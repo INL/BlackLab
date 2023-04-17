@@ -8,13 +8,12 @@ import java.util.function.LongUnaryOperator;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
+import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -275,12 +274,13 @@ class SpansReader implements Runnable {
                 if (storeThisHit) {
                     int start = spans.startPosition();
                     int end = spans.endPosition();
-                    results.add(doc, start, end);
+                    RelationInfo[] matchInfo = null;
                     if (capturedGroups != null) {
-                        RelationInfo[] groups = new RelationInfo[numCaptureGroups];
-                        hitQueryContext.getCapturedGroups(groups);
-                        capturedGroups.add(groups);
+                        matchInfo = new RelationInfo[numCaptureGroups];
+                        hitQueryContext.getCapturedGroups(matchInfo);
+                        capturedGroups.add(matchInfo); // FIXME: remove when matchInfo is fully integrated
                     }
+                    results.add(doc, start, end, matchInfo);
                 }
 
                 hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);

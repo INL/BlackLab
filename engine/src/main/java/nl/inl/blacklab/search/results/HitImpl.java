@@ -1,5 +1,10 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Arrays;
+import java.util.Objects;
+
+import nl.inl.blacklab.search.lucene.RelationInfo;
+
 /**
  * Class for a hit. Normally, hits are iterated over in a Lucene Spans object,
  * but in some places, it makes sense to place hits in separate objects: when
@@ -24,6 +29,9 @@ public final class HitImpl implements Hit {
     /** Start of this hit's span (in word positions) */
     private final int start;
 
+    /** Match info for this hit, or null if none */
+    private final RelationInfo[] matchInfo;
+
     /**
      * Construct a hit object
      *
@@ -31,10 +39,11 @@ public final class HitImpl implements Hit {
      * @param start start of the hit (word positions)
      * @param end end of the hit (word positions)
      */
-    protected HitImpl(int doc, int start, int end) {
+    protected HitImpl(int doc, int start, int end, RelationInfo[] matchInfo) {
         this.doc = doc;
         this.start = start;
         this.end = end;
+        this.matchInfo = matchInfo;
     }
 
     @Override
@@ -53,26 +62,32 @@ public final class HitImpl implements Hit {
     }
 
     @Override
-    public boolean equals(Object with) {
-        if (this == with)
-            return true;
-        if (with instanceof Hit) {
-            Hit o = (Hit) with;
-            return doc() == o.doc() && start() == o.start() && end() == o.end();
-        }
-        return false;
+    public RelationInfo[] matchInfo() {
+        return matchInfo;
     }
 
     @Override
     public String toString() {
         return String.format("doc %d, words %d-%d", doc(), start(), end());
     }
-    
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        HitImpl hit = (HitImpl) o;
+        return doc == hit.doc && end == hit.end && start == hit.start && Arrays.equals(matchInfo, hit.matchInfo);
+    }
+
     @Override
     public int hashCode() {
-        return (doc() * 17 + start()) * 31 + end();
+        int result = Objects.hash(doc, end, start);
+        result = 31 * result + Arrays.hashCode(matchInfo);
+        return result;
     }
-    
+
     // POSSIBLE FUTURE OPTIMIZATION
 
 //    /**
@@ -88,6 +103,7 @@ public final class HitImpl implements Hit {
 //    @Override
 //    public int hashCode() {
 //        if (hashCode == Integer.MIN_VALUE) {
+//            // @@@ don't forget about matchInfo, see above!
 //            hashCode = (doc() * 17 + start()) * 31 + end();
 //        }
 //        return hashCode;

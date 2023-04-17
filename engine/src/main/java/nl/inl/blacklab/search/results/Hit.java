@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.search.lucene.RelationInfo;
+
 /**
  * Interface for a hit. Normally, hits are iterated over in a Lucene Spans object,
  * but in some places, it makes sense to place hits in separate objects: when
@@ -13,10 +15,11 @@ public interface Hit extends Result<Hit> {
      * @param doc Lucene document id
      * @param start position of first word of the hit
      * @param end first word position after the hit
+     * @param matchInfo extra information such as capture groups / relations
      * @return the hit
      */
-    static Hit create(int doc, int start, int end) {
-        return new HitImpl(doc, start, end);
+    static Hit create(int doc, int start, int end, RelationInfo[] matchInfo) {
+        return new HitImpl(doc, start, end, matchInfo);
     }
     
     @Override
@@ -49,5 +52,14 @@ public interface Hit extends Result<Hit> {
      * @return position of first word after the hit
      */
     int end();
+
+    /**
+     * Get extra information for this hit, such as captured groups and relations.
+     *
+     * Only available if the query captured such information.
+     *
+     * @return extra information for this hit, or null if none available
+     */
+    RelationInfo[] matchInfo();
 
 }

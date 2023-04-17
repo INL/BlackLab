@@ -48,7 +48,7 @@ public interface Hits extends Results<Hit, HitProperty> {
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
 
-        return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds), null);
+        return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds, null), null);
     }
 
     static Hits list(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.search.lucene.RelationInfo;
+
 /**
  * A mutable list of simple hits, used internally.
  *
@@ -9,7 +11,7 @@ package nl.inl.blacklab.search.results;
  */
 public interface HitsInternalMutable extends HitsInternal {
 
-    void add(int doc, int start, int end);
+    void add(int doc, int start, int end, RelationInfo[] matchInfo);
 
     void add(EphemeralHit hit);
 

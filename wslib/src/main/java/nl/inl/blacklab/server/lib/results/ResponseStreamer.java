@@ -365,7 +365,7 @@ public class ResponseStreamer {
         if (capturedGroups != null) {
             ds.startEntry("captureGroups").startList();
             for (Map.Entry<String, RelationInfo> capturedGroup : capturedGroups.entrySet()) {
-                if (capturedGroup.getValue() != null) {
+                if (capturedGroup.getValue() != null && capturedGroup.getValue().isSpan()) {
                     ds.startItem("group").startMap();
                     {
                         ds.entry("name", capturedGroup.getKey());
