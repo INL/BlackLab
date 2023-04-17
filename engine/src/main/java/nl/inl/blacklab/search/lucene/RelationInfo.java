@@ -6,13 +6,15 @@ import java.util.Objects;
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.store.DataOutput;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+
 /**
  * Position information about a relation's source and target
  */
 public class RelationInfo {
 
     public static RelationInfo captureGroupSpan(int start, int end) {
-        RelationInfo relationInfo = new RelationInfo(false, start, start, end, end);
+        RelationInfo relationInfo = new RelationInfo(null, false, start, start, end, end);
         relationInfo.span = true;
         return relationInfo;
     }
@@ -101,11 +103,15 @@ public class RelationInfo {
     /** Where does the target of the relation end? */
     private int targetEnd;
 
+    /** Our relation type, or null if not applicable or not set. */
+    private String fullRelationType;
+
     public RelationInfo() {
-        this(false, -1, -1, -1, -1);
+        this(null, false, -1, -1, -1, -1);
     }
 
-    public RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
+    public RelationInfo(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
+        this.fullRelationType = fullRelationType;
         this.onlyHasTarget = onlyHasTarget;
         this.sourceStart = sourceStart;
         this.sourceEnd = sourceEnd;
@@ -192,7 +198,7 @@ public class RelationInfo {
     }
 
     public RelationInfo copy() {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+        return new RelationInfo(fullRelationType, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
     }
 
     public boolean isRoot() {
@@ -281,15 +287,34 @@ public class RelationInfo {
         return span;
     }
 
+    /**
+     * Pass the indexed term for this relation, so we can decode it.
+     *
+     * @param term indexed term
+     */
+    public void setRelationTerm(String term) {
+        this.fullRelationType = AnnotatedFieldNameUtil.fullRelationTypeFromIndexedTerm(term);
+    }
+
+    /**
+     * Get the full relation type, consisting of the class and type.
+     *
+     * @return full relation type
+     */
+    public String getFullRelationType() {
+        return fullRelationType;
+    }
+
     @Override
     public String toString() {
         if (isRoot())
-            return "rootrel(" + targetStart + "-" + targetEnd + ")";
+            return "rootrel(" + fullRelationType + ", " + targetStart + "-" + targetEnd + ")";
         if (isSpan())
             return "span(" + getFullSpanStart() + "-" + getFullSpanEnd() + ")";
         if (isTag())
-            return "tag(" + getFullSpanStart() + "-" + getFullSpanEnd() + ")";
-        return "rel(sourceStart=" + sourceStart +
+            return "tag(" + fullRelationType + ", " + getFullSpanStart() + "-" + getFullSpanEnd() + ")";
+        return "rel(" + fullRelationType +
+                ", sourceStart=" + sourceStart +
                 ", sourceEnd=" + sourceEnd +
                 ", targetStart=" + targetStart +
                 ", targetEnd=" + targetEnd + ")";

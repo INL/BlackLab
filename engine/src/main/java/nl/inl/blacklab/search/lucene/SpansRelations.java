@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.store.ByteArrayDataInput;
@@ -139,7 +141,17 @@ class SpansRelations extends BLSpans {
         return start;
     }
 
-    private final PayloadSpanCollector collector = new PayloadSpanCollector();
+    private static class PayloadAndtermCollector extends PayloadSpanCollector {
+        public Term term;
+
+        @Override
+        public void collectLeaf(PostingsEnum postings, int position, Term term) throws IOException {
+            this.term = term;
+            super.collectLeaf(postings, position, term);
+        }
+    }
+
+    private final PayloadAndtermCollector collector = new PayloadAndtermCollector();
 
     @Override
     public int endPosition() {
@@ -158,6 +170,7 @@ class SpansRelations extends BLSpans {
             byte[] payload = collector.getPayloads().iterator().next();
             ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
             relationInfo.deserialize(relationsMatches.startPosition(), dataInput);
+            relationInfo.setRelationTerm(collector.term.text());
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Error getting payload");
         }

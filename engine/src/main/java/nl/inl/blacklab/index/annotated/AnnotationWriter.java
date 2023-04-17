@@ -418,14 +418,14 @@ public class AnnotationWriter {
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo relationInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
+        RelationInfo relationInfo = new RelationInfo(null, false, startPos, startPos, endPos, endPos);
         String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : AnnotatedFieldNameUtil.tagFullRelationType(tagName);
         return indexRelation(fullRelationType, startPos, attributes, indexType, relationInfo);
     }
 
     public int indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo relationInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+        RelationInfo relationInfo = new RelationInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
         int indexAt = Math.min(sourceStart, targetStart);
         return indexRelation(fullRelationType, indexAt, attributes, indexType, relationInfo);
     }
