@@ -29,7 +29,11 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
     final ForwardIndexAccessor fiAccessor;
 
     public SpanQueryConstrained(BLSpanQuery clause, MatchFilter constraint, ForwardIndexAccessor fiAccessor) {
-        super(BLSpanQuery.ensureSortedUnique(clause));
+        // NOTE: we used to make the clause unique using ensureSortedUnique(), but stopped
+        // because of MatchInfo. We could in theory still do it if we know there's no matchInfo -
+        // but usually there is with this query type (that's kind of what constraints are for), so we don't bother.
+        // Sorted is still important so we can use advanceStartPosition().
+        super(BLSpanQuery.ensureSorted(clause));
         this.constraint = constraint;
         this.fiAccessor = fiAccessor;
     }

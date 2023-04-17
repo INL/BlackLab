@@ -92,7 +92,10 @@ public class HitsFromQuery extends HitsMutable {
                 if (traceOptimization)
                     logger.debug("Query after rewrite(): " + optimizedQuery);
 
-                optimizedQuery = BLSpanQuery.ensureSortedUnique(optimizedQuery);
+                // NOTE: we used to call ensureSortedUnique() here, but we cannot
+                // determine uniqueness without looking at the matchInfo too. Instead
+                // we'll do it in SpansReader, where we already have access to the matchInfo.
+                optimizedQuery = BLSpanQuery.ensureSorted(optimizedQuery);
 
                 // Restore previous FI match threshold
                 if (searchSettings.fiMatchFactor() != -1) {
@@ -135,10 +138,8 @@ public class HitsFromQuery extends HitsMutable {
 
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
-                    if (hitQueryContextForThisSpans.getCaptureRegisterNumber() > 0) {
-                        matchInfoNames = hitQueryContextForThisSpans.getCapturedGroupNames();
-                        //capturedGroupsMutable = new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames());
-                        //spansReader.setCapturedGroups(capturedGroupsMutable);
+                    if (hitQueryContextForThisSpans.getMatchInfoRegisterNumber() > 0) {
+                        matchInfoNames = hitQueryContextForThisSpans.getMatchInfoNames();
                     }
 
                     hasInitialized = true;

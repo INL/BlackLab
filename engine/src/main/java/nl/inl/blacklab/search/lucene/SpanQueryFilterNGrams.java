@@ -101,9 +101,12 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
                     spansSource, op, min, max, leftAdjust, rightAdjust);
 
             // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
-            BLSpanQuery q = (BLSpanQuery) weight.getQuery();
-            if (q != null && !q.hitsStartPointSorted())
-                return BLSpans.ensureStartPointSorted(filtered);
+            // JN 2023-04-17 no, if our hitsStartPointSorted() method return the correct value,
+            //   we don't need to sort our spans. If another class needs sorted spans, it should
+            //   wrap it.
+            //BLSpanQuery q = (BLSpanQuery) weight.getQuery();
+            //if (q != null && !q.hitsStartPointSorted())
+            //    return BLSpans.ensureStartPointSorted(filtered);
 
             return filtered;
         }
@@ -172,7 +175,10 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsStartPointSorted() {
-        return clauses.get(0).hitsStartPointSorted() && clauses.get(0).hitsLengthMax() >= min;
+        // OPT: There are some very specific situations in which we can say that the start points are sorted,
+        //   (e.g. probably when op == CONTAINING_AT_START && clause.hitsStartPointSorted())
+        //   but for now we'll just say that they are not.
+        return false;
     }
 
     @Override

@@ -46,8 +46,6 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 public class SpanQuerySequence extends BLSpanQueryAbstract {
     protected static final Logger logger = LogManager.getLogger(SpanQuerySequence.class);
 
-    private static final boolean USE_SPANS_SEQUENCE_GAPS = true;
-
     public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
         super(first, second);
     }

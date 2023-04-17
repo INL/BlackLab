@@ -19,6 +19,19 @@ public class MatchInfo implements Comparable<MatchInfo> {
         return relationInfo;
     }
 
+    public static boolean equal(MatchInfo[] a, MatchInfo[] b) {
+        if ((a == null) != (b == null)) {
+            // One is null, the other is not.
+            return false;
+        }
+        if (a == null) {
+            // Both null
+            return true;
+        }
+        // Both set
+        return a.equals(b);
+    }
+
     /**
      * Different spans we can return for a relation
      */

@@ -142,6 +142,23 @@ class SpansReader implements Runnable {
         this.isDone = false;
     }
 
+    /**
+     * Check if hit is the same as the last hit.
+     *
+     * @param doc   the document number
+     * @param start the start position
+     * @param end   the end position
+     * @param matchInfo the match info
+     */
+    public boolean isSameAsLast(HitsInternal hits, int doc, int start, int end, MatchInfo[] matchInfo) {
+        long prev = hits.size() - 1;
+        if (hits.size() == 0 || doc != hits.doc(prev) || start != hits.start(prev) || end != hits.end(prev) ||
+                !MatchInfo.equal(matchInfo, hits.matchInfo(prev))) {
+            return false;
+        }
+        return true;
+    }
+
     void initialize() {
         try {
             this.isInitialized = true;
@@ -205,6 +222,8 @@ class SpansReader implements Runnable {
             return;
 
         final int numCaptureGroups = hitQueryContext.numberOfMatchInfos();
+
+        // FIXME: remove when matchInfo is fully integrated
         final ArrayList<MatchInfo[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<>() : null;
 
         final HitsInternalMutable results = HitsInternal.create(-1, true, true);
@@ -229,10 +248,25 @@ class SpansReader implements Runnable {
                 if (abortBeforeCounting)
                     return;
 
-                // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
-                final boolean storeThisHit = this.globalHitsProcessed.getAndUpdate(incrementProcessUnlessAtMax) < this.globalHitsToProcess.get();
-
+                // Find all the hit information
                 final int doc = spans.docID() + docBase;
+                int start = spans.startPosition();
+                int end = spans.endPosition();
+                MatchInfo[] matchInfo = null;
+                if (numCaptureGroups > 0) {
+                    matchInfo = new MatchInfo[numCaptureGroups];
+                    hitQueryContext.getMatchInfo(matchInfo);
+                    //capturedGroups.add(matchInfo);
+                }
+
+                // Check that this is a unique hit, not the exact same as the previous one.
+                boolean isSameAsLast = isSameAsLast(results, doc, start, end, matchInfo);
+
+                // only if unique hit and previous value (which is returned) was not yet at the limit
+                // (and thus we actually incremented) do we store this hit.
+                final boolean storeThisHit = !isSameAsLast &&
+                        this.globalHitsProcessed.getAndUpdate(incrementProcessUnlessAtMax) < this.globalHitsToProcess.get();
+
                 if (doc != prevDoc) {
                     globalDocsCounted.incrementAndGet();
                     if (storeThisHit) {
@@ -260,14 +294,6 @@ class SpansReader implements Runnable {
                 }
 
                 if (storeThisHit) {
-                    int start = spans.startPosition();
-                    int end = spans.endPosition();
-                    MatchInfo[] matchInfo = null;
-                    if (capturedGroups != null) {
-                        matchInfo = new MatchInfo[numCaptureGroups];
-                        hitQueryContext.getMatchInfo(matchInfo);
-                        capturedGroups.add(matchInfo); // FIXME: remove when matchInfo is fully integrated
-                    }
                     results.add(doc, start, end, matchInfo);
                 }
 

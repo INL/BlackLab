@@ -72,7 +72,7 @@ public class MatchFilterSameTokens extends MatchFilter {
     public void setHitQueryContext(HitQueryContext context) {
         groupIndex = new int[2];
         for (int i = 0; i < 2; i++)
-            groupIndex[i] = context.registerCapturedGroup(groupName[i]);
+            groupIndex[i] = context.registerMatchInfo(groupName[i]);
     }
 
     @Override

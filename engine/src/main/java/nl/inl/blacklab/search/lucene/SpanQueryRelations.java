@@ -157,8 +157,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(relationType, spans, primaryIndicator, direction,
-                    spanMode);
+            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode);
         }
 
     }

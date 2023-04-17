@@ -204,6 +204,8 @@ class SpansFiSeq extends BLSpans {
             int anchorPos = startOfAnchor ? anchorStart : anchor.endPosition();
             if (direction < 0)
                 anchorPos--;
+            // OPT: sometimes anchorPos may be the same as the previous one. We could check for
+            //      this to avoid re-running the NFA. This is likely fairly rare though.
             NavigableSet<Integer> setMatchEndpoints = nfa.findMatches(currentFiDoc, anchorPos, direction);
             if (setMatchEndpoints.size() > 0) {
                 if (direction == 1)

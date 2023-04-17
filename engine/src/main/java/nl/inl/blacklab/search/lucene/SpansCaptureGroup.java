@@ -111,7 +111,7 @@ class SpansCaptureGroup extends BLSpans {
     @Override
     public void setHitQueryContext(HitQueryContext context) {
         super.setHitQueryContext(context);
-        this.groupIndex = context.registerCapturedGroup(name);
+        this.groupIndex = context.registerMatchInfo(name);
     }
 
     @Override

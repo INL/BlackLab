@@ -140,11 +140,14 @@ public class SpansConstrained extends BLSpans {
         int startPos = clause.startPosition();
         while (startPos != Spans.NO_MORE_POSITIONS) {
             if (matchInfo == null) {
-                matchInfo = new MatchInfo[context.getCapturedGroupNames().size()];
+                matchInfo = new MatchInfo[context.getMatchInfoNames().size()];
             } else {
                 Arrays.fill(matchInfo, null);
             }
             context.getMatchInfo(matchInfo);
+            // OPT: if there are duplicate hits (including matchInfo), we'll
+            //   evaluate the same constraint multiple times. Could be prevented
+            //   by caching the previous results, but might not be worth it.
             if (constraint.evaluate(currentFiDoc, matchInfo).isTruthy())
                 break;
             startPos = clause.nextStartPosition();

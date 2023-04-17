@@ -73,7 +73,7 @@ class SpansRelations extends BLSpans {
         // Only keep Unicode letters from relationType
         String groupName = relationType.replaceAll("[^\\p{L}]", "");
         // Register our group
-        this.groupIndex = context.registerCapturedGroup(groupName, true);
+        this.groupIndex = context.registerMatchInfo(groupName, true);
     }
 
     @Override

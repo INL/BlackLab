@@ -219,9 +219,9 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     @Override
     public void setHitQueryContext(HitQueryContext context) {
         this.hitQueryContext = context;
-        int before = context.getCaptureRegisterNumber();
+        int before = context.getMatchInfoRegisterNumber();
         source.setHitQueryContext(context);
-        if (context.getCaptureRegisterNumber() == before) {
+        if (context.getMatchInfoRegisterNumber() == before) {
             // Our clause doesn't capture any groups; optimize
             clauseCapturesGroups = false;
         }
