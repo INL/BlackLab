@@ -8,7 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that locks and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
@@ -29,12 +29,12 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         super(initialCapacity);
     }
 
-    HitsInternalLock32(IntList docs, IntList starts, IntList ends, ObjectList<RelationInfo[]> matchInfos) {
+    HitsInternalLock32(IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
         super(docs, starts, ends, matchInfos);
     }
 
     @Override
-    public void add(int doc, int start, int end, RelationInfo[] matchInfo) {
+    public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -125,7 +125,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            RelationInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
+            MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
             return new HitImpl(docs.getInt((int)index), starts.getInt((int)index), ends.getInt((int)index), matchInfo);
         } finally {
             lock.readLock().unlock();
@@ -194,7 +194,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     }
 
     @Override
-    public RelationInfo[] matchInfo(long index) {
+    public MatchInfo[] matchInfo(long index) {
         lock.readLock().lock();
         try {
             return this.matchInfos.isEmpty() ? null : this.matchInfos.get((int)index);

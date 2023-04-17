@@ -17,7 +17,7 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.util.ThreadAborter;
 
 /** 
@@ -59,8 +59,6 @@ class SpansReader implements Runnable {
     final AtomicLong globalHitsToCount;
     /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
     private final HitsInternalMutable globalResults;
-    /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
-    private CapturedGroupsImpl globalCapturedGroups;
 
     // Internal state
     boolean isDone = false;
@@ -74,10 +72,8 @@ class SpansReader implements Runnable {
 
     /**
      * Construct an uninitialized SpansReader that will retrieve its own Spans object on when it's ran.
-     *
-     * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object, HitQueryContext and
+     * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object and HitQueryContext and
      * CapturedGroups objects are set) and leave the other ones to self-initialize when needed.
-     *
      * It is done this way because of an initialization order issue with capture groups.
      * The issue is as follows:
      * - we want to lazy-initialize Spans objects:
@@ -85,24 +81,19 @@ class SpansReader implements Runnable {
      * 2. because only a few SpansReaders are active at a time.
      * 3. because they take a long time to setup.
      * 4. because we might not even need them all if a hits limit has been set.
-     *
      * So if we pre-create them all, we're doing a lot of upfront work we possibly don't need to.
      * We'd also hold a lot of ram hostage (>10GB in some cases!) because all Spans objects exist
      * simultaneously even though we're not using them simultaneously.
      * However, in order to know whether a query (such as A:([pos="A.*"]) "ship") uses/produces capture groups (and how many groups)
      * we need to call BLSpans::setHitQueryContext(...) and then check the number capture group names in the HitQueryContext afterwards.
-     *
      * No why we need to know this:
      * - To construct the CaptureGroupsImpl we need to know the number of capture groups.
      * - To construct the SpansReaders we need to have already created the CaptureGroupsImpl, as it's shared between all of the SpansReaders.
-     *
      * So to summarise: there is an order issue.
      * - we want to lazy-init the Spans.
      * - but we need the capture groups object.
      * - for that we need at least one Spans object created.
-     *
      * Hence the explicit initialization of the first SpansReader by HitsFromQueryParallel.
-     *
      * This will create one of the Spans objects so we can create and set the CapturedGroups object in this
      * first SpansReader. Then the rest of the SpansReaders receive the same CapturedGroups object and can
      * lazy-initialize when needed.
@@ -111,7 +102,6 @@ class SpansReader implements Runnable {
      * @param leafReaderContext     leaf reader we're running on
      * @param sourceHitQueryContext source HitQueryContext from HitsFromQueryParallel; we'll derive our own context from it
      * @param globalResults         global results object (must be locked before writing)
-     * @param globalCapturedGroups  global captured groups object (must be locked before writing)
      * @param globalDocsProcessed   global docs retrieved counter
      * @param globalDocsCounted     global docs counter (includes ones that weren't retrieved because of max. settings)
      * @param globalHitsProcessed   global hits retrieved counter
@@ -125,8 +115,7 @@ class SpansReader implements Runnable {
         HitQueryContext sourceHitQueryContext,
 
         HitsInternalMutable globalResults,
-        CapturedGroupsImpl globalCapturedGroups,
-        AtomicLong globalDocsProcessed,
+            AtomicLong globalDocsProcessed,
         AtomicLong globalDocsCounted,
         AtomicLong globalHitsProcessed,
         AtomicLong globalHitsCounted,
@@ -142,7 +131,6 @@ class SpansReader implements Runnable {
         this.leafReaderContext = leafReaderContext;
 
         this.globalResults = globalResults;
-        this.globalCapturedGroups = globalCapturedGroups;
         this.globalDocsProcessed = globalDocsProcessed;
         this.globalDocsCounted = globalDocsCounted;
         this.globalHitsProcessed = globalHitsProcessed;
@@ -216,8 +204,8 @@ class SpansReader implements Runnable {
         if (isDone) // NOTE: initialize() may instantly set isDone to true, so order is important here.
             return;
 
-        final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
-        final ArrayList<RelationInfo[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<>() : null;
+        final int numCaptureGroups = hitQueryContext.numberOfMatchInfos();
+        final ArrayList<MatchInfo[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<>() : null;
 
         final HitsInternalMutable results = HitsInternal.create(-1, true, true);
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
@@ -274,10 +262,10 @@ class SpansReader implements Runnable {
                 if (storeThisHit) {
                     int start = spans.startPosition();
                     int end = spans.endPosition();
-                    RelationInfo[] matchInfo = null;
+                    MatchInfo[] matchInfo = null;
                     if (capturedGroups != null) {
-                        matchInfo = new RelationInfo[numCaptureGroups];
-                        hitQueryContext.getCapturedGroups(matchInfo);
+                        matchInfo = new MatchInfo[numCaptureGroups];
+                        hitQueryContext.getMatchInfo(matchInfo);
                         capturedGroups.add(matchInfo); // FIXME: remove when matchInfo is fully integrated
                     }
                     results.add(doc, start, end, matchInfo);
@@ -309,28 +297,11 @@ class SpansReader implements Runnable {
         this.leafReaderContext = null;
     }
 
-    void addToGlobalResults(HitsInternal hits, List<RelationInfo[]> capturedGroups) {
+    void addToGlobalResults(HitsInternal hits, List<MatchInfo[]> capturedGroups) {
         globalResults.addAll(hits);
-
-        if (globalCapturedGroups != null) {
-            synchronized (globalCapturedGroups) {
-                HitsInternal.Iterator it = hits.iterator();
-                int i = 0;
-                while (it.hasNext()) {
-                    Hit h = it.next().toHit();
-                    globalCapturedGroups.put(h, capturedGroups.get(i));
-                    ++i;
-                }
-                capturedGroups.clear();
-            }
-        }
     }
 
     public HitQueryContext getHitContext() {
         return hitQueryContext;
-    }
-
-    public void setCapturedGroups(CapturedGroupsImpl capturedGroups) {
-        globalCapturedGroups = capturedGroups;
     }
 }

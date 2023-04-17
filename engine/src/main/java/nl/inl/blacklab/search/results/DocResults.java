@@ -179,6 +179,8 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     private CorpusSize corpusSize = null;
 
+    private List<String> matchInfoNames = null;
+
     /**
      * Construct an empty DocResults.
      * @param queryInfo query info
@@ -197,6 +199,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
+        this.matchInfoNames = hits.matchInfoNames();
         this.sourceHitsIterator = hits.iterator();
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
@@ -292,7 +295,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
-                            Hits hits = Hits.list(queryInfo(), docHits, null);
+                            Hits hits = Hits.list(queryInfo(), docHits, matchInfoNames);
                             long size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
@@ -314,7 +317,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
-                        Hits hits = Hits.list(queryInfo(), docHits, null);
+                        Hits hits = Hits.list(queryInfo(), docHits, matchInfoNames);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;

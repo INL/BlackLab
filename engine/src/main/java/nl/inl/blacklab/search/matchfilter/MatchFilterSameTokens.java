@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterSameTokens extends MatchFilter {
     private final String annotationName;
@@ -76,10 +76,10 @@ public class MatchFilterSameTokens extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, RelationInfo[] capturedGroups) {
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
         int[] segmentTermIds = new int[2];
         for (int i = 0; i < 2; i++) {
-            RelationInfo span = capturedGroups[groupIndex[i]];
+            MatchInfo span = capturedGroups[groupIndex[i]];
             if (span == null)
                 return ConstraintValue.get(false); // if either side is undefined, they are not equal
             int tokenPosition = span.getFullSpanStart();

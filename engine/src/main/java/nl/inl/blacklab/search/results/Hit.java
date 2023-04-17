@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * Interface for a hit. Normally, hits are iterated over in a Lucene Spans object,
@@ -18,7 +18,7 @@ public interface Hit extends Result<Hit> {
      * @param matchInfo extra information such as capture groups / relations
      * @return the hit
      */
-    static Hit create(int doc, int start, int end, RelationInfo[] matchInfo) {
+    static Hit create(int doc, int start, int end, MatchInfo[] matchInfo) {
         return new HitImpl(doc, start, end, matchInfo);
     }
     
@@ -60,6 +60,6 @@ public interface Hit extends Result<Hit> {
      *
      * @return extra information for this hit, or null if none available
      */
-    RelationInfo[] matchInfo();
+    MatchInfo[] matchInfo();
 
 }

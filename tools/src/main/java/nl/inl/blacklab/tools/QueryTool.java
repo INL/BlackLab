@@ -60,7 +60,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -1512,9 +1512,9 @@ public class QueryTool {
         public final String hitText;
         public final String right;
 
-        public final Map<String, RelationInfo> capturedGroups;
+        public final Map<String, MatchInfo> capturedGroups;
 
-        public HitToShow(int doc, String left, String hitText, String right, Map<String, RelationInfo> capturedGroups) {
+        public HitToShow(int doc, String left, String hitText, String right, Map<String, MatchInfo> capturedGroups) {
             super();
             this.doc = doc;
             this.left = left;
@@ -1564,9 +1564,9 @@ public class QueryTool {
             hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
             right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
-            Map<String, RelationInfo> capturedGroups = null;
+            Map<String, MatchInfo> capturedGroups = null;
             if (window.hasCapturedGroups())
-                capturedGroups = window.capturedGroups().getMap(hit);
+                capturedGroups = window.getMatchInfoMap(hit);
             toShow.add(new HitToShow(hit.doc(), left, hitText, right, capturedGroups));
             if (leftContextMaxSize < left.length())
                 leftContextMaxSize = left.length();

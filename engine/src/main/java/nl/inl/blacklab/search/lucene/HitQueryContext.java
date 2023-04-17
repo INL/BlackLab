@@ -88,7 +88,7 @@ public class HitQueryContext {
      * 
      * @return number of captured groups
      */
-    public int numberOfCapturedGroups() {
+    public int numberOfMatchInfos() {
         return groupNames.size();
     }
 
@@ -97,10 +97,10 @@ public class HitQueryContext {
      *
      * Used by Hits.
      *
-     * @param capturedGroups array to place the captured group information into
+     * @param matchInfo array to place the captured group information into
      */
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
-        rootSpans.getCapturedGroups(capturedGroups);
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        rootSpans.getMatchInfo(matchInfo);
     }
 
     /**

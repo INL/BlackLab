@@ -4,7 +4,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterEquals extends MatchFilter {
 
@@ -64,7 +64,7 @@ public class MatchFilterEquals extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, RelationInfo[] capturedGroups) {
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
         ConstraintValue ra = a.evaluate(fiDoc, capturedGroups);
         ConstraintValue rb = b.evaluate(fiDoc, capturedGroups);
         if (ra instanceof ConstraintValueString && rb instanceof ConstraintValueString) {

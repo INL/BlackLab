@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Finds all sequences of consecutive hits from the source spans of the
  * specified min and max lengths. Used to implement repetition operators.
@@ -223,9 +221,9 @@ class SpansRepetition extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         int index = firstToken + numRepetitions - 1; // use the last match for captured groups
-        source.getCapturedGroups(index, capturedGroups);
+        source.getMatchInfo(index, relationInfo);
     }
 
     @Override

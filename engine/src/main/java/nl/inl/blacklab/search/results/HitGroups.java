@@ -39,7 +39,8 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @param docsStats docs statistics
      * @return grouped hits
      */
-    public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
+    public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria,
+            SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
         return new HitGroups(queryInfo, results, groupCriteria, sampleParameters, windowStats, hitsStats, docsStats);
     }
 
@@ -146,7 +147,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             PropertyValue groupId = e.getKey();
             HitsInternal hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
-            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
+            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.matchInfoNames(), groupSize);
             groups.put(groupId, group);
             results.add(group);
         }

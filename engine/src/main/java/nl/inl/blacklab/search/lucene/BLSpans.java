@@ -60,11 +60,11 @@ public abstract class BLSpans extends Spans {
      * Get the start and end position for the captured groups contained in this
      * BLSpans (sub)tree.
      *
-     * @param capturedGroups an array the size of the total number of groups in the
+     * @param relationInfo an array the size of the total number of groups in the
      *            query; the start and end positions for the groups in this subtree
      *            will be placed in here.
      */
-    abstract public void getCapturedGroups(RelationInfo[] capturedGroups);
+    abstract public void getMatchInfo(MatchInfo[] relationInfo);
 
     /**
      * Advance the start position in the current doc to target or beyond.
@@ -131,7 +131,7 @@ public abstract class BLSpans extends Spans {
         return spans;
     }
 
-    public RelationInfo getRelationInfo() {
+    public MatchInfo getRelationInfo() {
         return null;
     }
 

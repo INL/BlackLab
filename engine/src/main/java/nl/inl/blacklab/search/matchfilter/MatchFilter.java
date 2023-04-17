@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.matchfilter;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A global constraint (or "match filter") for our matches.
@@ -38,7 +38,7 @@ public abstract class MatchFilter {
      * @param capturedGroups current captured groups state
      * @return value of the constraint at this position
      */
-    public abstract ConstraintValue evaluate(ForwardIndexDocument fiDoc, RelationInfo[] capturedGroups);
+    public abstract ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups);
 
     /**
      * Let token annotation nodes look up the index of their annotation

@@ -11,7 +11,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that does no locking and can handle huge result sets.
@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  * This means it is safe to fill this object in one thread, then
  * use it from many threads as long as it is not modified anymore.
  *
- * A test calling {@link #add(int, int, int, RelationInfo[])} millions of times came out to be about 11% faster than
+ * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about 11% faster than
  * {@link HitsInternalLock}. That is not representative of real-world usage of course, but on huge
  * resultsets this will likely save a few seconds.
  */
@@ -67,13 +67,13 @@ class HitsInternalNoLock implements HitsInternalMutable {
             return hit.end;
         }
 
-        public RelationInfo[] matchInfo() { return hit.matchInfo; }
+        public MatchInfo[] matchInfo() { return hit.matchInfo; }
     }
 
     protected final IntBigList docs;
     protected final IntBigList starts;
     protected final IntBigList ends;
-    protected final ObjectBigList<RelationInfo[]> matchInfos;
+    protected final ObjectBigList<MatchInfo[]> matchInfos;
 
     HitsInternalNoLock(long initialCapacity) {
         if (initialCapacity < 0) {
@@ -90,7 +90,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
         }
     }
 
-    public void add(int doc, int start, int end, RelationInfo[] matchInfo) {
+    public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
         docs.add(doc);
         starts.add(start);
         ends.add(end);
@@ -154,7 +154,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     }
 
     public Hit get(long index) {
-        RelationInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(index);
+        MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(index);
         return new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index), matchInfo);
     }
 
@@ -192,7 +192,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     }
 
     @Override
-    public RelationInfo[] matchInfo(long index) { return this.matchInfos.isEmpty() ? null : this.matchInfos.get(index); }
+    public MatchInfo[] matchInfo(long index) { return this.matchInfos.isEmpty() ? null : this.matchInfos.get(index); }
 
     public long size() {
         return docs.size64();

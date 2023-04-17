@@ -9,7 +9,6 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.Span;
 
 /**
  * Returns all tokens that do not occur in the matches of the specified query.
@@ -280,11 +279,11 @@ class SpansNot extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
         if (clause != null)
-            clause.getCapturedGroups(capturedGroups);
+            clause.getMatchInfo(relationInfo);
     }
 
     @Override

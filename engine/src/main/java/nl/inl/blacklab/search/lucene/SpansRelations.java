@@ -33,7 +33,7 @@ class SpansRelations extends BLSpans {
     private int end = NOT_YET_NEXTED;
 
     /** Source and target for this relation */
-    private final RelationInfo relationInfo = new RelationInfo();
+    private final MatchInfo relationInfo = new MatchInfo();
 
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
     private final boolean payloadIndicatesPrimaryValues;
@@ -42,7 +42,7 @@ class SpansRelations extends BLSpans {
     private final Direction direction;
 
     /** What span to return for the relations found */
-    private final RelationInfo.SpanMode spanMode;
+    private final MatchInfo.SpanMode spanMode;
 
     /** Group number where we'll capture our relation info */
     private int groupIndex;
@@ -60,7 +60,7 @@ class SpansRelations extends BLSpans {
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(String relationType, BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode) {
+    public SpansRelations(String relationType, BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
         this.relationType = relationType;
         this.relationsMatches = relationsMatches;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
@@ -77,8 +77,8 @@ class SpansRelations extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
-        capturedGroups[groupIndex] = relationInfo.copy();
+    public void getMatchInfo(MatchInfo[] relationInfo) {
+        relationInfo[groupIndex] = this.relationInfo.copy();
     }
 
     @Override
@@ -116,7 +116,7 @@ class SpansRelations extends BLSpans {
     }
 
     private boolean suitableMatch() {
-        if (relationInfo.isRoot() && spanMode == RelationInfo.SpanMode.SOURCE) {
+        if (relationInfo.isRoot() && spanMode == MatchInfo.SpanMode.SOURCE) {
             // Root relations have no source
             return false;
         }
@@ -176,7 +176,7 @@ class SpansRelations extends BLSpans {
         }
     }
 
-    public RelationInfo getRelationInfo() {
+    public MatchInfo getRelationInfo() {
         return relationInfo;
     }
 

@@ -643,10 +643,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
 
                 @Override
-                public void getCapturedGroups(RelationInfo[] capturedGroups) {
+                public void getMatchInfo(MatchInfo[] relationInfo) {
                     if (!childClausesCaptureGroups)
                         return;
-                    ((BLSpans) topPositionSpans).getCapturedGroups(capturedGroups);
+                    ((BLSpans) topPositionSpans).getMatchInfo(relationInfo);
                 }
             };
         }

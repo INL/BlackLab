@@ -8,7 +8,6 @@ import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.Span;
 
 /**
  * Gets spans for a certain XML element.
@@ -43,7 +42,7 @@ class SpansTagsExternal extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         // NOP
     }
 

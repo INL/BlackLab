@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A mutable implementation of Hit, to be used for short-lived
@@ -10,7 +10,7 @@ public class EphemeralHit implements Hit {
     public int doc = -1;
     public int start = -1;
     public int end = -1;
-    public RelationInfo[] matchInfo = null;
+    public MatchInfo[] matchInfo = null;
 
     Hit toHit() {
         return new HitImpl(doc, start, end, matchInfo);
@@ -32,6 +32,6 @@ public class EphemeralHit implements Hit {
     }
 
     @Override
-    public RelationInfo[] matchInfo() { return matchInfo; }
+    public MatchInfo[] matchInfo() { return matchInfo; }
 
 }

@@ -7,7 +7,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A list of simple hits.
@@ -123,7 +123,7 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
      *
      * @return extra information for a match, or null if none available
      */
-    RelationInfo[] matchInfo(long index);
+    MatchInfo[] matchInfo(long index);
 
     long size();
 

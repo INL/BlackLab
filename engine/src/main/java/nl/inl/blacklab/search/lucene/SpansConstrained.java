@@ -7,7 +7,6 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -23,8 +22,8 @@ public class SpansConstrained extends BLSpans {
     /** The hit query context, which contains captured group information */
     private HitQueryContext context;
 
-    /** The current captured groups */
-    private RelationInfo[] capturedGroups;
+    /** The current match info (captured groups, relations, etc.) */
+    private MatchInfo[] matchInfo;
 
     /** Maps from term strings to term indices for each annotation. */
     private final ForwardIndexAccessorLeafReader fiAccessor;
@@ -58,8 +57,8 @@ public class SpansConstrained extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
-        clause.getCapturedGroups(capturedGroups);
+    public void getMatchInfo(MatchInfo[] relationInfo) {
+        clause.getMatchInfo(relationInfo);
     }
 
     @Override
@@ -140,13 +139,13 @@ public class SpansConstrained extends BLSpans {
     protected int ensureValidHit() throws IOException {
         int startPos = clause.startPosition();
         while (startPos != Spans.NO_MORE_POSITIONS) {
-            if (capturedGroups == null) {
-                capturedGroups = new RelationInfo[context.getCapturedGroupNames().size()];
+            if (matchInfo == null) {
+                matchInfo = new MatchInfo[context.getCapturedGroupNames().size()];
             } else {
-                Arrays.fill(capturedGroups, null);
+                Arrays.fill(matchInfo, null);
             }
-            context.getCapturedGroups(capturedGroups);
-            if (constraint.evaluate(currentFiDoc, capturedGroups).isTruthy())
+            context.getMatchInfo(matchInfo);
+            if (constraint.evaluate(currentFiDoc, matchInfo).isTruthy())
                 break;
             startPos = clause.nextStartPosition();
         }

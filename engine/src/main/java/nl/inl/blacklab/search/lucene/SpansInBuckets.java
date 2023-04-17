@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets")
  * instead of individual matches like with Spans.
@@ -101,8 +99,8 @@ public interface SpansInBuckets {
      *
      * @param indexInBucket what hit in the current bucket to get the information
      *            for
-     * @param capturedGroups where to add the captured group information
+     * @param matchInfo where to add the captured group information
      */
-    void getCapturedGroups(int indexInBucket, RelationInfo[] capturedGroups);
+    void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo);
 
 }

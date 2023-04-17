@@ -10,7 +10,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that does no locking and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  * This means it is safe to fill this object in one thread, then
  * use it from many threads as long as it is not modified anymore.
  *
- * A test calling {@link #add(int, int, int, RelationInfo[])} millions of times came out to be about 40% faster than
+ * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about 40% faster than
  * {@link HitsInternalLock32}, and also about 40% faster than {@link HitsInternalNoLock}.
  *
  * These tests are not representative of real-world usage, but on huge result sets this will
@@ -61,13 +61,13 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         public int end() {
             return hit.end;
         }
-        public RelationInfo[] matchInfo() { return hit.matchInfo; }
+        public MatchInfo[] matchInfo() { return hit.matchInfo; }
     }
 
     protected final IntList docs;
     protected final IntList starts;
     protected final IntList ends;
-    protected final ObjectList<RelationInfo[]> matchInfos;
+    protected final ObjectList<MatchInfo[]> matchInfos;
 
     HitsInternalNoLock32() {
         this(-1);
@@ -88,7 +88,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         }
     }
 
-    HitsInternalNoLock32(IntList docs, IntList starts, IntList ends, ObjectList<RelationInfo[]> matchInfos) {
+    HitsInternalNoLock32(IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
         if (docs == null || starts == null || ends == null)
             throw new NullPointerException();
         if (docs.size() != starts.size() || docs.size() != ends.size() || (matchInfos != null && matchInfos.size() != docs.size()))
@@ -101,7 +101,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     }
 
     @Override
-    public void add(int doc, int start, int end, RelationInfo[] matchInfo) {
+    public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
         docs.add(doc);
         starts.add(start);
         ends.add(end);
@@ -165,7 +165,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
 
     @Override
     public HitImpl get(long index) {
-        RelationInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
+        MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
         return new HitImpl(docs.getInt((int)index), starts.getInt((int)index), ends.getInt((int)index), matchInfo);
     }
 
@@ -207,7 +207,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     }
 
     @Override
-    public RelationInfo[] matchInfo(long index) {
+    public MatchInfo[] matchInfo(long index) {
         return matchInfos.isEmpty() ? null : matchInfos.get((int) index);
     }
 

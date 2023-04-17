@@ -1,6 +1,9 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -11,6 +14,7 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A list of hits, optionally with captured groups.
@@ -34,7 +38,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * Make a wrapper Hits object for a list of Hit objects.
      * <p>
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * Prefer using @link { {@link #list(QueryInfo, HitsInternal, CapturedGroups)} }
+     * Prefer using @link { {@link #list(QueryInfo, HitsInternal, List<String>)} }
      *
      * @param queryInfo information about the original query
      * @param docs      doc ids
@@ -51,8 +55,8 @@ public interface Hits extends Results<Hit, HitProperty> {
         return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds, null), null);
     }
 
-    static Hits list(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
-        return new HitsList(queryInfo, hits, capturedGroups);
+    static Hits list(QueryInfo queryInfo, HitsInternal hits, List<String> matchInfoNames) {
+        return new HitsList(queryInfo, hits, matchInfoNames);
     }
 
     static Hits list(
@@ -63,7 +67,7 @@ public interface Hits extends Results<Hit, HitProperty> {
             long hitsCounted,
             long docsRetrieved,
             long docsCounted,
-            CapturedGroups capturedGroups,
+            List<String> matchInfoNames,
             boolean ascendingLuceneDocIds) {
         return new HitsList(
                 queryInfo,
@@ -73,7 +77,7 @@ public interface Hits extends Results<Hit, HitProperty> {
                 hitsCounted,
                 docsRetrieved,
                 docsCounted,
-                capturedGroups,
+                matchInfoNames,
                 ascendingLuceneDocIds);
     }
 
@@ -292,9 +296,12 @@ public interface Hits extends Results<Hit, HitProperty> {
      */
     Hits window(Hit hit);
 
-    CapturedGroups capturedGroups();
+    List<String> matchInfoNames();
 
-    boolean hasCapturedGroups();
+    boolean hasMatchInfo();
+
+    @Deprecated
+    default boolean hasCapturedGroups() { return hasMatchInfo(); }
 
     Concordances concordances(ContextSize contextSize, ConcordanceType type);
 
@@ -333,5 +340,18 @@ public interface Hits extends Results<Hit, HitProperty> {
      */
     HitsInternal getInternalHits();
 
+    default Map<String, MatchInfo> getMatchInfoMap(Hit hit) {
+        return getMatchInfoMap(hit, false);
+    }
 
+    default Map<String, MatchInfo> getMatchInfoMap(Hit hit, boolean omitEmptyCaptures) {
+        MatchInfo[] matchInfo = hit.matchInfo();
+        Map<String, MatchInfo> map = new HashMap<>();
+        for (int i = 0; i < matchInfo.length; i++) {
+            if (omitEmptyCaptures && matchInfo[i].isFullSpanEmpty())
+                continue;
+            map.put(matchInfoNames().get(i), matchInfo[i]);
+        }
+        return map;
+    }
 }

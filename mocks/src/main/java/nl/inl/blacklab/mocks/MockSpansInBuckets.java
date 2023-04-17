@@ -4,7 +4,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpansInBuckets;
 
 /**
@@ -117,7 +117,7 @@ public class MockSpansInBuckets implements SpansInBuckets {
     }
 
     @Override
-    public void getCapturedGroups(int indexInBucket, RelationInfo[] capturedGroups) {
+    public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
         // NOP
     }
 

@@ -11,10 +11,10 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 /**
  * Position information about a relation's source and target
  */
-public class RelationInfo {
+public class MatchInfo {
 
-    public static RelationInfo captureGroupSpan(int start, int end) {
-        RelationInfo relationInfo = new RelationInfo(null, false, start, start, end, end);
+    public static MatchInfo captureGroupSpan(int start, int end) {
+        MatchInfo relationInfo = new MatchInfo(null, false, start, start, end, end);
         relationInfo.span = true;
         return relationInfo;
     }
@@ -106,11 +106,11 @@ public class RelationInfo {
     /** Our relation type, or null if not applicable or not set. */
     private String fullRelationType;
 
-    public RelationInfo() {
+    public MatchInfo() {
         this(null, false, -1, -1, -1, -1);
     }
 
-    public RelationInfo(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
+    public MatchInfo(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
         this.fullRelationType = fullRelationType;
         this.onlyHasTarget = onlyHasTarget;
         this.sourceStart = sourceStart;
@@ -161,7 +161,7 @@ public class RelationInfo {
     public static void serializeInlineTag(int start, int end, DataOutput dataOutput) throws IOException {
         int relativePositionOfLastToken = end - start;
         dataOutput.writeZInt(relativePositionOfLastToken);
-        // (rest of RelationInfo members have the default value so we skip them)
+        // (rest of MatchInfo members have the default value so we skip them)
     }
 
     public void serialize(int currentTokenPosition, DataOutput dataOutput) throws IOException {
@@ -197,8 +197,8 @@ public class RelationInfo {
             dataOutput.writeVInt(otherLength);
     }
 
-    public RelationInfo copy() {
-        return new RelationInfo(fullRelationType, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+    public MatchInfo copy() {
+        return new MatchInfo(fullRelationType, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
     }
 
     public boolean isRoot() {
@@ -259,9 +259,9 @@ public class RelationInfo {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof RelationInfo))
+        if (!(o instanceof MatchInfo))
             return false;
-        RelationInfo that = (RelationInfo) o;
+        MatchInfo that = (MatchInfo) o;
         return onlyHasTarget == that.onlyHasTarget && sourceStart == that.sourceStart && sourceEnd == that.sourceEnd
                 && targetStart == that.targetStart && targetEnd == that.targetEnd;
     }

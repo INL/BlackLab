@@ -6,7 +6,6 @@ import java.util.NavigableSet;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -254,10 +253,10 @@ class SpansFiSeq extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        anchor.getCapturedGroups(capturedGroups);
+        anchor.getMatchInfo(relationInfo);
         // what to do for NFA? (NFAs cannot be used right now if we're trying to capture groups)
     }
 

@@ -5,7 +5,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that locks and can handle huge result sets.
@@ -18,7 +18,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         super(initialCapacity);
     }
 
-    public void add(int doc, int start, int end, RelationInfo[] matchInfo) {
+    public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -112,7 +112,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            RelationInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
+            MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
             return new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index),
                     matchInfo);
         } finally {

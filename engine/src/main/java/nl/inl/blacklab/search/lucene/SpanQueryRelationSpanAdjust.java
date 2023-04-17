@@ -23,9 +23,9 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     private final BLSpanQuery clause;
 
-    private final RelationInfo.SpanMode mode;
+    private final MatchInfo.SpanMode mode;
 
-    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, RelationInfo.SpanMode mode) {
+    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, MatchInfo.SpanMode mode) {
         super(clause.queryInfo);
         this.clause = clause;
         this.mode = mode;
@@ -142,7 +142,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     @Override
     public boolean hitsStartPointSorted() {
-        return mode == RelationInfo.SpanMode.FULL_SPAN;
+        return mode == MatchInfo.SpanMode.FULL_SPAN;
     }
 
     @Override

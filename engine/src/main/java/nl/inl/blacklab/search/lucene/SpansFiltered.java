@@ -6,8 +6,6 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Apply a Filter to a Spans.
  *
@@ -97,10 +95,10 @@ class SpansFiltered extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        spans.getCapturedGroups(capturedGroups);
+        spans.getMatchInfo(relationInfo);
     }
 
     @Override

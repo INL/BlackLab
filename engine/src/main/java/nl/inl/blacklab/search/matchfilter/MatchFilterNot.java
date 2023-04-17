@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.matchfilter;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterNot extends MatchFilter {
 
@@ -50,7 +50,7 @@ public class MatchFilterNot extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, RelationInfo[] capturedGroups) {
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
         return ConstraintValue.get(!a.evaluate(fiDoc, capturedGroups).isTruthy());
     }
 

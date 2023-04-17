@@ -120,12 +120,12 @@ class SpansCaptureGroup extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (childClausesCaptureGroups)
-            clause.getCapturedGroups(capturedGroups);
+            clause.getMatchInfo(relationInfo);
 
         // Place our start and end position at the correct index in the array
-        capturedGroups[groupIndex] = RelationInfo.captureGroupSpan(startPosition() + leftAdjust, endPosition() + rightAdjust);
+        relationInfo[groupIndex] = MatchInfo.captureGroupSpan(startPosition() + leftAdjust, endPosition() + rightAdjust);
     }
 
     @Override

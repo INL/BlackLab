@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Simple version of sequence Spans. Assumes that:
  * 
@@ -198,11 +196,11 @@ class SpansSequenceSimple extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        left.getCapturedGroups(capturedGroups);
-        right.getCapturedGroups(capturedGroups);
+        left.getMatchInfo(relationInfo);
+        right.getMatchInfo(relationInfo);
     }
 
     @Override

@@ -6,7 +6,6 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 
@@ -310,10 +309,10 @@ class SpansExpansionRaw extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(RelationInfo[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        clause.getCapturedGroups(capturedGroups);
+        clause.getMatchInfo(relationInfo);
     }
 
     @Override

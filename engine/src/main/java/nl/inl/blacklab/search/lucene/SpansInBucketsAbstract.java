@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongArrays;
 import it.unimi.dsi.fastutil.longs.LongComparator;
-import nl.inl.blacklab.search.Span;
 
 /**
  * Wrap a Spans to retrieve sequences of certain matches (in "buckets"), so we
@@ -43,7 +42,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      * For each hit we fetched, store the captured groups, so we don't lose this
      * information.
      */
-    private Long2ObjectMap<RelationInfo[]> capturedGroupsPerHit = null;
+    private Long2ObjectMap<MatchInfo[]> capturedGroupsPerHit = null;
 
     /**
      * Size of the current bucket, or -1 if we're not at a valid bucket.
@@ -65,11 +64,11 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         bucket.add(span);
         if (doCapturedGroups) {
             // Store captured group information
-            RelationInfo[] capturedGroups = new RelationInfo[hitQueryContext.numberOfCapturedGroups()];
-            source.getCapturedGroups(capturedGroups);
+            MatchInfo[] matchInfo = new MatchInfo[hitQueryContext.numberOfMatchInfos()];
+            source.getMatchInfo(matchInfo);
             if (capturedGroupsPerHit == null)
                 capturedGroupsPerHit = new Long2ObjectOpenHashMap<>(HASHMAP_INITIAL_CAPACITY);
-            capturedGroupsPerHit.put(span, capturedGroups);
+            capturedGroupsPerHit.put(span, matchInfo);
         }
         bucketSize++;
     }
@@ -202,7 +201,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
         bucketSize = 0;
         doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
-                && hitQueryContext.numberOfCapturedGroups() > 0;
+                && hitQueryContext.numberOfMatchInfos() > 0;
         gatherHits();
         return currentDoc;
     }
@@ -229,14 +228,14 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     }
 
     @Override
-    public void getCapturedGroups(int indexInBucket, RelationInfo[] capturedGroups) {
+    public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
         if (!doCapturedGroups)
             return;
-        RelationInfo[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.getLong(indexInBucket));
+        MatchInfo[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.getLong(indexInBucket));
         if (previouslyCapturedGroups != null) {
-            for (int i = 0; i < capturedGroups.length; i++) {
+            for (int i = 0; i < matchInfo.length; i++) {
                 if (previouslyCapturedGroups[i] != null)
-                    capturedGroups[i] = previouslyCapturedGroups[i];
+                    matchInfo[i] = previouslyCapturedGroups[i];
             }
         }
     }

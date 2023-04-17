@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.results;
 import java.util.Arrays;
 import java.util.Objects;
 
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * Class for a hit. Normally, hits are iterated over in a Lucene Spans object,
@@ -30,7 +30,7 @@ public final class HitImpl implements Hit {
     private final int start;
 
     /** Match info for this hit, or null if none */
-    private final RelationInfo[] matchInfo;
+    private final MatchInfo[] matchInfo;
 
     /**
      * Construct a hit object
@@ -39,7 +39,7 @@ public final class HitImpl implements Hit {
      * @param start start of the hit (word positions)
      * @param end end of the hit (word positions)
      */
-    protected HitImpl(int doc, int start, int end, RelationInfo[] matchInfo) {
+    protected HitImpl(int doc, int start, int end, MatchInfo[] matchInfo) {
         this.doc = doc;
         this.start = start;
         this.end = end;
@@ -62,7 +62,7 @@ public final class HitImpl implements Hit {
     }
 
     @Override
-    public RelationInfo[] matchInfo() {
+    public MatchInfo[] matchInfo() {
         return matchInfo;
     }
 
@@ -93,7 +93,7 @@ public final class HitImpl implements Hit {
 //    /**
 //     * Cached hash code, or Integer.MIN_VALUE if not calculated yet.
 //     * 
-//     * Can help when using Hit as a key in HashMap, e.g. in CapturedGroups 
+//     * Can help when using Hit as a key in HashMap, e.g. in CapturedGroups (but no longer relevant)
 //     * and possibly with Contexts in the future.
 //     * 
 //     * Does cost about 17% extra memory for Hit objects. 
