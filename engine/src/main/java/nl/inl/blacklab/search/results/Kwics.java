@@ -99,8 +99,10 @@ public class Kwics {
          */
         int lastDocId = -1;
         int firstIndexWithCurrentDocId = 0;
-        for (int i = 1; i < hits.size(); ++i) {
+        for (int i = 0; i < hits.size(); ++i) {
             int curDocId = hits.doc(i);
+            if (lastDocId == -1)
+                lastDocId = curDocId;
             if (curDocId != lastDocId) {
                 if (firstIndexWithCurrentDocId != i) {
                     Contexts.makeKwicsSingleDocForwardIndex(
@@ -108,8 +110,8 @@ public class Kwics {
                         wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
                 }
                 firstIndexWithCurrentDocId = i;
-                lastDocId = curDocId;
             }
+            lastDocId = curDocId;
         }
         // last part
         Contexts.makeKwicsSingleDocForwardIndex(
