@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Arrays;
+
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
@@ -28,6 +30,11 @@ public interface Hit extends Result<Hit> {
             return 0;
         if (doc() == o.doc()) {
             if (start() == o.start()) {
+                if (end() == o.end()) {
+                    // Hits are identical in terms of doc, start and end.
+                    // Compare their MatchInfos.
+                    return Arrays.compare(matchInfo(), o.matchInfo());
+                }
                 return end() - o.end();
             }
             return start() - o.start();

@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 /**
  * Position information about a relation's source and target
  */
-public class MatchInfo {
+public class MatchInfo implements Comparable<MatchInfo> {
 
     public static MatchInfo captureGroupSpan(int start, int end) {
         MatchInfo relationInfo = new MatchInfo(null, false, start, start, end, end);
@@ -255,22 +255,6 @@ public class MatchInfo {
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof MatchInfo))
-            return false;
-        MatchInfo that = (MatchInfo) o;
-        return onlyHasTarget == that.onlyHasTarget && sourceStart == that.sourceStart && sourceEnd == that.sourceEnd
-                && targetStart == that.targetStart && targetEnd == that.targetEnd;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
-    }
-
     public boolean isTag() {
         // A tag is a relation with source and target, both of which are length 0, and source occurs before target.
         // (target can also be -1, which means we don't know yet)
@@ -318,5 +302,52 @@ public class MatchInfo {
                 ", sourceEnd=" + sourceEnd +
                 ", targetStart=" + targetStart +
                 ", targetEnd=" + targetEnd + ")";
+    }
+
+    @Override
+    public int compareTo(MatchInfo o) {
+        int n;
+        n = Integer.compare(sourceStart, o.sourceStart);
+        if (n != 0)
+            return n;
+        n = Integer.compare(sourceEnd, o.sourceEnd);
+        if (n != 0)
+            return n;
+        n = Integer.compare(targetStart, o.targetEnd);
+        if (n != 0)
+            return n;
+        n = Integer.compare(targetStart, o.targetEnd);
+        if (n != 0)
+            return n;
+        n = Boolean.compare(onlyHasTarget, o.onlyHasTarget);
+        if (n != 0)
+            return n;
+        n = Boolean.compare(span, o.span);
+        if (n != 0)
+            return n;
+        n = Boolean.compare(onlyHasTarget, o.onlyHasTarget);
+        if (n != 0)
+            return n;
+        n = fullRelationType.compareTo(o.fullRelationType);
+        return n;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        MatchInfo matchInfo = (MatchInfo) o;
+        return span == matchInfo.span && onlyHasTarget == matchInfo.onlyHasTarget
+                && sourceStart == matchInfo.sourceStart
+                && sourceEnd == matchInfo.sourceEnd && targetStart == matchInfo.targetStart
+                && targetEnd == matchInfo.targetEnd && Objects.equals(fullRelationType,
+                matchInfo.fullRelationType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(span, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType);
     }
 }
