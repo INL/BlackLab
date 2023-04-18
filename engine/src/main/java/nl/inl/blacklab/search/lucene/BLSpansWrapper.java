@@ -27,7 +27,7 @@ public final class BLSpansWrapper extends BLSpansFilter {
 
     @Override
     public String toString() {
-        return "WRAP(" + source + ")";
+        return "WRAP(" + in + ")";
     }
 
     /**
