@@ -191,7 +191,8 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
     @Override
     public float positionsCost() {
-        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null
+        //throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null
+        return in.positionsCost();
     }
 
     /**
