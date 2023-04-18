@@ -29,7 +29,7 @@ import org.apache.lucene.search.spans.Spans;
  * A {@link Spans} implementation wrapping another spans instance, allowing to filter spans matches
  * easily by implementing {@link #accept}
  */
-public abstract class BLSpansFilter extends BLSpans {
+public abstract class BLFilterSpans extends BLSpans {
 
     /** The Spans object we're wrapping */
     protected final Spans in;
@@ -48,7 +48,7 @@ public abstract class BLSpansFilter extends BLSpans {
     private int startPos = -1;
 
   /** Wrap the given {@link Spans}. */
-    protected BLSpansFilter(Spans in) {
+    protected BLFilterSpans(Spans in) {
         this.in = Objects.requireNonNull(in);
     }
 

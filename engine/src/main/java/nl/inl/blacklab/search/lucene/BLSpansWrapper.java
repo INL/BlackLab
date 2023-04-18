@@ -9,15 +9,15 @@ import org.apache.lucene.search.spans.TermSpans;
 /**
  * Wrap a "simple" Spans object in a BLSpans object.
  */
-public final class BLSpansWrapper extends BLSpansFilter {
+public final class BLSpansWrapper extends BLFilterSpans {
 
-    public BLSpansWrapper(Spans source) {
-        super(source);
-        if (source instanceof BLSpans) {
+    public BLSpansWrapper(Spans in) {
+        super(in);
+        if (in instanceof BLSpans) {
             throw new IllegalArgumentException("No need to wrap spans, already a BLSpans");
         }
 
-        if (!(source instanceof TermSpans)) {
+        if (!(in instanceof TermSpans)) {
             // For anything but the very basic TermSpans,
             // this wrapper shouldn't be used anymore because everything is already BLSpans.
             // (which is needed for captures and relations)
