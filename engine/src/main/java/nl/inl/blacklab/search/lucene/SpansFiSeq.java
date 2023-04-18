@@ -256,7 +256,7 @@ class SpansFiSeq extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
+        if (!childClausesCaptureMatchInfo)
             return;
         anchor.getMatchInfo(relationInfo);
         // what to do for NFA? (NFAs cannot be used right now if we're trying to capture groups)

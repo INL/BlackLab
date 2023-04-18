@@ -121,7 +121,7 @@ class SpansCaptureGroup extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (childClausesCaptureGroups)
+        if (childClausesCaptureMatchInfo)
             clause.getMatchInfo(relationInfo);
 
         // Place our start and end position at the correct index in the array

@@ -224,7 +224,7 @@ class SpansAnd extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
+        if (!childClausesCaptureMatchInfo)
             return;
         spans[0].getMatchInfo(relationInfo);
         spans[1].getMatchInfo(relationInfo);

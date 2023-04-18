@@ -403,7 +403,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
+        if (!childClausesCaptureMatchInfo)
             return;
         left.getMatchInfo(relationInfo);
         right.getMatchInfo(indexInBucketLeftEnd, relationInfo);

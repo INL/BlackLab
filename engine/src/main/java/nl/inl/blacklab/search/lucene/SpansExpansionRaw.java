@@ -310,7 +310,7 @@ class SpansExpansionRaw extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
+        if (!childClausesCaptureMatchInfo)
             return;
         clause.getMatchInfo(relationInfo);
     }

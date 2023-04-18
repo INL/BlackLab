@@ -105,7 +105,7 @@ class SpansUnique extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
+        if (!childClausesCaptureMatchInfo)
             return;
         src.getMatchInfo(relationInfo);
     }

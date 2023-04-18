@@ -96,7 +96,7 @@ class SpansFiltered extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
+        if (!childClausesCaptureMatchInfo)
             return;
         spans.getMatchInfo(relationInfo);
     }

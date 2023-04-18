@@ -29,15 +29,18 @@ import org.apache.lucene.search.spans.Spans;
  * A {@link Spans} implementation wrapping another spans instance, allowing to filter spans matches
  * easily by implementing {@link #accept}
  */
-public abstract class BLFilterSpans extends BLSpans {
+public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
-    /** The Spans object we're wrapping */
-    protected final Spans in;
+    /**
+     * The Spans object we're wrapping
+     */
+    protected final T in;
 
-    /** Did we advance to the first hit already through the two-phase iterator?
-     *  If true, startPos will contain the start position of the first hit,
-     *  but we should still return -1 to indicate nextStartPosition() hasn't been called
-     *  yet.
+    /**
+     * Did we advance to the first hit already through the two-phase iterator?
+     * If true, startPos will contain the start position of the first hit,
+     * but we should still return -1 to indicate nextStartPosition() hasn't been called
+     * yet.
      */
     private boolean atFirstInCurrentDoc = false;
 
@@ -47,8 +50,10 @@ public abstract class BLFilterSpans extends BLSpans {
      */
     private int startPos = -1;
 
-  /** Wrap the given {@link Spans}. */
-    protected BLFilterSpans(Spans in) {
+    /**
+     * Wrap the given {@link T}.
+     */
+    protected BLFilterSpans(T in) {
         this.in = Objects.requireNonNull(in);
     }
 
@@ -56,22 +61,22 @@ public abstract class BLFilterSpans extends BLSpans {
      * Returns YES if the candidate should be an accepted match, NO if it should not, and
      * NO_MORE_IN_CURRENT_DOC if iteration should move on to the next document.
      */
-    protected abstract FilterSpans.AcceptStatus accept(Spans candidate) throws IOException;
-
-  @Override
-  public final int nextDoc() throws IOException {
-    while (true) {
-      int doc = in.nextDoc();
-      if (doc == NO_MORE_DOCS) {
-        return NO_MORE_DOCS;
-      } else if (twoPhaseCurrentDocMatches()) {
-        return doc;
-      }
-    }
-  }
+    protected abstract FilterSpans.AcceptStatus accept(T candidate) throws IOException;
 
     @Override
-    public final int advance(int target) throws IOException {
+    public int nextDoc() throws IOException {
+        while (true) {
+            int doc = in.nextDoc();
+            if (doc == NO_MORE_DOCS) {
+                return NO_MORE_DOCS;
+            } else if (twoPhaseCurrentDocMatches()) {
+                return doc;
+            }
+        }
+    }
+
+    @Override
+    public int advance(int target) throws IOException {
         int doc = in.advance(target);
         while (doc != NO_MORE_DOCS) {
             if (twoPhaseCurrentDocMatches()) {
@@ -90,37 +95,37 @@ public abstract class BLFilterSpans extends BLSpans {
 
     @Override
     public final int nextStartPosition() throws IOException {
-  if (atFirstInCurrentDoc) {
-      atFirstInCurrentDoc = false;
-      return startPos;
-    }
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
+            return startPos;
+        }
 
-    for (; ; ) {
-      startPos = in.nextStartPosition();
-      if (startPos == NO_MORE_POSITIONS) {
-        return NO_MORE_POSITIONS;
-      }
-      switch (accept(in)) {
-        case YES:
-          return startPos;
-        case NO:
-          break;
-        case NO_MORE_IN_CURRENT_DOC:
-          return startPos = NO_MORE_POSITIONS; // startPos ahead for the current doc.
-      }
-    }
+        for (; ; ) {
+            startPos = in.nextStartPosition();
+            if (startPos == NO_MORE_POSITIONS) {
+                return NO_MORE_POSITIONS;
+            }
+            switch (accept(in)) {
+            case YES:
+                return startPos;
+            case NO:
+                break;
+            case NO_MORE_IN_CURRENT_DOC:
+                return startPos = NO_MORE_POSITIONS; // startPos ahead for the current doc.
+            }
+        }
     }
 
     @Override
     public final int startPosition() {
-    return atFirstInCurrentDoc ? -1 : startPos;
+        return atFirstInCurrentDoc ? -1 : startPos;
     }
 
     @Override
     public final int endPosition() {
-    return atFirstInCurrentDoc
-        ? -1
-        : (startPos != NO_MORE_POSITIONS) ? in.endPosition() : NO_MORE_POSITIONS;
+        return atFirstInCurrentDoc
+                ? -1
+                : (startPos != NO_MORE_POSITIONS) ? in.endPosition() : NO_MORE_POSITIONS;
     }
 
     @Override
@@ -133,10 +138,10 @@ public abstract class BLFilterSpans extends BLSpans {
         in.collect(collector);
     }
 
-  @Override
-  public final long cost() {
-    return in.cost();
-  }
+    @Override
+    public final long cost() {
+        return in.cost();
+    }
 
     @Override
     public abstract String toString();
@@ -186,17 +191,16 @@ public abstract class BLFilterSpans extends BLSpans {
 
     @Override
     public float positionsCost() {
-    throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null
     }
 
-  /**
-   * Returns true if the current document matches.
-   *
-   * <p>This is called during two-phase processing.
-   */
-  // return true if the current document matches
-  @SuppressWarnings("fallthrough")
-    private final boolean twoPhaseCurrentDocMatches() throws IOException {
+    /**
+     * Returns true if the current document matches.
+     * <p>This is called during two-phase processing.
+     */
+    // return true if the current document matches
+    @SuppressWarnings("fallthrough")
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;
         startPos = in.nextStartPosition();
         assert startPos != NO_MORE_POSITIONS;
@@ -219,19 +223,15 @@ public abstract class BLFilterSpans extends BLSpans {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passHitQueryContextToClauses(HitQueryContext context) {
         if (in instanceof BLSpans)
             ((BLSpans) in).setHitQueryContext(context);
     }
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
-            return;
-        if (in instanceof BLSpans) // shouldn't happen, but ok
+        if (childClausesCaptureMatchInfo && in instanceof BLSpans)
             ((BLSpans) in).getMatchInfo(relationInfo);
     }
-
-
 
 }

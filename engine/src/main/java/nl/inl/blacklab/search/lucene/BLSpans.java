@@ -21,7 +21,7 @@ public abstract class BLSpans extends Spans {
      * Should we ask our clauses for captured groups? If the clauses don't capture
      * any groups, this will be set to false to improve performance.
      */
-    protected boolean childClausesCaptureGroups = true;
+    protected boolean childClausesCaptureMatchInfo = true;
 
     /**
      * Give the BLSpans tree a way to access match info (captured groups etc.),
@@ -43,7 +43,7 @@ public abstract class BLSpans extends Spans {
         passHitQueryContextToClauses(context);
         if (context.getMatchInfoRegisterNumber() == before) {
             // Our clauses don't capture any match info; optimize
-            childClausesCaptureGroups = false;
+            childClausesCaptureMatchInfo = false;
         }
     }
 
