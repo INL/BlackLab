@@ -7,7 +7,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.spans.SpanCollector;
 
 /**
- * Apply a Filter to a Spans.
+ * Apply a document Filter to a Spans.
  *
  * This allows us to only consider certain documents (say, only documents in a
  * certain domain) when executing our query.

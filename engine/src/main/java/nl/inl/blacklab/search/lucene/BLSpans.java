@@ -5,10 +5,7 @@ import java.io.IOException;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Will be the base class for all our own Spans classes. Is able to give extra
- * guarantees about the hits in this Spans object, such as if every hit is equal
- * in length, if there may be duplicates, etc. This information will help us
- * optimize certain operations, such as sequence queries, in certain cases.
+ * Base class for all our own Spans classes.
  *
  * The default implementation is appropriate for Spans classes that return only
  * single-term hits.
