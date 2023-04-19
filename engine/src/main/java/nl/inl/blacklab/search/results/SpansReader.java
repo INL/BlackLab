@@ -69,31 +69,39 @@ class SpansReader implements Runnable {
     private int prevDoc = -1;
 
     /**
-     * TODO: update this (CapturedGroups doesn't exist anymore)
-     *
      * Construct an uninitialized SpansReader that will retrieve its own Spans object on when it's ran.
+     *
+     * TODO: update this comment (CapturedGroups doesn't exist anymore, match info was integrated into hits)
+     *
      * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object and HitQueryContext and
      * CapturedGroups objects are set) and leave the other ones to self-initialize when needed.
+     *
      * It is done this way because of an initialization order issue with capture groups.
+     *
      * The issue is as follows:
      * - we want to lazy-initialize Spans objects:
-     * 1. because they hold a lot of memory for large indexes.
-     * 2. because only a few SpansReaders are active at a time.
-     * 3. because they take a long time to setup.
-     * 4. because we might not even need them all if a hits limit has been set.
+     *   1. because they hold a lot of memory for large indexes.
+     *   2. because only a few SpansReaders are active at a time.
+     *   3. because they take a long time to setup.
+     *   4. because we might not even need them all if a hits limit has been set.
+     *
      * So if we pre-create them all, we're doing a lot of upfront work we possibly don't need to.
      * We'd also hold a lot of ram hostage (>10GB in some cases!) because all Spans objects exist
      * simultaneously even though we're not using them simultaneously.
      * However, in order to know whether a query (such as A:([pos="A.*"]) "ship") uses/produces capture groups (and how many groups)
      * we need to call BLSpans::setHitQueryContext(...) and then check the number capture group names in the HitQueryContext afterwards.
+     *
      * No why we need to know this:
+     *
      * - To construct the CaptureGroupsImpl we need to know the number of capture groups.
      * - To construct the SpansReaders we need to have already created the CaptureGroupsImpl, as it's shared between all of the SpansReaders.
      * So to summarise: there is an order issue.
      * - we want to lazy-init the Spans.
      * - but we need the capture groups object.
      * - for that we need at least one Spans object created.
+     *
      * Hence the explicit initialization of the first SpansReader by HitsFromQueryParallel.
+     *
      * This will create one of the Spans objects so we can create and set the CapturedGroups object in this
      * first SpansReader. Then the rest of the SpansReaders receive the same CapturedGroups object and can
      * lazy-initialize when needed.
