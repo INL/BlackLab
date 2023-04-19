@@ -2,127 +2,47 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.FilterSpans;
 import org.apache.lucene.search.spans.Spans;
 
 /**
  * Remove consecutive duplicate hits from a source spans.
  */
-class SpansUnique extends BLSpans {
+class SpansUnique extends BLFilterSpans {
 
-    private final BLSpans src;
+    /** Document id for the previous match */
+    int prevDoc = -1;
 
-    private int currentDoc = -1;
+    /** Start point for the previous match */
+    int prevStart = -1;
 
-    private int currentStart = Spans.NO_MORE_POSITIONS;
+    /** End point for the previous match */
+    int prevEnd = -1;
 
     /**
      * Construct SpansUnique.
      *
-     * @param src (startpoint-sorted) Spans to make unique
+     * @param in (startpoint-sorted) Spans to make unique
      */
-    public SpansUnique(BLSpans src) {
-        this.src = src; // NOTE: must be startpoint sorted! (caller's responsibility)
-    }
-
-    @Override
-    public int docID() {
-        return currentDoc;
-    }
-
-    @Override
-    public int startPosition() {
-        return currentStart;
-    }
-
-    @Override
-    public int endPosition() {
-        return src.endPosition();
-    }
-
-    @Override
-    public int nextDoc() throws IOException {
-        if (currentDoc != NO_MORE_DOCS) {
-            currentDoc = src.nextDoc();
-            currentStart = -1;
-        }
-        return currentDoc;
-    }
-
-    @Override
-    public int nextStartPosition() throws IOException {
-        int prevStart, prevEnd;
-        if (currentStart != NO_MORE_POSITIONS) {
-            do {
-                prevStart = currentStart;
-                prevEnd = src.endPosition();
-                currentStart = src.nextStartPosition();
-            } while (prevStart == currentStart && prevEnd == src.endPosition());
-        }
-        return currentStart;
-    }
-
-    @Override
-    public int advanceStartPosition(int target) throws IOException {
-        int prevStart, prevEnd;
-        if (currentStart != NO_MORE_POSITIONS) {
-            prevStart = currentStart;
-            prevEnd = src.endPosition();
-            currentStart = src.advanceStartPosition(target);
-            while (prevStart == currentStart && prevEnd == src.endPosition()) {
-                prevStart = currentStart;
-                prevEnd = src.endPosition();
-                currentStart = src.nextStartPosition();
-            }
-        }
-        return currentStart;
-    }
-
-    @Override
-    public int advance(int target) throws IOException {
-        if (currentDoc != NO_MORE_DOCS) {
-            if (target > currentDoc) {
-                // Skip to the target doc
-                currentDoc = src.advance(target);
-                currentStart = -1;
-            } else {
-                // We're already in or past the target doc. Just go to the next doc.
-                nextDoc();
-            }
-        }
-        return currentDoc;
+    public SpansUnique(BLSpans in) {
+        super(in); // NOTE: must be startpoint sorted! (caller's responsibility)
     }
 
     @Override
     public String toString() {
-        return "UniqueSpans(" + src.toString() + ")";
+        return "UNIQUE(" + in.toString() + ")";
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        src.setHitQueryContext(context);
+    protected FilterSpans.AcceptStatus accept(Spans candidate) throws IOException {
+        if (candidate.docID() == prevDoc && candidate.startPosition() == prevStart && candidate.endPosition() == prevEnd) {
+            // Not unique doc/start/end (match filter may be unique, we don't know yet - so careful with this class!)
+            return FilterSpans.AcceptStatus.NO;
+        }
+        // Unique hit. Remember for next time.
+        prevDoc = candidate.docID();
+        prevStart = candidate.startPosition();
+        prevEnd = candidate.endPosition();
+        return FilterSpans.AcceptStatus.YES;
     }
-
-    @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureMatchInfo)
-            return;
-        src.getMatchInfo(relationInfo);
-    }
-
-    @Override
-    public int width() {
-        return src.width();
-    }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        src.collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return src.positionsCost();
-    }
-
 }

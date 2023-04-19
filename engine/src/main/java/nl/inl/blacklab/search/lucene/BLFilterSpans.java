@@ -99,9 +99,15 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
             atFirstInCurrentDoc = false;
             return startPos;
         }
+        return goToNextMatch(true);
+    }
 
+    private int goToNextMatch(boolean nextImmediately) throws IOException {
+        boolean next = nextImmediately;
         for (;;) {
-            startPos = in.nextStartPosition();
+            if (next)
+                startPos = in.nextStartPosition();
+            next = true;
             if (startPos == NO_MORE_POSITIONS) {
                 return NO_MORE_POSITIONS;
             }
@@ -111,9 +117,22 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
             case NO:
                 break;
             case NO_MORE_IN_CURRENT_DOC:
-                return startPos = NO_MORE_POSITIONS; // startPos ahead for the current doc.
+                return startPos = NO_MORE_POSITIONS;
             }
         }
+    }
+
+    @Override
+    public int advanceStartPosition(int target) throws IOException {
+        if (in.startPosition() >= target) {
+            // we always advance at least 1 hit, as per contract
+            return nextStartPosition();
+        }
+        if (in instanceof BLSpans) {
+            startPos = ((BLSpans) in).advanceStartPosition(target);
+            return goToNextMatch(false);
+        }
+        return super.advanceStartPosition(target);
     }
 
     @Override
