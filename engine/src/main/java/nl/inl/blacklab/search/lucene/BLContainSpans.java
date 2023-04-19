@@ -25,7 +25,7 @@ import org.apache.lucene.search.spans.SpanCollector;
 
 /**
  * Base class for containing/within spans.
- *
+ * <p>
  * (adapted directly from Lucene)
  */
 abstract class BLContainSpans extends BLConjunctionSpans {

@@ -28,6 +28,8 @@ import org.apache.lucene.search.spans.Spans;
 /**
  * A {@link Spans} implementation wrapping another spans instance, allowing to filter spans matches
  * easily by implementing {@link #accept}
+ * <p>
+ * (adapted directly from Lucene)
  */
 public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
