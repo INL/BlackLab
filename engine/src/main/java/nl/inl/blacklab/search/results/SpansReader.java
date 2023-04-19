@@ -194,19 +194,17 @@ class SpansReader implements Runnable {
      * @return true if the spans has been advanced to the next hit, false if out of hits.
      */
     private static boolean advanceSpansToNextHit(BLSpans spans, Bits liveDocs) throws IOException {
-        if (spans.docID() == DocIdSetIterator.NO_MORE_DOCS && spans.startPosition() == Spans.NO_MORE_POSITIONS)
-            return false;
-
-        int doc = spans.docID();
-        if (doc == -1) // initial document
+        if (spans.docID() == -1)
             spans.nextDoc();
+        int doc = spans.docID();
+        if (doc == DocIdSetIterator.NO_MORE_DOCS)
+            return false;
 
         int start = spans.nextStartPosition();
         while (start == Spans.NO_MORE_POSITIONS || (liveDocs != null && !liveDocs.get(spans.docID()))) {
             doc = spans.nextDoc();
-            if (doc == DocIdSetIterator.NO_MORE_DOCS) {
+            if (doc == DocIdSetIterator.NO_MORE_DOCS)
                 return false;
-            }
             if (liveDocs != null && !liveDocs.get(doc))
                 continue;
             start = spans.nextStartPosition();

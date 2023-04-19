@@ -1,8 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-
-import org.apache.lucene.search.spans.SpanCollector;
+import java.util.List;
 
 /**
  * Simple version of sequence Spans. Assumes that:
@@ -15,53 +14,31 @@ import org.apache.lucene.search.spans.SpanCollector;
  * 
  * The client should ensure these properties are true.
  */
-class SpansSequenceSimple extends BLSpans {
-    private final BLSpans left;
-
-    private final BLSpans right;
-
-    int currentDoc = -1;
-
-    private boolean alreadyAtFirstMatch = false;
-
-    private int leftStart = NO_MORE_POSITIONS;
+class SpansSequenceSimple extends BLConjunctionSpans {
 
     public SpansSequenceSimple(BLSpans leftClause, BLSpans rightClause) {
-        left = leftClause;
-        right = rightClause;
+        super(List.of(leftClause, rightClause));
     }
 
     @Override
-    public int docID() {
-        return currentDoc;
+    public int startPosition() {
+        if (oneExhaustedInCurrentDoc)
+            return NO_MORE_POSITIONS;
+        return atFirstInCurrentDoc ? -1 : subSpans[0].startPosition();
     }
 
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
-            return -1; // .nextStartPosition() not called yet
-        if (leftStart == NO_MORE_POSITIONS)
+        if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
-        return right.endPosition();
-    }
-
-    @Override
-    public int nextDoc() throws IOException {
-        alreadyAtFirstMatch = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            currentDoc = left.nextDoc();
-            if (currentDoc != NO_MORE_DOCS) {
-                realignDoc();
-            }
-        }
-        return currentDoc;
+        return atFirstInCurrentDoc ? -1 : subSpans[1].endPosition();
     }
 
     @Override
     public int nextStartPosition() throws IOException {
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
-            return leftStart;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
+            return subSpans[0].startPosition();
         }
 
         /*
@@ -82,142 +59,74 @@ class SpansSequenceSimple extends BLSpans {
          * multiple matches from the left with the same end point).
          */
 
-        if (currentDoc == NO_MORE_DOCS || leftStart == NO_MORE_POSITIONS)
+        if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
 
-        leftStart = left.nextStartPosition();
-        if (leftStart != NO_MORE_POSITIONS)
-            realignPos();
-        return leftStart;
-    }
-
-    /**
-     * Puts both spans in the next doc (possibly the current one) that has a match
-     * in it.
-     *
-     * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
-     */
-    private int realignDoc() throws IOException {
-        while (true) {
-            // Put in same doc if necessary
-            while (currentDoc != right.docID()) {
-                while (currentDoc < right.docID()) {
-                    currentDoc = left.advance(right.docID());
-                    if (currentDoc == NO_MORE_DOCS)
-                        return NO_MORE_DOCS;
-                }
-                while (right.docID() < currentDoc) {
-                    int rightDoc = right.advance(currentDoc);
-                    if (rightDoc == NO_MORE_DOCS) {
-                        currentDoc = NO_MORE_DOCS;
-                        return NO_MORE_DOCS;
-                    }
-                }
-            }
-
-            // See if this doc has any matches
-            leftStart = left.nextStartPosition();
-            if (leftStart != NO_MORE_POSITIONS)
-                leftStart = realignPos();
-            if (leftStart != NO_MORE_POSITIONS) {
-                // Reset the end point iterator (end points of right matches starting at this mid point)
-                // and save current end position.
-                alreadyAtFirstMatch = true;
-                return leftStart;
-            }
-
-            // No matches in this doc; on to the next
-            currentDoc = left.nextDoc();
-            if (currentDoc == NO_MORE_DOCS)
-                return NO_MORE_DOCS;
+        if (subSpans[0].nextStartPosition() == NO_MORE_POSITIONS) {
+            oneExhaustedInCurrentDoc = true;
+            return NO_MORE_POSITIONS;
         }
+        return realignPos();
     }
 
     private int realignPos() throws IOException {
         // Synchronize within doc
-        int leftEnd = left.endPosition();
-        int rightStart = right.startPosition();
+        int leftEnd = subSpans[0].endPosition();
+        int rightStart = subSpans[1].startPosition();
         while (leftEnd != rightStart) {
             if (rightStart < leftEnd) {
                 // Advance right if necessary
                 while (rightStart < leftEnd) {
-                    rightStart = right.advanceStartPosition(leftEnd);
+                    rightStart = subSpans[1].advanceStartPosition(leftEnd);
                     if (rightStart == NO_MORE_POSITIONS) {
-                        leftStart = NO_MORE_POSITIONS;
-                        break;
+                        oneExhaustedInCurrentDoc = true;
+                        return NO_MORE_POSITIONS;
                     }
                 }
             } else {
                 // Advance left if necessary
                 while (leftEnd < rightStart) {
-                    leftStart = left.nextStartPosition();
-                    leftEnd = left.endPosition();
-                    if (leftStart == NO_MORE_POSITIONS)
-                        break;
-                    leftEnd = left.endPosition();
+                    if (subSpans[0].nextStartPosition() == NO_MORE_POSITIONS) {
+                        oneExhaustedInCurrentDoc = true;
+                        return NO_MORE_POSITIONS;
+                    }
+                    leftEnd = subSpans[0].endPosition();
                 }
             }
         }
-        return leftStart;
+        return subSpans[0].startPosition();
     }
 
     @Override
-    public int advance(int doc) throws IOException {
-        alreadyAtFirstMatch = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            currentDoc = left.advance(doc);
-            if (currentDoc != NO_MORE_DOCS) {
-                int rightDoc = right.advance(doc);
-                if (rightDoc == NO_MORE_DOCS)
-                    currentDoc = NO_MORE_DOCS;
-                else
-                    realignDoc();
-            }
+    boolean twoPhaseCurrentDocMatches() throws IOException {
+        if (oneExhaustedInCurrentDoc)
+            return false;
+
+        if (subSpans[0].nextStartPosition() == NO_MORE_POSITIONS) {
+            oneExhaustedInCurrentDoc = true;
+            return false;
         }
-        return currentDoc;
-    }
-
-    @Override
-    public int startPosition() {
-        if (alreadyAtFirstMatch)
-            return -1; // .nextStartPosition() not called yet
-        return leftStart;
+        int pos = realignPos();
+        if (pos != NO_MORE_POSITIONS) {
+            atFirstInCurrentDoc = true;
+            return true;
+        }
+        return false;
     }
 
     @Override
     public String toString() {
-        return "SeqSimple(" + left + ", " + right + ")";
-    }
-
-    @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        left.setHitQueryContext(context);
-        right.setHitQueryContext(context);
-    }
-
-    @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureMatchInfo)
-            return;
-        left.getMatchInfo(relationInfo);
-        right.getMatchInfo(relationInfo);
+        return "SEQSIMPLE(" + subSpans[0] + ", " + subSpans[1] + ")";
     }
 
     @Override
     public int width() {
-        return left.width(); // should be + right.width(); but not implemented for now and we don't use .width()
-    }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        left.collect(collector);
-        //right.collect(collector); should probably be called as well, but not implemented, and not necessary for now
-        // (we only use payloads in SpansTags)
+        return subSpans[0].width() + subSpans[1].width();
     }
 
     @Override
     public float positionsCost() {
-        return left.positionsCost();
+        return subSpans[0].positionsCost() + subSpans[1].positionsCost();
     }
 
 }
