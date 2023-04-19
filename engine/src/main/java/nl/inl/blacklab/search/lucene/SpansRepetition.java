@@ -212,7 +212,7 @@ class SpansRepetition extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansRepetition(" + source + ", " + min + ", " + inf(max) + ")";
+        return "SpansRepetition(" + source + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
     @Override

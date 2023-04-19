@@ -100,12 +100,12 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
             return startPos;
         }
 
-        for (; ; ) {
+        for (;;) {
             startPos = in.nextStartPosition();
             if (startPos == NO_MORE_POSITIONS) {
                 return NO_MORE_POSITIONS;
             }
-            switch (accept(in)) {
+            switch(accept(in)) {
             case YES:
                 return startPos;
             case NO:
@@ -123,8 +123,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
     @Override
     public final int endPosition() {
-        return atFirstInCurrentDoc
-                ? -1
+        return atFirstInCurrentDoc ? -1
                 : (startPos != NO_MORE_POSITIONS) ? in.endPosition() : NO_MORE_POSITIONS;
     }
 
@@ -164,11 +163,11 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
                 @Override
                 public String toString() {
-                    return "BLSpansWrapper@asTwoPhaseIterator(inner=" + inner + ", source=" + in + ")";
+                    return "BLFilterSpans@asTwoPhaseIterator(inner=" + inner + ", in=" + in + ")";
                 }
             };
         } else {
-            // wrapped instance has no approximation, but
+            // wrapped instance has no approximation, but 
             // we can still defer matching until absolutely needed.
             return new TwoPhaseIterator(in) {
                 @Override
@@ -183,7 +182,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
                 @Override
                 public String toString() {
-                    return "BLSpansWrapper@asTwoPhaseIterator(source=" + in + ")";
+                    return "BLFilterSpans@asTwoPhaseIterator(in=" + in + ")";
                 }
             };
         }
@@ -197,7 +196,8 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
     /**
      * Returns true if the current document matches.
-     * <p>This is called during two-phase processing.
+     * <p>
+     * This is called during two-phase processing.
      */
     // return true if the current document matches
     @SuppressWarnings("fallthrough")
@@ -205,8 +205,8 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
         atFirstInCurrentDoc = false;
         startPos = in.nextStartPosition();
         assert startPos != NO_MORE_POSITIONS;
-        for (; ; ) {
-            switch (accept(in)) {
+        for (;;) {
+            switch(accept(in)) {
             case YES:
                 atFirstInCurrentDoc = true;
                 return true;

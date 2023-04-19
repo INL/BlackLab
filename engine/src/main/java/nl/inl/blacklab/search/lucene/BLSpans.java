@@ -18,8 +18,8 @@ public abstract class BLSpans extends Spans {
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 
     /**
-     * Should we ask our clauses for captured groups? If the clauses don't capture
-     * any groups, this will be set to false to improve performance.
+     * Should we ask our clauses for match info? If the clauses don't capture
+     * any match info, this will be set to false to improve performance.
      */
     protected boolean childClausesCaptureMatchInfo = true;
 
@@ -27,7 +27,7 @@ public abstract class BLSpans extends Spans {
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
      *
-     * subclasses should override this method, pass the context to their child
+     * Subclasses should override this method, pass the context to their child
      * clauses (if any), and either:
      *
      * <ul>
@@ -35,6 +35,8 @@ public abstract class BLSpans extends Spans {
      *   <li>store the context so they can later use it to access match info (although this can be problematic
      *       as it may not be available during matching)</li>
      * </ul>
+     *
+     * As an alternative, they can also only override {@link #passHitQueryContextToClauses(HitQueryContext)}.
      *
      * @param context the hit query context, that e.g. keeps track of captured groups
      */
@@ -49,6 +51,8 @@ public abstract class BLSpans extends Spans {
 
     /**
      * Called by setHitQueryContext() to pass the context to child clauses.
+     *
+     * Subclasses can override this to avoid having to override {@link #setHitQueryContext(HitQueryContext)}.
      *
      * @param context the hit query context, that e.g. keeps track of captured
      *            groups
@@ -98,10 +102,6 @@ public abstract class BLSpans extends Spans {
         return 100;
     }
 
-    static String inf(int max) {
-        return BLSpanQuery.inf(max);
-    }
-
     /**
      * Ensure that given spans are startpoint-sorted within documents.
      *
@@ -132,6 +132,14 @@ public abstract class BLSpans extends Spans {
         return spans;
     }
 
+    /**
+     * Get the match info for this BLSpans object.
+     *
+     * Only SpansCaptureGroup and SpansRelations have match info
+     * (capture group and relation, respectively).
+     *
+     * @return the match info, or null if none available
+     */
     public MatchInfo getRelationInfo() {
         return null;
     }

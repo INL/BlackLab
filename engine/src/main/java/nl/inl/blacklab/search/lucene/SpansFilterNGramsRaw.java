@@ -360,7 +360,7 @@ class SpansFilterNGramsRaw extends BLSpans {
     @Override
     public String toString() {
         String adj = (leftAdjust != 0 || rightAdjust != 0) ? ", " + leftAdjust + ", " + rightAdjust : "";
-        return "SpansFilterNGrams(" + clause + ", " + op + ", " + min + ", " + inf(max) + adj + ")";
+        return "SpansFilterNGrams(" + clause + ", " + op + ", " + min + ", " + BLSpanQuery.inf(max) + adj + ")";
     }
 
     @Override

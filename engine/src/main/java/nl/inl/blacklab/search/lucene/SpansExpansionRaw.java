@@ -300,7 +300,7 @@ class SpansExpansionRaw extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansExpansion(" + clause + ", " + direction + ", " + min + ", " + inf(max) + ")";
+        return "SpansExpansion(" + clause + ", " + direction + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
     @Override
