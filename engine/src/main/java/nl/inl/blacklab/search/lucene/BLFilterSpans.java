@@ -225,7 +225,6 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
      * <p>
      * This is called during two-phase processing.
      */
-    // return true if the current document matches
     @SuppressWarnings("fallthrough")
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;

@@ -8,15 +8,21 @@ import org.junit.Test;
 import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.mocks.MockSpans;
 
-public class TestSpansTags {
+public class TestSpansRelations {
+
+    private SpansRelations tagRelationQuery(BLSpans a, boolean payloadHasIsPrimaryIndicators) {
+        return new SpansRelations("test", a,
+                payloadHasIsPrimaryIndicators, SpanQueryRelations.Direction.FORWARD,
+                MatchInfo.SpanMode.FULL_SPAN);
+    }
 
     @Test
     public void test() throws IOException {
-        int[] aDoc = { 1, 2, 2 };
+        int[] aDoc   = {  1, 2, 2 };
         int[] aStart = { 10, 1, 4 };
-        int[] aEnd = { 21, 2, 6 };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, null);
-        Spans spans = new SpansTagsExternal(a, false);
+        int[] aEnd   = { 21, 2, 6 };
+        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
+        Spans spans = tagRelationQuery(a, false);
 
         Spans exp = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(exp, spans);
@@ -24,12 +30,12 @@ public class TestSpansTags {
 
     @Test
     public void testWithIsPrimary() throws IOException {
-        int[] aDoc = { 1, 2, 2 };
+        int[] aDoc   = {  1, 2, 2 };
         int[] aStart = { 10, 1, 4 };
-        int[] aEnd = { 21, 2, 6 };
+        int[] aEnd   = { 21, 2, 6 };
         boolean[] aIsPrimary = { true, false, true };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, aIsPrimary);
-        Spans spans = new SpansTagsExternal(a, true);
+        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, aIsPrimary);
+        Spans spans = tagRelationQuery(a, true);
 
         Spans exp = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(exp, spans);
@@ -40,9 +46,9 @@ public class TestSpansTags {
         int[] aDoc = { 1, 1 };
         int[] aStart = { 2, 4 };
         int[] aEnd = { 7, 5 };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, null);
+        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
 
-        Spans spans = new SpansTagsExternal(a, false);
+        Spans spans = tagRelationQuery(a, false);
 
         Spans exp = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(exp, spans);
@@ -59,9 +65,9 @@ public class TestSpansTags {
         int[] aDoc = { 1, 1 };
         int[] aStart = { 2, 4 };
         int[] aEnd = { 2, 7 };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, null);
+        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
 
-        Spans spans = new SpansTagsExternal(a, false);
+        Spans spans = tagRelationQuery(a, false);
 
         Spans exp = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(exp, spans);
@@ -72,9 +78,9 @@ public class TestSpansTags {
         int[] aDoc = { 1, 1, 2, 2 };
         int[] aStart = { 2, 4, 12, 14 };
         int[] aEnd = { 5, 7, 17, 15 };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, null);
+        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
 
-        Spans spans = new SpansTagsExternal(a, false);
+        Spans spans = tagRelationQuery(a, false);
         spans.advance(2);
 
         int[] expDoc = { 2, 2 };

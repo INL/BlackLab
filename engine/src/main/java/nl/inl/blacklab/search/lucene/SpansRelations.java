@@ -5,7 +5,8 @@ import java.io.IOException;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.FilterSpans;
+import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
@@ -19,18 +20,12 @@ import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
  * payload to determine the source and target of the relation. The source and
  * target also define the span that is returned.
  */
-class SpansRelations extends BLSpans {
+class SpansRelations extends BLFilterSpans {
 
     private final int NOT_YET_NEXTED = -1;
 
-    /** Term query that found our relations */
-    private final BLSpans relationsMatches;
-
     /** Span end position (or NOT_YET_NEXTED) */
-    private int start = NOT_YET_NEXTED;
-
-    /** Span end position (or NOT_YET_NEXTED) */
-    private int end = NOT_YET_NEXTED;
+    private int endPos = NOT_YET_NEXTED;
 
     /** Source and target for this relation */
     private final MatchInfo relationInfo = new MatchInfo();
@@ -61,8 +56,8 @@ class SpansRelations extends BLSpans {
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
     public SpansRelations(String relationType, BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
+        super(relationsMatches);
         this.relationType = relationType;
-        this.relationsMatches = relationsMatches;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
         this.spanMode = spanMode;
@@ -83,65 +78,126 @@ class SpansRelations extends BLSpans {
 
     @Override
     public int nextDoc() throws IOException {
-        start = end = NOT_YET_NEXTED;
-        return relationsMatches.nextDoc();
+        startPos = endPos = NOT_YET_NEXTED;
+        return super.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
-        start = end = NOT_YET_NEXTED;
-        return relationsMatches.advance(target);
-    }
-
-    @Override
-    public int docID() {
-        return relationsMatches.docID();
+        startPos = endPos = NOT_YET_NEXTED;
+        return super.advance(target);
     }
 
     @Override
     public int nextStartPosition() throws IOException {
-        do {
-            if (relationsMatches.nextStartPosition() == NO_MORE_POSITIONS) {
-                start = NO_MORE_POSITIONS;
-                end = NO_MORE_POSITIONS;
-                return start;
-            }
-            fetchRelationInfo(); // decode the payload
-        } while (!suitableMatch());
-
-        // By default, we return the target of the relation (but this can be changed using rspan())
-        start = relationInfo.spanStart(spanMode);
-        end = relationInfo.spanEnd(spanMode);
-        return start;
-    }
-
-    private boolean suitableMatch() {
-        if (relationInfo.isRoot() && spanMode == MatchInfo.SpanMode.SOURCE) {
-            // Root relations have no source
-            return false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
+            return startPos;
         }
-
-        // See if it's the correct direction
-        switch (direction) {
-        case ROOT:
-            return relationInfo.isRoot();
-        case FORWARD:
-            return relationInfo.getSourceStart() <= getRelationInfo().getTargetStart();
-        case BACKWARD:
-            return relationInfo.getSourceStart() >= getRelationInfo().getTargetStart();
-        case BOTH_DIRECTIONS:
-            return true;
-        default:
-            throw new IllegalArgumentException("Unknown filter: " + direction);
+        while (true) {
+            if (in.nextStartPosition() == NO_MORE_POSITIONS) {
+                startPos = NO_MORE_POSITIONS;
+                endPos = NO_MORE_POSITIONS;
+                return startPos;
+            }
+            switch (accept(this)) {
+            case YES:
+                // By default, we return the target of the relation (but this can be changed using rspan())
+                startPos = relationInfo.spanStart(spanMode);
+                endPos = relationInfo.spanEnd(spanMode);
+                return startPos;
+            case NO:
+                continue;
+            case NO_MORE_IN_CURRENT_DOC:
+                startPos = endPos = NO_MORE_POSITIONS;
+                return startPos;
+            }
         }
     }
 
     @Override
-    public int startPosition() {
-        return start;
+    public int advanceStartPosition(int target) throws IOException {
+        if (direction == Direction.FORWARD &&
+                (spanMode == MatchInfo.SpanMode.FULL_SPAN || spanMode == MatchInfo.SpanMode.SOURCE)) {
+            // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
+            super.advanceStartPosition(target);
+            if (startPos == NO_MORE_POSITIONS) {
+                endPos = NO_MORE_POSITIONS;
+                return NO_MORE_POSITIONS;
+            }
+            switch (accept(this)) {
+            case YES:
+                break;
+            case NO:
+                nextStartPosition();
+            case NO_MORE_IN_CURRENT_DOC:
+                startPos = endPos = NO_MORE_POSITIONS;
+                return startPos;
+            }
+            endPos = relationInfo.spanEnd(spanMode);
+            return startPos;
+        }
+        // Our spans may not be in order; use the slower implementation
+        return BLSpans.naiveAdvanceStartPosition(this, target);
     }
 
-    private static class PayloadAndtermCollector extends PayloadSpanCollector {
+    @Override
+    public int endPosition() {
+        if (atFirstInCurrentDoc)
+            return -1;
+        return startPos == NO_MORE_POSITIONS ? NO_MORE_POSITIONS : endPos;
+    }
+
+    @Override
+    protected FilterSpans.AcceptStatus accept(Spans candidate) throws IOException {
+        fetchRelationInfo(); // decode the payload
+        if (relationInfo.isRoot() && spanMode == MatchInfo.SpanMode.SOURCE) {
+            // Root relations have no source
+            return FilterSpans.AcceptStatus.NO;
+        }
+
+        // See if it's the correct direction
+        boolean acc;
+        switch (direction) {
+        case ROOT:
+            acc = relationInfo.isRoot();
+            break;
+        case FORWARD:
+            acc = relationInfo.getSourceStart() <= getRelationInfo().getTargetStart();
+            break;
+        case BACKWARD:
+            acc = relationInfo.getSourceStart() >= getRelationInfo().getTargetStart();
+            break;
+        case BOTH_DIRECTIONS:
+            acc = true;
+            break;
+        default:
+            throw new IllegalArgumentException("Unknown filter: " + direction);
+        }
+        if (acc)
+            endPos = relationInfo.spanEnd(spanMode);
+        return acc ? FilterSpans.AcceptStatus.YES : FilterSpans.AcceptStatus.NO;
+    }
+
+    private void fetchRelationInfo() {
+        try {
+            // Fetch the payload
+            collector.reset();
+            // NOTE: relationsMatches is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
+            //   each relation gets a payload, so there should always be one
+            in.collect(collector);
+            byte[] payload = collector.getPayloads().iterator().next();
+            ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
+            relationInfo.deserialize(in.startPosition(), dataInput);
+            if (collector.term != null) // can happen during testing...
+                relationInfo.setRelationTerm(collector.term.text());
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException("Error getting payload");
+        }
+    }
+
+    /** SpanCollector that collects both the the payload and term for the current match. */
+    private static class PayloadAndTermCollector extends PayloadSpanCollector {
         public Term term;
 
         @Override
@@ -151,48 +207,15 @@ class SpansRelations extends BLSpans {
         }
     }
 
-    private final PayloadAndtermCollector collector = new PayloadAndtermCollector();
+    private final PayloadAndTermCollector collector = new PayloadAndTermCollector();
 
-    @Override
-    public int endPosition() {
-        if (start == NO_MORE_POSITIONS)
-            return NO_MORE_POSITIONS;
-        return end;
-    }
-
-    private void fetchRelationInfo() {
-        try {
-            // Fetch the payload
-            collector.reset();
-            // NOTE: relationsMatches is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
-            //   each relation gets a payload, so there should always be one
-            relationsMatches.collect(collector);
-            byte[] payload = collector.getPayloads().iterator().next();
-            ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
-            relationInfo.deserialize(relationsMatches.startPosition(), dataInput);
-            relationInfo.setRelationTerm(collector.term.text());
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException("Error getting payload");
-        }
-    }
 
     public MatchInfo getRelationInfo() {
         return relationInfo;
     }
 
     @Override
-    public int width() {
-        return relationsMatches.width();
+    public String toString() {
+        return "REL(" + relationType + ", " + direction + ", " + spanMode + ")";
     }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        relationsMatches.collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return relationsMatches.positionsCost();
-    }
-
 }
