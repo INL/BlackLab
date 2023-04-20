@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.lucene;
 
-import static org.apache.lucene.search.spans.FilterSpans.AcceptStatus.YES;
-
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.FilterSpans;
@@ -29,7 +27,7 @@ class SpansEdge extends BLFilterSpans<BLSpans> {
 
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
-        return YES;
+        return FilterSpans.AcceptStatus.YES;
     }
 
     @Override
