@@ -5,19 +5,18 @@ import java.util.List;
 
 /**
  * Simple version of sequence Spans. Assumes that:
- * 
- * <p>
+ *
  * <ul>
- * <li>right side is ordered by start point, and start points are unique
- * <li>left side is ordered by end point, and end points are unique
+ * <li>1st clause is ordered by end point, and end points are unique</li>
+ * <li>2nd clause is ordered by start point, and start points are unique</li>
  * </ul>
- * 
- * The client should ensure these properties are true.
+ *
+ * <p>The client should ensure these properties are true.</p>
  */
 class SpansSequenceSimple extends BLConjunctionSpans {
 
-    public SpansSequenceSimple(BLSpans leftClause, BLSpans rightClause) {
-        super(List.of(leftClause, rightClause));
+    public SpansSequenceSimple(BLSpans firstClause, BLSpans secondClause) {
+        super(List.of(firstClause, secondClause));
     }
 
     @Override
@@ -44,19 +43,19 @@ class SpansSequenceSimple extends BLConjunctionSpans {
         /*
          * Go to the next match.
          *
-         * This is done around the 'mid point', the word position where the left match ends and the
-         * right match begins.
+         * This is done around the 'mid point', the word position where the first match ends and the
+         * second match begins.
          *
-         * The left Spans are sorted by end point. The matches from this Spans are iterated through, and
+         * The first Spans are sorted by end point. The matches from this Spans are iterated through, and
          * for each match, the end point will be the 'mid point' of the resulting match. Note that there
-         * may be multiple matches from the left with the same end point.
+         * may be multiple matches from the first with the same end point.
          *
-         * The right Spans are sorted by start point (no sorting required, as this is Lucene's default).
-         * For each 'mid point', all matches starting at that point are collected from the right spans.
+         * The second Spans are sorted by start point (no sorting required, as this is Lucene's default).
+         * For each 'mid point', all matches starting at that point are collected from the second spans.
          *
-         * Each match from the left is then combined with all the collected matches from the right. The
-         * collected matches from the right may be used for multiple matches from the left (if there are
-         * multiple matches from the left with the same end point).
+         * Each match from the first is then combined with all the collected matches from the second. The
+         * collected matches from the second may be used for multiple matches from the first (if there are
+         * multiple matches from the first with the same end point).
          */
 
         if (oneExhaustedInCurrentDoc)
@@ -71,26 +70,26 @@ class SpansSequenceSimple extends BLConjunctionSpans {
 
     private int realignPos() throws IOException {
         // Synchronize within doc
-        int leftEnd = subSpans[0].endPosition();
-        int rightStart = subSpans[1].startPosition();
-        while (leftEnd != rightStart) {
-            if (rightStart < leftEnd) {
-                // Advance right if necessary
-                while (rightStart < leftEnd) {
-                    rightStart = subSpans[1].advanceStartPosition(leftEnd);
-                    if (rightStart == NO_MORE_POSITIONS) {
+        int firstEnd = subSpans[0].endPosition();
+        int secondStart = subSpans[1].startPosition();
+        while (firstEnd != secondStart) {
+            if (secondStart < firstEnd) {
+                // Advance 2nd if necessary
+                while (secondStart < firstEnd) {
+                    secondStart = subSpans[1].advanceStartPosition(firstEnd);
+                    if (secondStart == NO_MORE_POSITIONS) {
                         oneExhaustedInCurrentDoc = true;
                         return NO_MORE_POSITIONS;
                     }
                 }
             } else {
-                // Advance left if necessary
-                while (leftEnd < rightStart) {
+                // Advance 1st if necessary
+                while (firstEnd < secondStart) {
                     if (subSpans[0].nextStartPosition() == NO_MORE_POSITIONS) {
                         oneExhaustedInCurrentDoc = true;
                         return NO_MORE_POSITIONS;
                     }
-                    leftEnd = subSpans[0].endPosition();
+                    firstEnd = subSpans[0].endPosition();
                 }
             }
         }

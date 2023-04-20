@@ -211,7 +211,6 @@ class SpansRelations extends BLFilterSpans {
 
     private final PayloadAndTermCollector collector = new PayloadAndTermCollector();
 
-
     public MatchInfo getRelationInfo() {
         return relationInfo;
     }
