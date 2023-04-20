@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.spans.FilterSpans;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Apply a document Filter to a Spans.
@@ -13,7 +12,7 @@ import org.apache.lucene.search.spans.Spans;
  * This allows us to only consider certain documents (say, only documents in a
  * certain domain) when executing our query.
  */
-class SpansFiltered extends BLFilterSpans {
+class SpansFiltered extends BLFilterSpans<BLSpans> {
 
     /** Keep hits from these documents. */
     private final DocIdSetIterator acceptedDocs;
@@ -30,7 +29,7 @@ class SpansFiltered extends BLFilterSpans {
     }
 
     @Override
-    protected FilterSpans.AcceptStatus accept(Spans candidate) throws IOException {
+    protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         if (acceptedDocs == null || acceptedDocs.docID() == NO_MORE_DOCS)
             return FilterSpans.AcceptStatus.NO_MORE_IN_CURRENT_DOC;
         int docId = candidate.docID();

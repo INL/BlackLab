@@ -243,6 +243,7 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
+        //return null;
         DocIdSetIterator approximation = new DocIdSetIterator() {
             int doc = -1;
 
@@ -259,9 +260,14 @@ class SpansNGrams extends BLSpans {
             @Override
             public int advance(int target) {
                 if (target >= maxDoc) {
-                    return doc = NO_MORE_DOCS;
+                    doc = NO_MORE_DOCS;
+                    return NO_MORE_DOCS;
                 }
-                return doc = target;
+                if (doc == target)
+                    doc++; // per contract of advance()
+                else
+                    doc = target;
+                return doc;
             }
 
             @Override

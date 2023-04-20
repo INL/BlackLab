@@ -3,6 +3,8 @@ package nl.inl.blacklab.searches;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,6 +19,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -48,14 +51,20 @@ public class TestSearchHitGroups {
 
     @Test
     public void testHitGroups() throws InvalidQuery {
-        testGroup(false); // slow path
-        testGroup(true); // fast path
+        MatchAllDocsQuery filter = new MatchAllDocsQuery();
+        testGroup(true, filter); // fast path
+        testGroup(false, filter); // slow path
+
+        testGroup(false, null); // slow path
+        testGroup(true, null); // fast path
     }
 
-    private void testGroup(boolean fastPath) throws InvalidQuery {
+    private void testGroup(boolean fastPath, Query filter) throws InvalidQuery {
         String title = fastPath ? "group fast path" : "group slow path";
         TextPattern tp = new TextPatternAnnotation("word", new TextPatternAnyToken(1, 1));
         BLSpanQuery query = tp.toQuery(QueryInfo.create(index));
+        if (filter != null)
+            query = new SpanQueryFiltered(query, filter);
         HitProperty groupBy = new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.SENSITIVE);
         SearchHits searchHits = index.search(contents, false).find(query);
         SearchHitGroups searchHitGroups = fastPath ? searchHits.groupStats(groupBy, 0) : searchHits.groupWithStoredHits(groupBy, 1);

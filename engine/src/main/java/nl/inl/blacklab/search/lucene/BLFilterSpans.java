@@ -232,6 +232,13 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
     @SuppressWarnings("fallthrough")
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;
+
+        // FIXME: this seems to cause TestSearchHitGroups.testHitGroups() to fail
+        //        with fast path and filter. The reason seems to be that in this case,
+        //        we use the SpanQuery to find all matching docs. But this operation
+        //        doesn't call nextDoc() on the Spans object; it only uses the two-phase
+        //        iterator and this matches() method tries to advance the Spans object,
+        //        but that hasn't been initialized yet (currentDoc is still at -1).
         startPos = in.nextStartPosition();
         assert startPos != NO_MORE_POSITIONS;
         for (;;) {
