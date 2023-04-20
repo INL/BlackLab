@@ -29,7 +29,12 @@ import org.apache.lucene.search.spans.Spans;
  * A {@link Spans} implementation wrapping another spans instance, allowing to filter spans matches
  * easily by implementing {@link #accept}
  * <p>
- * (adapted directly from Lucene)
+ * Adapted from Lucene.
+ *
+ * NOTE: We've relaxed the visibility of some members to allow more reuse (see e.g. {@link SpansEdge}),
+ * at the cost of child classes having to know more about the implementation. Specifically: match-level methods
+ * are no longer final, and child classes can access atFirstInCurrentDoc and startPos, but should make sure
+ * these are updated correctly when overriding methods)
  */
 public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
@@ -44,13 +49,13 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
      * but we should still return -1 to indicate nextStartPosition() hasn't been called
      * yet.
      */
-    private boolean atFirstInCurrentDoc = false;
+    protected boolean atFirstInCurrentDoc = false;
 
     /**
      * Start position of current hit, or (if atFirstInCurrentDoc is true) the first
      * hit to return when nextStartPosition() is called.
      */
-    private int startPos = -1;
+    protected int startPos = -1;
 
     /**
      * Wrap the given {@link T}.
@@ -96,7 +101,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
     }
 
     @Override
-    public final int nextStartPosition() throws IOException {
+    public int nextStartPosition() throws IOException {
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
             return startPos;
@@ -138,12 +143,12 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
     }
 
     @Override
-    public final int startPosition() {
+    public int startPosition() {
         return atFirstInCurrentDoc ? -1 : startPos;
     }
 
     @Override
-    public final int endPosition() {
+    public int endPosition() {
         return atFirstInCurrentDoc ? -1
                 : (startPos != NO_MORE_POSITIONS) ? in.endPosition() : NO_MORE_POSITIONS;
     }

@@ -6,10 +6,10 @@ import org.apache.lucene.search.spans.Spans;
 
 /**
  * Base class for all our own Spans classes.
- *
+ * <p>
  * The default implementation is appropriate for Spans classes that return only
  * single-term hits.
- *
+ * <p>
  * Note that Spans will iterate through a Lucene index segment in a single thread,
  * therefore Spans and subclasses don't need to be thread-safe.
  */
@@ -26,7 +26,7 @@ public abstract class BLSpans extends Spans {
     /**
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
-     *
+     * <p>
      * Subclasses should override this method, pass the context to their child
      * clauses (if any), and either:
      *
@@ -51,7 +51,7 @@ public abstract class BLSpans extends Spans {
 
     /**
      * Called by setHitQueryContext() to pass the context to child clauses.
-     *
+     * <p>
      * Subclasses can override this to avoid having to override {@link #setHitQueryContext(HitQueryContext)}.
      *
      * @param context the hit query context, that e.g. keeps track of captured
@@ -71,10 +71,10 @@ public abstract class BLSpans extends Spans {
 
     /**
      * Advance the start position in the current doc to target or beyond.
-     *
+     * <p>
      * Always at least advances to the next hit, even if the current start position
      * is already at or beyond the target.
-     *
+     * <p>
      * <b>CAUTION:</b> if your spans are not start point sorted, this method can
      * not guarantee to skip over all hits that start before the target.
      * Any class that uses this method should be aware of this.
@@ -88,10 +88,23 @@ public abstract class BLSpans extends Spans {
      */
     public int advanceStartPosition(int target) throws IOException {
         // Naive implementations; subclasses may provide a faster version.
+        return naiveAdvanceStartPosition(this, target);
+    }
+
+    /**
+     * Advance the start position by calling nextStartPosition() repeatedly.
+     *
+     * Useful for twice-derived classes that don't have a more efficient way to advance.
+     *
+     * @param spans spans to advance
+     * @param target target start position to advance to
+     * @return new start position, or Spans.NO_MORE_POSITIONS
+     */
+    public static int naiveAdvanceStartPosition(BLSpans spans, int target) throws IOException {
         int pos;
         do {
-            pos = nextStartPosition();
-        } while (pos < target && pos != NO_MORE_POSITIONS);
+            pos = spans.nextStartPosition();
+        } while (pos < target); // also covers NO_MORE_POSITIONS
         return pos;
     }
 
@@ -104,10 +117,10 @@ public abstract class BLSpans extends Spans {
 
     /**
      * Ensure that given spans are startpoint-sorted within documents.
-     *
+     * <p>
      * It is assumed that they are already document-sorted, or at least
      * all hits from one document are contiguous.
-     *
+     * <p>
      * Just uses PerDocumentSortedSpans for now, but could be perhaps be
      * optimized to only look at startpoints within the document.
      *
@@ -134,7 +147,7 @@ public abstract class BLSpans extends Spans {
 
     /**
      * Get the match info for this BLSpans object.
-     *
+     * <p>
      * Only SpansCaptureGroup and SpansRelations have match info
      * (capture group and relation, respectively).
      *
