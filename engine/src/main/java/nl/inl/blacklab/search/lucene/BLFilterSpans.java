@@ -131,6 +131,10 @@ public abstract class BLFilterSpans<T extends Spans> extends BLSpans {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        if (atFirstInCurrentDoc && startPos >= target) {
+            // Our cached hit is the one we want.
+            return nextStartPosition();
+        }
         if (in.startPosition() >= target) {
             // we always advance at least 1 hit, as per contract
             return nextStartPosition();

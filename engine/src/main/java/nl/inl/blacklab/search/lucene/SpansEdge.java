@@ -48,6 +48,10 @@ class SpansEdge extends BLFilterSpans<BLSpans> {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        if (atFirstInCurrentDoc && startPos >= target) {
+            // Our cached hit is the one we want.
+            return nextStartPosition();
+        }
         if (trailingEdge) {
             // We can't skip because the spans we produce are not sorted by start.
             // Use the naive implementation.

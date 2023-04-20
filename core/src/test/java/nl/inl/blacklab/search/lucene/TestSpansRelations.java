@@ -1,8 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
+import java.util.concurrent.Callable;
 
-import org.apache.lucene.search.spans.Spans;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestUtil;
@@ -10,48 +9,70 @@ import nl.inl.blacklab.mocks.MockSpans;
 
 public class TestSpansRelations {
 
-    private SpansRelations tagRelationQuery(BLSpans a, boolean payloadHasIsPrimaryIndicators) {
+    private SpansRelations tagRelationQuery(BLSpans a, boolean hasPrimaryValueIndicators) {
         return new SpansRelations("test", a,
-                payloadHasIsPrimaryIndicators, SpanQueryRelations.Direction.FORWARD,
+                hasPrimaryValueIndicators, SpanQueryRelations.Direction.FORWARD,
                 MatchInfo.SpanMode.FULL_SPAN);
     }
 
-    @Test
-    public void test() throws IOException {
-        int[] aDoc   = {  1, 2, 2 };
-        int[] aStart = { 10, 1, 4 };
-        int[] aEnd   = { 21, 2, 6 };
-        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
-        Spans spans = tagRelationQuery(a, false);
+    private void testRelationsAndAdjust(int[] aDoc, int[] aStart, int[] aEnd, Callable<BLSpans> createSpans) throws Exception {
+        testRelationsAndAdjust(aDoc, aStart, aEnd, createSpans, false);
+    }
 
-        Spans exp = new MockSpans(aDoc, aStart, aEnd);
-        TestUtil.assertEquals(exp, spans);
+    private void testRelationsAndAdjust(int[] aDoc, int[] aStart, int[] aEnd, Callable<BLSpans> createSpans, boolean skipFirstNextDoc) throws Exception {
+        // Test without adjustment
+        BLSpans full = new MockSpans(aDoc, aStart, aEnd);
+        TestUtil.assertEquals(full, createSpans.call(), skipFirstNextDoc);
+
+        // Test getting full spans
+        full = new MockSpans(aDoc, aStart, aEnd);
+        TestUtil.assertEquals(full, new SpansRelationSpanAdjust(
+                createSpans.call(), MatchInfo.SpanMode.FULL_SPAN), skipFirstNextDoc);
+
+        // Test getting source spans
+        BLSpans sources = new MockSpans(aDoc, aStart, aStart);
+        TestUtil.assertEquals(sources, new SpansRelationSpanAdjust(
+                createSpans.call(), MatchInfo.SpanMode.SOURCE), skipFirstNextDoc);
+
+        // Test getting target spans
+        BLSpans targets = new MockSpans(aDoc, aEnd, aEnd);
+        TestUtil.assertEquals(targets, new SpansRelationSpanAdjust(
+                createSpans.call(), MatchInfo.SpanMode.TARGET), skipFirstNextDoc);
     }
 
     @Test
-    public void testWithIsPrimary() throws IOException {
+    public void test() throws Exception {
+        int[] aDoc   = {  1, 2, 2 };
+        int[] aStart = { 10, 1, 4 };
+        int[] aEnd   = { 21, 2, 6 };
+        testRelationsAndAdjust(aDoc, aStart, aEnd, () -> {
+            BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
+            return tagRelationQuery(a, false);
+        });
+    }
+
+    @Test
+    public void testWithIsPrimary() throws Exception {
         int[] aDoc   = {  1, 2, 2 };
         int[] aStart = { 10, 1, 4 };
         int[] aEnd   = { 21, 2, 6 };
         boolean[] aIsPrimary = { true, false, true };
-        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, aIsPrimary);
-        Spans spans = tagRelationQuery(a, true);
 
-        Spans exp = new MockSpans(aDoc, aStart, aEnd);
-        TestUtil.assertEquals(exp, spans);
+        testRelationsAndAdjust(aDoc, aStart, aEnd, () -> {
+            BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, aIsPrimary);
+            return tagRelationQuery(a, true);
+        });
     }
 
     @Test
-    public void testNested() throws IOException {
+    public void testNested() throws Exception {
         int[] aDoc = { 1, 1 };
         int[] aStart = { 2, 4 };
         int[] aEnd = { 7, 5 };
-        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
-
-        Spans spans = tagRelationQuery(a, false);
-
-        Spans exp = new MockSpans(aDoc, aStart, aEnd);
-        TestUtil.assertEquals(exp, spans);
+        testRelationsAndAdjust(aDoc, aStart, aEnd, () -> {
+            BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
+            return tagRelationQuery(a, false);
+        });
     }
 
     /**
@@ -61,32 +82,31 @@ public class TestSpansRelations {
      *
      */
     @Test
-    public void testEmptyTag() throws IOException {
+    public void testEmptyTag() throws Exception {
         int[] aDoc = { 1, 1 };
         int[] aStart = { 2, 4 };
         int[] aEnd = { 2, 7 };
-        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
-
-        Spans spans = tagRelationQuery(a, false);
-
-        Spans exp = new MockSpans(aDoc, aStart, aEnd);
-        TestUtil.assertEquals(exp, spans);
+        testRelationsAndAdjust(aDoc, aStart, aEnd, () -> {
+            BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
+            return tagRelationQuery(a, false);
+        });
     }
 
     @Test
-    public void testSkip() throws IOException {
-        int[] aDoc = { 1, 1, 2, 2 };
+    public void testSkip() throws Exception {
+        // Actual
+        int[] aDoc   = { 1, 1,  2,  2 };
         int[] aStart = { 2, 4, 12, 14 };
-        int[] aEnd = { 5, 7, 17, 15 };
-        BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
-
-        Spans spans = tagRelationQuery(a, false);
-        spans.advance(2);
-
-        int[] expDoc = { 2, 2 };
+        int[] aEnd   = { 5, 7, 17, 15 };
+        // Expected
+        int[] expDoc   = {  2, 2 };
         int[] expStart = { 12, 14 };
-        int[] expEnd = { 17, 15 };
-        Spans exp = new MockSpans(expDoc, expStart, expEnd);
-        TestUtil.assertEquals(exp, spans, true);
+        int[] expEnd   = { 17, 15 };
+        testRelationsAndAdjust(expDoc, expStart, expEnd, () -> {
+            BLSpans a = MockSpans.withRelationInfoInPayload(aDoc, aStart, aEnd, null);
+            BLSpans spans = tagRelationQuery(a, false);
+            spans.advance(2); // skip to doc 2
+            return spans;
+        }, true);
     }
 }

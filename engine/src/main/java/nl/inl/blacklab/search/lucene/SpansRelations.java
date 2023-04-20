@@ -102,9 +102,6 @@ class SpansRelations extends BLFilterSpans {
             }
             switch (accept(this)) {
             case YES:
-                // By default, we return the target of the relation (but this can be changed using rspan())
-                startPos = relationInfo.spanStart(spanMode);
-                endPos = relationInfo.spanEnd(spanMode);
                 return startPos;
             case NO:
                 continue;
@@ -117,6 +114,10 @@ class SpansRelations extends BLFilterSpans {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        if (atFirstInCurrentDoc && startPos >= target) {
+            // Our cached hit is the one we want.
+            return nextStartPosition();
+        }
         if (direction == Direction.FORWARD &&
                 (spanMode == MatchInfo.SpanMode.FULL_SPAN || spanMode == MatchInfo.SpanMode.SOURCE)) {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
@@ -134,7 +135,6 @@ class SpansRelations extends BLFilterSpans {
                 startPos = endPos = NO_MORE_POSITIONS;
                 return startPos;
             }
-            endPos = relationInfo.spanEnd(spanMode);
             return startPos;
         }
         // Our spans may not be in order; use the slower implementation
@@ -174,8 +174,10 @@ class SpansRelations extends BLFilterSpans {
         default:
             throw new IllegalArgumentException("Unknown filter: " + direction);
         }
-        if (acc)
+        if (acc) {
+            startPos = relationInfo.spanStart(spanMode);
             endPos = relationInfo.spanEnd(spanMode);
+        }
         return acc ? FilterSpans.AcceptStatus.YES : FilterSpans.AcceptStatus.NO;
     }
 

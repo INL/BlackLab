@@ -2,6 +2,7 @@ package nl.inl.blacklab.search;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +24,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
@@ -44,14 +46,9 @@ public class TestSearches {
     @Parameterized.Parameter
     public TestIndex testIndex;
 
-    /**
-     * Expected search results;
-     */
-    List<String> expected;
-
     @Test
     public void testSimple() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "[The] quick",
                 "over [the] lazy",
                 "May [the] Force",
@@ -74,14 +71,14 @@ public class TestSearches {
 
     @Test
     public void testSimpleDocFilter() {
-        expected = List.of("May [the] Force");
+        List<String> expected = List.of("May [the] Force");
         int docId = testIndex.getDocIdForDocNumber(2);
         Assert.assertEquals(expected, testIndex.findConc(" 'the' ", new SingleDocIdFilter(docId)));
     }
 
     @Test
     public void testSimpleTitleFilter() {
-        expected = List.of("May [the] Force");
+        List<String> expected = List.of("May [the] Force");
         // metadata is tokenized and lowercased by default
         Query filter = new TermQuery(new Term("title", "star"));
         Assert.assertEquals(expected, testIndex.findConc(" 'the' ", filter));
@@ -89,7 +86,7 @@ public class TestSearches {
 
     @Test
     public void testFilteredQuery() {
-        expected = Arrays.asList("[The] quick", "over [the] lazy");
+        List<String> expected = Arrays.asList("[The] quick", "over [the] lazy");
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
         TermQuery filterQuery = new TermQuery(new Term("contents%word@i", "fox"));
         Assert.assertEquals(expected, testIndex.findConc(new SpanQueryFiltered(patternQuery, filterQuery)));
@@ -97,7 +94,7 @@ public class TestSearches {
 
     @Test
     public void testSequences() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "quick [brown fox] jumps",
                 "the [lazy dog]");
         Assert.assertEquals(expected, testIndex.findConc(" [pos='adj'] [pos='nou'] "));
@@ -117,7 +114,7 @@ public class TestSearches {
 
     @Test
     public void testMatchAll() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "brown [fox jumps] over",
                 "the [Force be] with");
         Assert.assertEquals(expected, testIndex.findConc(" [pos='nou'] [] "));
@@ -132,7 +129,7 @@ public class TestSearches {
 
     @Test
     public void testOptional1() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "be [with you]",
                 "with [you]",
                 "to [find That] is",
@@ -142,7 +139,7 @@ public class TestSearches {
 
     @Test
     public void testOptional2() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "with [you]",
                 "find [That] is",
                 "find [That is] the");
@@ -152,7 +149,7 @@ public class TestSearches {
 
     @Test
     public void testOptional3() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "be [with] you",
                 "be [with you]",
                 "with [you]",
@@ -165,7 +162,7 @@ public class TestSearches {
 
     @Test
     public void testRepetition() {
-        expected = List.of(
+        List<String> expected = List.of(
                 "The [quick brown] fox");
         Assert.assertEquals(expected, testIndex.findConc(" [pos='adj']{2} "));
 
@@ -179,14 +176,14 @@ public class TestSearches {
 
     @Test
     public void testRepetitionNoResults() {
-        expected = List.of();
+        List<String> expected = Collections.emptyList();
         Assert.assertEquals(expected, testIndex.findConc("[pos='PD.*']+ '(?i)getal'"));
 
     }
 
     @Test
     public void testStringRegexes() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "quick [brown] fox",
                 "Force [be] with");
         Assert.assertEquals(expected, testIndex.findConc(" 'b.*' "));
@@ -199,14 +196,14 @@ public class TestSearches {
 
     @Test
     public void testUniq() {
-        expected = List.of(
+        List<String> expected = List.of(
                 "fox [jumps] over");
         Assert.assertEquals(expected, testIndex.findConc("[word = 'jumps' | lemma = 'jump']"));
     }
 
     @Test
     public void testOr() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "fox [jumps] over",
                 "jumps [over] the");
         Assert.assertEquals(expected, testIndex.findConc("[word = 'jumps' | lemma = 'over']"));
@@ -214,14 +211,14 @@ public class TestSearches {
 
     @Test
     public void testAnd() {
-        expected = List.of(
+        List<String> expected = List.of(
                 "The [quick] brown");
         Assert.assertEquals(expected, testIndex.findConc("[pos = 'adj' & lemma = '.*u.*']"));
     }
 
     @Test
     public void testTags() {
-        expected = List.of(
+        List<String> expected = List.of(
                 "[The quick brown fox] jumps", "over [the lazy dog]", "May [the Force] be");
         Assert.assertEquals(expected, testIndex.findConc("<entity/>"));
 
@@ -243,51 +240,80 @@ public class TestSearches {
     }
 
     @Test
+    public void testRelRspan() {
+        if (testIndex.getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
+            List<String> allRelations = List.of(
+                    "[The quick brown fox] jumps", "over [the lazy dog]", "May [the Force] be");
+            List<String> targets = List.of("fox [] jumps", "dog []", "Force [] be");
+            List<String> sources = List.of("[] The", "over [] the", "May [] the");
+            List<String> none = Collections.emptyList();
+            String type = AnnotatedFieldNameUtil.tagFullRelationType("entity");
+
+            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', _, 'full')"));
+            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', 'forward', 'full')"));
+            Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "'), 'full')"));
+            Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "', _, 'source'), 'full')"));
+
+            Assert.assertEquals(targets, testIndex.findConc("rel('" + type + "')"));
+            Assert.assertEquals(targets, testIndex.findConc("rel('" + type + "', 'forward', 'target')"));
+            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', _, 'full'), 'target')"));
+            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', _, 'source'), 'target')"));
+
+            Assert.assertEquals(sources, testIndex.findConc("rel('" + type + "', _, 'source')"));
+            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', _, 'full'), 'source')"));
+            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', _, 'target'), 'source')"));
+
+            Assert.assertEquals(none, testIndex.findConc("rel('" + type + "', 'backward')"));
+            Assert.assertEquals(none, testIndex.findConc("rel('" + type + "', 'root')"));
+        }
+    }
+
+    @Test
     public void testNfa4() {
-        expected = List.of("[May the Force be with] you");
+        List<String> expected = List.of("[May the Force be with] you");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' '.*e'+ 'with' "));
     }
 
     @Test
     public void testOnlyRepetition() {
-        expected = Arrays.asList("[The] quick", "over [the] lazy", "May [the] Force", "is [the] question");
+        List<String> expected = Arrays.asList("[The] quick", "over [the] lazy", "May [the] Force", "is [the] question");
         Assert.assertEquals(expected, testIndex.findConc("[lemma='.*he']{0,10}"));
     }
 
     @Test
     public void testConstraintSimple0() {
-        expected = List.of("the [Force] be");
+        List<String> expected = List.of("the [Force] be");
         Assert.assertEquals(expected, testIndex.findConc("a:'Force' :: a.word = 'Force'"));
     }
 
     @Test
     public void testConstraintSimple1() {
-        expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+        List<String> expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.word"));
     }
 
     @Test
     public void testConstraintSimple2() {
-        expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+        List<String> expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma"));
     }
 
     @Test
     public void testConstraintSimple3() {
-        expected = List.of("noot [mier aap mier mier] mier");
+        List<String> expected = List.of("noot [mier aap mier mier] mier");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' 'mier' b:[] :: a.word = b.word"));
     }
 
     @Test
     public void testConstraintSimple4() {
-        expected = List.of("[The quick brown fox jumps over the] lazy");
+        List<String> expected = List.of("[The quick brown fox jumps over the] lazy");
         Assert.assertEquals(expected,
                 testIndex.findConc("a:[] ([]{1,5} containing 'brown') b:[] :: a.lemma = b.lemma"));
     }
 
     @Test
     public void testConstraintSimple4a() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "[The quick brown fox] jumps",
                 "[The quick brown fox jumps] over",
                 "[The quick brown fox jumps over] the",
@@ -304,21 +330,21 @@ public class TestSearches {
 
     @Test
     public void testLocalConstraint() {
-        expected = List.of("[The quick brown fox jumps over the lazy] dog");
+        List<String> expected = List.of("[The quick brown fox jumps over the lazy] dog");
         Assert.assertEquals(expected,
                 testIndex.findConc("(a:[] ([]{1,5} containing 'brown') b:[] :: a.lemma = b.lemma) 'lazy'"));
     }
 
     @Test
     public void testLocalConstraintAnyTokens() {
-        expected = List.of("noot [mier aap mier mier] mier", "aap [mier mier mier noot] noot", "noot [aap aap aap aap]");
+        List<String> expected = List.of("noot [mier aap mier mier] mier", "aap [mier mier mier noot] noot", "noot [aap aap aap aap]");
         Assert.assertEquals(expected,
                 testIndex.findConc("(a:[] [] b:[] :: a.lemma = b.lemma) []"));
     }
 
     @Test
     public void testNGramContainingWithAdjustment() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
             "[The quick brown] fox",
             "[The quick brown fox] jumps",
             "[The quick brown fox jumps] over",
@@ -335,7 +361,7 @@ public class TestSearches {
 
     @Test
     public void testExpandTwice() {
-        expected = List.of(
+        List<String> expected = List.of(
                 "[The quick brown fox jumps over] the"
         );
         Assert.assertEquals(expected,
@@ -344,37 +370,37 @@ public class TestSearches {
 
     @Test
     public void testConstraintOr1() {
-        expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+        List<String> expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma | a.word = b.pos"));
     }
 
     @Test
     public void testConstraintOr2() {
-        expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+        List<String> expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma | a.lemma = b.word"));
     }
 
     @Test
     public void testConstraintAnd1() {
-        expected = List.of();
+        List<String> expected = List.of();
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.word = b.pos"));
     }
 
     @Test
     public void testConstraintAnd2() {
-        expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+        List<String> expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.word != b.pos"));
     }
 
     @Test
     public void testConstraintAnd3() {
-        expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
+        List<String> expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.pos = b.pos"));
     }
 
     @Test
     public void testConstraintImplication1() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "[noot mier aap mier] mier", // left side matches, right side holds
                 "noot [mier aap mier] mier", // left side doesn't match
                 "noot [noot aap aap] aap", // left side doesn't match
@@ -388,7 +414,7 @@ public class TestSearches {
 
     @Test
     public void testConstraintImplication2() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "noot [mier aap mier] mier",
                 "noot [noot aap aap] aap",
                 "noot [aap aap aap] aap",
@@ -399,7 +425,7 @@ public class TestSearches {
 
     @Test
     public void testSort() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "aap [aap aap aap]",
                 "noot [aap aap aap] aap",
                 "noot [mier aap mier] mier",
@@ -414,7 +440,7 @@ public class TestSearches {
 
     @Test
     public void testSortReverse() {
-        expected = Arrays.asList(
+        List<String> expected = Arrays.asList(
                 "noot [noot aap aap] aap",
                 "noot [mier aap mier] mier",
                 "noot [aap aap aap] aap",
@@ -429,7 +455,7 @@ public class TestSearches {
 
     @Test
     public void testFilter() {
-        expected = List.of(
+        List<String> expected = List.of(
                 "noot [noot aap aap] aap"
         );
         // If left side of implication is always false, right side is ignored
@@ -444,7 +470,7 @@ public class TestSearches {
 
     @Test
     public void testNGramsNotContaining() {
-        expected = List.of(
+        List<String> expected = List.of(
                 "noot [noot aap aap] aap"
         );
         BlackLabIndex index = testIndex.index();

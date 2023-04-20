@@ -34,8 +34,9 @@ public class TestUtil {
             Assert.assertEquals(ord + " doc id", actualDocId, actual.docID());
             if (actualDocId == DocIdSetIterator.NO_MORE_DOCS)
                 break;
-            Assert.assertEquals(ord + " initial start -1", -1, actual.startPosition());
-            Assert.assertEquals(ord + " initial start -1", -1, actual.endPosition());
+            // Not true if spans have been advanced to a specific document
+            //Assert.assertEquals(ord + " initial start -1", -1, actual.startPosition());
+            //Assert.assertEquals(ord + " initial start -1", -1, actual.endPosition());
             boolean first = true;
             while (true) {
                 int actualStartPos = actual.nextStartPosition();
