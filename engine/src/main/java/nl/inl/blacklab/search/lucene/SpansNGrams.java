@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
@@ -239,4 +241,45 @@ class SpansNGrams extends BLSpans {
         return 0;
     }
 
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        DocIdSetIterator approximation = new DocIdSetIterator() {
+            int doc = -1;
+
+            @Override
+            public int docID() {
+                return doc;
+            }
+
+            @Override
+            public int nextDoc() {
+                return advance(doc + 1);
+            }
+
+            @Override
+            public int advance(int target) {
+                if (target >= maxDoc) {
+                    return doc = NO_MORE_DOCS;
+                }
+                return doc = target;
+            }
+
+            @Override
+            public long cost() {
+                return maxDoc;
+            }
+        };
+        return new TwoPhaseIterator(approximation) {
+            @Override
+            public boolean matches() throws IOException {
+                // Any document that can fit the smallest N-gram is a match
+                return lengthGetter.getFieldLength(approximation.docID()) >= min;
+            }
+
+            @Override
+            public float matchCost() {
+                return 0;
+            }
+        };
+    }
 }
