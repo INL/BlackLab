@@ -99,8 +99,8 @@ class SpansNGrams extends BLSpans {
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS;
             }
+            // Go to next nondeleted doc
             boolean currentDocIsDeletedDoc;
-            boolean currentDocIsMetadataDoc;
             do {
                 currentDoc++;
                 currentDocIsDeletedDoc = currentDoc < maxDoc && liveDocs != null && !liveDocs.get(currentDoc);
@@ -112,9 +112,10 @@ class SpansNGrams extends BLSpans {
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS; // no more docs; we're done
             }
+            // Get document length and reset currentStart/currentEnd so we can check if there's actually hits
             currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
-        } while (nextStartPosition() == NO_MORE_POSITIONS);
+        } while (currentDocLength < min || nextStartPosition() == NO_MORE_POSITIONS);
         alreadyAtFirstMatch = true;
 
         return currentDoc;
@@ -242,49 +243,8 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
+        // We have no inner clause and therefore no fast approximation
         return null;
-//        DocIdSetIterator approximation = new DocIdSetIterator() {
-//            int doc = -1;
-//
-//            @Override
-//            public int docID() {
-//                return doc;
-//            }
-//
-//            @Override
-//            public int nextDoc() {
-//                return advance(doc + 1);
-//            }
-//
-//            @Override
-//            public int advance(int target) {
-//                if (target >= maxDoc) {
-//                    doc = NO_MORE_DOCS;
-//                    return NO_MORE_DOCS;
-//                }
-//                if (doc == target)
-//                    doc++; // per contract of advance()
-//                else
-//                    doc = target;
-//                return doc;
-//            }
-//
-//            @Override
-//            public long cost() {
-//                return maxDoc;
-//            }
-//        };
-//        return new TwoPhaseIterator(approximation) {
-//            @Override
-//            public boolean matches() throws IOException {
-//                // Any document that can fit the smallest N-gram is a match
-//                return lengthGetter.getFieldLength(approximation.docID()) >= min;
-//            }
-//
-//            @Override
-//            public float matchCost() {
-//                return 0;
-//            }
-//        };
     }
+
 }
