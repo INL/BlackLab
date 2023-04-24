@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
@@ -301,7 +302,13 @@ class SpansNot extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return 0;
+        return clause.positionsCost();
     }
 
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        // An approximation of our clause doesn't help us eliminate documents,
+        // because we can only eliminate a document if we know its clause matches all tokens.
+        return super.asTwoPhaseIterator();
+    }
 }

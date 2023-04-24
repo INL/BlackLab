@@ -243,8 +243,8 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
-        // We have no inner clause and therefore no fast approximation
-        return null;
+        // We have no inner clause and therefore no fast approximation we can use to skip documents.
+        return super.asTwoPhaseIterator();
     }
 
 }
