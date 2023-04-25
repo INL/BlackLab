@@ -42,7 +42,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     private int groupIndex;
 
     /** Relation type we're looking for */
-    private String relationType;
+    private final String relationType;
 
     /**
      * Construct SpansRelations.

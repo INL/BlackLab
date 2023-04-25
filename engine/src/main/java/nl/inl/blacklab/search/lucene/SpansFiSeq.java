@@ -13,9 +13,6 @@ import nl.inl.blacklab.search.fimatch.NfaState;
  */
 class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
 
-    /** What doc is the anchorSpans in? */
-    private int anchorDoc = -1;
-
     /** Where to get forward index tokens for the current doc */
     private ForwardIndexDocument currentFiDoc;
 
@@ -86,7 +83,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int nextStartPosition() throws IOException {
-        if (anchorDoc == NO_MORE_DOCS)
+        if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;
 
         if (alreadyAtFirstMatch) {
@@ -111,7 +108,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
-        if (anchorDoc == NO_MORE_DOCS)
+        if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;
 
         if (alreadyAtFirstMatch) {

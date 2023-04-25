@@ -221,7 +221,7 @@ class SpansSequenceWithGap extends BLSpans {
 
         // Are we done with this document?
         if (leftStart == NO_MORE_POSITIONS) {
-            leftStart = rightEnd = NO_MORE_POSITIONS;
+            rightEnd = NO_MORE_POSITIONS;
             return NO_MORE_POSITIONS;
         }
         

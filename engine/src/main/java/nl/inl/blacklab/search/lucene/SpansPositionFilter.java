@@ -177,7 +177,7 @@ class SpansPositionFilter extends BLSpans {
                         }
                     } else
                         filter.nextBucket();
-                } else if (producerDoc < filterDoc) {
+                } else {
                     if (invert) {
                         // For negative filters, lagging producer spans is ok. This just means
                         // all hits in the current producer doc are matches.

@@ -17,7 +17,7 @@ class SpansTagsExternal extends BLFilterSpans<BLSpans> {
     private int end = -1; // -1: not nexted yet. -2: payload not read yet.
 
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
-    private boolean payloadIndicatesPrimaryValues;
+    private final boolean payloadIndicatesPrimaryValues;
 
     /**
      * Construct SpansTags.

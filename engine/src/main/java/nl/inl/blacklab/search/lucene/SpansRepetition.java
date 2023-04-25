@@ -101,7 +101,7 @@ class SpansRepetition extends BLSpans {
 
                 @Override
                 public String toString() {
-                    return "SpansRepetition@asTwoPhaseIterator(in=" + in + ")";
+                    return "SpansRepetition@asTwoPhaseIterator(source=" + source + ", in=" + in + ")";
                 }
             };
         } else {
@@ -120,7 +120,7 @@ class SpansRepetition extends BLSpans {
 
                 @Override
                 public String toString() {
-                    return "SpansRepetition@asTwoPhaseIterator(in=" + in + ")";
+                    return "SpansRepetition@asTwoPhaseIterator(source=" + source + ")";
                 }
             };
         }

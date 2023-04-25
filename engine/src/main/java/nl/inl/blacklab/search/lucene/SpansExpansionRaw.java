@@ -94,7 +94,7 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
     private void checkMinMax() {
         if (min > this.max)
             throw new IllegalArgumentException("min > max");
-        if (min < 0 || this.max < 0)
+        if (min < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
     }
 
@@ -200,7 +200,7 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
      */
     private void resetExpand() throws IOException {
         if (clauseStart == NO_MORE_POSITIONS) {
-            clauseStart = start = end = NO_MORE_POSITIONS;
+            start = end = NO_MORE_POSITIONS;
             return;
         }
         while (true) {

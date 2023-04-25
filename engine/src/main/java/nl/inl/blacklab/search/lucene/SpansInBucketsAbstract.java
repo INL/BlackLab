@@ -239,7 +239,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
         TwoPhaseIterator inner = source.asTwoPhaseIterator();
-        if (inner == null) {
+        if (inner != null) {
             return new TwoPhaseIterator(inner.approximation()) {
                 @Override
                 public boolean matches() throws IOException {

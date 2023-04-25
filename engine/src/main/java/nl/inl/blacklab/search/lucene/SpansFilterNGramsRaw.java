@@ -81,7 +81,7 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
             throw new IllegalArgumentException("min > max");
-        if (min < 0 || this.max < 0)
+        if (min < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
@@ -125,7 +125,7 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
         switch (op) {
         case CONTAINING:
             end++;
-            while (!atValidNGram) {
+            while (true) {
                 if (end - start <= max && end <= tokenLength) {
                     // N-gram is within allowed size and not beyond end of document
                     atValidNGram = true;

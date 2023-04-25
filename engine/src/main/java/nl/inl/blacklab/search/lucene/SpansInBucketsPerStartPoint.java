@@ -3,8 +3,8 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
@@ -47,7 +47,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
      * @param source (startpoint-sorted) source spans
      */
     public SpansInBucketsPerStartPoint(BLSpans source) {
-        this.source = source; //Sort
+        this.source = Objects.requireNonNull(source); //Sort
     }
 
     @Override
@@ -108,7 +108,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
             capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
         }
 
-        doCapturedGroups = clauseCapturesGroups && source != null && hitQueryContext != null
+        doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
                 && hitQueryContext.numberOfMatchInfos() > 0;
 
         bucketSize = 0;
@@ -131,16 +131,9 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
         if (currentDoc >= target) {
             return nextDoc();
         }
-
-        if (currentDoc == NO_MORE_DOCS)
-            return DocIdSetIterator.NO_MORE_DOCS;
-
-        if (currentDoc < target) {
-            currentDoc = source.advance(target);
-            currentSpansStart = source.nextStartPosition();
-            currentBucketStart = -1; // no bucket yet
-        }
-
+        currentDoc = source.advance(target);
+        currentSpansStart = source.nextStartPosition();
+        currentBucketStart = -1; // no bucket yet
         return currentDoc;
     }
 
