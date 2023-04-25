@@ -2,11 +2,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
-
 /**
- * Finds all sequences of consecutive hits from the source spans of the
+ * Finds all sequences of consecutive hits from the in spans of the
  * specified min and max lengths. Used to implement repetition operators.
  *
  * This generates all possible sequences of consecutive hits, so if we search
@@ -14,14 +11,7 @@ import org.apache.lucene.search.spans.SpanCollector;
  * length 2, and 1 hit of length 3. In the future, this should be made
  * configurable (to specifically support greedy matching, etc.)
  */
-class SpansRepetition extends BLSpans {
-    private final SpansInBuckets source;
-
-    /**
-     * If -1: not started yet. If NO_MORE_DOCS: done. Otherwise: doc id.
-     */
-    private int currentDoc = -1;
-
+class SpansRepetition extends BLFilterDocsSpans<SpansInBuckets> {
     boolean moreBuckets = false;
 
     private final int min;
@@ -45,7 +35,7 @@ class SpansRepetition extends BLSpans {
      */
     public SpansRepetition(BLSpans source, int min, int max) {
         // Find all consecutive matches in this Spans
-        this.source = new SpansInBucketsConsecutive(source);
+        super(new SpansInBucketsConsecutive(source));
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
@@ -55,78 +45,21 @@ class SpansRepetition extends BLSpans {
     }
 
     @Override
-    public int docID() {
-        return currentDoc;
-    }
-
-    @Override
     public int endPosition() {
         if (alreadyAtFirstMatch)
             return -1; // .nextStartPosition() not called yet
         if (!moreBuckets)
             return NO_MORE_POSITIONS;
-        return source.endPosition(firstToken + numRepetitions - 1);
+        return in.endPosition(firstToken + numRepetitions - 1);
     }
 
     @Override
     public int nextDoc() throws IOException {
         alreadyAtFirstMatch = false;
-
-        if (currentDoc == NO_MORE_DOCS)
-            return NO_MORE_DOCS;
-
-        // Go to next doc (we don't know if it has a match)
-        currentDoc = source.nextDoc();
-        // From here, find the first doc (possibly this one) that has a match
-        while (currentDoc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
-            currentDoc = source.nextDoc();
-        }
-        return currentDoc;
+        return super.nextDoc();
     }
 
-    @Override
-    public TwoPhaseIterator asTwoPhaseIterator() {
-        TwoPhaseIterator in = source.asTwoPhaseIterator();
-        if (in != null) {
-            return new TwoPhaseIterator(in.approximation()) {
-                @Override
-                public boolean matches() throws IOException {
-                    return twoPhaseCurrentDocMatches();
-                }
-
-                @Override
-                public float matchCost() {
-                    return in.matchCost();
-                }
-
-                @Override
-                public String toString() {
-                    return "SpansRepetition@asTwoPhaseIterator(source=" + source + ", in=" + in + ")";
-                }
-            };
-        } else {
-            // wrapped instance has no approximation, but
-            // we can still defer matching until absolutely needed.
-            return new TwoPhaseIterator(source) {
-                @Override
-                public boolean matches() throws IOException {
-                    return twoPhaseCurrentDocMatches();
-                }
-
-                @Override
-                public float matchCost() {
-                    return source.positionsCost(); // overestimate
-                }
-
-                @Override
-                public String toString() {
-                    return "SpansRepetition@asTwoPhaseIterator(source=" + source + ")";
-                }
-            };
-        }
-    }
-
-    private boolean twoPhaseCurrentDocMatches() throws IOException {
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
         // See if there's a bucket of matches in this doc
         moreBuckets = nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
         if (moreBuckets) {
@@ -145,18 +78,17 @@ class SpansRepetition extends BLSpans {
      *         more matching buckets
      */
     private int nextBucket() throws IOException {
-        moreBuckets = source.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
+        moreBuckets = in.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
         while (moreBuckets) {
-            if (source.bucketSize() >= min) {
+            if (in.bucketSize() >= min) {
                 // This stretch is large enough to get a repetition hit;
                 // Position us at the first hit and remember we're already there.
                 firstToken = 0;
                 numRepetitions = min;
-                currentDoc = source.docID();
-                return source.startPosition(firstToken);
+                return in.startPosition(firstToken);
             }
             // Not large enough; try next bucket
-            moreBuckets = source.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
+            moreBuckets = in.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
         }
         return SpansInBuckets.NO_MORE_BUCKETS;
     }
@@ -168,29 +100,29 @@ class SpansRepetition extends BLSpans {
      */
     @Override
     public int nextStartPosition() throws IOException {
-        if (currentDoc == NO_MORE_DOCS || !moreBuckets)
+        if (in.docID() == NO_MORE_DOCS || !moreBuckets)
             return NO_MORE_POSITIONS;
 
         if (alreadyAtFirstMatch) {
             // We're already at the first match in the document, because
             // we needed to check if there were matches at all. Return it now.
             alreadyAtFirstMatch = false;
-            return source.startPosition(firstToken);
+            return in.startPosition(firstToken);
         }
 
         // Go to the next hit length for this start point in the current bucket.
         numRepetitions++;
 
         // Find the first valid hit in the bucket
-        if (numRepetitions > max || firstToken + numRepetitions > source.bucketSize()) {
+        if (numRepetitions > max || firstToken + numRepetitions > in.bucketSize()) {
             // On to the next start point.
             firstToken++;
             numRepetitions = min;
         }
 
-        if (firstToken + numRepetitions <= source.bucketSize()) {
+        if (firstToken + numRepetitions <= in.bucketSize()) {
             // Still a valid rep. hit.
-            return source.startPosition(firstToken);
+            return in.startPosition(firstToken);
         }
 
         // No valid hits left; on to the next matching bucket
@@ -208,22 +140,13 @@ class SpansRepetition extends BLSpans {
      * Go to the specified document, if it has hits. If not, go to the next document
      * containing hits.
      *
-     * @param doc the document number to skip to / over
+     * @param target the document number to skip to / over
      * @return true if we're at a valid hit, false if not
      */
     @Override
-    public int advance(int doc) throws IOException {
+    public int advance(int target) throws IOException {
         alreadyAtFirstMatch = false;
-
-        if (currentDoc != NO_MORE_DOCS) {
-            // Go to first doc at or after target that has a match.
-            currentDoc = source.advance(doc);
-            // From here, find next match in this or further doc
-            while (currentDoc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
-                currentDoc = nextDoc();
-            }
-        }
-        return currentDoc;
+        return super.advance(target);
     }
 
     /**
@@ -235,38 +158,17 @@ class SpansRepetition extends BLSpans {
             return -1; // .nextStartPosition() not called yet
         if (!moreBuckets)
             return NO_MORE_POSITIONS;
-        return source.startPosition(firstToken);
+        return in.startPosition(firstToken);
     }
 
     @Override
     public String toString() {
-        return "SpansRepetition(" + source + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
-    }
-
-    @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        source.setHitQueryContext(context);
+        return "SpansRepetition(" + in + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
         int index = firstToken + numRepetitions - 1; // use the last match for captured groups
-        source.getMatchInfo(index, relationInfo);
-    }
-
-    @Override
-    public int width() {
-        return 0; // should be source.width(); but not currently supported and we don't use .width()
-    }
-
-    @Override
-    public void collect(SpanCollector collector) {
-        // Should be  source.collect(collector); but not currently supported and we don't use
-        // payloads except in simple queries like SpanQueryTags.
-    }
-
-    @Override
-    public float positionsCost() {
-        return 0;
+        in.getMatchInfo(index, relationInfo);
     }
 }
