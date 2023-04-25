@@ -49,7 +49,7 @@ class SpansRepetition extends BLSpans {
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
             throw new IllegalArgumentException("min > max");
-        if (min < 1 || this.max < 1)
+        if (min < 1)
             throw new IllegalArgumentException("min and max must be at least 1");
     }
 
