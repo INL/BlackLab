@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.BlackLabIndexAbstract;
  * matches per document and eliminates duplicates (hence the 'raw' in the name -
  * not suitable for consumption yet).
  */
-class SpansFilterNGramsRaw2 extends BLFilterDocsSpans<BLSpans> {
+class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
 
     /** Current startPosition() in the clause */
     private int srcStart = -1;
@@ -67,7 +67,7 @@ class SpansFilterNGramsRaw2 extends BLFilterDocsSpans<BLSpans> {
 
     private boolean alreadyAtFirstHit;
 
-    public SpansFilterNGramsRaw2(LeafReader reader, String fieldName, BLSpans clause,
+    public SpansFilterNGramsRaw(LeafReader reader, String fieldName, BLSpans clause,
             SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
         super(clause);
         if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT

@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.FilterSpans;
-import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -13,7 +12,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 /**
  * Gets spans for a certain XML element.
  */
-class SpansTagsExternal extends BLFilterSpans {
+class SpansTagsExternal extends BLFilterSpans<BLSpans> {
 
     private int end = -1; // -1: not nexted yet. -2: payload not read yet.
 
@@ -36,7 +35,7 @@ class SpansTagsExternal extends BLFilterSpans {
     }
 
     @Override
-    protected FilterSpans.AcceptStatus accept(Spans candidate) throws IOException {
+    protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         return FilterSpans.AcceptStatus.YES;
     }
 

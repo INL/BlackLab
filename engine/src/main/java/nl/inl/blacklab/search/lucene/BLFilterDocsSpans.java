@@ -20,17 +20,18 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Objects;
 
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * A {@link Spans} implementation wrapping another spans instance, providing a framework for quickly skipping
- * non-matching docs.
+ * A {@link Spans} implementation wrapping another spans instance (or any doc iterator, such as SpansInBuckets),
+ * providing a framework for quickly skipping non-matching docs.
  * <p>
  * Based on Lucene's FilterSpans.
  */
-public abstract class BLFilterDocsSpans<T extends Spans> extends BLSpans {
+public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSpans {
 
     /**
      * The Spans object we're wrapping
@@ -72,12 +73,13 @@ public abstract class BLFilterDocsSpans<T extends Spans> extends BLSpans {
 
     @Override
     public int width() {
-        return in.width();
+        return in instanceof Spans ? ((Spans) in).width() : 0;
     }
 
     @Override
     public void collect(SpanCollector collector) throws IOException {
-        in.collect(collector);
+        if (in instanceof Spans)
+            ((Spans) in).collect(collector);
     }
 
     @Override
@@ -90,7 +92,7 @@ public abstract class BLFilterDocsSpans<T extends Spans> extends BLSpans {
 
     @Override
     public final TwoPhaseIterator asTwoPhaseIterator() {
-        TwoPhaseIterator inner = in.asTwoPhaseIterator();
+        TwoPhaseIterator inner = in instanceof Spans ? ((Spans) in).asTwoPhaseIterator() : null;
         if (inner != null) {
             // wrapped instance has an approximation
             return new TwoPhaseIterator(inner.approximation()) {
@@ -120,7 +122,7 @@ public abstract class BLFilterDocsSpans<T extends Spans> extends BLSpans {
 
                 @Override
                 public float matchCost() {
-                    return in.positionsCost(); // overestimate
+                    return in instanceof Spans ? ((Spans) in).positionsCost() : in.cost(); // overestimate
                 }
 
                 @Override
@@ -133,8 +135,7 @@ public abstract class BLFilterDocsSpans<T extends Spans> extends BLSpans {
 
     @Override
     public float positionsCost() {
-        //throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null
-        return in.positionsCost();
+        return in instanceof Spans ? ((Spans) in).positionsCost() : in.cost(); // overestimate
     }
 
     /**

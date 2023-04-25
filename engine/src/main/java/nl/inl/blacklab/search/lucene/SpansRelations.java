@@ -6,7 +6,6 @@ import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.FilterSpans;
-import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
@@ -20,7 +19,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
  * payload to determine the source and target of the relation. The source and
  * target also define the span that is returned.
  */
-class SpansRelations extends BLFilterSpans {
+class SpansRelations extends BLFilterSpans<BLSpans> {
 
     private final int NOT_YET_NEXTED = -1;
 
@@ -149,7 +148,7 @@ class SpansRelations extends BLFilterSpans {
     }
 
     @Override
-    protected FilterSpans.AcceptStatus accept(Spans candidate) throws IOException {
+    protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         fetchRelationInfo(); // decode the payload
         if (relationInfo.isRoot() && spanMode == MatchInfo.SpanMode.SOURCE) {
             // Root relations have no source
