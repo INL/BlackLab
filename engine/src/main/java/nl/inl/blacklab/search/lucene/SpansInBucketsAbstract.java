@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -32,8 +33,6 @@ import it.unimi.dsi.fastutil.longs.LongComparator;
 abstract class SpansInBucketsAbstract implements SpansInBuckets {
     
     protected final BLSpans source;
-
-    protected int currentDoc = -1;
 
     /** Starts of hits in our bucket */
     private final LongArrayList bucket = new LongArrayList(LIST_INITIAL_CAPACITY);
@@ -114,23 +113,21 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     @Override
     public int nextDoc() throws IOException {
         bucketSize = -1; // not at a valid bucket anymore
-        if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
-            currentDoc = source.nextDoc();
-            if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
+        if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
+            if (source.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
                 source.nextStartPosition(); // start gathering at the first hit
-                //gatherHitsInternal();
             }
         }
-        return currentDoc;
+        return source.docID();
     }
 
     @Override
     public int nextBucket() throws IOException {
-        if (currentDoc < 0) {
+        if (source.docID() < 0) {
             // Not nexted yet, no bucket
             return -1;
         }
-        if (currentDoc == DocIdSetIterator.NO_MORE_DOCS || source.startPosition() == Spans.NO_MORE_POSITIONS)
+        if (source.docID() == DocIdSetIterator.NO_MORE_DOCS || source.startPosition() == Spans.NO_MORE_POSITIONS)
             return NO_MORE_BUCKETS;
         return gatherHitsInternal();
     }
@@ -169,21 +166,18 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     @Override
     public int advance(int target) throws IOException {
         bucketSize = -1; // not at a valid bucket anymore
-        if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
-            if (currentDoc >= target)
+        if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
+            if (source.docID() >= target)
                 nextDoc();
             else {
-                currentDoc = source.advance(target);
-                if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
+                if (source.advance(target) != DocIdSetIterator.NO_MORE_DOCS) {
                     source.nextStartPosition(); // start gathering at the first hit
-                    //gatherHitsInternal();
                 }
             }
         }
-        return currentDoc;
+        return source.docID();
     }
 
-    @SuppressWarnings("unused")
     private int gatherHitsInternal() throws IOException {
         // NOTE: we could call .clear() here, but we don't want to hold on to
         // a lot of memory indefinitely after encountering one huge bucket.
@@ -203,12 +197,12 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
                 && hitQueryContext.numberOfMatchInfos() > 0;
         gatherHits();
-        return currentDoc;
+        return source.docID();
     }
 
     @Override
     public int docID() {
-        return currentDoc;
+        return source.docID();
     }
 
     @Override
@@ -240,4 +234,28 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         }
     }
 
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        TwoPhaseIterator inner = source.asTwoPhaseIterator();
+        return new TwoPhaseIterator(inner.approximation()) {
+            @Override
+            public boolean matches() throws IOException {
+                return false;
+            }
+
+            @Override
+            public float matchCost() {
+                return inner.matchCost();
+            }
+        };
+    }
+
+    public long cost() {
+        return source.cost();
+    }
+
+    @Override
+    public float positionsCost() {
+        return source.positionsCost();
+    }
 }

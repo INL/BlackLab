@@ -126,4 +126,13 @@ public class MockSpansInBuckets implements SpansInBuckets {
         return new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);
     }
 
+    @Override
+    public long cost() {
+        return 0;
+    }
+
+    @Override
+    public float positionsCost() {
+        return 0;
+    }
 }

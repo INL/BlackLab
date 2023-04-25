@@ -190,7 +190,11 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
     @Override
     public long cost() {
-        return 300; // (arbitrary value. This is used for scoring, which we don't use yet)
+        return source.cost();
     }
 
+    @Override
+    public float positionsCost() {
+        return source.positionsCost();
+    }
 }

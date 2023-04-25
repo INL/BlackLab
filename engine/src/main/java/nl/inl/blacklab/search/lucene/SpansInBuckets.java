@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
 /**
@@ -103,4 +104,11 @@ public interface SpansInBuckets {
      */
     void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo);
 
+    default TwoPhaseIterator asTwoPhaseIterator() {
+        return null;
+    }
+
+    public long cost();
+
+    float positionsCost();
 }

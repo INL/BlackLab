@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 
 /**
@@ -76,36 +78,86 @@ class SpansRepetition extends BLSpans {
 
         // Go to next doc (we don't know if it has a match)
         currentDoc = source.nextDoc();
-        if (currentDoc != NO_MORE_DOCS) {
-            // From here, find next match in this or further doc
-            currentDoc = findDocWithMatchingBucket();
-            if (currentDoc != NO_MORE_DOCS)
-                // findDocWithMatchingBucket places us at the first match.
-                alreadyAtFirstMatch = true;
+        // From here, find the first doc (possibly this one) that has a match
+        while (currentDoc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
+            currentDoc = source.nextDoc();
         }
         return currentDoc;
     }
 
-    /**
-     * Go to the next matching bucket, not necessarily in the current doc.
-     * 
-     * @return the doc id, or NO_MORE_DOCS if there's no more buckets.
-     */
-    private int findDocWithMatchingBucket() throws IOException {
-        while (currentDoc != NO_MORE_DOCS) {
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        TwoPhaseIterator in = source.asTwoPhaseIterator();
+        if (in != null) {
+            return new TwoPhaseIterator(in.approximation()) {
+                @Override
+                public boolean matches() throws IOException {
+                    return twoPhaseCurrentDocMatches();
+                }
 
-            // Another bucket in this doc?
-            int startPos = nextBucket();
-            moreBuckets = startPos != SpansInBuckets.NO_MORE_BUCKETS;
-            if (moreBuckets) {
-                // Yes, found one.
-                break;
-            }
+                @Override
+                public float matchCost() {
+                    return in.matchCost();
+                }
 
-            // No more matching buckets; try next doc
-            currentDoc = source.nextDoc();
+                @Override
+                public String toString() {
+                    return "SpansRepetition@asTwoPhaseIterator(in=" + in + ")";
+                }
+            };
+        } else {
+            DocIdSetIterator approximation = new DocIdSetIterator() {
+                @Override
+                public int docID() {
+                    return source.docID();
+                }
+
+                @Override
+                public int nextDoc() throws IOException {
+                    return source.nextDoc();
+                }
+
+                @Override
+                public int advance(int i) throws IOException {
+                    return source.advance(i);
+                }
+
+                @Override
+                public long cost() {
+                    return source.cost();
+                }
+            };
+            // wrapped instance has no approximation, but
+            // we can still defer matching until absolutely needed.
+            return new TwoPhaseIterator(approximation) {
+                @Override
+                public boolean matches() throws IOException {
+                    return twoPhaseCurrentDocMatches();
+                }
+
+                @Override
+                public float matchCost() {
+                    return source.positionsCost(); // overestimate
+                }
+
+                @Override
+                public String toString() {
+                    return "SpansRepetition@asTwoPhaseIterator(in=" + in + ")";
+                }
+            };
         }
-        return currentDoc;
+    }
+
+    private boolean twoPhaseCurrentDocMatches() throws IOException {
+        // See if there's a bucket of matches in this doc
+        moreBuckets = nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
+        if (moreBuckets) {
+            alreadyAtFirstMatch = true;
+            return true;
+        }
+
+        // No more matching buckets.
+        return false;
     }
 
     /**
@@ -188,11 +240,9 @@ class SpansRepetition extends BLSpans {
         if (currentDoc != NO_MORE_DOCS) {
             // Go to first doc at or after target that has a match.
             currentDoc = source.advance(doc);
-            if (currentDoc != NO_MORE_DOCS) {
-                // From here, find next match in this or further doc
-                currentDoc = findDocWithMatchingBucket();
-                if (currentDoc != NO_MORE_DOCS)
-                    alreadyAtFirstMatch = true;
+            // From here, find next match in this or further doc
+            while (currentDoc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
+                currentDoc = nextDoc();
             }
         }
         return currentDoc;
@@ -241,5 +291,4 @@ class SpansRepetition extends BLSpans {
     public float positionsCost() {
         return 0;
     }
-
 }

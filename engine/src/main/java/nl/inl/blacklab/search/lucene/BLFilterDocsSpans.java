@@ -100,7 +100,7 @@ public abstract class BLFilterDocsSpans<T extends Spans> extends BLSpans {
             return new TwoPhaseIterator(inner.approximation()) {
                 @Override
                 public boolean matches() throws IOException {
-                    return inner.matches() && twoPhaseCurrentDocMatches();
+                    return twoPhaseCurrentDocMatches();
                 }
 
                 @Override
