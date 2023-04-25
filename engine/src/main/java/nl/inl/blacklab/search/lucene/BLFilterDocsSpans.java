@@ -59,13 +59,9 @@ public abstract class BLFilterDocsSpans<T extends Spans> extends BLSpans {
     @Override
     public int advance(int target) throws IOException {
         int doc = in.advance(target);
-        while (doc != NO_MORE_DOCS) {
-            if (twoPhaseCurrentDocMatches()) {
-                break;
-            }
+        while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
             doc = in.nextDoc();
         }
-
         return doc;
     }
 

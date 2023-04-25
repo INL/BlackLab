@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 
@@ -106,30 +105,9 @@ class SpansRepetition extends BLSpans {
                 }
             };
         } else {
-            DocIdSetIterator approximation = new DocIdSetIterator() {
-                @Override
-                public int docID() {
-                    return source.docID();
-                }
-
-                @Override
-                public int nextDoc() throws IOException {
-                    return source.nextDoc();
-                }
-
-                @Override
-                public int advance(int i) throws IOException {
-                    return source.advance(i);
-                }
-
-                @Override
-                public long cost() {
-                    return source.cost();
-                }
-            };
             // wrapped instance has no approximation, but
             // we can still defer matching until absolutely needed.
-            return new TwoPhaseIterator(approximation) {
+            return new TwoPhaseIterator(source) {
                 @Override
                 public boolean matches() throws IOException {
                     return twoPhaseCurrentDocMatches();

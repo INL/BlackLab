@@ -167,9 +167,11 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     public int advance(int target) throws IOException {
         bucketSize = -1; // not at a valid bucket anymore
         if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
-            if (source.docID() >= target)
+            if (source.docID() >= target) {
+                // Already at or beyond; go to the next doc
+                // (though we shouldn't rely on this behavior)
                 nextDoc();
-            else {
+            } else {
                 if (source.advance(target) != DocIdSetIterator.NO_MORE_DOCS) {
                     source.nextStartPosition(); // start gathering at the first hit
                 }
@@ -237,17 +239,45 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
         TwoPhaseIterator inner = source.asTwoPhaseIterator();
-        return new TwoPhaseIterator(inner.approximation()) {
-            @Override
-            public boolean matches() throws IOException {
-                return false;
-            }
+        if (inner == null) {
+            return new TwoPhaseIterator(inner.approximation()) {
+                @Override
+                public boolean matches() throws IOException {
+                    bucketSize = -1; // not at a valid bucket anymore
+                    source.nextStartPosition(); // start gathering at the first hit
+                    return true;
+                }
 
-            @Override
-            public float matchCost() {
-                return inner.matchCost();
-            }
-        };
+                @Override
+                public float matchCost() {
+                    return inner.matchCost();
+                }
+
+                @Override
+                public String toString() {
+                    return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ", iter=" + inner + ")";
+                }
+            };
+        } else {
+            return new TwoPhaseIterator(source) {
+                @Override
+                public boolean matches() throws IOException {
+                    bucketSize = -1; // not at a valid bucket anymore
+                    source.nextStartPosition(); // start gathering at the first hit
+                    return true;
+                }
+
+                @Override
+                public float matchCost() {
+                    return source.positionsCost(); // overestimate
+                }
+
+                @Override
+                public String toString() {
+                    return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ")";
+                }
+            };
+        }
     }
 
     public long cost() {

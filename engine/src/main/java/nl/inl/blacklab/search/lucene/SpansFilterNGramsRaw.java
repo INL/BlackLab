@@ -27,13 +27,7 @@ import nl.inl.blacklab.search.BlackLabIndexAbstract;
  * matches per document and eliminates duplicates (hence the 'raw' in the name -
  * not suitable for consumption yet).
  */
-class SpansFilterNGramsRaw extends BLSpans {
-
-    /** The clause to expand */
-    private final BLSpans clause;
-
-    /** Whether or not there's more docs in the clause */
-    private int currentDoc = -1;
+class SpansFilterNGramsRaw2 extends BLFilterDocsSpans<BLSpans> {
 
     /** Current startPosition() in the clause */
     private int srcStart = -1;
@@ -73,15 +67,15 @@ class SpansFilterNGramsRaw extends BLSpans {
 
     private boolean alreadyAtFirstHit;
 
-    public SpansFilterNGramsRaw(LeafReader reader, String fieldName, BLSpans clause,
+    public SpansFilterNGramsRaw2(LeafReader reader, String fieldName, BLSpans clause,
             SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
+        super(clause);
         if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT
                 && op != SpanQueryPositionFilter.Operation.MATCHES) {
             // We need to know document length to properly do expansion to the right
             // OPT: cache this in BlackLabIndex..?
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         }
-        this.clause = clause;
         this.op = op;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
@@ -105,11 +99,6 @@ class SpansFilterNGramsRaw extends BLSpans {
     }
 
     @Override
-    public int docID() {
-        return currentDoc;
-    }
-
-    @Override
     public int endPosition() {
         if (alreadyAtFirstHit)
             return -1; // .nextStartPosition() not called yet
@@ -119,17 +108,7 @@ class SpansFilterNGramsRaw extends BLSpans {
     @Override
     public int nextDoc() throws IOException {
         alreadyAtFirstHit = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            do {
-                currentDoc = clause.nextDoc();
-                if (currentDoc == NO_MORE_DOCS)
-                    return NO_MORE_DOCS;
-                srcStart = srcEnd = start = end = -1;
-                goToNextClauseSpan();
-            } while (start == NO_MORE_POSITIONS);
-            alreadyAtFirstHit = true;
-        }
-        return currentDoc;
+        return super.nextDoc();
     }
 
     @Override
@@ -138,7 +117,7 @@ class SpansFilterNGramsRaw extends BLSpans {
             alreadyAtFirstHit = false;
             return start;
         }
-        if (currentDoc == NO_MORE_DOCS || srcStart == NO_MORE_POSITIONS)
+        if (in.docID() == NO_MORE_DOCS || srcStart == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
 
         // Is there another n-gram for this source hit?
@@ -216,29 +195,21 @@ class SpansFilterNGramsRaw extends BLSpans {
     }
 
     @Override
-    public int advance(int doc) throws IOException {
+    public int advance(int target) throws IOException {
         alreadyAtFirstHit = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            if (currentDoc < doc) {
-                currentDoc = clause.advance(doc);
-                if (currentDoc != NO_MORE_DOCS) {
-                    while (true) {
-                        srcStart = srcEnd = start = end = -1;
-                        goToNextClauseSpan();
-                        if (start != NO_MORE_POSITIONS) {
-                            alreadyAtFirstHit = true;
-                            return currentDoc;
-                        }
-                        currentDoc = clause.nextDoc();
-                        if (currentDoc == NO_MORE_DOCS)
-                            return NO_MORE_DOCS;
-                    }
-                }
-            } else {
-                nextDoc(); // per Lucene's specification, always at least go to the next doc
-            }
+        return super.advance(target);
+    }
+
+    @Override
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        alreadyAtFirstHit = false;
+        srcStart = srcEnd = start = end = -1;
+        goToNextClauseSpan();
+        if (start != NO_MORE_POSITIONS) {
+            alreadyAtFirstHit = true;
+            return true;
         }
-        return currentDoc;
+        return false;
     }
 
     /**
@@ -252,14 +223,14 @@ class SpansFilterNGramsRaw extends BLSpans {
      *         expansion, NO_MORE_POSITIONS if we're done
      */
     private int goToNextClauseSpan() throws IOException {
-        srcStart = clause.nextStartPosition();
+        srcStart = in.nextStartPosition();
         if (srcStart == NO_MORE_POSITIONS) {
             start = end = srcEnd = NO_MORE_POSITIONS;
             return NO_MORE_POSITIONS;
         }
         while (true) {
             // Determine limits and set to initial n-gram
-            srcEnd = clause.endPosition();
+            srcEnd = in.endPosition();
             switch (op) {
             case MATCHES:
                 int len = srcEnd - rightAdjust - (srcStart - leftAdjust);
@@ -273,9 +244,9 @@ class SpansFilterNGramsRaw extends BLSpans {
                 break;
             case CONTAINING:
                 // Do we know this document's length already?
-                if (currentDoc != tokenLengthDocId) {
+                if (in.docID() != tokenLengthDocId) {
                     // No, determine length now
-                    tokenLengthDocId = currentDoc;
+                    tokenLengthDocId = in.docID();
                     tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
 
@@ -296,9 +267,9 @@ class SpansFilterNGramsRaw extends BLSpans {
                 break;
             case CONTAINING_AT_START:
                 // Do we know this document's length already?
-                if (currentDoc != tokenLengthDocId) {
+                if (in.docID() != tokenLengthDocId) {
                     // No, determine length now
-                    tokenLengthDocId = currentDoc;
+                    tokenLengthDocId = in.docID();
                     tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
 
@@ -360,33 +331,33 @@ class SpansFilterNGramsRaw extends BLSpans {
     @Override
     public String toString() {
         String adj = (leftAdjust != 0 || rightAdjust != 0) ? ", " + leftAdjust + ", " + rightAdjust : "";
-        return "SpansFilterNGrams(" + clause + ", " + op + ", " + min + ", " + BLSpanQuery.inf(max) + adj + ")";
+        return "SpansFilterNGrams(" + in + ", " + op + ", " + min + ", " + BLSpanQuery.inf(max) + adj + ")";
     }
 
     @Override
     public void passHitQueryContextToClauses(HitQueryContext context) {
-        clause.setHitQueryContext(context);
+        in.setHitQueryContext(context);
     }
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureMatchInfo)
             return;
-        clause.getMatchInfo(relationInfo);
+        in.getMatchInfo(relationInfo);
     }
 
     @Override
     public int width() {
-        return clause.width();
+        return in.width();
     }
 
     @Override
     public void collect(SpanCollector collector) throws IOException {
-        clause.collect(collector);
+        in.collect(collector);
     }
 
     @Override
     public float positionsCost() {
-        return clause.positionsCost();
+        return in.positionsCost();
     }
 }
