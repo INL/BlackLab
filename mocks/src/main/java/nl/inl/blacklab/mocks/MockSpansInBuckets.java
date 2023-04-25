@@ -133,6 +133,6 @@ public class MockSpansInBuckets extends SpansInBuckets {
 
     @Override
     public float positionsCost() {
-        return 0;
+        return start.length;
     }
 }

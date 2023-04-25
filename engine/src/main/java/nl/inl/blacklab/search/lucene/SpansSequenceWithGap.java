@@ -1,8 +1,13 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 
+import org.apache.lucene.search.ConjunctionDISI;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.Spans;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the
@@ -45,7 +50,7 @@ import org.apache.lucene.search.spans.SpanCollector;
  * matches per document and eliminates duplicates.
  */
 class SpansSequenceWithGap extends BLSpans {
-    
+
     /** Allowable gap size between parts of a sequence. */
     public static class Gap {
         
@@ -127,7 +132,10 @@ class SpansSequenceWithGap extends BLSpans {
     /** Right clause matches, collected for the whole document, sorted by startpoint. */
     private final SpansInBucketsPerDocument right;
 
-    /** 
+    /** Approximation for two-phase iterator */
+    private final DocIdSetIterator conjunction;
+
+    /**
      * First index in the right bucket that we could possibly match to a span with the current
      * start position.
      * 
@@ -146,8 +154,6 @@ class SpansSequenceWithGap extends BLSpans {
      * First index in the right bucket that we could match to the end of the current left span.
      */
     int indexInBucketLeftEnd = -2; // -2 == not started yet; -1 == just started a bucket
-    
-    int currentDoc = -1;
 
     int leftStart = -1;
 
@@ -160,6 +166,7 @@ class SpansSequenceWithGap extends BLSpans {
      */
     private boolean alreadyAtFirstMatch = false;
 
+    /** Highest acceptable value for start of right match given the current left end and allowable gap */
     private int rightStartLast;
 
     /**
@@ -173,11 +180,12 @@ class SpansSequenceWithGap extends BLSpans {
         this.left = left;
         this.gap = gap;
         this.right = new SpansInBucketsPerDocument(right);
+        this.conjunction = ConjunctionDISI.intersectIterators(List.of(left, this.right));
     }
 
     @Override
     public int docID() {
-        return currentDoc;
+        return conjunction.docID();
     }
 
     @Override
@@ -190,19 +198,38 @@ class SpansSequenceWithGap extends BLSpans {
     @Override
     public int nextDoc() throws IOException {
         alreadyAtFirstMatch = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            currentDoc = left.nextDoc();
-            leftStart = -1;
-            if (currentDoc != NO_MORE_DOCS) {
-                right.nextDoc();
-                right.nextBucket();
-                indexInBucket = -1;
-                indexInBucketLeftEnd = -1;
-                rightEnd = -1;
-                realignDoc();
-            }
+        int doc = conjunction.nextDoc();
+        while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
+            doc = conjunction.nextDoc();
         }
-        return currentDoc;
+        return doc;
+    }
+
+    @Override
+    public int advance(int target) throws IOException {
+        alreadyAtFirstMatch = false;
+        int doc = conjunction.advance(target);
+        while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
+            doc = conjunction.nextDoc();
+        }
+        return doc;
+    }
+
+    private boolean twoPhaseCurrentDocMatches() throws IOException {
+        // Does this doc have any matches?
+        assert left.startPosition() == -1;
+        leftStart = left.nextStartPosition();
+        right.nextBucket();
+        indexInBucket = -1;
+        indexInBucketLeftEnd = -1;
+        rightEnd = -1;
+        realignPos();
+        if (leftStart != NO_MORE_POSITIONS) {
+            // Yes. Remember that we're already on the first match
+            alreadyAtFirstMatch = true;
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -251,58 +278,6 @@ class SpansSequenceWithGap extends BLSpans {
         leftStart = left.nextStartPosition();
         realignPos();
         return leftStart;
-    }
-
-    /**
-     * Puts both spans in the next doc (possibly the current one) that has a match
-     * in it.
-     *
-     * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
-     */
-    private int realignDoc() throws IOException {
-        while (true) {
-            // Put in same doc if necessary
-            while (currentDoc != right.docID()) {
-                while (currentDoc < right.docID()) {
-                    currentDoc = left.advance(right.docID());
-                    if (currentDoc == NO_MORE_DOCS) {
-                        leftStart = rightEnd = NO_MORE_POSITIONS;
-                        return NO_MORE_DOCS;
-                    }
-                    leftStart = -1;
-                    rightEnd = -1;
-                }
-                while (right.docID() < currentDoc) {
-                    int rightDoc = right.advance(currentDoc);
-                    if (rightDoc == NO_MORE_DOCS) {
-                        currentDoc = NO_MORE_DOCS;
-                        leftStart = rightEnd = NO_MORE_POSITIONS;
-                        return NO_MORE_DOCS;
-                    }
-                    right.nextBucket();
-                    rightEnd = -1;
-                    indexInBucket = 0;
-                    indexInBucketLeftEnd = -1;
-                }
-            }
-
-            // Does this doc have any matches?
-            leftStart = left.nextStartPosition();
-            realignPos();
-            if (leftStart != NO_MORE_POSITIONS) {
-                // Yes. Remember that we're already on the first match and return the doc id.
-                alreadyAtFirstMatch = true;
-                return currentDoc;
-            }
-            
-            // No matches in this doc; on to the next
-            currentDoc = left.nextDoc();
-            if (currentDoc == NO_MORE_DOCS) {
-                // We're out of docs.
-                leftStart = rightEnd = NO_MORE_POSITIONS;
-                return NO_MORE_DOCS;
-            }
-        }
     }
 
     /**
@@ -358,28 +333,6 @@ class SpansSequenceWithGap extends BLSpans {
         }
     }
 
-    @Override
-    public int advance(int doc) throws IOException {
-        alreadyAtFirstMatch = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            currentDoc = left.advance(doc);
-            if (currentDoc != NO_MORE_DOCS) {
-                leftStart = -1;
-                int rightDoc = right.advance(doc);
-                if (rightDoc == NO_MORE_DOCS)
-                    currentDoc = NO_MORE_DOCS;
-                else {
-                    right.nextBucket();
-                    rightEnd = -1;
-                    indexInBucket = 0;
-                    indexInBucketLeftEnd = -1;
-                    realignDoc();
-                }
-            }
-        }
-        return currentDoc;
-    }
-
     /**
      * @return start of the current hit
      */
@@ -426,4 +379,29 @@ class SpansSequenceWithGap extends BLSpans {
         return left.positionsCost();
     }
 
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        float totalMatchCost = 0;
+        // Compute the matchCost as the total matchCost/positionsCostant of the sub spans.
+        for (DocIdSetIterator iter : List.of(left, right)) {
+            TwoPhaseIterator tpi = iter instanceof Spans ? ((Spans) iter).asTwoPhaseIterator() : null;
+            if (tpi != null) {
+                totalMatchCost += tpi.matchCost();
+            } else {
+                totalMatchCost += iter instanceof Spans ? ((Spans)iter).positionsCost() : iter.cost();
+            }
+        }
+        final float matchCost = totalMatchCost;
+        return new TwoPhaseIterator(conjunction) {
+            @Override
+            public boolean matches() throws IOException {
+                return twoPhaseCurrentDocMatches();
+            }
+
+            @Override
+            public float matchCost() {
+                return matchCost;
+            }
+        };
+    }
 }

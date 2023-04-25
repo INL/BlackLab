@@ -126,10 +126,6 @@ abstract class BLConjunctionSpans extends BLSpans {
         //throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
-    public BLSpans[] getSubSpans() {
-        return subSpans;
-    }
-
     /**
      * Collect postings data from the leaves of the current Spans.
      * <p>

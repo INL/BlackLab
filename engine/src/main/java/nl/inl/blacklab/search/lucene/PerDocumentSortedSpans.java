@@ -166,6 +166,6 @@ final class PerDocumentSortedSpans extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return 0; // should maybe be bucketedSpans.positionsCost()
+        return bucketedSpans.positionsCost();
     }
 }
