@@ -30,7 +30,7 @@ import it.unimi.dsi.fastutil.longs.LongComparator;
  * Also, SpansInBuckets assumes all hits in a bucket are from a single document.
  *
  */
-abstract class SpansInBucketsAbstract implements SpansInBuckets {
+abstract class SpansInBucketsAbstract extends SpansInBuckets {
     
     protected final BLSpans source;
 

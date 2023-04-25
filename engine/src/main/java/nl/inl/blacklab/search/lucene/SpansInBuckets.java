@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
@@ -26,40 +27,40 @@ import org.apache.lucene.search.spans.Spans;
  * Note that SpansInBuckets assumes all hits in a bucket are from a single
  * document.
  */
-public interface SpansInBuckets {
+public abstract class SpansInBuckets extends DocIdSetIterator {
     
     /** What initial capacity to reserve for lists to avoid too much reallocation */
-    int LIST_INITIAL_CAPACITY = 1000;
+    public static final int LIST_INITIAL_CAPACITY = 1000;
     
     /** Load factor determines when a HashMap is rehashed to increase its size (percentage filled) */
-    double HASHMAP_DEFAULT_LOAD_FACTOR = 0.75;
+    public static final double HASHMAP_DEFAULT_LOAD_FACTOR = 0.75;
     
     /** Initial capacity for HashMap to avoid too much reallocation */
-    int HASHMAP_INITIAL_CAPACITY = (int)(LIST_INITIAL_CAPACITY / HASHMAP_DEFAULT_LOAD_FACTOR);
+    public static final int HASHMAP_INITIAL_CAPACITY = (int)(LIST_INITIAL_CAPACITY / HASHMAP_DEFAULT_LOAD_FACTOR);
 
     /** Should we reallocate lists/maps if they grow larger than COLLECTION_REALLOC_THRESHOLD?
      * If no, we potentially use too much memory while searching.
      * If yes, we potentially create a lot of garbage and fragment the heap.
      */
-    boolean REALLOCATE_IF_TOO_LARGE = false;
+    public static final boolean REALLOCATE_IF_TOO_LARGE = false;
     
     /** When to reallocate lists/maps to avoid holding on to too much memory */
-    int COLLECTION_REALLOC_THRESHOLD = 30_000;
+    public static final int COLLECTION_REALLOC_THRESHOLD = 30_000;
     
-    int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
+    public static final int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
     /**
      * Document id of current bucket
      *
      * @return Document id of current bucket
      */
-    int docID();
+    public abstract int docID();
 
-    int bucketSize();
+    public abstract int bucketSize();
 
-    int startPosition(int index);
+    public abstract int startPosition(int index);
 
-    int endPosition(int index);
+    public abstract int endPosition(int index);
 
     /**
      * Go to the next document.
@@ -68,7 +69,7 @@ public interface SpansInBuckets {
      *
      * @return docID if we're at the next valid doc, NO_MORE_DOCS if we're done
      */
-    int nextDoc() throws IOException;
+    public abstract int nextDoc() throws IOException;
 
     /**
      * Go to the next bucket in this doc.
@@ -76,7 +77,7 @@ public interface SpansInBuckets {
      * @return docID if we're at the next valid bucket, NO_MORE_BUCKETS if we're
      *         done
      */
-    int nextBucket() throws IOException;
+    public abstract int nextBucket() throws IOException;
 
     /**
      * Skip to specified document id.
@@ -86,14 +87,14 @@ public interface SpansInBuckets {
      * @param target document id to skip to
      * @return docID if we're at a valid document, NO_MORE_DOCS if we're done
      */
-    int advance(int target) throws IOException;
+    public abstract int advance(int target) throws IOException;
 
     /**
      * Pass the hit query context to the underlying BLSpans.
      *
      * @param context the hit query context
      */
-    void setHitQueryContext(HitQueryContext context);
+    public abstract void setHitQueryContext(HitQueryContext context);
 
     /**
      * Get the captured groups information for the current hit.
@@ -102,13 +103,13 @@ public interface SpansInBuckets {
      *            for
      * @param matchInfo where to add the captured group information
      */
-    void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo);
+    public abstract void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo);
 
-    default TwoPhaseIterator asTwoPhaseIterator() {
+    public TwoPhaseIterator asTwoPhaseIterator() {
         return null;
     }
 
-    public long cost();
+    public abstract long cost();
 
-    float positionsCost();
+    public abstract float positionsCost();
 }

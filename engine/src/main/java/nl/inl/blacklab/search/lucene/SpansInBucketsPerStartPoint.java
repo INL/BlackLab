@@ -16,7 +16,7 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
  * efficient to just save the endpoints for the current start point (the source
  * spans is normally startpoint-sorted already).
  */
-class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuckets {
+class SpansInBucketsPerStartPoint extends SpansInBuckets {
     protected final BLSpans source;
 
     protected int currentDoc = -1;

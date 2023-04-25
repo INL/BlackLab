@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.lucene.SpansInBuckets;
  * Stub SpansInBuckets class for testing. Takes arrays and iterates through
  * 'hits' from these arrays.
  */
-public class MockSpansInBuckets implements SpansInBuckets {
+public class MockSpansInBuckets extends SpansInBuckets {
 
     private final int[] start;
 
