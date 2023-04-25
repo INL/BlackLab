@@ -238,13 +238,16 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return 0;
+        // we have no clause to derive this from; we should really return a value indicating
+        // how many n-grams are in the entire corpus?
+        // For now we just return a random value that seems fairly high, but maybe look into this more
+        return 10_000;
     }
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
         // We have no inner clause and therefore no fast approximation we can use to skip documents.
-        return super.asTwoPhaseIterator();
+        return null;
     }
 
 }

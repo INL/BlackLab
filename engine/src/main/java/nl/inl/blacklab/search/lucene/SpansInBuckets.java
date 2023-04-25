@@ -105,9 +105,7 @@ public abstract class SpansInBuckets extends DocIdSetIterator {
      */
     public abstract void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo);
 
-    public TwoPhaseIterator asTwoPhaseIterator() {
-        return null;
-    }
+    public abstract TwoPhaseIterator asTwoPhaseIterator();
 
     public abstract long cost();
 

@@ -117,13 +117,13 @@ abstract class BLConjunctionSpans extends BLSpans {
 
     @Override
     public float positionsCost() {
-        // Sum the positionsCost of all our subSpans
-        float cost = 0;
-        for (BLSpans spans : subSpans) {
-            cost += spans.positionsCost();
-        }
-        return cost;
-        //throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
+//        // Sum the positionsCost of all our subSpans
+//        float cost = 0;
+//        for (BLSpans spans : subSpans) {
+//            cost += spans.positionsCost();
+//        }
+//        return cost;
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
     /**

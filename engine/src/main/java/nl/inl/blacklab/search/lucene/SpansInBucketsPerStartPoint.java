@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
@@ -184,6 +185,11 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
     @Override
     public long cost() {
         return source.cost();
+    }
+
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        return null;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.mocks;
 
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -129,6 +130,11 @@ public class MockSpansInBuckets extends SpansInBuckets {
     @Override
     public long cost() {
         return 0;
+    }
+
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        return null;
     }
 
     @Override
