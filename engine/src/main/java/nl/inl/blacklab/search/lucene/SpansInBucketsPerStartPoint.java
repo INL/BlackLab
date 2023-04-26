@@ -196,4 +196,9 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
     public float positionsCost() {
         return source.positionsCost();
     }
+
+    @Override
+    public int width() {
+        return source.width();
+    }
 }

@@ -110,4 +110,6 @@ public abstract class SpansInBuckets extends DocIdSetIterator {
     public abstract long cost();
 
     public abstract float positionsCost();
+
+    public abstract int width();
 }

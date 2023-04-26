@@ -141,4 +141,9 @@ public class MockSpansInBuckets extends SpansInBuckets {
     public float positionsCost() {
         return start.length;
     }
+
+    @Override
+    public int width() {
+        return 0;
+    }
 }
