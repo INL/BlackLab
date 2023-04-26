@@ -30,8 +30,6 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
 
     private List<MatchInfo[]> capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
 
-    private int bucketSize = 0;
-
     private HitQueryContext hitQueryContext;
 
     /** Do we have a hitQueryContext and does it contain captured groups? */
@@ -99,20 +97,11 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
 
     @SuppressWarnings("unused")
     protected int gatherEndPointsAtStartPoint() throws IOException {
-        if (!REALLOCATE_IF_TOO_LARGE || endPoints.size() < COLLECTION_REALLOC_THRESHOLD) {
-            // Not a huge amount of memory, so don't reallocate
-            endPoints.clear();
-            capturedGroupsPerEndpoint.clear();
-        } else {
-            // Reallocate in this case to avoid holding on to a lot of memory
-            endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
-            capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
-        }
-
+        endPoints.clear();
+        capturedGroupsPerEndpoint.clear();
         doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
                 && hitQueryContext.numberOfMatchInfos() > 0;
 
-        bucketSize = 0;
         currentBucketStart = currentSpansStart;
         while (currentSpansStart != Spans.NO_MORE_POSITIONS && currentSpansStart == currentBucketStart) {
             endPoints.add(source.endPosition());
@@ -121,7 +110,6 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
                 source.getMatchInfo(capturedGroups);
                 capturedGroupsPerEndpoint.add(capturedGroups);
             }
-            bucketSize++;
             currentSpansStart = source.nextStartPosition();
         }
         return currentDoc;
@@ -145,7 +133,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
 
     @Override
     public int bucketSize() {
-        return bucketSize;
+        return endPoints.size();
     }
 
     @Override
@@ -187,9 +175,11 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
         return source.cost();
     }
 
+
+
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
-        return null;
+        return getTwoPhaseIterator(source);
     }
 
     @Override

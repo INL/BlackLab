@@ -38,15 +38,6 @@ public abstract class SpansInBuckets extends DocIdSetIterator {
     /** Initial capacity for HashMap to avoid too much reallocation */
     public static final int HASHMAP_INITIAL_CAPACITY = (int)(LIST_INITIAL_CAPACITY / HASHMAP_DEFAULT_LOAD_FACTOR);
 
-    /** Should we reallocate lists/maps if they grow larger than COLLECTION_REALLOC_THRESHOLD?
-     * If no, we potentially use too much memory while searching.
-     * If yes, we potentially create a lot of garbage and fragment the heap.
-     */
-    public static final boolean REALLOCATE_IF_TOO_LARGE = false;
-    
-    /** When to reallocate lists/maps to avoid holding on to too much memory */
-    public static final int COLLECTION_REALLOC_THRESHOLD = 30_000;
-    
     public static final int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
     /**
@@ -108,6 +99,47 @@ public abstract class SpansInBuckets extends DocIdSetIterator {
     public abstract TwoPhaseIterator asTwoPhaseIterator();
 
     public abstract long cost();
+
+    protected static TwoPhaseIterator getTwoPhaseIterator(BLSpans source) {
+        TwoPhaseIterator inner = source.asTwoPhaseIterator();
+        if (inner != null) {
+            return new TwoPhaseIterator(inner.approximation()) {
+                @Override
+                public boolean matches() throws IOException {
+                    source.nextStartPosition(); // start gathering at the first hit
+                    return true;
+                }
+
+                @Override
+                public float matchCost() {
+                    return inner.matchCost();
+                }
+
+                @Override
+                public String toString() {
+                    return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ", iter=" + inner + ")";
+                }
+            };
+        } else {
+            return new TwoPhaseIterator(source) {
+                @Override
+                public boolean matches() throws IOException {
+                    source.nextStartPosition(); // start gathering at the first hit
+                    return true;
+                }
+
+                @Override
+                public float matchCost() {
+                    return source.positionsCost(); // overestimate
+                }
+
+                @Override
+                public String toString() {
+                    return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ")";
+                }
+            };
+        }
+    }
 
     public abstract float positionsCost();
 

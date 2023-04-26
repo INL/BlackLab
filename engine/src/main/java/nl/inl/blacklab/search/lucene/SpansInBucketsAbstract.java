@@ -43,11 +43,6 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
      */
     private Long2ObjectMap<MatchInfo[]> capturedGroupsPerHit = null;
 
-    /**
-     * Size of the current bucket, or -1 if we're not at a valid bucket.
-     */
-    private int bucketSize = -1;
-
     private HitQueryContext hitQueryContext;
 
     /** Is there captured group information for each hit that we need to store? */
@@ -69,7 +64,6 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
                 capturedGroupsPerHit = new Long2ObjectOpenHashMap<>(HASHMAP_INITIAL_CAPACITY);
             capturedGroupsPerHit.put(span, matchInfo);
         }
-        bucketSize++;
     }
     
     static final LongComparator longCmpEndPoint = (k1, k2) -> {
@@ -91,7 +85,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public int bucketSize() {
-        return bucketSize;
+        return bucket.size();
     }
 
     @Override
@@ -112,7 +106,6 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public int nextDoc() throws IOException {
-        bucketSize = -1; // not at a valid bucket anymore
         if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
             if (source.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
                 source.nextStartPosition(); // start gathering at the first hit
@@ -165,7 +158,6 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public int advance(int target) throws IOException {
-        bucketSize = -1; // not at a valid bucket anymore
         if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
             if (source.docID() >= target) {
                 // Already at or beyond; go to the next doc
@@ -181,21 +173,9 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     }
 
     private int gatherHitsInternal() throws IOException {
-        // NOTE: we could call .clear() here, but we don't want to hold on to
-        // a lot of memory indefinitely after encountering one huge bucket.
-        if (!REALLOCATE_IF_TOO_LARGE || bucketSize < COLLECTION_REALLOC_THRESHOLD) {
-            // Not a huge amount of memory, so don't reallocate
-            bucket.clear();
-            if (doCapturedGroups)
-                capturedGroupsPerHit.clear();
-        } else {
-            // Reallocate in this case to avoid holding on to a lot of memory
-            bucket.trim(COLLECTION_REALLOC_THRESHOLD / 2);
-            if (doCapturedGroups)
-                capturedGroupsPerHit = new Long2ObjectOpenHashMap<>();
-        }
-
-        bucketSize = 0;
+        bucket.clear();
+        if (doCapturedGroups)
+            capturedGroupsPerHit.clear();
         doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
                 && hitQueryContext.numberOfMatchInfos() > 0;
         gatherHits();
@@ -238,46 +218,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
-        TwoPhaseIterator inner = source.asTwoPhaseIterator();
-        if (inner != null) {
-            return new TwoPhaseIterator(inner.approximation()) {
-                @Override
-                public boolean matches() throws IOException {
-                    bucketSize = -1; // not at a valid bucket anymore
-                    source.nextStartPosition(); // start gathering at the first hit
-                    return true;
-                }
-
-                @Override
-                public float matchCost() {
-                    return inner.matchCost();
-                }
-
-                @Override
-                public String toString() {
-                    return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ", iter=" + inner + ")";
-                }
-            };
-        } else {
-            return new TwoPhaseIterator(source) {
-                @Override
-                public boolean matches() throws IOException {
-                    bucketSize = -1; // not at a valid bucket anymore
-                    source.nextStartPosition(); // start gathering at the first hit
-                    return true;
-                }
-
-                @Override
-                public float matchCost() {
-                    return source.positionsCost(); // overestimate
-                }
-
-                @Override
-                public String toString() {
-                    return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ")";
-                }
-            };
-        }
+        return getTwoPhaseIterator(source);
     }
 
     public long cost() {
