@@ -399,6 +399,29 @@ public class TestSearches {
     }
 
     @Test
+    public void testWeirdTwoPhaseIterFail() {
+        testIndex.findConc("'noot'     [] 'aap'");
+
+        //testIndex.findConc(  "[]");                        // SUCCEEDS
+        //testIndex.findConc("a:[]");                        // SUCCEEDS
+        //testIndex.findConc(   "'noot'     []");            // SUCCEEDS
+        //testIndex.findConc(   "'noot'   a:[]");            // SUCCEEDS
+        //testIndex.findConc(   "'noot'?  a:[]");            // SUCCEEDS
+        //testIndex.findConc(   "'noot'        'aap'");      // SUCCEEDS
+        //testIndex.findConc(   "'noot'?       'aap'");      // SUCCEEDS
+        //testIndex.findConc(   "'noot'?    [] 'aap'");      // SUCCEEDS
+        //testIndex.findConc("(c:'noot')?   [] 'aap'");      // SUCCEEDS
+        //testIndex.findConc(            "a:[] 'aap' b:[]"); // SUCCEEDS
+        //testIndex.findConc("            a:[] 'aap' b:[] :: c -> (a.word = b.word)"); // SUCCEEDS
+        //testIndex.findConc(   "'noot'     [] 'aap'");      // FAILS
+        //testIndex.findConc(   "'noot'   a:[] 'aap'");      // FAILS
+        //testIndex.findConc(   "'noot'?  a:[] 'aap'");      // FAILS
+        //testIndex.findConc("(c:'noot')? a:[] 'aap'");      // FAILS    (removed capture b and token)
+        //testIndex.findConc("(c:'noot')? a:[] 'aap' b:[]"); // FAILS
+        //testIndex.findConc("(c:'noot')? a:[] 'aap' b:[] :: c -> (a.word = b.word)"); // FAILS
+    }
+
+    @Test
     public void testConstraintImplication1() {
         List<String> expected = Arrays.asList(
                 "[noot mier aap mier] mier", // left side matches, right side holds
@@ -488,7 +511,7 @@ public class TestSearches {
     public void testCaptureGroups() {
         Hits hits = testIndex.find("A:'aap'");
         Assert.assertEquals(5, hits.size());
-        Assert.assertTrue(hits.hasCapturedGroups());
+        Assert.assertTrue(hits.hasMatchInfo());
         MatchInfo[] group = hits.get(0).matchInfo();
         Assert.assertNotNull(group);
         Assert.assertEquals(1, group.length);

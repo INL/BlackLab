@@ -33,37 +33,6 @@ public class SpansConstrained extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    public int nextDoc() throws IOException {
-        int docId = super.nextDoc();
-        return updateCurrentFiDoc(docId);
-    }
-
-    @Override
-    public int advance(int target) throws IOException {
-        int docId = super.advance(target);
-        return updateCurrentFiDoc(docId);
-    }
-
-    /**
-     * Returns true if the current document matches.
-     * <p>This is called during two-phase processing.
-     */
-    // return true if the current document matches
-    @SuppressWarnings("fallthrough")
-    protected boolean twoPhaseCurrentDocMatches() throws IOException {
-        updateCurrentFiDoc(in.docID());
-        return super.twoPhaseCurrentDocMatches();
-    }
-
-    private int updateCurrentFiDoc(int docId) {
-        if (docId == NO_MORE_DOCS)
-            currentFiDoc = null;
-        else if (currentFiDoc == null || docId != currentFiDoc.getSegmentDocId())
-            currentFiDoc = fiAccessor.advanceForwardIndexDoc(docId);
-        return docId;
-    }
-
-    @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         super.passHitQueryContextToClauses(context);
         this.context = context;
@@ -79,6 +48,10 @@ public class SpansConstrained extends BLFilterSpans<BLSpans> {
         }
         context.getMatchInfo(matchInfo);
 
+        // Make sure we have the right forward index doc
+        if (currentFiDoc == null || currentFiDoc.getSegmentDocId() != candidate.docID())
+            currentFiDoc = fiAccessor.advanceForwardIndexDoc(candidate.docID());
+
         // OPT: if there are duplicate hits (including matchInfo), we'll
         //   evaluate the same constraint multiple times. Could be prevented
         //   by caching the previous results, but might not be worth it.
@@ -90,5 +63,20 @@ public class SpansConstrained extends BLFilterSpans<BLSpans> {
     @Override
     public String toString() {
         return "SpansConstrained(" + in + ", " + constraint + ")";
+    }
+
+    @Override
+    public int nextDoc() throws IOException {
+        return super.nextDoc();
+    }
+
+    @Override
+    public int advance(int target) throws IOException {
+        return super.advance(target);
+    }
+
+    @Override
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        return super.twoPhaseCurrentDocMatches();
     }
 }

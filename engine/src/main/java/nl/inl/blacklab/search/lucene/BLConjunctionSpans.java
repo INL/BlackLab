@@ -57,7 +57,8 @@ abstract class BLConjunctionSpans extends BLSpans {
     }
 
     @Override
-    public int nextDoc() throws IOException {
+    public int  nextDoc() throws IOException {
+        atFirstInCurrentDoc = false;
         return (conjunction.nextDoc() == NO_MORE_DOCS)
                 ? NO_MORE_DOCS
                 : toMatchDoc();
@@ -65,6 +66,7 @@ abstract class BLConjunctionSpans extends BLSpans {
 
     @Override
     public int advance(int target) throws IOException {
+        atFirstInCurrentDoc = false;
         return (conjunction.advance(target) == NO_MORE_DOCS)
                 ? NO_MORE_DOCS
                 : toMatchDoc();

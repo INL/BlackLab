@@ -63,9 +63,24 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
     protected abstract FilterSpans.AcceptStatus accept(T candidate) throws IOException;
 
     @Override
+    public int nextDoc() throws IOException {
+        atFirstInCurrentDoc = false;
+        startPos = -1;
+        return super.nextDoc();
+    }
+
+    @Override
+    public int advance(int target) throws IOException {
+        atFirstInCurrentDoc = false;
+        startPos = -1;
+        return super.advance(target);
+    }
+
+    @Override
     public int nextStartPosition() throws IOException {
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
+            assert startPos != -1 && startPos != NO_MORE_POSITIONS;
             return startPos;
         }
         return goToNextMatch(true);
@@ -76,6 +91,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         for (;;) {
             if (next)
                 startPos = in.nextStartPosition();
+            assert startPos >= 0;
             next = true;
             if (startPos == NO_MORE_POSITIONS) {
                 return NO_MORE_POSITIONS;
@@ -127,8 +143,11 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
     @SuppressWarnings("fallthrough")
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;
+        startPos = -1;
+        assert docID() != -1 && docID() != NO_MORE_DOCS;
+        assert startPosition() == -1;
         startPos = in.nextStartPosition();
-        assert startPos != NO_MORE_POSITIONS;
+        assert startPos != NO_MORE_POSITIONS && startPos != -1;
         for (;;) {
             switch(accept(in)) {
             case YES:

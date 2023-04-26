@@ -105,6 +105,7 @@ public abstract class BLSpans extends Spans {
         do {
             pos = spans.nextStartPosition();
         } while (pos < target); // also covers NO_MORE_POSITIONS
+        assert pos != -1;
         return pos;
     }
 

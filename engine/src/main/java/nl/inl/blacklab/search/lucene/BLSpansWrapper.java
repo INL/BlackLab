@@ -9,7 +9,7 @@ import org.apache.lucene.search.spans.TermSpans;
 /**
  * Wrap a "simple" Spans object in a BLSpans object.
  */
-public final class BLSpansWrapper extends BLFilterSpans {
+public final class BLSpansWrapper extends BLFilterSpans<Spans> {
 
     public BLSpansWrapper(Spans in) {
         super(in);

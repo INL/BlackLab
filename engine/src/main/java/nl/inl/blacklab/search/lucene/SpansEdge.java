@@ -32,7 +32,7 @@ class SpansEdge extends BLFilterSpans<BLSpans> {
 
     @Override
     public int startPosition() {
-        return atFirstInCurrentDoc ? -1 : (trailingEdge ? in.endPosition() : startPos);
+        return atFirstInCurrentDoc || startPos < 0 ? -1 : (trailingEdge ? in.endPosition() : startPos);
     }
 
     @Override

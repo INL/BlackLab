@@ -1565,7 +1565,7 @@ public class QueryTool {
             right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
             Map<String, MatchInfo> capturedGroups = null;
-            if (window.hasCapturedGroups())
+            if (window.hasMatchInfo())
                 capturedGroups = window.getMatchInfoMap(hit);
             toShow.add(new HitToShow(hit.doc(), left, hitText, right, capturedGroups));
             if (leftContextMaxSize < left.length())

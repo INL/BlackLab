@@ -17,6 +17,7 @@ class SpansSequenceSimple extends BLConjunctionSpans {
 
     public SpansSequenceSimple(BLSpans firstClause, BLSpans secondClause) {
         super(List.of(firstClause, secondClause));
+        atFirstInCurrentDoc = false;
     }
 
     @Override
@@ -37,6 +38,8 @@ class SpansSequenceSimple extends BLConjunctionSpans {
     public int nextStartPosition() throws IOException {
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
+            assert subSpans[0].startPosition() >= 0 && subSpans[0].startPosition() != NO_MORE_POSITIONS;
+            assert subSpans[1].startPosition() >= 0 && subSpans[1].startPosition() != NO_MORE_POSITIONS;
             return subSpans[0].startPosition();
         }
 
@@ -93,11 +96,13 @@ class SpansSequenceSimple extends BLConjunctionSpans {
                 }
             }
         }
+        assert subSpans[0].startPosition() != -1 && subSpans[0].startPosition() != NO_MORE_POSITIONS;
         return subSpans[0].startPosition();
     }
 
     @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
+        atFirstInCurrentDoc = false;
         if (oneExhaustedInCurrentDoc)
             return false;
 
@@ -108,6 +113,9 @@ class SpansSequenceSimple extends BLConjunctionSpans {
         int pos = realignPos();
         if (pos != NO_MORE_POSITIONS) {
             atFirstInCurrentDoc = true;
+            assert pos != -1;
+            assert subSpans[0].startPosition() >= 0 && subSpans[0].startPosition() != NO_MORE_POSITIONS;
+            assert subSpans[1].startPosition() >= 0 && subSpans[1].startPosition() != NO_MORE_POSITIONS;
             return true;
         }
         return false;

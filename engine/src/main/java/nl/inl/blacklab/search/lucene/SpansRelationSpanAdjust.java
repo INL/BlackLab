@@ -34,7 +34,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     public int startPosition() {
-        if (atFirstInCurrentDoc)
+        if (atFirstInCurrentDoc || startPos < 0)
             return -1;
         if (startPos == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
@@ -43,7 +43,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     public int endPosition() {
-        if (atFirstInCurrentDoc)
+        if (atFirstInCurrentDoc || startPos < 0)
             return -1;
         if (startPos == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
