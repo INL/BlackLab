@@ -98,7 +98,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
             return new TwoPhaseIterator(inner.approximation()) {
                 @Override
                 public boolean matches() throws IOException {
-                    return twoPhaseCurrentDocMatches();
+                    return inner.matches() && twoPhaseCurrentDocMatches();
                 }
 
                 @Override

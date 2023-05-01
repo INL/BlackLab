@@ -41,10 +41,16 @@ class SpansAnd extends BLConjunctionSpans {
             return NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
+            assert subSpans[0].startPosition() >= 0 && subSpans[1].startPosition() >= 0;
+            assert subSpans[0].startPosition() != NO_MORE_POSITIONS && subSpans[1].startPosition() != NO_MORE_POSITIONS;
             return subSpans[0].startPosition();
         }
-        subSpans[0].nextStartPosition();
-        subSpans[1].nextStartPosition();
+        for (BLSpans subSpan: subSpans) {
+            if (subSpan.nextStartPosition() == NO_MORE_POSITIONS) {
+                oneExhaustedInCurrentDoc = true;
+                return NO_MORE_POSITIONS;
+            }
+        }
         return synchronizePosition();
     }
 
@@ -56,17 +62,20 @@ class SpansAnd extends BLConjunctionSpans {
         if (startPos >= target)
             return nextStartPosition(); // already at or beyond target. per contract, return next match
         for (BLSpans subSpan: subSpans) {
-            subSpan.advanceStartPosition(target);
+            if (subSpan.advanceStartPosition(target) == NO_MORE_POSITIONS) {
+                oneExhaustedInCurrentDoc = true;
+                return NO_MORE_POSITIONS;
+            }
         }
         return synchronizePosition();
     }
 
     private int synchronizePosition() throws IOException {
         while (true) {
-            int leftStart = subSpans[0].startPosition();
-            int rightStart = subSpans[1].startPosition();
             if (oneExhaustedInCurrentDoc)
                 return NO_MORE_POSITIONS;
+            int leftStart = subSpans[0].startPosition();
+            int rightStart = subSpans[1].startPosition();
 
             // Synch at match start level
             if ((leftStart == -1 && rightStart == -1) ||
@@ -85,6 +94,7 @@ class SpansAnd extends BLConjunctionSpans {
                     oneExhaustedInCurrentDoc = true;
                     return NO_MORE_POSITIONS;
                 }
+                assert leftStart >= 0;
                 return leftStart;
             }
         }
@@ -113,6 +123,8 @@ class SpansAnd extends BLConjunctionSpans {
     boolean twoPhaseCurrentDocMatches() throws IOException {
         // Note that we DON't use our nextStartPosition() here because atFirstInCurrentDoc
         // is not properly set yet at this point in time (we do that below).
+        atFirstInCurrentDoc = false;
+        oneExhaustedInCurrentDoc = false;
         subSpans[0].nextStartPosition();
         subSpans[1].nextStartPosition();
         int start = synchronizePosition();

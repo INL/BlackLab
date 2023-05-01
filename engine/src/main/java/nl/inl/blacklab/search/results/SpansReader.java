@@ -310,6 +310,8 @@ class SpansReader implements Runnable {
                 }
 
                 if (storeThisHit) {
+                    assert start >= 0;
+                    assert end >= 0;
                     results.add(doc, start, end, matchInfo);
                 }
 

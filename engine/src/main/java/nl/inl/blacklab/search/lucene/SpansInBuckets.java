@@ -106,6 +106,8 @@ public abstract class SpansInBuckets extends DocIdSetIterator {
             return new TwoPhaseIterator(inner.approximation()) {
                 @Override
                 public boolean matches() throws IOException {
+                    if (!inner.matches())
+                        return false;
                     source.nextStartPosition(); // start gathering at the first hit
                     return true;
                 }

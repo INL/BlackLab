@@ -106,7 +106,7 @@ public class TestSearches {
     @Test
     public void testMoreSequencesFiMatch() {
         int expected = 33;
-        //DEBUG Assert.assertEquals(expected, testIndex.findConc(" [] [] ").size());
+        Assert.assertEquals(expected, testIndex.findConc(" [] [] ").size());
         // Also test that forward index matching either the first or the second clause produces the same results
         Assert.assertEquals(expected, testIndex.findConc(" _FI1([], []) ").size());
         Assert.assertEquals(expected, testIndex.findConc(" _FI2([], []) ").size());
@@ -214,6 +214,13 @@ public class TestSearches {
         List<String> expected = List.of(
                 "The [quick] brown");
         Assert.assertEquals(expected, testIndex.findConc("[pos = 'adj' & lemma = '.*u.*']"));
+    }
+
+    @Test
+    public void testAnd2() {
+        List<String> expected = List.of(
+                "fox [jumps] over");
+        Assert.assertEquals(expected, testIndex.findConc("[word = 'jumps' & lemma = 'jump']"));
     }
 
     @Test
@@ -396,29 +403,6 @@ public class TestSearches {
     public void testConstraintAnd3() {
         List<String> expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.pos = b.pos"));
-    }
-
-    @Test
-    public void testWeirdTwoPhaseIterFail() {
-        testIndex.findConc("'noot'     [] 'aap'");
-
-        //testIndex.findConc(  "[]");                        // SUCCEEDS
-        //testIndex.findConc("a:[]");                        // SUCCEEDS
-        //testIndex.findConc(   "'noot'     []");            // SUCCEEDS
-        //testIndex.findConc(   "'noot'   a:[]");            // SUCCEEDS
-        //testIndex.findConc(   "'noot'?  a:[]");            // SUCCEEDS
-        //testIndex.findConc(   "'noot'        'aap'");      // SUCCEEDS
-        //testIndex.findConc(   "'noot'?       'aap'");      // SUCCEEDS
-        //testIndex.findConc(   "'noot'?    [] 'aap'");      // SUCCEEDS
-        //testIndex.findConc("(c:'noot')?   [] 'aap'");      // SUCCEEDS
-        //testIndex.findConc(            "a:[] 'aap' b:[]"); // SUCCEEDS
-        //testIndex.findConc("            a:[] 'aap' b:[] :: c -> (a.word = b.word)"); // SUCCEEDS
-        //testIndex.findConc(   "'noot'     [] 'aap'");      // FAILS
-        //testIndex.findConc(   "'noot'   a:[] 'aap'");      // FAILS
-        //testIndex.findConc(   "'noot'?  a:[] 'aap'");      // FAILS
-        //testIndex.findConc("(c:'noot')? a:[] 'aap'");      // FAILS    (removed capture b and token)
-        //testIndex.findConc("(c:'noot')? a:[] 'aap' b:[]"); // FAILS
-        //testIndex.findConc("(c:'noot')? a:[] 'aap' b:[] :: c -> (a.word = b.word)"); // FAILS
     }
 
     @Test

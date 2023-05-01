@@ -146,6 +146,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         startPos = -1;
         assert docID() != -1 && docID() != NO_MORE_DOCS;
         assert startPosition() == -1;
+        assert in.startPosition() == -1;
         startPos = in.nextStartPosition();
         assert startPos != NO_MORE_POSITIONS && startPos != -1;
         for (;;) {

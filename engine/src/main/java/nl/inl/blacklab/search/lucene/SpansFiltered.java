@@ -30,6 +30,7 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
 
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
+        assert candidate.startPosition() >= 0;
         if (acceptedDocs == null || acceptedDocs.docID() == NO_MORE_DOCS)
             return FilterSpans.AcceptStatus.NO_MORE_IN_CURRENT_DOC;
         int docId = candidate.docID();

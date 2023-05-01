@@ -103,8 +103,7 @@ class SpansSequenceSimple extends BLConjunctionSpans {
     @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;
-        if (oneExhaustedInCurrentDoc)
-            return false;
+        oneExhaustedInCurrentDoc = false;
 
         if (subSpans[0].nextStartPosition() == NO_MORE_POSITIONS) {
             oneExhaustedInCurrentDoc = true;
