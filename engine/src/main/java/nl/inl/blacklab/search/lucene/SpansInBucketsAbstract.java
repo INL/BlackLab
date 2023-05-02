@@ -33,14 +33,14 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     
     protected final BLSpans source;
 
-    /** Starts of hits in our bucket */
-    private final LongArrayList bucket = new LongArrayList(LIST_INITIAL_CAPACITY);
+    /** Starts and ends of hits in our bucket */
+    protected final LongArrayList startsEnds = new LongArrayList(LIST_INITIAL_CAPACITY);
 
     /**
      * For each hit we fetched, store the match info (e.g. captured groups, relations),
      * so we don't lose this information.
      */
-    private ObjectArrayList<MatchInfo[]> matchInfoPerHit = null;
+    protected ObjectArrayList<MatchInfo[]> matchInfoPerHit = null;
 
     private HitQueryContext hitQueryContext;
 
@@ -54,7 +54,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     protected void addHitFromSource() {
         long span = ((long)source.startPosition() << 32) | source.endPosition();
-        bucket.add(span);
+        startsEnds.add(span);
         if (doMatchInfo) {
             // Store match information such as captured groups
             MatchInfo[] matchInfo = new MatchInfo[hitQueryContext.numberOfMatchInfos()];
@@ -76,27 +76,27 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     
     protected void sortHits(boolean sortByStartPoint) {
         if (sortByStartPoint) { 
-            LongArrays.quickSort(bucket.elements(), 0, bucket.size()); // natural order is startpoint order
+            LongArrays.quickSort(startsEnds.elements(), 0, startsEnds.size()); // natural order is startpoint order
         } else {
-            LongArrays.quickSort(bucket.elements(), 0, bucket.size(), longCmpEndPoint);
+            LongArrays.quickSort(startsEnds.elements(), 0, startsEnds.size(), longCmpEndPoint);
         }
     }
 
     @Override
     public int bucketSize() {
-        return bucket.size();
+        return startsEnds.size();
     }
 
     @Override
     public int startPosition(int indexInBucket) {
         //return bucketSlow.get(indexInBucket).start();
-        return (int)(bucket.getLong(indexInBucket) >> 32);
+        return (int)(startsEnds.getLong(indexInBucket) >> 32);
     }
 
     @Override
     public int endPosition(int indexInBucket) {
         //return bucketSlow.get(indexInBucket).end();
-        return (int)bucket.getLong(indexInBucket);
+        return (int) startsEnds.getLong(indexInBucket);
     }
 
     public SpansInBucketsAbstract(BLSpans source) {
@@ -172,7 +172,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     }
 
     private int gatherHitsInternal() throws IOException {
-        bucket.clear();
+        startsEnds.clear();
         if (doMatchInfo)
             matchInfoPerHit.clear();
         doMatchInfo = clauseCapturesMatchInfo && hitQueryContext != null

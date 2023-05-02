@@ -13,6 +13,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -172,6 +173,16 @@ public class TestSearches {
                 "quick [brown] fox",
                 "the [lazy] dog");
         Assert.assertEquals(expected, testIndex.findConc(" [pos='adj']{1,} "));
+    }
+
+    @Ignore // @@@ Working on it
+    @Test
+    public void testRepetitionNonConsecutive() {
+        List<String> expected = List.of(
+                "mier [aap mier mier mier noot noot aap aap] aap",
+                "mier [aap mier mier mier noot noot aap aap aap] aap",
+                "mier [aap mier mier mier noot noot aap aap aap aap]");
+        Assert.assertEquals(expected, testIndex.findConc("('aap' [word != 'noot']{1, 3} 'noot'{0,2}){2,}"));
     }
 
     @Test
