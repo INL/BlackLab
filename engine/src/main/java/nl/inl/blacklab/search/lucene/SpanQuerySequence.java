@@ -24,8 +24,8 @@ import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
-import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
+import nl.inl.util.StringUtil;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the
@@ -190,25 +190,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         return anyRewritten;
     }
 
-    private static String ord(int pass) {
-        pass++;
-        switch(pass) {
-        case 1:
-            return "1st";
-        case 2:
-            return "2nd";
-        case 3:
-            return "3rd";
-        default:
-            return pass + "th";
-        }
-    }
-
     private static String prioName(int prio) {
         return prio == ClauseCombiner.CANNOT_COMBINE ? "CANNOT_COMBINE" : Integer.toString(prio);
     }
 
-    static boolean combineAdjacentClauses(List<BLSpanQuery> cl, IndexReader reader, String fieldName,
+    static boolean combineAdjacentClauses(List<BLSpanQuery> cl, IndexReader reader,
             Set<ClauseCombiner> combiners) {
 
         boolean anyRewritten = false;
@@ -222,7 +208,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             logger.debug("SpanQuerySequence.combineAdjacentClauses() start");
         while (anyRewrittenThisCycle) {
             if (traceOptimization) {
-                logger.debug("Clauses before " + ord(pass) + " pass: " + StringUtils.join(cl, ", "));
+                logger.debug("Clauses before " + StringUtil.ord(pass) + " pass: " + StringUtils.join(cl, ", "));
                 pass++;
             }
 
@@ -231,18 +217,18 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             // Find the highest-priority rewrite possible
             int highestPrio = ClauseCombiner.CANNOT_COMBINE, highestPrioIndex = -1;
             ClauseCombiner highestPrioCombiner = null;
-            BLSpanQuery left, right;
+            BLSpanQuery first, second;
             for (int i = 1; i < cl.size(); i++) {
                 // See if any combiners apply, and if the priority is higher than found so far.
-                left = cl.get(i - 1);
-                right = cl.get(i);
+                first = cl.get(i - 1);
+                second = cl.get(i);
                 for (ClauseCombiner combiner : combiners) {
-                    int prio = combiner.priority(left, right, reader);
+                    int prio = combiner.priority(first, second, reader);
                     if (searchLogger != null) {
                         if (prio == ClauseCombiner.CANNOT_COMBINE)
-                            logger.debug("(Cannot apply " + combiner + "(" + left + ", " + right + "))");
+                            logger.debug("(Cannot apply " + combiner + "(" + first + ", " + second + "))");
                         else
-                            logger.debug("Can apply " + combiner + "(" + left + ", " + right + "), priority: " + prioName(prio));
+                            logger.debug("Can apply " + combiner + "(" + first + ", " + second + "), priority: " + prioName(prio));
                     }
                     if (prio < highestPrio) {
                         highestPrio = prio;
@@ -254,13 +240,13 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             // Any combiners found?
             if (highestPrio < ClauseCombiner.CANNOT_COMBINE) {
                 // Yes, execute the highest-prio combiner
-                left = cl.get(highestPrioIndex - 1);
-                right = cl.get(highestPrioIndex);
+                first = cl.get(highestPrioIndex - 1);
+                second = cl.get(highestPrioIndex);
                 if (traceOptimization)
-                    logger.info("Execute lowest prio number combiner: " + highestPrioCombiner + "(" + left + ", " + right + ")");
-                left = cl.get(highestPrioIndex - 1);
-                right = cl.get(highestPrioIndex);
-                BLSpanQuery combined = highestPrioCombiner.combine(left, right, reader);
+                    logger.info("Execute lowest prio number combiner: " + highestPrioCombiner + "(" + first + ", " + second + ")");
+                first = cl.get(highestPrioIndex - 1);
+                second = cl.get(highestPrioIndex);
+                BLSpanQuery combined = highestPrioCombiner.combine(first, second, reader);
                 // (we used to rewrite() combined here just to be safe, but that could break optimizations later)
                 cl.remove(highestPrioIndex);
                 cl.set(highestPrioIndex - 1, combined);
@@ -278,33 +264,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery optimize(IndexReader reader) throws IOException {
         super.optimize(reader);
-        BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
-        boolean canDoNfaMatching = false;
-        if (index instanceof BlackLabIndexAbstract) {
-            canDoNfaMatching = ((BlackLabIndexAbstract)index).canDoNfaMatching();
-        }
-        boolean anyRewritten = false;
-
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
-        // Flatten nested sequences.
-        // This doesn't change the query because the sequence operator is associative.
-        anyRewritten |= flattenSequence(cl);
-
-        // Find matching tags and rewrite them to position filter (e.g. containing) to execute more
-        // efficiently
-        anyRewritten |= matchingTagsToPosFilter(cl);
-
-        // Try to combine adjacent clauses into more efficient ones.
-        // We do this before rewrite (as well as after) specifically to find clauses that are slow
-        // because
-        // of regular expressions matching many terms (e.g. "s.*" or ".*s") and match these using an
-        // NFA instead.
-        // By doing it before rewriting, we save the time to expand the regex to all its matching
-        // terms, as well
-        // as dealing with each of these (sometimes frequent) terms, which can be significant.
-        anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
+        BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
+        boolean canDoNfaMatching = isCanDoNfaMatching(index);
+        boolean anyRewritten = performQueryOptimizations(index, cl, canDoNfaMatching);
 
         // Optimize each clause, and flatten again if necessary
         anyRewritten |= optimizeClauses(cl, reader);
@@ -319,21 +284,10 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         return new SpanQuerySequence(cl.toArray(new BLSpanQuery[0]));
     }
 
-    @Override
-    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        BlackLabIndex index = BlackLab.indexFromReader(null /* FIXME */, reader, true);
-        boolean canDoNfaMatching = false;
-        if (index instanceof BlackLabIndexAbstract) {
-            canDoNfaMatching = ((BlackLabIndexAbstract)index).canDoNfaMatching();
-        }
-        boolean anyRewritten = false;
-
-        // Make a copy, because our methods rewrite things in-place.
-        List<BLSpanQuery> cl = new ArrayList<>(clauses);
-
+    private boolean performQueryOptimizations(BlackLabIndex index, List<BLSpanQuery> cl, boolean canDoNfaMatching) {
         // Flatten nested sequences.
         // This doesn't change the query because the sequence operator is associative.
-        anyRewritten |= flattenSequence(cl);
+        boolean anyRewritten = flattenSequence(cl);
 
         // Find matching tags and rewrite them to position filter (e.g. containing) to execute more
         // efficiently
@@ -347,17 +301,27 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // By doing it before rewriting, we save the time to expand the regex to all its matching
         // terms, as well
         // as dealing with each of these (sometimes frequent) terms, which can be significant.
-        anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
+        anyRewritten |= combineAdjacentClauses(cl, index.reader(), ClauseCombiner.all(canDoNfaMatching));
+        return anyRewritten;
+    }
+
+    @Override
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        // Make a copy, because our methods rewrite things in-place.
+        List<BLSpanQuery> cl = new ArrayList<>(clauses);
+
+        BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
+        boolean canDoNfaMatching = isCanDoNfaMatching(index);
+        boolean anyRewritten = performQueryOptimizations(index, cl, canDoNfaMatching);
 
         // Rewrite each clause, and flatten again if necessary
         anyRewritten |= rewriteClauses(cl, reader);
         if (anyRewritten)
             flattenSequence(cl);
 
-        // Again, try to combine adjacent clauses into more efficient ones. Rewriting clauses may
-        // have
+        // Again, try to combine adjacent clauses into more efficient ones. Rewriting clauses may have
         // generated new opportunities for combining clauses.
-        anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
+        anyRewritten |= combineAdjacentClauses(cl, reader,  ClauseCombiner.all(canDoNfaMatching));
 
         // If any part of the sequence matches the empty sequence, we must
         // rewrite it to several alternatives combined with OR. Do so now.
@@ -382,10 +346,18 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         return new BLSpanOrQuery(orCl.toArray(new BLSpanQuery[0])).rewrite(reader);
     }
 
+    private boolean isCanDoNfaMatching(BlackLabIndex index) {
+        boolean canDoNfaMatching = false;
+        if (index instanceof BlackLabIndexAbstract) {
+            canDoNfaMatching = ((BlackLabIndexAbstract) index).canDoNfaMatching();
+        }
+        return canDoNfaMatching;
+    }
+
     /**
      * For possibly empty clauses, combine them with a neighbour into a binary-tree
      * structure. This differs from the approach of makeAlternatives() which
-     * produces a OR of several longer sequences. That approach is probably more
+     * produces an OR of several longer sequences. That approach is probably more
      * efficient with Lucene (because it allows more optimizations on the longer
      * sequences produced), while this approach is probably more efficient for NFAs
      * (because we don't have to follow many long paths in the NFA).
@@ -403,35 +375,35 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             int bestIndex = -1;
             boolean bestBothEmpty = true;
             for (int i = 1; i < cl.size(); i++) {
-                BLSpanQuery left = cl.get(i - 1);
-                BLSpanQuery right = cl.get(i);
-                boolean leftEmpty = left.matchesEmptySequence();
-                boolean rightEmpty = right.matchesEmptySequence();
+                BLSpanQuery first = cl.get(i - 1);
+                BLSpanQuery second = cl.get(i);
+                boolean firstEmpty = first.matchesEmptySequence();
+                boolean secondEmpty = second.matchesEmptySequence();
                 // Does either clause matcht the empty sequence, and are these two
                 // the best candidates to combine right now?
-                if ((leftEmpty || rightEmpty) && bestBothEmpty || (!bestBothEmpty && (!leftEmpty || !rightEmpty))) {
-                    bestBothEmpty = leftEmpty && rightEmpty;
+                if ((firstEmpty || secondEmpty) && bestBothEmpty || (!bestBothEmpty && (!firstEmpty || !secondEmpty))) {
+                    bestBothEmpty = firstEmpty && secondEmpty;
                     bestIndex = i;
                 }
             }
             if (bestIndex < 0)
                 return anyRewritten; // we're done
             // Combine the clauses we found
-            BLSpanQuery left = cl.get(bestIndex - 1);
-            BLSpanQuery right = cl.get(bestIndex);
-            boolean leftEmpty = left.matchesEmptySequence();
-            boolean rightEmpty = right.matchesEmptySequence();
+            BLSpanQuery first = cl.get(bestIndex - 1);
+            BLSpanQuery second = cl.get(bestIndex);
+            boolean firstEmpty = first.matchesEmptySequence();
+            boolean secondEmpty = second.matchesEmptySequence();
             BLSpanQuery combi;
-            BLSpanQuery both = new SpanQuerySequence(left, right);
-            if (leftEmpty && rightEmpty) {
-                // 4 alternatives: neither, left only, right only, or both
-                combi = new SpanQueryRepetition(new BLSpanOrQuery(left, right, both), 0, 1);
-            } else if (leftEmpty) {
-                // 2 alternatives: right only, or both
-                combi = new BLSpanOrQuery(right, both);
+            BLSpanQuery both = new SpanQuerySequence(first, second);
+            if (firstEmpty && secondEmpty) {
+                // 4 alternatives: neither (hence the {0,1} repetition), first only, second only, or both
+                combi = new SpanQueryRepetition(new BLSpanOrQuery(first, second, both), 0, 1);
+            } else if (firstEmpty) {
+                // 2 alternatives: second only, or both
+                combi = new BLSpanOrQuery(second, both);
             } else {
-                // 2 alternatives: left only, or both
-                combi = new BLSpanOrQuery(left, both);
+                // 2 alternatives: first only, or both
+                combi = new BLSpanOrQuery(first, both);
             }
             cl.remove(bestIndex - 1);
             cl.set(bestIndex - 1, combi);
@@ -549,7 +521,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             }
         }
 
-        class CombiPart {
+        private class CombiPart {
             BLSpans spans;
 
             boolean uniqueStart;
@@ -606,19 +578,21 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
             // First, combine as many clauses as possible into SpansSequenceSimple,
             // which works for simple clauses and is the most efficient to execute.
-            // OPT: it might be even better to favour combining low-frequency terms first,
-            // as that minimizes useless skipping through non-matching docs.
+            //
+            // NOTE: it might be even better to favour combining low-frequency terms first,
+            // as that minimizes useless skipping through non-matching docs (but this should
+            // be solved by two-phase iterators now).
             for (int i = 1; i < parts.size(); i++) {
-                CombiPart left = parts.get(i - 1);
-                CombiPart right = parts.get(i);
-                CombiPart newPart = null;
-                if (left.uniqueEnd && left.endSorted && right.startSorted && right.uniqueStart) {
+                CombiPart first = parts.get(i - 1);
+                CombiPart second = parts.get(i);
+                CombiPart newPart;
+                if (first.uniqueEnd && first.endSorted && second.startSorted && second.uniqueStart) {
                     // We can take a shortcut because of what we know about the Spans we're
                     // combining.
-                    BLSpans newSpans = new SpansSequenceSimple(left.spans, right.spans);
-                    newPart = new CombiPart(newSpans, left.uniqueStart, right.uniqueEnd, left.startSorted,
-                            right.sameLength,
-                            left.sameLength && right.sameLength);
+                    BLSpans newSpans = new SpansSequenceSimple(first.spans, second.spans);
+                    newPart = new CombiPart(newSpans, first.uniqueStart, second.uniqueEnd,
+                            first.startSorted, second.sameLength,
+                            first.sameLength && second.sameLength);
                     parts.remove(i - 1);
                     parts.set(i - 1, newPart);
                     i--;
@@ -627,76 +601,85 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
             // Next, see if we have SpansExpansion that we can resolve using SpansSequenceWithGap.
             for (int i = 1; i < parts.size(); i++) {
-                CombiPart left = parts.get(i - 1);
-                CombiPart right = parts.get(i);
-                CombiPart newPart = null;
-                BLSpans lsp = left.spans;
-                BLSpans rsp = right.spans;
-                if (lsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)lsp).direction() == Direction.RIGHT) {
-                    // Left is an expand-to-right. Make a SpansSequenceWithGap.
+                CombiPart first = parts.get(i - 1);
+                CombiPart second = parts.get(i);
+                BLSpans sp1 = first.spans;
+                BLSpans sp2 = second.spans;
+                if (sp1 instanceof SpansExpansionRaw && ((SpansExpansionRaw)sp1).direction() == Direction.RIGHT) {
+                    // First is a forward expansion. Make a SpansSequenceWithGap.
                     BLSpans newSpans;
-                    if (rsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)rsp).direction() == Direction.RIGHT) {
-                        // Right is an expansion-to-the-right too. Make the whole resulting clause expansion-to-right
+                    if (sp2 instanceof SpansExpansionRaw && ((SpansExpansionRaw)sp2).direction() == Direction.RIGHT) {
+                        // Second is a forward expansion too. Make the whole resulting clause a forward expansion
                         //   instead, so we can repeat the sequence-with-gaps trick.
-                        SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
-                        SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;
-                        BLSpans gapped = new SpansSequenceWithGap(expLeft.clause(), expLeft.gap(), expRight.clause());
-                        newSpans = new SpansExpansionRaw(expRight.lengthGetter(), gapped, Direction.RIGHT, expRight.gap().minSize(), expRight.gap().maxSize());
+                        SpansExpansionRaw expFirst = (SpansExpansionRaw)sp1;
+                        SpansExpansionRaw expSecond = (SpansExpansionRaw)sp2;
+                        // Note that the first clause is startpoint-sorted
+                        BLSpans gapped = new SpansSequenceWithGap(ensureSorted(first, expFirst.clause()),
+                                expFirst.gap(), ensureSorted(second, expSecond.clause()));
+                        newSpans = new SpansExpansionRaw(expSecond.lengthGetter(), gapped,
+                                Direction.RIGHT, expSecond.gap().minSize(), expSecond.gap().maxSize());
                     } else {
-                        // Only left is an expansion-to-the-right.
-                        SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
-                        newSpans = new SpansSequenceWithGap(expLeft.clause(), expLeft.gap(), rsp);
+                        // Only first is a forward expansion.
+                        SpansExpansionRaw expFirst = (SpansExpansionRaw)sp1;
+                        newSpans = new SpansSequenceWithGap(ensureSorted(first, expFirst.clause()),
+                                expFirst.gap(), ensureSorted(second, sp2));
                     }
-                    newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
-                            left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
-                            left.sameLength && right.sameLength);
-                    parts.remove(i - 1);
-                    parts.set(i - 1, newPart);
                     i--;
-                } else if (rsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)rsp).direction() == Direction.LEFT) {
-                    // Right is an expand-to-left (much less common, but can probably occur sometimes)
+                    replaceCombiParts(parts, i, first, second, newSpans);
+                } else if (sp2 instanceof SpansExpansionRaw && ((SpansExpansionRaw)sp2).direction() == Direction.LEFT) {
+                    // Second is a backward expansion (much less common, but can probably occur sometimes)
                     BLSpans newSpans;
-                    if (lsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)lsp).direction() == Direction.LEFT) {
-                        // Left is an expansion-to-the-left too. Make the whole resulting clause expansion-to-left
+                    if (sp1 instanceof SpansExpansionRaw && ((SpansExpansionRaw)sp1).direction() == Direction.LEFT) {
+                        // First is a backward expansion too. Make the whole resulting clause a backward expansion
                         //   instead, so we can repeat the sequence-with-gaps trick.
-                        SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
-                        SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;
-                        BLSpans gapped = new SpansSequenceWithGap(expLeft.clause(), expRight.gap(), expRight.clause());
-                        newSpans = new SpansExpansionRaw(expLeft.lengthGetter(), gapped, Direction.LEFT, expLeft.gap().minSize(), expLeft.gap().maxSize());
+                        SpansExpansionRaw expFirst = (SpansExpansionRaw)sp1;
+                        SpansExpansionRaw expSecond = (SpansExpansionRaw)sp2;
+                        BLSpans gapped = new SpansSequenceWithGap(ensureSorted(first, expFirst.clause()),
+                                expSecond.gap(), ensureSorted(second, expSecond.clause()));
+                        newSpans = new SpansExpansionRaw(expFirst.lengthGetter(), gapped,
+                                Direction.LEFT, expFirst.gap().minSize(), expFirst.gap().maxSize());
                     } else {
-                        // Only right is an expasion-to-the-left
-                        SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;
-                        newSpans = new SpansSequenceWithGap(lsp, expRight.gap(), expRight.clause());
+                        // Only second is a backward expansion
+                        SpansExpansionRaw expSecond = (SpansExpansionRaw)sp2;
+                        newSpans = new SpansSequenceWithGap(ensureSorted(first, sp1), expSecond.gap(),
+                                ensureSorted(second, expSecond.clause()));
                     }
-                    newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
-                            left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
-                            left.sameLength && right.sameLength);
-                    parts.remove(i - 1);
-                    parts.set(i - 1, newPart);
                     i--;
+                    replaceCombiParts(parts, i, first, second, newSpans);
                 }
             }
 
             // Now, combine the rest (if any) using the more expensive SpansSequenceWithGap,
             // that takes more complex sequences into account.
             while (parts.size() > 1) {
-                CombiPart left = parts.get(0);
-                CombiPart right = parts.get(1);
+                CombiPart first = parts.get(0);
+                CombiPart second = parts.get(1);
 
                 // Note: the spans coming from SpansSequenceWithGap may not be sorted by end point.
                 // We keep track of this and sort them manually if necessary.
-                CombiPart newPart = null;
-                if (!right.startSorted)
-                    right.spans = PerDocumentSortedSpans.startPoint(right.spans);
-                BLSpans newSpans = new SpansSequenceWithGap(left.spans, Gap.NONE, right.spans);
-                newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
-                        left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
-                        left.sameLength && right.sameLength);
-                parts.remove(0);
-                parts.set(0, newPart);
+                BLSpans newSpans = new SpansSequenceWithGap(ensureSorted(first, first.spans), SequenceGap.NONE,
+                        ensureSorted(second, second.spans));
+                replaceCombiParts(parts, 0, first, second, newSpans);
             }
 
             return parts.get(0).spans;
+        }
+
+        private void replaceCombiParts(List<CombiPart> parts, int partIndex, CombiPart first, CombiPart second,
+                BLSpans newSpans) {
+            CombiPart newPart = new CombiPart(newSpans,
+                    first.uniqueStart && first.uniqueEnd && second.uniqueStart,
+                    first.uniqueEnd && second.uniqueStart && second.uniqueEnd,
+                    true, first.endSorted && second.sameLength,
+                    first.sameLength && second.sameLength);
+            parts.remove(partIndex);
+            parts.set(partIndex, newPart);
+        }
+
+        private BLSpans ensureSorted(CombiPart part, BLSpans spans) {
+            if (!part.startSorted)
+                return PerDocumentSortedSpans.startPoint(spans);
+            return spans;
         }
 
     }
@@ -814,7 +797,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     }
 
     @Override
-    public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+    public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean isFollowingClause) {
         // NOTE: we (explicitly) return false even though sequences can always
         // internalize neighbours, because sequences are explicitly flattened
         // while rewriting, so this shouldn't be necessary.
@@ -826,13 +809,13 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
      * Create a new sequence with a clause added to it.
      *
      * @param clause clause to add
-     * @param addToRight if true, add to the right; if false, to the left
+     * @param addAtEnd if true, add at the end; if false, at the beginning
      * @return new sequence with clause added
      */
     @Override
-    public SpanQuerySequence internalizeNeighbour(BLSpanQuery clause, boolean addToRight) {
+    public SpanQuerySequence internalizeNeighbour(BLSpanQuery clause, boolean addAtEnd) {
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
-        if (addToRight)
+        if (addAtEnd)
             cl.add(clause);
         else
             cl.add(0, clause);
@@ -846,18 +829,18 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
      * @param whereToInternalize existing sequence, or existing non-sequence clause
      * @param clauseToInternalize clause to add to sequence or add to existing
      *            clause
-     * @param addToRight if true, add new clause to the right of existing; if false,
-     *            to the left
+     * @param addAtEnd if true, add new clause at the end of existing; if false,
+     *            at the beginning
      * @return the expanded or newly created sequence
      */
     public static SpanQuerySequence sequenceInternalize(BLSpanQuery whereToInternalize, BLSpanQuery clauseToInternalize,
-            boolean addToRight) {
+            boolean addAtEnd) {
         SpanQuerySequence seq;
         if (whereToInternalize instanceof SpanQuerySequence) {
             seq = (SpanQuerySequence) whereToInternalize;
-            seq = seq.internalizeNeighbour(clauseToInternalize, addToRight);
+            seq = seq.internalizeNeighbour(clauseToInternalize, addAtEnd);
         } else {
-            if (addToRight)
+            if (addAtEnd)
                 seq = new SpanQuerySequence(whereToInternalize, clauseToInternalize);
             else
                 seq = new SpanQuerySequence(clauseToInternalize, whereToInternalize);

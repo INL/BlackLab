@@ -262,6 +262,11 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
     }
 
     @Override
+    public boolean hitsCanOverlap() {
+        return clauses.get(0).hitsCanOverlap();
+    }
+
+    @Override
     public long reverseMatchingCost(IndexReader reader) {
         return clauses.get(0).reverseMatchingCost(reader);
     }

@@ -175,6 +175,16 @@ public class TestSearches {
     }
 
     @Test
+    public void testRepetitionNonConsecutive() {
+        List<String> expected = List.of(
+                "mier [aap mier mier mier noot noot aap aap] aap",
+                "mier [aap mier mier mier noot noot aap aap aap] aap",
+                "mier [aap mier mier mier noot noot aap aap aap aap]",
+                "noot [aap aap aap aap]");
+        Assert.assertEquals(expected, testIndex.findConc("('aap' [word != 'noot']{1, 3} 'noot'{0,2}){2,}"));
+    }
+
+    @Test
     public void testRepetitionNoResults() {
         List<String> expected = Collections.emptyList();
         Assert.assertEquals(expected, testIndex.findConc("[pos='PD.*']+ '(?i)getal'"));

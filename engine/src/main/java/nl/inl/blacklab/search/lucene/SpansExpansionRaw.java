@@ -6,7 +6,6 @@ import org.apache.lucene.index.LeafReader;
 
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
-import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -281,8 +280,8 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
         return in;
     }
 
-    public Gap gap() {
-        return Gap.variable(min, max);
+    public SequenceGap gap() {
+        return SequenceGap.variable(min, max);
     }
 
     public DocFieldLengthGetter lengthGetter() {

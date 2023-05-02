@@ -149,6 +149,11 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
     }
 
     @Override
+    public boolean hitsCanOverlap() {
+        return clauses.get(0).hitsCanOverlap();
+    }
+
+    @Override
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
         return clause.hitsAllSameLength();
     }

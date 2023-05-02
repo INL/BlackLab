@@ -23,7 +23,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * A required interface for a BlackLab SpanQuery. All our queries must be
  * derived from this so we know they will produce BLSpans (which contains extra
  * methods necessary for functionality such as capture groups, relatoins, etc.
- *
+ * <p>
  * Is able to give extra guarantees about the hits this query will produce, such as
  * if every hit is equal in length, if there may be duplicates, etc. This information
  * will help us optimize certain operations, such as sequence queries, in certain cases.
@@ -38,7 +38,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     
     /**
      * Rewrite a SpanQuery after rewrite() to a BLSpanQuery equivalent.
-     *
+     * <p>
      * This is used for BLSpanOrQuery and BLSpanMultiTermQueryWrapper: we let Lucene
      * rewrite these for us, but the result needs to be BL-ified so we know we'll
      * get BLSpans (which contain extra methods for optimization).
@@ -65,7 +65,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     /**
      * Add two values for maximum number of repetitions, taking "infinite" into
      * account.
-     *
+     * <p>
      * -1 or Integer.MAX_VALUE means infinite. Adding infinite to any other value
      * produces infinite again (-1 if either value is -1; otherwise,
      * Integer.MAX_VALUE if either value is Integer.MAX_VALUE).
@@ -135,7 +135,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     /**
      * Called before rewrite() to optimize certain parts of the query before they
      * are rewritten (e.g. match regex terms using NFA instead of OR).
-     *
+     * <p>
      * For now, only SpanQuerySequence overrides this to make sure certain clause
      * combinations are performed before rewrite().
      *
@@ -155,12 +155,12 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     /**
      * Does this query match the empty sequence?
-     *
+     * <p>
      * For example, the query [word="cow"]* matches the empty sequence. We need to
      * know this so we can rewrite to the appropriate queries. A query of the form
      * "AB*" would be translated into "A|AB+", so each component of the query
      * actually generates non-empty matches.
-     *
+     * <p>
      * We default to no because most queries don't match the empty sequence.
      *
      * @return true if this query matches the empty sequence, false otherwise
@@ -191,7 +191,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     /**
      * Is it okay to invert this query for optimization?
-     *
+     * <p>
      * Heuristic used to determine when to optimize a query by inverting one or more
      * of its subqueries.
      *
@@ -204,7 +204,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     /**
      * Is this query only a negative clause, producing all tokens that don't satisfy
      * certain conditions?
-     *
+     * <p>
      * Used for optimization decisions, i.e. in BLSpanOrQuery.rewrite().
      *
      * @return true if it's negative-only, false if not
@@ -274,11 +274,36 @@ public abstract class BLSpanQuery extends SpanQuery {
     public abstract boolean hitsHaveUniqueEnd();
 
     /**
-     * Is it guaranteed that no two hits have the same start and end position?
-     * 
+     * Is it guaranteed that no two hits are completely identical?
+     * <p>
+     * Two hits are identical if they have the same start and end position,
+     * AND the same match info, if any. If there is no match info, this
+     * method always returns the same as hitsHaveUniqueSpan().
+     *
+     * @return true if this is guaranteed, false if not
+     */
+    public boolean hitsAreUniqueWithMatchInfo() {
+        // Subclass may add additional guarantee if it knows
+        return hitsAreUnique();
+    }
+
+    /**
+     * Is it guaranteed that no two hits have identical start and end?
+     *
      * @return true if this is guaranteed, false if not
      */
     public abstract boolean hitsAreUnique();
+
+    /**
+     * Can two hits overlap?
+     *
+     * @return true if they can, false if not
+     */
+    public boolean hitsCanOverlap() {
+        // Subclasses may know more and therefore be able to guarantee non-overlapping in more cases
+        boolean hitsAreDiscrete = hitsAllSameLength() && hitsLengthMax() <= 1 && hitsHaveUniqueStart();
+        return !hitsAreDiscrete;
+    }
 
     /**
      * Is this query a single "any token", e.g. one that matches all individual tokens?
@@ -290,7 +315,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     /**
      * Can this query "internalize" the given neighbouring clause?
-     *
+     * <p>
      * Internalizing means adding the clause to its children, which is often more
      * efficient because we create longer sequences that match fewer hits and may
      * themselves be further optimized. An example is SpanQueryPosFilter, which can
@@ -299,8 +324,8 @@ public abstract class BLSpanQuery extends SpanQuery {
      * number of hits that have to be filter.
      *
      * @param clause clause we want to internalize
-     * @param onTheRight if true, clause is a right neighbour of this query; if
-     *            false, a left neighbour
+     * @param onTheRight if true, clause is a following clause of this query; if
+     *            false, a preceding clause
      * @return true iff clause can be internalized
      */
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
@@ -309,7 +334,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     /**
      * Internalize the given clause.
-     *
+     * <p>
      * See canInternalizeNeighbour() for more information.
      *
      * @param clause clause we want to internalize
@@ -339,11 +364,11 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     /**
      * Return an (very rough) indication of how many hits this clause might return.
-     *
+     * <p>
      * Used to decide what parts of the query to match using the forward index.
-     *
+     * <p>
      * Based on term frequency, which are combined using simple rules of thumb.
-     *
+     * <p>
      * Another way to think of this is an indication of how much computation this
      * clause will require when matching using the reverse index.
      *
@@ -356,7 +381,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     /**
      * Return an (very rough) indication of how expensive finding a match for this
      * query using an NFA would be.
-     *
+     * <p>
      * Used to decide what parts of the query to match using the forward index.
      *
      * @return rough estimation of the NFA complexity
