@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.mocks.MockSpans;
-import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 
 public class TestSpansSequenceWithGap {
 
@@ -23,7 +22,7 @@ public class TestSpansSequenceWithGap {
         int[] bEnd   = { 4, 5, 4 };
         BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
-        Spans spans = new SpansSequenceWithGap(a, Gap.NONE, b);
+        Spans spans = new SpansSequenceWithGap(a, SequenceGap.NONE, b);
 
         int[] expDoc   = { 1, 1, 1 };
         int[] expStart = { 1, 1, 1 };
@@ -44,7 +43,7 @@ public class TestSpansSequenceWithGap {
         int[] bEnd   = { 4, 5, 6 };
         BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
-        Spans spans = new SpansSequenceWithGap(a, Gap.variable(1, 2), b);
+        Spans spans = new SpansSequenceWithGap(a, SequenceGap.variable(1, 2), b);
 
         int[] expDoc   = { 1, 1 };
         int[] expStart = { 1, 1 };
@@ -65,7 +64,7 @@ public class TestSpansSequenceWithGap {
         int[] bEnd   = { 3, 5, 6 };
         BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
-        Spans spans = new SpansSequenceWithGap(a, Gap.NONE, b);
+        Spans spans = new SpansSequenceWithGap(a, SequenceGap.NONE, b);
 
         int[] expDoc   = { 1, 1 };
         int[] expStart = { 1, 4 };
@@ -86,7 +85,7 @@ public class TestSpansSequenceWithGap {
         int[] bEnd   = { 3, 5, 6 };
         BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
-        Spans spans = new SpansSequenceWithGap(a, Gap.ANY, b);
+        Spans spans = new SpansSequenceWithGap(a, SequenceGap.ANY, b);
 
         int[] expDoc   = { 1, 1, 1, 1, 1, 1 };
         int[] expStart = { 1, 1, 1, 2, 2, 4 };
@@ -107,7 +106,7 @@ public class TestSpansSequenceWithGap {
         int[] bEnd   = { 6 };
         BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
-        Spans spans = new SpansSequenceWithGap(a, Gap.NONE, b);
+        Spans spans = new SpansSequenceWithGap(a, SequenceGap.NONE, b);
 
         int[] expDoc   = { 1 };
         int[] expStart = { 2 };
@@ -137,7 +136,7 @@ public class TestSpansSequenceWithGap {
         int[] bEnd   = { 6, 4 };
         BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
-        Spans spans = new SpansSequenceWithGap(a, Gap.NONE, b);
+        Spans spans = new SpansSequenceWithGap(a, SequenceGap.NONE, b);
 
         int[] expDoc   = { 2 };
         int[] expStart = { 2 };

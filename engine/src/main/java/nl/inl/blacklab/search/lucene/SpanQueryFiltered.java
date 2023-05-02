@@ -99,6 +99,11 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
     }
 
     @Override
+    public boolean hitsCanOverlap() {
+        return clauses.get(0).hitsCanOverlap();
+    }
+
+    @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         BLSpanWeight weight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Query rewrite = filter.rewrite(searcher.getIndexReader());

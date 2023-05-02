@@ -235,7 +235,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return true;
+        return false;
     }
 
     @Override

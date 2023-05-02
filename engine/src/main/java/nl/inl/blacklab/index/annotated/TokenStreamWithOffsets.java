@@ -8,7 +8,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.eclipse.collections.api.iterator.IntIterator;
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
+import org.eclipse.collections.api.list.primitive.IntList;
 
 /**
  * Takes a List&lt;String&gt; plus two List&lt;Integer&gt;'s and iterates
@@ -45,8 +45,8 @@ class TokenStreamWithOffsets extends TokenStream {
 
     private int currentEndChar = -1;
 
-    public TokenStreamWithOffsets(List<String> tokens, IntArrayList increments, IntArrayList startChar,
-            IntArrayList endChar) {
+    public TokenStreamWithOffsets(List<String> tokens, IntList increments, IntList startChar,
+            IntList endChar) {
         clearAttributes();
         termAttr = addAttribute(CharTermAttribute.class);
         offsetAttr = addAttribute(OffsetAttribute.class);

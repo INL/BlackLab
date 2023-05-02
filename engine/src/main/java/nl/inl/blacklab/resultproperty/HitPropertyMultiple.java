@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -50,7 +51,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     final List<MatchSensitivity> sensitivities;
     
     /** Which of the contexts do the individual properties need? */
-    final Map<HitProperty, IntArrayList> contextIndicesPerProperty;
+    final Map<HitProperty, IntList> contextIndicesPerProperty;
     
     HitPropertyMultiple(HitPropertyMultiple mprop, Hits newHits, Contexts contexts, boolean invert) {
         super(mprop, null, null, invert);
@@ -62,7 +63,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         for (int i = 0; i < n; i++) {
             HitProperty prop = mprop.properties.get(i);
             HitProperty nprop = prop.copyWith(newHits, contexts);
-            IntArrayList indices = mprop.contextIndicesPerProperty.get(prop);
+            IntList indices = mprop.contextIndicesPerProperty.get(prop);
             if (indices != null) {
                 contextIndicesPerProperty.put(nprop, indices);
                 prop.setContextIndices(indices);
@@ -144,7 +145,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         for (HitProperty prop: properties) {
             List<Annotation> requiredContext = prop.needsContext();
             if (requiredContext != null) {
-                IntArrayList contextNumbers = new IntArrayList();
+                IntList contextNumbers = new IntArrayList();
                 for (Annotation c: requiredContext) {
                     contextNumbers.add(contextNeeded.indexOf(c));
                 }

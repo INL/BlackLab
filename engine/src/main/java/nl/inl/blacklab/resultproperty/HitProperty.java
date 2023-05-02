@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -134,7 +135,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      * the context(s) they need in the result set. (in the same order as reported by
      * needsContext()).
      */
-    IntArrayList contextIndices;
+    IntList contextIndices;
 
     public HitProperty() {
         this.hits = null;
@@ -203,7 +204,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      * @param contextIndices the indices, in the same order as reported by
      *            needsContext().
      */
-    protected void setContextIndices(IntArrayList contextIndices) {
+    protected void setContextIndices(IntList contextIndices) {
         this.contextIndices = new IntArrayList(contextIndices);
     }
 

@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.index.BLInputDocument;
@@ -45,9 +46,9 @@ public class AnnotatedFieldWriter {
 
     private final Map<String, AnnotationWriter> annotations = new HashMap<>();
 
-    private IntArrayList start = new IntArrayList();
+    private MutableIntList start = new IntArrayList();
 
-    private IntArrayList end = new IntArrayList();
+    private MutableIntList end = new IntArrayList();
 
     private final String fieldName;
 

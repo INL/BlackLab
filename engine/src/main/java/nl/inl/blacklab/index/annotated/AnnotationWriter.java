@@ -12,6 +12,8 @@ import java.util.Map;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
+import org.eclipse.collections.api.list.primitive.IntList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
@@ -50,7 +52,7 @@ public class AnnotationWriter {
      * Token position increments. This allows us to index multiple terms at a single
      * token position (just set the token increments of the additional tokens to 0).
      */
-    protected IntArrayList increments = new IntArrayList();
+    protected MutableIntList increments = new IntArrayList();
 
     /**
      * Payloads for this annotation, if any.
@@ -151,7 +153,7 @@ public class AnnotationWriter {
         return Collections.unmodifiableCollection(sensitivities.keySet());
     }
 
-    TokenStream tokenStream(String sensitivityName, IntArrayList startChars, IntArrayList endChars) {
+    TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
         TokenStream ts;
         if (includeOffsets) {
             ts = new TokenStreamWithOffsets(values, increments, startChars, endChars);
@@ -185,8 +187,8 @@ public class AnnotationWriter {
         return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity);
     }
 
-    public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntArrayList startChars,
-            IntArrayList endChars) {
+    public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntList startChars,
+            IntList endChars) {
         for (String sensitivityName : sensitivities.keySet()) {
             BLFieldType fieldType = getFieldType(doc.indexObjectFactory(), sensitivityName);
             TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);

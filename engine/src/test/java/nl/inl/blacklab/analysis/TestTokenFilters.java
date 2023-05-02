@@ -7,6 +7,7 @@ import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PayloadAttribute;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,7 +34,7 @@ public class TestTokenFilters {
     public void testAddSecondaryValuePayloadFilter() throws IOException {
         // Even tokens are primary, odd tokens are secondary (posIncr == 0)
         List<String> tokens = List.of("Hé", "he", "JIJ", "jij", "daar!", "daar");
-        IntArrayList increments = new IntArrayList();
+        MutableIntList increments = new IntArrayList();
         increments.addAll(0, 0, 1, 0, 1, 0);
 
         // Create token stream with s-primary indicators in payload
