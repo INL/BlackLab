@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
@@ -16,7 +17,7 @@ import nl.inl.blacklab.search.BlackLabIndexAbstract;
  * Each token is returned as a single hit.
  */
 class SpansNot extends BLSpans {
-    /** The spans to invert, or null if we want all tokens */
+    /** The spans to invert */
     private final BLSpans clause;
 
     private int clauseDoc = -1;
@@ -66,11 +67,15 @@ class SpansNot extends BLSpans {
      *
      * Clause must be start-point sorted.
      *
+     * Clause may not be null; use SpansNGrams(1,1) instead.
+     *
      * @param reader the index reader, for getting field lengths
      * @param fieldName the field name, for getting field lengths
-     * @param clause the clause to invert, or null if we want all tokens
+     * @param clause the clause to invert
      */
     public SpansNot(LeafReader reader, String fieldName, BLSpans clause) {
+        if (clause == null)
+            throw new IllegalArgumentException("clause == null; use SpansNGrams(1,1) instead");
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiBits.getLiveDocs(reader);
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
@@ -104,6 +109,7 @@ class SpansNot extends BLSpans {
                 currentStart = currentEnd = clauseStart = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS;
             }
+            // Go to next non-deleted doc
             boolean currentDocIsDeletedDoc;
             do {
                 currentDoc++;
@@ -116,11 +122,11 @@ class SpansNot extends BLSpans {
                 currentStart = currentEnd = clauseStart = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS; // no more docs; we're done
             }
-            if (clause == null)
-                clauseDoc = NO_MORE_DOCS;
-            else if (clauseDoc < currentDoc)
+            // Advance clause to current doc or beyond
+            if (clauseDoc < currentDoc)
                 clauseDoc = clause.advance(currentDoc);
             clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
+            // Prepare to produce tokens for this doc
             currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
@@ -158,7 +164,7 @@ class SpansNot extends BLSpans {
                 // A - We haven't started yet.
                 return -1;
 
-            } else if (clause != null && clauseDoc == currentDoc && clauseStart != NO_MORE_POSITIONS) {
+            } else if (clauseDoc == currentDoc && clauseStart != NO_MORE_POSITIONS) {
 
                 // B - There is a clause, and it is positioning within currentDoc.
                 //     Look at the hit and adjust currentToken if necessary.
@@ -214,7 +220,7 @@ class SpansNot extends BLSpans {
             return NO_MORE_POSITIONS;
         }
         // Advance us to just before the requested start point, then call nextStartPosition().
-        clauseStart = clause == null ? NO_MORE_POSITIONS : clause.advanceStartPosition(targetPosition);
+        clauseStart = clause.advanceStartPosition(targetPosition);
         currentStart = targetPosition - 1;
         currentEnd = targetPosition;
         return nextStartPosition();
@@ -269,21 +275,19 @@ class SpansNot extends BLSpans {
 
     @Override
     public String toString() {
-        return clause == null ? "AnyToken()" : "NotSpans(" + clause + ")";
+        return "NotSpans(" + clause + ")";
     }
 
     @Override
     public void passHitQueryContextToClauses(HitQueryContext context) {
-        if (clause != null)
-            clause.setHitQueryContext(context);
+        clause.setHitQueryContext(context);
     }
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
+        if (!childClausesCaptureMatchInfo)
             return;
-        if (clause != null)
-            clause.getMatchInfo(relationInfo);
+        clause.getMatchInfo(relationInfo);
     }
 
     @Override
@@ -298,7 +302,13 @@ class SpansNot extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return 0;
+        return clause.positionsCost();
     }
 
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        // An approximation of our clause doesn't help us eliminate documents,
+        // because we can only eliminate a document if we know its clause matches all tokens.
+        return super.asTwoPhaseIterator();
+    }
 }

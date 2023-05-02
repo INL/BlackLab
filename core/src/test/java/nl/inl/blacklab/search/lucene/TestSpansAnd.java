@@ -11,7 +11,7 @@ import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.mocks.MockSpans;
 
 public class TestSpansAnd {
-    private static SpansAnd getSpans() {
+    private static BLSpans getSpans() {
         BLSpans a = MockSpans.fromLists(
                 new int[] { 1, 1, 2, 2, 2, 3 },
                 new int[] { 10, 20, 10, 10, 30, 10 },
@@ -35,24 +35,15 @@ public class TestSpansAnd {
     @Test
     public void testAndSpansAdvance() throws IOException {
         Spans exp = MockSpans.single(2, 10, 20);
-        SpansAnd spans = getSpans();
+        BLSpans spans = getSpans();
         Assert.assertEquals(2, spans.advance(2));
-        TestUtil.assertEquals(exp, spans, true);
-    }
-
-    @Test
-    public void testAndSpansAdvanceToCurrent() throws IOException {
-        Spans exp = MockSpans.single(2, 10, 20);
-        SpansAnd spans = getSpans();
-        Assert.assertEquals(1, spans.nextDoc());
-        Assert.assertEquals(2, spans.advance(1));
         TestUtil.assertEquals(exp, spans, true);
     }
 
     @Test
     public void testAndSpansAdvanceNoResults() throws IOException {
         MockSpans exp = MockSpans.emptySpans();
-        SpansAnd spans = getSpans();
+        BLSpans spans = getSpans();
         Assert.assertEquals(DocIdSetIterator.NO_MORE_DOCS, spans.advance(3));
         TestUtil.assertEquals(exp, spans, true);
     }
@@ -60,7 +51,7 @@ public class TestSpansAnd {
     @Test
     public void testAndSpansAdvanceBeyond() throws IOException {
         MockSpans exp = MockSpans.emptySpans();
-        SpansAnd spans = getSpans();
+        BLSpans spans = getSpans();
         Assert.assertEquals(DocIdSetIterator.NO_MORE_DOCS, spans.advance(1000));
         TestUtil.assertEquals(exp, spans, true);
     }

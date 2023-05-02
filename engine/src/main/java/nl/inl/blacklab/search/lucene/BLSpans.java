@@ -5,14 +5,11 @@ import java.io.IOException;
 import org.apache.lucene.search.spans.Spans;
 
 /**
- * Will be the base class for all our own Spans classes. Is able to give extra
- * guarantees about the hits in this Spans object, such as if every hit is equal
- * in length, if there may be duplicates, etc. This information will help us
- * optimize certain operations, such as sequence queries, in certain cases.
- *
+ * Base class for all our own Spans classes.
+ * <p>
  * The default implementation is appropriate for Spans classes that return only
  * single-term hits.
- *
+ * <p>
  * Note that Spans will iterate through a Lucene index segment in a single thread,
  * therefore Spans and subclasses don't need to be thread-safe.
  */
@@ -21,16 +18,16 @@ public abstract class BLSpans extends Spans {
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 
     /**
-     * Should we ask our clauses for captured groups? If the clauses don't capture
-     * any groups, this will be set to false to improve performance.
+     * Should we ask our clauses for match info? If the clauses don't capture
+     * any match info, this will be set to false to improve performance.
      */
-    protected boolean childClausesCaptureGroups = true;
+    protected boolean childClausesCaptureMatchInfo = true;
 
     /**
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
-     *
-     * subclasses should override this method, pass the context to their child
+     * <p>
+     * Subclasses should override this method, pass the context to their child
      * clauses (if any), and either:
      *
      * <ul>
@@ -39,6 +36,8 @@ public abstract class BLSpans extends Spans {
      *       as it may not be available during matching)</li>
      * </ul>
      *
+     * As an alternative, they can also only override {@link #passHitQueryContextToClauses(HitQueryContext)}.
+     *
      * @param context the hit query context, that e.g. keeps track of captured groups
      */
     public void setHitQueryContext(HitQueryContext context) {
@@ -46,12 +45,14 @@ public abstract class BLSpans extends Spans {
         passHitQueryContextToClauses(context);
         if (context.getMatchInfoRegisterNumber() == before) {
             // Our clauses don't capture any match info; optimize
-            childClausesCaptureGroups = false;
+            childClausesCaptureMatchInfo = false;
         }
     }
 
     /**
      * Called by setHitQueryContext() to pass the context to child clauses.
+     * <p>
+     * Subclasses can override this to avoid having to override {@link #setHitQueryContext(HitQueryContext)}.
      *
      * @param context the hit query context, that e.g. keeps track of captured
      *            groups
@@ -70,10 +71,10 @@ public abstract class BLSpans extends Spans {
 
     /**
      * Advance the start position in the current doc to target or beyond.
-     *
+     * <p>
      * Always at least advances to the next hit, even if the current start position
      * is already at or beyond the target.
-     *
+     * <p>
      * <b>CAUTION:</b> if your spans are not start point sorted, this method can
      * not guarantee to skip over all hits that start before the target.
      * Any class that uses this method should be aware of this.
@@ -87,10 +88,24 @@ public abstract class BLSpans extends Spans {
      */
     public int advanceStartPosition(int target) throws IOException {
         // Naive implementations; subclasses may provide a faster version.
+        return naiveAdvanceStartPosition(this, target);
+    }
+
+    /**
+     * Advance the start position by calling nextStartPosition() repeatedly.
+     *
+     * Useful for twice-derived classes that don't have a more efficient way to advance.
+     *
+     * @param spans spans to advance
+     * @param target target start position to advance to
+     * @return new start position, or Spans.NO_MORE_POSITIONS
+     */
+    public static int naiveAdvanceStartPosition(BLSpans spans, int target) throws IOException {
         int pos;
         do {
-            pos = nextStartPosition();
-        } while (pos < target && pos != NO_MORE_POSITIONS);
+            pos = spans.nextStartPosition();
+        } while (pos < target); // also covers NO_MORE_POSITIONS
+        assert pos != -1;
         return pos;
     }
 
@@ -101,16 +116,12 @@ public abstract class BLSpans extends Spans {
         return 100;
     }
 
-    static String inf(int max) {
-        return BLSpanQuery.inf(max);
-    }
-
     /**
      * Ensure that given spans are startpoint-sorted within documents.
-     *
+     * <p>
      * It is assumed that they are already document-sorted, or at least
      * all hits from one document are contiguous.
-     *
+     * <p>
      * Just uses PerDocumentSortedSpans for now, but could be perhaps be
      * optimized to only look at startpoints within the document.
      *
@@ -135,6 +146,14 @@ public abstract class BLSpans extends Spans {
         return spans;
     }
 
+    /**
+     * Get the match info for this BLSpans object.
+     * <p>
+     * Only SpansCaptureGroup and SpansRelations have match info
+     * (capture group and relation, respectively).
+     *
+     * @return the match info, or null if none available
+     */
     public MatchInfo getRelationInfo() {
         return null;
     }

@@ -3,8 +3,9 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
@@ -16,7 +17,7 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
  * efficient to just save the endpoints for the current start point (the source
  * spans is normally startpoint-sorted already).
  */
-class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuckets {
+class SpansInBucketsPerStartPoint extends SpansInBuckets {
     protected final BLSpans source;
 
     protected int currentDoc = -1;
@@ -28,8 +29,6 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
     private IntArrayList endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
 
     private List<MatchInfo[]> capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
-
-    private int bucketSize = 0;
 
     private HitQueryContext hitQueryContext;
 
@@ -47,7 +46,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
      * @param source (startpoint-sorted) source spans
      */
     public SpansInBucketsPerStartPoint(BLSpans source) {
-        this.source = source; //Sort
+        this.source = Objects.requireNonNull(source); //Sort
     }
 
     @Override
@@ -98,20 +97,11 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
     @SuppressWarnings("unused")
     protected int gatherEndPointsAtStartPoint() throws IOException {
-        if (!REALLOCATE_IF_TOO_LARGE || endPoints.size() < COLLECTION_REALLOC_THRESHOLD) {
-            // Not a huge amount of memory, so don't reallocate
-            endPoints.clear();
-            capturedGroupsPerEndpoint.clear();
-        } else {
-            // Reallocate in this case to avoid holding on to a lot of memory
-            endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
-            capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
-        }
-
-        doCapturedGroups = clauseCapturesGroups && source != null && hitQueryContext != null
+        endPoints.clear();
+        capturedGroupsPerEndpoint.clear();
+        doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
                 && hitQueryContext.numberOfMatchInfos() > 0;
 
-        bucketSize = 0;
         currentBucketStart = currentSpansStart;
         while (currentSpansStart != Spans.NO_MORE_POSITIONS && currentSpansStart == currentBucketStart) {
             endPoints.add(source.endPosition());
@@ -120,7 +110,6 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
                 source.getMatchInfo(capturedGroups);
                 capturedGroupsPerEndpoint.add(capturedGroups);
             }
-            bucketSize++;
             currentSpansStart = source.nextStartPosition();
         }
         return currentDoc;
@@ -131,16 +120,9 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
         if (currentDoc >= target) {
             return nextDoc();
         }
-
-        if (currentDoc == NO_MORE_DOCS)
-            return DocIdSetIterator.NO_MORE_DOCS;
-
-        if (currentDoc < target) {
-            currentDoc = source.advance(target);
-            currentSpansStart = source.nextStartPosition();
-            currentBucketStart = -1; // no bucket yet
-        }
-
+        currentDoc = source.advance(target);
+        currentSpansStart = source.nextStartPosition();
+        currentBucketStart = -1; // no bucket yet
         return currentDoc;
     }
 
@@ -151,7 +133,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
     @Override
     public int bucketSize() {
-        return bucketSize;
+        return endPoints.size();
     }
 
     @Override
@@ -190,7 +172,23 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
     @Override
     public long cost() {
-        return 300; // (arbitrary value. This is used for scoring, which we don't use yet)
+        return source.cost();
     }
 
+
+
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        return getTwoPhaseIterator(source);
+    }
+
+    @Override
+    public float positionsCost() {
+        return source.positionsCost();
+    }
+
+    @Override
+    public int width() {
+        return source.width();
+    }
 }

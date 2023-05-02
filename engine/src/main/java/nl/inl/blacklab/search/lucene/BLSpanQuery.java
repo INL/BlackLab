@@ -22,7 +22,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
  * derived from this so we know they will produce BLSpans (which contains extra
- * methods for optimization).
+ * methods necessary for functionality such as capture groups, relatoins, etc.
+ *
+ * Is able to give extra guarantees about the hits this query will produce, such as
+ * if every hit is equal in length, if there may be duplicates, etc. This information
+ * will help us optimize certain operations, such as sequence queries, in certain cases.
  */
 public abstract class BLSpanQuery extends SpanQuery {
 

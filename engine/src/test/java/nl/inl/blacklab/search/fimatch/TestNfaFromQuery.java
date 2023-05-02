@@ -148,6 +148,11 @@ public class TestNfaFromQuery {
         }
 
         @Override
+        public int getSegmentDocId() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public int getTokenSegmentTermId(int annotIndex, int pos) {
             if (!validPos(pos))
                 return -1;

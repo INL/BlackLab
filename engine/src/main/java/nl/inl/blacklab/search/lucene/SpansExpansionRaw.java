@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
@@ -32,13 +31,7 @@ import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
  * matches per document and eliminates duplicates (hence the 'raw' in the name -
  * not suitable for consumption yet).
  */
-class SpansExpansionRaw extends BLSpans {
-
-    /** The clause to expand */
-    private final BLSpans clause;
-
-    /** Whether or not there's more docs in the clause */
-    private int currentDoc = -1;
+class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
 
     /** Current startPosition() in the clause */
     private int clauseStart = -1;
@@ -74,33 +67,34 @@ class SpansExpansionRaw extends BLSpans {
 
     public SpansExpansionRaw(LeafReader reader, String fieldName, BLSpans clause,
             Direction direction, int min, int max) {
+        super(clause);
         if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         }
-        this.clause = clause;
         this.direction = direction;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
-        if (min > this.max)
-            throw new IllegalArgumentException("min > max");
-        if (min < 0 || this.max < 0)
-            throw new IllegalArgumentException("Expansions cannot be negative");
+        checkMinMax();
     }
 
     public SpansExpansionRaw(DocFieldLengthGetter lengthGetter, BLSpans clause, Direction direction, int min, int max) {
+        super(clause);
         if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             // OPT: cache this in BlackLabIndex..?
             this.lengthGetter = lengthGetter;
         }
-        this.clause = clause;
         this.direction = direction;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
+        checkMinMax();
+    }
+
+    private void checkMinMax() {
         if (min > this.max)
             throw new IllegalArgumentException("min > max");
-        if (min < 0 || this.max < 0)
+        if (min < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
     }
 
@@ -116,32 +110,24 @@ class SpansExpansionRaw extends BLSpans {
     }
 
     @Override
-    public int docID() {
-        return currentDoc;
-    }
-
-    @Override
-    public int endPosition() {
-        if (alreadyAtFirstHit)
-            return -1; // .nextStartPosition() not called yet
-        return end;
-    }
-
-    @Override
     public int nextDoc() throws IOException {
         alreadyAtFirstHit = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            do {
-                currentDoc = clause.nextDoc();
-                if (currentDoc == NO_MORE_DOCS)
-                    return NO_MORE_DOCS;
-                start = end = -1;
-                clauseStart = clause.nextStartPosition();
-                resetExpand();
-            } while (clauseStart == NO_MORE_POSITIONS);
-            alreadyAtFirstHit = true;
-        }
-        return currentDoc;
+        return super.nextDoc();
+    }
+
+    @Override
+    public int advance(int doc) throws IOException {
+        alreadyAtFirstHit = false;
+        return super.advance(doc);
+    }
+
+    @Override
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        // Are there search results in this document?
+        clauseStart = in.nextStartPosition();
+        resetExpand();
+        alreadyAtFirstHit = clauseStart != NO_MORE_POSITIONS;
+        return alreadyAtFirstHit;
     }
 
     @Override
@@ -150,7 +136,7 @@ class SpansExpansionRaw extends BLSpans {
             alreadyAtFirstHit = false;
             return start;
         }
-        if (currentDoc == NO_MORE_DOCS)
+        if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;
         if (clauseStart == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
@@ -172,9 +158,9 @@ class SpansExpansionRaw extends BLSpans {
             }
         }
 
-        clauseStart = clause.nextStartPosition();
+        clauseStart = in.nextStartPosition();
         resetExpand();
-        return clauseStart;
+        return start;
     }
 
     @Override
@@ -184,7 +170,7 @@ class SpansExpansionRaw extends BLSpans {
             if (start >= target)
                 return start;
         }
-        if (currentDoc == NO_MORE_DOCS)
+        if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;
         if (clauseStart == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
@@ -192,36 +178,13 @@ class SpansExpansionRaw extends BLSpans {
         if (expandStepsLeft > 0 && start >= target)
             return nextStartPosition(); // we're already there
 
-        clauseStart = clause.advanceStartPosition(target);
+        // If we're expanding to the left, adjust the target to skip positions in the clause that cannot produce
+        // any hits with start >= target. Note that we may still produce hits with start < target because of max;
+        // but this is inherent with this method if your hits are not startpoint sorted; callers should be aware of this.
+        int adjustedTarget = direction == Direction.LEFT ? target + min : target;
+        clauseStart = in.advanceStartPosition(adjustedTarget);
         resetExpand();
-        return clauseStart;
-    }
-
-    @Override
-    public int advance(int doc) throws IOException {
-        alreadyAtFirstHit = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            if (currentDoc < doc) {
-                currentDoc = clause.advance(doc);
-                if (currentDoc != NO_MORE_DOCS) {
-                    while (true) {
-                        start = end = -1;
-                        clauseStart = clause.nextStartPosition();
-                        resetExpand();
-                        if (clauseStart != NO_MORE_POSITIONS) {
-                            alreadyAtFirstHit = true;
-                            return currentDoc;
-                        }
-                        currentDoc = clause.nextDoc();
-                        if (currentDoc == NO_MORE_DOCS)
-                            return NO_MORE_DOCS;
-                    }
-                }
-            } else {
-                nextDoc(); // per Lucene's specification, always at least go to the next doc
-            }
-        }
-        return currentDoc;
+        return start;
     }
 
     /**
@@ -237,13 +200,13 @@ class SpansExpansionRaw extends BLSpans {
      */
     private void resetExpand() throws IOException {
         if (clauseStart == NO_MORE_POSITIONS) {
-            clauseStart = start = end = NO_MORE_POSITIONS;
+            start = end = NO_MORE_POSITIONS;
             return;
         }
         while (true) {
             // Attempt to do the initial expansion and reset the counter
             start = clauseStart;
-            end = clause.endPosition();
+            end = in.endPosition();
             if (direction == Direction.LEFT)
                 start -= min;
             else
@@ -258,9 +221,9 @@ class SpansExpansionRaw extends BLSpans {
                 // Can only expand to the right until last token in document.
 
                 // Do we know this document's length already?
-                if (currentDoc != tokenLengthDocId) {
+                if (in.docID() != tokenLengthDocId) {
                     // No, determine length now
-                    tokenLengthDocId = currentDoc;
+                    tokenLengthDocId = in.docID();
                     tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
                 maxExpandSteps = tokenLength - end;
@@ -280,7 +243,7 @@ class SpansExpansionRaw extends BLSpans {
             }
 
             // No, try the next hit, if there is one
-            clauseStart = clause.nextStartPosition();
+            clauseStart = in.nextStartPosition();
             if (clauseStart == NO_MORE_POSITIONS) {
                 start = end = NO_MORE_POSITIONS;
                 return; // No hits left, we're done
@@ -299,35 +262,15 @@ class SpansExpansionRaw extends BLSpans {
     }
 
     @Override
+    public int endPosition() {
+        if (alreadyAtFirstHit)
+            return -1; // .nextStartPosition() not called yet
+        return end;
+    }
+
+    @Override
     public String toString() {
-        return "SpansExpansion(" + clause + ", " + direction + ", " + min + ", " + inf(max) + ")";
-    }
-
-    @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        clause.setHitQueryContext(context);
-    }
-
-    @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
-            return;
-        clause.getMatchInfo(relationInfo);
-    }
-
-    @Override
-    public int width() {
-        return clause.width();
-    }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        clause.collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return clause.positionsCost();
+        return "SpansExpansion(" + in + ", " + direction + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
     public Direction direction() {
@@ -335,7 +278,7 @@ class SpansExpansionRaw extends BLSpans {
     }
 
     public BLSpans clause() {
-        return clause;
+        return in;
     }
 
     public Gap gap() {

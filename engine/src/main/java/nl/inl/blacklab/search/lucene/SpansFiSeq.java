@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.NavigableSet;
 
-import org.apache.lucene.search.spans.SpanCollector;
-
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -13,13 +11,7 @@ import nl.inl.blacklab.search.fimatch.NfaState;
 /**
  * Finds hits using the forward index, by matching an NFA from anchor points.
  */
-class SpansFiSeq extends BLSpans {
-
-    /** The spans we're (possibly) looking for */
-    private final BLSpans anchor;
-
-    /** What doc is the anchorSpans in? */
-    private int anchorDoc = -1;
+class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
 
     /** Where to get forward index tokens for the current doc */
     private ForwardIndexDocument currentFiDoc;
@@ -57,16 +49,11 @@ class SpansFiSeq extends BLSpans {
 
     public SpansFiSeq(BLSpans anchorSpans, boolean startOfAnchor, NfaState nfa, int direction,
             ForwardIndexAccessorLeafReader fiAccessor) {
-        this.anchor = anchorSpans;
+        super(anchorSpans);
         this.startOfAnchor = startOfAnchor;
         this.nfa = nfa;
         this.direction = direction;
         this.fiAccessor = fiAccessor;
-    }
-
-    @Override
-    public int docID() {
-        return anchorDoc;
     }
 
     @Override
@@ -82,36 +69,21 @@ class SpansFiSeq extends BLSpans {
     public int endPosition() {
         if (alreadyAtFirstMatch)
             return -1; // nextStartPosition() hasn't been called yet
-        int endPos = anchor.endPosition();
+        int endPos = in.endPosition();
         if (endPos == NO_MORE_POSITIONS || endPos < 0)
             return endPos;
-        return direction > 0 ? Math.max(currentMatchEndPoint, anchor.endPosition()) : anchor.endPosition();
+        return direction > 0 ? Math.max(currentMatchEndPoint, in.endPosition()) : in.endPosition();
     }
 
     @Override
     public int nextDoc() throws IOException {
         alreadyAtFirstMatch = false;
-
-        // Are we done yet?
-        if (anchorDoc == NO_MORE_DOCS)
-            return NO_MORE_DOCS;
-
-        // Advance container
-        anchorDoc = anchor.nextDoc();
-        anchorStart = -1;
-        if (anchorDoc == NO_MORE_DOCS) {
-            currentFiDoc = null;
-            return NO_MORE_DOCS; // no more containers; we're done.
-        }
-        currentFiDoc = fiAccessor.advanceForwardIndexDoc(anchorDoc);
-
-        // Find first matching anchor span from here
-        return findDocWithMatch();
+        return super.nextDoc();
     }
 
     @Override
     public int nextStartPosition() throws IOException {
-        if (anchorDoc == NO_MORE_DOCS)
+        if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;
 
         if (alreadyAtFirstMatch) {
@@ -130,13 +102,13 @@ class SpansFiSeq extends BLSpans {
         }
 
         // Find first matching anchor span from here
-        anchorStart = anchor.nextStartPosition();
+        anchorStart = in.nextStartPosition();
         return synchronizePos();
     }
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
-        if (anchorDoc == NO_MORE_DOCS)
+        if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;
 
         if (alreadyAtFirstMatch) {
@@ -149,44 +121,25 @@ class SpansFiSeq extends BLSpans {
         if (anchorStart == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
 
-        anchorStart = anchor.advanceStartPosition(target);
+        anchorStart = in.advanceStartPosition(target);
 
         // Find first matching anchor span from here
         return synchronizePos();
     }
 
-    /**
-     * Find a anchor span (not necessarily in this document) matching with NFA,
-     * starting from the current anchor span.
-     *
-     * @return docID if found, NO_MORE_DOCS if no such anchor span exists (i.e.
-     *         we're done)
-     */
-    private int findDocWithMatch() throws IOException {
-        // Find the next "valid" container, if there is one.
-        while (anchorDoc != NO_MORE_DOCS) {
-
-            // Are there search results in this document?
-            if (anchorStart != NO_MORE_POSITIONS) {
-                anchorStart = anchor.nextStartPosition();
-            }
-            anchorStart = synchronizePos();
-            if (anchorStart != NO_MORE_POSITIONS) {
-                alreadyAtFirstMatch = true;
-                return anchorDoc;
-            }
-
-            // No search results found in the current container.
-            // Advance to the next container.
-            anchorDoc = anchor.nextDoc();
-            if (anchorDoc != NO_MORE_DOCS) {
-                currentFiDoc = fiAccessor.advanceForwardIndexDoc(anchorDoc);
-            } else {
-                currentFiDoc = null;
-            }
-            anchorStart = -1;
+    @Override
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        // Are there search results in this document?
+        alreadyAtFirstMatch = false;
+        matchEndPointIt = null;
+        if (in.startPosition() != NO_MORE_POSITIONS) {
+            anchorStart = in.nextStartPosition();
         }
-        return anchorDoc;
+        anchorStart = synchronizePos();
+        if (anchorStart == NO_MORE_POSITIONS)
+            return false;
+        alreadyAtFirstMatch = true;
+        return true;
     }
 
     /**
@@ -197,11 +150,14 @@ class SpansFiSeq extends BLSpans {
      *         exists (i.e. we're done)
      */
     private int synchronizePos() throws IOException {
+        if (currentFiDoc == null || currentFiDoc.getSegmentDocId() != docID())
+            currentFiDoc = fiAccessor.advanceForwardIndexDoc(docID());
+
         // Find the next "valid" anchor spans, if there is one.
         while (anchorStart != NO_MORE_POSITIONS) {
 
             // We're at the first unchecked anchor spans. Does our NFA match?
-            int anchorPos = startOfAnchor ? anchorStart : anchor.endPosition();
+            int anchorPos = startOfAnchor ? anchorStart : in.endPosition();
             if (direction < 0)
                 anchorPos--;
             // OPT: sometimes anchorPos may be the same as the previous one. We could check for
@@ -217,7 +173,7 @@ class SpansFiSeq extends BLSpans {
             }
 
             // Didn't match filter; go to the next position.
-            anchorStart = anchor.nextStartPosition();
+            anchorStart = in.nextStartPosition();
             if (anchorStart == NO_MORE_POSITIONS)
                 return NO_MORE_POSITIONS;
 
@@ -228,53 +184,13 @@ class SpansFiSeq extends BLSpans {
     @Override
     public int advance(int doc) throws IOException {
         alreadyAtFirstMatch = false;
-
-        // Skip both to doc
-        anchorDoc = anchor.advance(doc);
-        anchorStart = -1;
-        if (anchorDoc == NO_MORE_DOCS) {
-            currentFiDoc = null;
-            return NO_MORE_DOCS;
-        }
-        currentFiDoc = fiAccessor.advanceForwardIndexDoc(anchorDoc);
-
-        // Find first matching anchor span from here
-        return findDocWithMatch();
+        return super.advance(doc);
     }
 
     @Override
     public String toString() {
-        return "SpansFiSeq(" + anchor + ", " + (startOfAnchor ? "START" : "END") + ", " + nfa + ", "
+        return "SpansFiSeq(" + in + ", " + (startOfAnchor ? "START" : "END") + ", " + nfa + ", "
                 + (direction == 1 ? "FORWARD" : "BACKWARD") + ")";
-    }
-
-    @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        anchor.setHitQueryContext(context);
-        // what to do for NFA? (NFAs cannot be used right now if we're trying to capture groups)
-    }
-
-    @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
-            return;
-        anchor.getMatchInfo(relationInfo);
-        // what to do for NFA? (NFAs cannot be used right now if we're trying to capture groups)
-    }
-
-    @Override
-    public int width() {
-        return anchor.width();
-    }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        anchor.collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return anchor.positionsCost();
     }
 
 }

@@ -31,16 +31,16 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
  * Combines spans, keeping only combinations of hits that occur one after the
  * other. The order is significant: a hit from the first span must be followed
  * by a hit from the second.
- *
+ * <p>
  * Note that this class is different from
  * org.apache.lucene.search.spans.SpanNearQuery: it tries to make sure it
  * generates *all* possible sequence matches. SpanNearQuery doesn't do this;
  * once a hit is used in a SpanNearQuery match, it advances to the next hit.
- *
+ * <p>
  * In the future, this class could be expanded to make the exact behaviour
  * configurable: find all matches / find longest matches / find shortest matches
  * / ...
- *
+ * <p>
  * See SpanSequenceRaw for details on the matching process.
  */
 public class SpanQuerySequence extends BLSpanQueryAbstract {
@@ -60,7 +60,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
     /**
      * Flatten nested sequences in clauses array.
-     *
+     * <p>
      * Flattens in-place.
      *
      * @param clauses clauses which may need flattening
@@ -83,7 +83,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     /**
      * Try to match separate start and end tags in this sequence, and convert into a
      * position filter (e.g. containing) query.
-     *
+     * <p>
      * For example: <s> []* 'bla' []* </s> ==> <s/> containing 'bla'
      *
      * @param clauses clauses in which to find matching tags
@@ -442,7 +442,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     /**
      * Given translated clauses, builds several alternatives and combines them with
      * OR.
-     *
+     * <p>
      * This is necessary because of how sequence matching works: first the hits in
      * each of the clauses are located, then we try to detect valid sequences by
      * looking at these hits. But when a clause also matches the empty sequence, you
@@ -615,7 +615,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 if (left.uniqueEnd && left.endSorted && right.startSorted && right.uniqueStart) {
                     // We can take a shortcut because of what we know about the Spans we're
                     // combining.
-                    SpansSequenceSimple newSpans = new SpansSequenceSimple(left.spans, right.spans);
+                    BLSpans newSpans = new SpansSequenceSimple(left.spans, right.spans);
                     newPart = new CombiPart(newSpans, left.uniqueStart, right.uniqueEnd, left.startSorted,
                             right.sameLength,
                             left.sameLength && right.sameLength);
