@@ -339,7 +339,7 @@ public class ResponseStreamer {
             {
                 String docPid = result.getDocIdToPid().get(hit.doc());
                 Map<String, MatchInfo> capturedGroups = null;
-                if (hits.hasCapturedGroups()) {
+                if (hits.hasMatchInfo()) {
                     capturedGroups = hits.getMatchInfoMap(hit, params.omitEmptyCapture());
                     if (capturedGroups == null && logger != null)
                         logger.warn(

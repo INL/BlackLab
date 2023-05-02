@@ -49,6 +49,11 @@ public class TestNfa {
         }
 
         @Override
+        public int getSegmentDocId() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public int getTokenSegmentTermId(int annotIndex, int pos) {
             if (annotIndex != 0)
                 throw new BlackLabRuntimeException("only 0 is valid annotation");

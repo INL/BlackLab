@@ -1,249 +1,147 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-
-import org.apache.lucene.search.spans.SpanCollector;
+import java.util.List;
 
 /**
  * Combines two Spans using AND. Note that this means that only matches with the
  * same document id, the same start and the same end positions will be kept.
  */
-class SpansAnd extends BLSpans {
-    /** The two sets of hits to combine */
-    private final BLSpans[] spans = new BLSpans[2];
-
-    /** -1 = not started, NO_MORE_DOCS = done, otherwise = docID */
-    private final int[] currentDoc = new int[2];
-
-    /** -1 = not started, NO_MORE_POSITIONS = done, otherwise = start position */
-    private final int[] currentStart = new int[2];
-
-    private boolean alreadyAtFirstMatch = false;
+class SpansAnd extends BLConjunctionSpans {
 
     /**
      * Construct SpansAnd.
-     *
+     * <p>
      * Clauses must be start-point sorted.
      *
      * @param leftClause left clause
      * @param rightClause right clause
      */
     public SpansAnd(BLSpans leftClause, BLSpans rightClause) {
-        spans[0] = leftClause;
-        spans[1] = rightClause;
-        currentDoc[0] = currentDoc[1] = -1;
-        currentStart[0] = currentStart[1] = -1;
-    }
-
-    @Override
-    public int docID() {
-        if (currentDoc[1] == NO_MORE_DOCS)
-            return NO_MORE_DOCS;
-        return currentDoc[0];
+        super(List.of(leftClause, rightClause));
     }
 
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
-            return -1; // .nextStartPosition() not called yet
-        if (currentStart[1] == NO_MORE_POSITIONS)
+        if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
-        return currentStart[0];
+        return atFirstInCurrentDoc ? -1 : subSpans[0].startPosition();
     }
 
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
-            return -1; // .nextStartPosition() not called yet
-        if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS)
+        if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
-        return spans[0].endPosition();
-    }
-
-    @Override
-    public int nextDoc() throws IOException {
-        alreadyAtFirstMatch = false;
-        if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
-            return NO_MORE_DOCS;
-        currentDoc[0] = spans[0].nextDoc();
-        currentStart[0] = -1;
-        if (currentDoc[0] == NO_MORE_DOCS)
-            return NO_MORE_DOCS;
-        int laggingSpans = currentDoc[0] < currentDoc[1] ? 0 : 1;
-        if (currentDoc[laggingSpans] < currentDoc[1 - laggingSpans])
-            catchUpDoc(laggingSpans);
-        return synchronizeDoc();
+        return atFirstInCurrentDoc ? -1 : subSpans[0].endPosition();
     }
 
     @Override
     public int nextStartPosition() throws IOException {
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
-            return currentStart[0];
+        if (oneExhaustedInCurrentDoc)
+            return NO_MORE_POSITIONS;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
+            assert subSpans[0].startPosition() >= 0 && subSpans[1].startPosition() >= 0;
+            assert subSpans[0].startPosition() != NO_MORE_POSITIONS && subSpans[1].startPosition() != NO_MORE_POSITIONS;
+            return subSpans[0].startPosition();
         }
-        if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS)
-            return NO_MORE_POSITIONS;
-        // Waren we al klaar?
-        if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS)
-            return NO_MORE_POSITIONS;
-
-        // Draai beide Spans door
-        currentStart[0] = spans[0].nextStartPosition();
-        currentStart[1] = spans[1].nextStartPosition();
-
+        for (BLSpans subSpan: subSpans) {
+            if (subSpan.nextStartPosition() == NO_MORE_POSITIONS) {
+                oneExhaustedInCurrentDoc = true;
+                return NO_MORE_POSITIONS;
+            }
+        }
         return synchronizePosition();
     }
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
-            if (currentStart[0] >= target)
-                return currentStart[0];
-        }
-        for (int i = 0; i < 2; i++) {
-            currentStart[i] = spans[i].advanceStartPosition(target);
+        if (oneExhaustedInCurrentDoc)
+            return NO_MORE_POSITIONS;
+        int startPos = startPosition();
+        if (startPos >= target)
+            return nextStartPosition(); // already at or beyond target. per contract, return next match
+        for (BLSpans subSpan: subSpans) {
+            if (subSpan.advanceStartPosition(target) == NO_MORE_POSITIONS) {
+                oneExhaustedInCurrentDoc = true;
+                return NO_MORE_POSITIONS;
+            }
         }
         return synchronizePosition();
     }
 
     private int synchronizePosition() throws IOException {
-        // Synchronise spans
         while (true) {
-
-            if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS)
+            if (oneExhaustedInCurrentDoc)
                 return NO_MORE_POSITIONS;
+            int leftStart = subSpans[0].startPosition();
+            int rightStart = subSpans[1].startPosition();
 
             // Synch at match start level
-            if (currentStart[0] == -1 && currentStart[1] == -1 || currentStart[0] != currentStart[1]) {
-                int laggingSpans = currentStart[0] < currentStart[1] ? 0 : 1;
+            if ((leftStart == -1 && rightStart == -1) ||
+                    leftStart != rightStart) {
+                // Starts don't match
+                int laggingSpans = leftStart < rightStart ? 0 : 1;
                 catchUpMatchStart(laggingSpans);
-                continue; // restart synching
-            }
-
-            // Synch at match end level
-            if (spans[0].endPosition() != spans[1].endPosition()) {
-                int laggingSpans = spans[0].endPosition() < spans[1].endPosition() ? 0 : 1;
+            } else if (subSpans[0].endPosition() != subSpans[1].endPosition()) {
+                // Starts match but ends don't
+                int laggingSpans = subSpans[0].endPosition() < subSpans[1].endPosition() ? 0 : 1;
                 catchUpMatchEnd(laggingSpans);
-                continue; // restart synching
+            } else {
+                // Both match
+                leftStart = subSpans[0].startPosition();
+                if (leftStart == NO_MORE_POSITIONS || subSpans[1].startPosition() == NO_MORE_POSITIONS) {
+                    oneExhaustedInCurrentDoc = true;
+                    return NO_MORE_POSITIONS;
+                }
+                assert leftStart >= 0;
+                return leftStart;
             }
-
-            // Are we done?
-            if (currentStart[0] == NO_MORE_POSITIONS || currentStart[1] == NO_MORE_POSITIONS) {
-                // Yes, one of the Spans was exhausted
-                return NO_MORE_POSITIONS;
-            }
-
-            // No, we are synched on a new hit
-            return currentStart[0];
         }
-
     }
 
-    /**
-     * Put both spans in the same doc.
-     * 
-     * @return the doc id if succesful, or NO_MORE_DOCS if we're done
-     */
-    private int synchronizeDoc() throws IOException {
-        while (true) {
-
-            // Are we done?
-            if (currentDoc[0] == NO_MORE_DOCS || currentDoc[1] == NO_MORE_DOCS) {
-                // Yes, one of the Spans was exhausted
-                return NO_MORE_DOCS;
-            }
-
-            // Synch at document level
-            if (currentDoc[0] != currentDoc[1]) {
-                int laggingSpans = currentDoc[0] < currentDoc[1] ? 0 : 1;
-                catchUpDoc(laggingSpans);
-                continue;
-            }
-
-            if (synchronizePosition() == NO_MORE_POSITIONS) {
-                // This doc doesn't match; try next doc.
-                currentDoc[0] = spans[0].nextDoc();
-                currentStart[0] = -1;
-                if (currentDoc[0] == NO_MORE_DOCS)
-                    return NO_MORE_DOCS;
-                continue;
-            }
-
-            // We are synched on a new hit
-            alreadyAtFirstMatch = true;
-            return currentDoc[0];
-        }
-
-    }
-
-    private void catchUpDoc(int laggingSpans) throws IOException {
-        currentDoc[laggingSpans] = spans[laggingSpans].advance(currentDoc[1 - laggingSpans]);
-        currentStart[laggingSpans] = -1;
-    }
-
+    /** See if we can get starts to line up. */
     private void catchUpMatchStart(int laggingSpans) throws IOException {
-        int catchUpTo = currentStart[1 - laggingSpans];
-        if (currentStart[laggingSpans] != NO_MORE_POSITIONS && currentStart[laggingSpans] < catchUpTo
-                || currentStart[laggingSpans] == -1) {
-            currentStart[laggingSpans] = spans[laggingSpans].advanceStartPosition(catchUpTo);
+        int catchUpTo = subSpans[1 - laggingSpans].startPosition();
+        int catchUpFrom = subSpans[laggingSpans].startPosition();
+        if (catchUpFrom < catchUpTo || catchUpFrom == -1) { // also covers catchUpFrom != NO_MORE_POSITIONS
+            subSpans[laggingSpans].advanceStartPosition(catchUpTo);
         }
     }
 
+    /** Try to get ends to line up without moving starts. */
     private void catchUpMatchEnd(int laggingSpans) throws IOException {
-        int start = currentStart[laggingSpans];
-        int catchUpTo = spans[1 - laggingSpans].endPosition();
-        while (currentStart[laggingSpans] == start && spans[laggingSpans].endPosition() < catchUpTo
-                || currentStart[laggingSpans] == -1) {
-            currentStart[laggingSpans] = spans[laggingSpans].nextStartPosition();
+        int catchUpFromStart = subSpans[laggingSpans].startPosition();
+        int catchUpToEnd = subSpans[1 - laggingSpans].endPosition();
+        while ((subSpans[laggingSpans].startPosition() == catchUpFromStart &&
+                subSpans[laggingSpans].endPosition() < catchUpToEnd) || subSpans[laggingSpans].startPosition() == -1) {
+            subSpans[laggingSpans].nextStartPosition();
         }
     }
 
     @Override
-    public int advance(int doc) throws IOException {
-        // Skip beiden tot aan doc
-        int docID0 = spans[0].docID();
-        currentDoc[0] = docID0 < doc ? spans[0].advance(doc) : docID0;
-        currentStart[0] = -1; // not started yet
-        int docID1 = spans[1].docID();
-        currentDoc[1] = docID1 < doc ? spans[1].advance(doc) : docID1;
-        currentStart[1] = -1; // not started yet
-        return synchronizeDoc();
+    boolean twoPhaseCurrentDocMatches() throws IOException {
+        // Note that we DON't use our nextStartPosition() here because atFirstInCurrentDoc
+        // is not properly set yet at this point in time (we do that below).
+        atFirstInCurrentDoc = false;
+        oneExhaustedInCurrentDoc = false;
+        subSpans[0].nextStartPosition();
+        subSpans[1].nextStartPosition();
+        int start = synchronizePosition();
+        if (start == NO_MORE_DOCS)
+            return false;
+        atFirstInCurrentDoc = true;
+        return true;
     }
 
     @Override
     public String toString() {
-        return "AndSpans(" + spans[0] + ", " + spans[1] + ")";
-    }
-
-    @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        spans[0].setHitQueryContext(context);
-        spans[1].setHitQueryContext(context);
-    }
-
-    @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
-            return;
-        spans[0].getMatchInfo(relationInfo);
-        spans[1].getMatchInfo(relationInfo);
+        return "AND(" + subSpans[0] + ", " + subSpans[1] + ")";
     }
 
     @Override
     public int width() {
-        return Math.max(spans[0].width(), spans[1].width());
-    }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        spans[0].collect(collector);
-        spans[1].collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return Math.max(spans[0].positionsCost(), spans[1].positionsCost());
+        return subSpans[0].width() + subSpans[1].width();
     }
 
 }

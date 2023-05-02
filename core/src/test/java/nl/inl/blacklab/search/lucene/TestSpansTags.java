@@ -15,7 +15,7 @@ public class TestSpansTags {
         int[] aDoc = { 1, 2, 2 };
         int[] aStart = { 10, 1, 4 };
         int[] aEnd = { 21, 2, 6 };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
+        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, null);
         Spans spans = new SpansTagsExternal(a, false);
 
         Spans exp = new MockSpans(aDoc, aStart, aEnd);
@@ -40,7 +40,7 @@ public class TestSpansTags {
         int[] aDoc = { 1, 1 };
         int[] aStart = { 2, 4 };
         int[] aEnd = { 7, 5 };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
+        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, null);
 
         Spans spans = new SpansTagsExternal(a, false);
 
@@ -59,7 +59,7 @@ public class TestSpansTags {
         int[] aDoc = { 1, 1 };
         int[] aStart = { 2, 4 };
         int[] aEnd = { 2, 7 };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
+        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, null);
 
         Spans spans = new SpansTagsExternal(a, false);
 
@@ -72,7 +72,7 @@ public class TestSpansTags {
         int[] aDoc = { 1, 1, 2, 2 };
         int[] aStart = { 2, 4, 12, 14 };
         int[] aEnd = { 5, 7, 17, 15 };
-        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
+        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, null);
 
         Spans spans = new SpansTagsExternal(a, false);
         spans.advance(2);
