@@ -106,6 +106,9 @@ public class QueryTool {
     /** How many results to show per page? (default is increased for correctness testing) */
     static int defaultPageSize = 20;
 
+    /** Should results always be sorted? Useful for correctness testing */
+    static String alwaysSortBy = null;
+
     /** Our BlackLab index object. */
     BlackLabIndex index;
 
@@ -346,6 +349,7 @@ public class QueryTool {
                         showOutput = true;
                         showStats = false;
                         defaultPageSize = 1000;
+                        alwaysSortBy = "docid,hitposition"; // for reproducibility
                     } else if (mode.matches("p(erformance)?")) {
                         // Performance testing: we want timing and no results
                         showOutput = false;
@@ -585,7 +589,7 @@ public class QueryTool {
             cmd = cmd.trim();
             if (cmd.equals("exit"))
                 break;
-            if (batchMode && showOutput && !cmd.startsWith("#")) {
+            if (batchMode && showOutput && !cmd.isEmpty() && !cmd.startsWith("#")) {
                 // Verbose batch mode, show command before output
                 outprintln("COMMAND: " + cmd);
             }
@@ -1121,6 +1125,11 @@ public class QueryTool {
             if (verbose)
                 outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
             SearchHits search = index.search().find(spanQuery);
+
+            if (alwaysSortBy != null) {
+                search = search.sort(HitProperty.deserialize(index, index.mainAnnotatedField(), alwaysSortBy));
+            }
+
             hits = search.execute();
             docs = null;
             groups = null;
@@ -1377,7 +1386,8 @@ public class QueryTool {
      * @param time time to report
      */
     private void reportTime(long time) {
-        outprintln(describeInterval(time) + " elapsed");
+        if (showStats)
+            outprintln(describeInterval(time) + " elapsed");
     }
 
     private String describeInterval(long time1) {
