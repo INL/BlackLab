@@ -94,7 +94,26 @@ public class QueryTool {
     /** Our error writer (if null, output errors to out as well) */
     public PrintWriter err;
 
+    /** Was a commands file specified (using -f)?  */
     static boolean batchMode = false;
+
+    /** Show output of commands? (useful for correctness tests, not for performance tests; see --mode)  */
+    static boolean showOutput = true;
+
+    /** Show output of commands? (useful for performance tests, not for correctness tests; see --mode)  */
+    static boolean showStats = true;
+
+    /** Show doc ids in the results? (makes results incomparable between indexes)  */
+    static boolean showDocIds = true;
+
+    /** Show doc ids in the results? (makes results incomparable between indexes)  */
+    static boolean showCaptures = true;
+
+    /** How many results to show per page? (default is increased for correctness testing) */
+    static int defaultPageSize = 20;
+
+    /** Should results always be sorted? Useful for correctness testing */
+    static String alwaysSortBy = null;
 
     /** Our BlackLab index object. */
     BlackLabIndex index;
@@ -124,7 +143,7 @@ public class QueryTool {
     private long firstResult;
 
     /** Number of hits or groups to show per results page. */
-    private long resultsPerPage = 20;
+    private long resultsPerPage = defaultPageSize;
 
     /** Show document titles between hits? */
     private boolean showDocTitle = false;
@@ -314,16 +333,49 @@ public class QueryTool {
     public static void main(String[] args) throws ErrorOpeningIndex {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
-        LogUtil.setupBasicLoggingConfig(Level.DEBUG);
+        LogUtil.setupBasicLoggingConfig(Level.WARN);
 
         // Parse command line
         File indexDir = null;
         File inputFile = null;
         String encoding = Charset.defaultCharset().name();
+        Boolean showStats = null; // default not overridden (default depends on batch mode or not)
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
-            if (arg.length() > 0 && arg.charAt(0) == '-') {
-                if (arg.equals("-e")) {
+            if (arg.startsWith("--")) {
+                if (arg.equals("--mode")) {
+                    if (i + 1 == args.length) {
+                        System.err.println("--mode option needs argument");
+                        usage();
+                        return;
+                    }
+                    String mode = args[i + 1].toLowerCase();
+                    if (mode.matches("c(orrectness)?")) {
+                        // Correctness testing: we want results, no timing and larger pagesize
+                        showOutput = true;
+                        showStats = false;
+                        defaultPageSize = 1000;
+                        alwaysSortBy = "hitposition"; // for reproducibility
+                        showDocIds = false; // doc ids are randomly assigned
+                        showCaptures = false; // (temporary)
+                    } else if (mode.matches("p(erformance)?")) {
+                        // Performance testing: we want timing and no results
+                        showOutput = false;
+                        showStats = true;
+                    } else if (mode.matches("a(ll)?")) {
+                        // Regular: we want results and timing
+                        showOutput = true;
+                        showStats = true;
+                    } else {
+                        System.err.println("Unknown mode: " + mode);
+                        usage();
+                        return;
+                    }
+                    i++;
+                }
+            } else if (arg.startsWith("-")) {
+                switch (arg) {
+                case "-e":
                     if (i + 1 == args.length) {
                         System.err.println("-e option needs argument");
                         usage();
@@ -331,7 +383,8 @@ public class QueryTool {
                     }
                     encoding = args[i + 1];
                     i++;
-                } else if (arg.equals("-f")) {
+                    break;
+                case "-f":
                     if (i + 1 == args.length) {
                         System.err.println("-f option needs argument");
                         usage();
@@ -340,7 +393,8 @@ public class QueryTool {
                     inputFile = new File(args[i + 1]);
                     i++;
                     System.err.println("Batch mode; reading commands from " + inputFile);
-                } else {
+                    break;
+                default:
                     System.err.println("Unknown option: " + arg);
                     usage();
                     return;
@@ -359,50 +413,12 @@ public class QueryTool {
             return;
         }
 
+        // By default we don't show stats in batch mode, but we do in interactive mode
+        // (batch mode is useful for correctness testing, where you don't want stats;
+        //  use --mode performance to get stats but no results in batch mode)
+        boolean showStatsDefaultValue = inputFile == null;
+        QueryTool.showStats = showStats == null ? showStatsDefaultValue : showStats;
         run(indexDir, inputFile, encoding);
-    }
-
-    /**
-     * Run the QueryTool in batch mode
-     *
-     * @param indexDir the index to search
-     * @param commandFile the command file to execute
-     * @param encoding the output encoding
-     * @throws ErrorOpeningIndex if index could not be opened
-     */
-    public static void runBatch(File indexDir, File commandFile, String encoding) throws ErrorOpeningIndex {
-        run(indexDir, commandFile, encoding);
-    }
-
-    /**
-     * Run the QueryTool in batch mode
-     *
-     * @param indexDir the index to search
-     * @param commandFile the command file to execute
-     */
-    public static void runBatch(File indexDir, File commandFile) throws ErrorOpeningIndex {
-        run(indexDir, commandFile, Charset.defaultCharset().name());
-    }
-
-    /**
-     * Run the QueryTool in interactive mode
-     *
-     * @param indexDir the index to search
-     * @param encoding the output encoding
-     * @throws ErrorOpeningIndex if index could not be opened
-     */
-    public static void runInteractive(File indexDir, String encoding) throws ErrorOpeningIndex {
-        run(indexDir, null, encoding);
-    }
-
-    /**
-     * Run the QueryTool in interactive mode
-     *
-     * @param indexDir the index to search
-     * @throws ErrorOpeningIndex if index could not be opened
-     */
-    public static void runInteractive(File indexDir) throws ErrorOpeningIndex {
-        run(indexDir, null, Charset.defaultCharset().name());
     }
 
     /**
@@ -448,15 +464,15 @@ public class QueryTool {
         System.err.println(
                 "Usage: " + QueryTool.class.getName() + " [options] <indexDir>\n" +
                         "\n" +
-                        "Options:\n" +
-                        "-e <encoding>   Specify what output encoding to use\n" +
-                        "-f <file>       Execute batch commands from file, print performance\n" +
-                        "                info and exit\n" +
+                        "Options (mostly useful for batch testing):\n" +
+                        "-f <file>            Execute batch commands from file and exit\n" +
+                        "--mode all           Show results and timings (default without -f)\n" +
+                        "--mode correctness,  Show results but no timings (default for -f)\n" +
+                        "--mode c\n" +
+                        "--mode performance,  Show timings but no results\n" +
+                        "--mode p,\n" +
+                        "-e <encoding>        Specify what output encoding to use [system default]\n" +
                         "\n" +
-                        WordUtils.wrap("In batch mode, for every command executed, the command is printed " +
-                        "to stdout with the elapsed time and (if applicable) the number of " +
-                        "hits found (tab-separated). Non-query commands are preceded by @.", 80) +
-                        "\n\n" +
                         WordUtils.wrap("Batch command files should contain one command per line, or multiple " +
                         "commands on a single line separated by && (use this e.g. to time " +
                         "querying and sorting together). Lines starting with # are comments. " +
@@ -576,19 +592,25 @@ public class QueryTool {
             } catch (IOException e1) {
                 throw BlackLabRuntimeException.wrap(e1);
             }
-            if (cmd == null || cmd.trim().equals("exit")) {
+            if (cmd == null)
                 break;
+            cmd = cmd.trim();
+            if (cmd.equals("exit"))
+                break;
+            if (batchMode && showOutput && !cmd.isEmpty() && !cmd.startsWith("#")) {
+                // Verbose batch mode, show command before output
+                outprintln("COMMAND: " + cmd);
             }
 
-            boolean printStat = true;
-            if (cmd.length() > 0 && cmd.charAt(0) == '-') {
-                // Command preceded by "-": silent, don't output stats
+            boolean printStat = showStats;
+            if (cmd.startsWith("-")) {
+                // Silent, don't output stats
                 printStat = false;
                 cmd = cmd.substring(1).trim();
             }
 
-            if (cmd.length() > 0 && cmd.charAt(0) == '#') {
-                // Line starting with "#": comment
+            if (cmd.startsWith("#")) {
+                // Comment
                 if (printStat)
                     statprintln(cmd);
                 continue;
@@ -745,16 +767,10 @@ public class QueryTool {
                 docs = null;
             } else if (lcased.startsWith("concfi ")) {
                 String v = lcased.substring(7);
-                boolean b = false;
-                if (v.equals("on") || v.equals("yes") || v.equals("true"))
-                    b = true;
-                concType = b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE;
+                concType = isTrue(v) ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE;
             } else if (lcased.startsWith("stripxml ")) {
                 String v = lcased.substring(9);
-                boolean b = false;
-                if (v.equals("on") || v.equals("yes") || v.equals("true"))
-                    b = true;
-                stripXML = b;
+                stripXML = isTrue(v);
             } else if (lcased.startsWith("sensitive ")) {
                 String v = lcased.substring(10);
                 MatchSensitivity sensitivity;
@@ -873,6 +889,10 @@ public class QueryTool {
             processCommand(restCommand);
     }
 
+    private boolean isTrue(String v) {
+        return v.equals("on") || v.equals("yes") || v.equals("true");
+    }
+
     private void showContents(int docId) {
         if (!index.docExists(docId)) {
             outprintln("Document " + docId + " was deleted.");
@@ -905,7 +925,7 @@ public class QueryTool {
     }
 
     public String describeAnnotation(Annotation annotation) {
-        String sensitivityDesc = "";
+        String sensitivityDesc;
         if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE)) {
             if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
                 if (annotation.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE)) {
@@ -952,7 +972,7 @@ public class QueryTool {
                 special = "AUTHORFIELD";
             else if (field.name().equals(s.custom().get("dateField", "")))
                 special = "DATEFIELD";
-            else if (field.name().equals(mf.pidField()))
+            else if (field.name().equals(mf.pidField().name()))
                 special = "PIDFIELD";
             if (special.length() > 0)
                 special = " (" + special + ")";
@@ -1001,7 +1021,8 @@ public class QueryTool {
             }
         }
 
-        outprint(prompt);
+        if (!batchMode)
+            outprint(prompt);
         out.flush();
         return in.readLine();
     }
@@ -1010,6 +1031,8 @@ public class QueryTool {
      * Print command and query help.
      */
     private void printHelp() {
+        if (batchMode)
+            return;
         String langAvail = "CorpusQL, Lucene, ContextQL (EXPERIMENTAL)";
 
         outprintln("Control commands:");
@@ -1110,6 +1133,11 @@ public class QueryTool {
             if (verbose)
                 outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
             SearchHits search = index.search().find(spanQuery);
+
+            if (alwaysSortBy != null) {
+                search = search.sort(HitProperty.deserialize(index, index.mainAnnotatedField(), alwaysSortBy));
+            }
+
             hits = search.execute();
             docs = null;
             groups = null;
@@ -1259,8 +1287,6 @@ public class QueryTool {
             sortedHits = hitsToSort.sort(crit);
             firstResult = 0;
             showResultsPage();
-            if (annotationName == null)
-                annotationName = "(default)";
             reportTime(t.elapsed());
         }
     }
@@ -1309,33 +1335,22 @@ public class QueryTool {
         }
 
         // Group results
-        HitProperty crit = null;
+        HitProperty crit;
         try {
             Annotation annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
             if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
                 crit = new HitPropertyHitText(index, annotation);
             else if (groupBy.startsWith("left"))
                 crit = new HitPropertyWordLeft(index, annotation);
-            else if (groupBy.startsWith("right"))
+            else
                 crit = new HitPropertyWordRight(index, annotation);
-            else if (groupBy.equals("test")) {
-                HitProperty p1 = new HitPropertyHitText(index, contentsField.annotation("lemma"));
-                HitProperty p2 = new HitPropertyHitText(index, contentsField.annotation("type"));
-                crit = new HitPropertyMultiple(p1, p2);
-            }
         } catch (Exception e) {
             errprintln("Unknown annotation: " + annotationName);
-            return;
-        }
-        if (crit == null) {
-            errprintln("Unknown criterium: " + groupBy);
             return;
         }
         groups = hits.group(crit, -1);
         showSetting = ShowSetting.GROUPS;
         sortGroups("size");
-        if (annotationName == null)
-            annotationName = "(default)";
         reportTime(t.elapsed());
     }
 
@@ -1379,7 +1394,8 @@ public class QueryTool {
      * @param time time to report
      */
     private void reportTime(long time) {
-        outprintln(describeInterval(time) + " elapsed");
+        if (showStats)
+            outprintln(describeInterval(time) + " elapsed");
     }
 
     private String describeInterval(long time1) {
@@ -1565,7 +1581,7 @@ public class QueryTool {
             right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
             Map<String, MatchInfo> capturedGroups = null;
-            if (window.hasCapturedGroups())
+            if (window.hasMatchInfo())
                 capturedGroups = window.getMatchInfoMap(hit);
             toShow.add(new HitToShow(hit.doc(), left, hitText, right, capturedGroups));
             if (leftContextMaxSize < left.length())
@@ -1574,7 +1590,7 @@ public class QueryTool {
 
         // Display hits
         String format = "%4d. [%04d] %" + leftContextMaxSize + "s[%s]%s\n";
-        if (showDocTitle)
+        if (showDocTitle || !showDocIds)
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
         String titleField = index.metadata().custom().get("titleField", "");
@@ -1592,12 +1608,12 @@ public class QueryTool {
                     title = title + " (doc #" + currentDoc + ")";
                 outprintln("--- " + title + " ---");
             }
-            if (showDocTitle)
+            if (showDocTitle || !showDocIds)
                 outprintf(format, hitNr, hit.left, hit.hitText, hit.right);
             else
                 outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
             hitNr++;
-            if (hit.capturedGroups != null)
+            if (hit.capturedGroups != null && showCaptures)
                 outprintln("CAP: " + hit.capturedGroups);
         }
 
@@ -1657,17 +1673,17 @@ public class QueryTool {
     }
 
     public void outprintln(String str) {
-        if (!batchMode)
+        if (showOutput)
             out.println(str);
     }
 
     public void outprint(String str) {
-        if (!batchMode)
+        if (showOutput)
             out.print(str);
     }
 
     public void outprintf(String str, Object... args) {
-        if (!batchMode)
+        if (showOutput)
             out.printf(str, args);
     }
 

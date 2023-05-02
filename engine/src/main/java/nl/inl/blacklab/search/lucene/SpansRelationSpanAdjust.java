@@ -2,115 +2,85 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.FilterSpans;
 
 /**
  * Adjust relations spans to match source, target, or entire relation.
  */
-class SpansRelationSpanAdjust extends BLSpans {
-
-    /** query the query to determine edges from */
-    private final BLSpans clause;
+class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     /** how to adjust spans */
     private final MatchInfo.SpanMode mode;
 
     /**
-     * Constructs a SpansEdge.
+     * Constructs a SpansRelationSpanAdjust.
      *
-     * @param clause the clause to get an edge from
+     * @param in spans to adjust
      * @param mode how to adjust spans
      */
-    public SpansRelationSpanAdjust(BLSpans clause, MatchInfo.SpanMode mode) {
-        this.clause = clause;
+    public SpansRelationSpanAdjust(BLSpans in, MatchInfo.SpanMode mode) {
+        super(in);
         this.mode = mode;
     }
 
     @Override
-    public int docID() {
-        return clause.docID();
+    protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
+        if (mode == MatchInfo.SpanMode.SOURCE & in.getRelationInfo().isRoot()) {
+            // Need source, but this has no source
+            return FilterSpans.AcceptStatus.NO;
+        }
+        return FilterSpans.AcceptStatus.YES;
     }
 
     @Override
     public int startPosition() {
-        if (clause.startPosition() == NO_MORE_POSITIONS)
+        if (atFirstInCurrentDoc || startPos < 0)
+            return -1;
+        if (startPos == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
-        return clause.getRelationInfo().spanStart(mode);
+        return in.getRelationInfo().spanStart(mode);
     }
 
     @Override
     public int endPosition() {
-        if (clause.endPosition() == NO_MORE_POSITIONS)
+        if (atFirstInCurrentDoc || startPos < 0)
+            return -1;
+        if (startPos == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
-        return clause.getRelationInfo().spanEnd(mode);
-    }
-
-    @Override
-    public int nextDoc() throws IOException {
-        return clause.nextDoc();
+        return in.getRelationInfo().spanEnd(mode);
     }
 
     @Override
     public int nextStartPosition() throws IOException {
-        while (true) {
-            if (clause.nextStartPosition() == NO_MORE_POSITIONS)
-                return NO_MORE_POSITIONS;
-            // If we're looking for sources, skip root relations because they have none
-            if (!clause.getRelationInfo().isRoot() || mode != MatchInfo.SpanMode.SOURCE) {
-                return startPosition();
-            }
-        }
+        super.nextStartPosition();
+        return startPosition();
     }
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        if (atFirstInCurrentDoc && startPos >= target) {
+            // Our cached hit is the one we want.
+            return nextStartPosition();
+        }
         if (mode != MatchInfo.SpanMode.FULL_SPAN) {
             // We can't skip because our spans are not sorted by start.
             // Call the naive implementation.
-            if (super.advanceStartPosition(target) == NO_MORE_POSITIONS)
+            if (BLSpans.naiveAdvanceStartPosition(this, target) == NO_MORE_POSITIONS) {
+                startPos = NO_MORE_POSITIONS;
                 return NO_MORE_POSITIONS;
+            }
         } else {
-            if (clause.advanceStartPosition(target) == NO_MORE_POSITIONS)
+            if (in.advanceStartPosition(target) == NO_MORE_POSITIONS) {
+                startPos = NO_MORE_POSITIONS;
                 return NO_MORE_POSITIONS;
+            }
         }
         return startPosition();
     }
 
     @Override
-    public int advance(int doc) throws IOException {
-        return clause.advance(doc);
-    }
-
-    @Override
     public String toString() {
-        return "rspan(" + clause + ", " + mode + ")";
-    }
-
-    @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        clause.setHitQueryContext(context);
-    }
-
-    @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureGroups)
-            return;
-        clause.getMatchInfo(relationInfo);
-    }
-
-    @Override
-    public int width() {
-        return clause.width();
-    }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        clause.collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return clause.positionsCost();
+        return "RSPAN(" + in + ", " + mode + ")";
     }
 
 }

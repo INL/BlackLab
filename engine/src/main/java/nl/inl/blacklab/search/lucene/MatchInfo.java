@@ -1,10 +1,13 @@
 package nl.inl.blacklab.search.lucene;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Objects;
 
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.store.DataOutput;
+import org.apache.lucene.store.OutputStreamDataOutput;
+import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
@@ -177,6 +180,12 @@ public class MatchInfo implements Comparable<MatchInfo> {
         // (rest of MatchInfo members have the default value so we skip them)
     }
 
+    /**
+     * Serialize to a DataOutput.
+     *
+     * @param currentTokenPosition the position of the token we're being indexed at
+     * @param dataOutput the DataOutput to write to
+     */
     public void serialize(int currentTokenPosition, DataOutput dataOutput) throws IOException {
         // Determine values to write from our source and target, and the position we're being indexed at
         boolean indexedAtTarget = targetStart == currentTokenPosition;
@@ -208,6 +217,22 @@ public class MatchInfo implements Comparable<MatchInfo> {
             dataOutput.writeVInt(thisLength);
         if (writeOtherLength)
             dataOutput.writeVInt(otherLength);
+    }
+
+    /**
+     * Serialize to a BytesRef.
+     *
+     * @param currentTokenPosition the position of the token we're being indexed at
+     * @return the serialized data
+     */
+    public BytesRef serialize(int currentTokenPosition) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+            serialize(currentTokenPosition, new OutputStreamDataOutput(os));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return new BytesRef(os.toByteArray());
     }
 
     public MatchInfo copy() {

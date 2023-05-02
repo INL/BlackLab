@@ -34,21 +34,21 @@ public class TestSpansSequence {
 
     @Test
     public void testSequenceSpansSimple() throws IOException {
-        int[] aDoc = { 1, 1, 1 };
+        int[] aDoc =   { 1, 1, 1 };
         int[] aStart = { 1, 2, 4 };
-        int[] aEnd = { 2, 3, 5 };
+        int[] aEnd =   { 2, 3, 5 };
         BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
-        int[] bDoc = { 1, 1, 1 };
+        int[] bDoc =   { 1, 1, 1 };
         int[] bStart = { 2, 4, 5 };
-        int[] bEnd = { 3, 5, 6 };
+        int[] bEnd =   { 3, 5, 6 };
         BLSpans b = new MockSpans(bDoc, bStart, bEnd);
 
         Spans spans = new SpansSequenceSimple(a, b);
 
-        int[] expDoc = { 1, 1 };
+        int[] expDoc =   { 1, 1 };
         int[] expStart = { 1, 4 };
-        int[] expEnd = { 3, 6 };
+        int[] expEnd =   { 3, 6 };
         Spans exp = new MockSpans(expDoc, expStart, expEnd);
         TestUtil.assertEquals(exp, spans);
     }

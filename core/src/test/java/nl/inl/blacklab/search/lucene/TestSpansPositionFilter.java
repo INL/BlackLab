@@ -24,7 +24,7 @@ public class TestSpansPositionFilter {
             a = b;
             b = c;
         }
-        SpansInBuckets bb = new SpansInBucketsPerDocument(b);
+        SpansInBucketsPerDocument bb = new SpansInBucketsPerDocument(b);
         return new SpansPositionFilter(a, bb, false, type, invert, 0, 0);
     }
 

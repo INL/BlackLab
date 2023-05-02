@@ -51,6 +51,11 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     }
 
     @Override
+    public int getSegmentDocId() {
+        return segmentDocId;
+    }
+
+    @Override
     public int getTokenSegmentTermId(int annotIndex, int pos) {
         if (pos < 0 || pos >= docLengthTokens)
             return Terms.NO_TERM;

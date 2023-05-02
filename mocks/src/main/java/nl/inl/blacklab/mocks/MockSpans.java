@@ -1,7 +1,6 @@
 package nl.inl.blacklab.mocks;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
@@ -102,7 +101,7 @@ public class MockSpans extends BLSpans {
                 return null;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
                 return null;
-            return new BytesRef(payloads[currentHit]);
+            return payloads[currentHit];
         }
 
         @Override
@@ -139,7 +138,7 @@ public class MockSpans extends BLSpans {
 
     private boolean noMoreHitsInDoc = true;
 
-    byte[][] payloads = null;
+    BytesRef[] payloads = null;
 
     private int endPos = -1;
 
@@ -161,22 +160,25 @@ public class MockSpans extends BLSpans {
         return endPos; //spans.endPosition();
     }
 
-    private void setPayloadsInt(int[] aStart, int[] aEnd) {
-        this.payloads = new byte[aEnd.length][];
+    private void setPayloadsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+        this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            this.payloads[i] = ByteBuffer.allocate(4).putInt(aEnd[i]).array();
+            BytesRef payload = PayloadUtils.tagEndPositionPayload(aStart[i], aEnd[i],
+                    BlackLabIndex.IndexType.EXTERNAL_FILES);
+            if (aIsPrimary != null)
+                payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
+            this.payloads[i] = payload;
         }
     }
 
-    private void setPayloadsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
-        this.payloads = new byte[aEnd.length][];
+    private void setPayloadsRelationsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+        this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            BytesRef bytesRef = PayloadUtils.tagEndPositionPayload(aStart[i], aEnd[i],
-                    BlackLabIndex.IndexType.EXTERNAL_FILES);
-            BytesRef withPrimary = PayloadUtils.addIsPrimary(aIsPrimary[i], bytesRef);
-            byte[] b = new byte[withPrimary.length];
-            System.arraycopy(withPrimary.bytes, withPrimary.offset, b, 0, b.length);
-            this.payloads[i] = b;
+            MatchInfo relInfo = new MatchInfo("test", false, aStart[i], aStart[i], aEnd[i], aEnd[i]);
+            BytesRef payload = relInfo.serialize(aStart[i]);
+            if (aIsPrimary != null)
+                payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
+            this.payloads[i] = payload;
         }
     }
 
@@ -247,15 +249,15 @@ public class MockSpans extends BLSpans {
         return new MockSpans(doc, start, end);
     }
 
-    public static MockSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd) {
-        MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
-        spans.setPayloadsInt(aStart, aEnd);
-        return spans;
-    }
-
     public static BLSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
         spans.setPayloadsInt(aStart, aEnd, aIsPrimary);
+        return spans;
+    }
+
+    public static BLSpans withRelationInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+        MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
+        spans.setPayloadsRelationsInt(aStart, aEnd, aIsPrimary);
         return spans;
     }
 
@@ -279,7 +281,7 @@ public class MockSpans extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return 0;
+        return start.length;
     }
 
 }
