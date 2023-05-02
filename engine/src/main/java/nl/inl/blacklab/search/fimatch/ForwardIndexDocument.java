@@ -12,6 +12,8 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 @NotThreadSafe
 public interface ForwardIndexDocument {
 
+    public int getSegmentDocId();
+
     /**
      * Return token at specified position.
      *

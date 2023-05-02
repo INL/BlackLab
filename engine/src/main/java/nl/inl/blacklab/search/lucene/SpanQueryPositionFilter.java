@@ -139,7 +139,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
                 return invert ? spansProd : null;
             }
             boolean filterFixedLength = clauses.get(1).hitsAllSameLength();
-            SpansInBuckets filter;
+            SpansInBucketsPerDocument filter;
             if (clauses.get(1).hitsStartPointSorted()) {
                 // Already start point sorted; no need to sort buckets again
                 filter = new SpansInBucketsPerDocument(spansFilter);

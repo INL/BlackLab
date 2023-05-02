@@ -6,6 +6,7 @@ import java.util.function.LongUnaryOperator;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
@@ -34,9 +35,15 @@ class SpansReader implements Runnable {
     BLSpans spans; // usually lazy initialization - takes a long time to set up and holds a large amount of memory.
                    // Set to null after we're finished
 
+    /** Allows us to more efficiently step to the next potentially matching document */
+    private DocIdSetIterator twoPhaseApproximation;
+
+    /** Allows us to check that doc matched by approximation is an actual match */
+    private TwoPhaseIterator twoPhaseIt;
+
     /**
      * Root hitQueryContext, needs to be shared between instances of SpansReader due to some internal global state.
-     *
+     * <p>
      * TODO refactor or improve documentation in HitQueryContext, the internal backing array is now shared between
      *   instances of it, and is modified in copyWith(spans), which seems...dirty and it's prone to errors.
      */
@@ -59,7 +66,7 @@ class SpansReader implements Runnable {
     private final HitsInternalMutable globalResults;
 
     // Internal state
-    boolean isDone = false;
+    boolean isDone;
     private final ThreadAborter threadAborter = ThreadAborter.create();
     private boolean isInitialized;
     /* only valid after initialize() */
@@ -69,31 +76,39 @@ class SpansReader implements Runnable {
     private int prevDoc = -1;
 
     /**
-     * TODO: update this (CapturedGroups doesn't exist anymore)
-     *
      * Construct an uninitialized SpansReader that will retrieve its own Spans object on when it's ran.
+     * <p>
+     * TODO: update this comment (CapturedGroups doesn't exist anymore, match info was integrated into hits)
+     * <p>
      * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object and HitQueryContext and
      * CapturedGroups objects are set) and leave the other ones to self-initialize when needed.
+     * <p>
      * It is done this way because of an initialization order issue with capture groups.
+     * <p>
      * The issue is as follows:
      * - we want to lazy-initialize Spans objects:
-     * 1. because they hold a lot of memory for large indexes.
-     * 2. because only a few SpansReaders are active at a time.
-     * 3. because they take a long time to setup.
-     * 4. because we might not even need them all if a hits limit has been set.
+     *   1. because they hold a lot of memory for large indexes.
+     *   2. because only a few SpansReaders are active at a time.
+     *   3. because they take a long time to setup.
+     *   4. because we might not even need them all if a hits limit has been set.
+     * <p>
      * So if we pre-create them all, we're doing a lot of upfront work we possibly don't need to.
      * We'd also hold a lot of ram hostage (>10GB in some cases!) because all Spans objects exist
      * simultaneously even though we're not using them simultaneously.
      * However, in order to know whether a query (such as A:([pos="A.*"]) "ship") uses/produces capture groups (and how many groups)
      * we need to call BLSpans::setHitQueryContext(...) and then check the number capture group names in the HitQueryContext afterwards.
+     * <p>
      * No why we need to know this:
+     * <p>
      * - To construct the CaptureGroupsImpl we need to know the number of capture groups.
      * - To construct the SpansReaders we need to have already created the CaptureGroupsImpl, as it's shared between all of the SpansReaders.
      * So to summarise: there is an order issue.
      * - we want to lazy-init the Spans.
      * - but we need the capture groups object.
      * - for that we need at least one Spans object created.
+     * <p>
      * Hence the explicit initialization of the first SpansReader by HitsFromQueryParallel.
+     * <p>
      * This will create one of the Spans objects so we can create and set the CapturedGroups object in this
      * first SpansReader. Then the rest of the SpansReaders receive the same CapturedGroups object and can
      * lazy-initialize when needed.
@@ -152,11 +167,8 @@ class SpansReader implements Runnable {
      */
     public boolean isSameAsLast(HitsInternal hits, int doc, int start, int end, MatchInfo[] matchInfo) {
         long prev = hits.size() - 1;
-        if (hits.size() == 0 || doc != hits.doc(prev) || start != hits.start(prev) || end != hits.end(prev) ||
-                !MatchInfo.equal(matchInfo, hits.matchInfo(prev))) {
-            return false;
-        }
-        return true;
+        return hits.size() > 0 && doc == hits.doc(prev) && start == hits.start(prev) && end == hits.end(prev) &&
+                MatchInfo.equal(matchInfo, hits.matchInfo(prev));
     }
 
     void initialize() {
@@ -169,6 +181,8 @@ class SpansReader implements Runnable {
                 this.isDone = true;
                 return;
             }
+            this.twoPhaseIt = spans.asTwoPhaseIterator();
+            this.twoPhaseApproximation = twoPhaseIt == null ? spans : twoPhaseIt.approximation();
 
             this.hitQueryContext = this.sourceHitQueryContext.copyWith(this.spans);
             this.spans.setHitQueryContext(this.hitQueryContext);
@@ -181,36 +195,42 @@ class SpansReader implements Runnable {
     /**
      * Step through all hits in all documents in this spans object.
      *
-     * @param spans spans to advance
      * @param liveDocs used to check if the document is still alive in the index.
      * @return true if the spans has been advanced to the next hit, false if out of hits.
      */
-    private static boolean advanceSpansToNextHit(BLSpans spans, Bits liveDocs) throws IOException {
-        if (spans.docID() == DocIdSetIterator.NO_MORE_DOCS && spans.startPosition() == Spans.NO_MORE_POSITIONS)
-            return false;
+    private boolean advanceSpansToNextHit(Bits liveDocs) throws IOException {
+        // Make sure we've nexted at least once
+        int doc = twoPhaseApproximation.docID();
+        if (doc != -1) {
+            // See if there's more matches in the current document
+            int start = spans.nextStartPosition();
+            if (start != Spans.NO_MORE_POSITIONS) {
+                // Yes, we're at the next valid match.
+                return true;
+            }
+        }
 
-        int doc = spans.docID();
-        if (doc == -1) // initial document
-            spans.nextDoc();
-
-        int start = spans.nextStartPosition();
-        while (start == Spans.NO_MORE_POSITIONS || (liveDocs != null && !liveDocs.get(spans.docID()))) {
-            doc = spans.nextDoc();
-            if (doc == DocIdSetIterator.NO_MORE_DOCS) {
+        // No more matches in this document. Find first match in next matching document.
+        while (true) {
+            int doc1 = twoPhaseApproximation.nextDoc();
+            if (doc1 == DocIdSetIterator.NO_MORE_DOCS) {
+                // We're done.
                 return false;
             }
-            if (liveDocs != null && !liveDocs.get(doc))
-                continue;
-            start = spans.nextStartPosition();
+            boolean actualMatch = twoPhaseIt == null || twoPhaseIt.matches();
+            if (actualMatch && (liveDocs == null || liveDocs.get(doc1))) {
+                // Document matches. Put us at the first match.
+                spans.nextStartPosition();
+                return true;
+            }
         }
-        return true;
     }
 
     /**
      * Collect all hits from our spans object.
      * Updates the global counters, shared with other SpansReader objects operating on the same result set.
      * Hits are periodically copied into the {@link SpansReader#globalResults} list when a large enough batch has been gathered.
-     *
+     * <p>
      * Updating the maximums while this is running is allowed.
      */
     @Override
@@ -235,7 +255,7 @@ class SpansReader implements Runnable {
 
             if (!hasPrefetchedHit) {
                 prevDoc = spans.docID();
-                hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);
+                hasPrefetchedHit = advanceSpansToNextHit(liveDocs);
             }
 
             while (hasPrefetchedHit) {
@@ -290,10 +310,12 @@ class SpansReader implements Runnable {
                 }
 
                 if (storeThisHit) {
+                    assert start >= 0;
+                    assert end >= 0;
                     results.add(doc, start, end, matchInfo);
                 }
 
-                hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);
+                hasPrefetchedHit = advanceSpansToNextHit(liveDocs);
                 prevDoc = doc;
 
                 // Do this at the end so interruptions don't happen halfway through a loop and lead to invalid states

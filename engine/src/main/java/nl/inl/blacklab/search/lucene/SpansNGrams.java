@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
@@ -98,8 +99,8 @@ class SpansNGrams extends BLSpans {
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS;
             }
+            // Go to next nondeleted doc
             boolean currentDocIsDeletedDoc;
-            boolean currentDocIsMetadataDoc;
             do {
                 currentDoc++;
                 currentDocIsDeletedDoc = currentDoc < maxDoc && liveDocs != null && !liveDocs.get(currentDoc);
@@ -111,9 +112,10 @@ class SpansNGrams extends BLSpans {
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS; // no more docs; we're done
             }
+            // Get document length and reset currentStart/currentEnd so we can check if there's actually hits
             currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
-        } while (nextStartPosition() == NO_MORE_POSITIONS);
+        } while (currentDocLength < min || nextStartPosition() == NO_MORE_POSITIONS);
         alreadyAtFirstMatch = true;
 
         return currentDoc;
@@ -236,7 +238,16 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return 0;
+        // we have no clause to derive this from; we should really return a value indicating
+        // how many n-grams are in the entire corpus?
+        // For now we just return a random value that seems fairly high, but maybe look into this more
+        return 10_000;
+    }
+
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        // We have no inner clause and therefore no fast approximation we can use to skip documents.
+        return null;
     }
 
 }

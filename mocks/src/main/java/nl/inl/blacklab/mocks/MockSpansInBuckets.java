@@ -1,6 +1,7 @@
 package nl.inl.blacklab.mocks;
 
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -11,7 +12,7 @@ import nl.inl.blacklab.search.lucene.SpansInBuckets;
  * Stub SpansInBuckets class for testing. Takes arrays and iterates through
  * 'hits' from these arrays.
  */
-public class MockSpansInBuckets implements SpansInBuckets {
+public class MockSpansInBuckets extends SpansInBuckets {
 
     private final int[] start;
 
@@ -126,4 +127,23 @@ public class MockSpansInBuckets implements SpansInBuckets {
         return new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);
     }
 
+    @Override
+    public long cost() {
+        return 0;
+    }
+
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        return null;
+    }
+
+    @Override
+    public float positionsCost() {
+        return start.length;
+    }
+
+    @Override
+    public int width() {
+        return 0;
+    }
 }
