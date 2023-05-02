@@ -103,6 +103,12 @@ public class QueryTool {
     /** Show output of commands? (useful for performance tests, not for correctness tests; see --mode)  */
     static boolean showStats = true;
 
+    /** Show doc ids in the results? (makes results incomparable between indexes)  */
+    static boolean showDocIds = true;
+
+    /** Show doc ids in the results? (makes results incomparable between indexes)  */
+    static boolean showCaptures = true;
+
     /** How many results to show per page? (default is increased for correctness testing) */
     static int defaultPageSize = 20;
 
@@ -349,7 +355,9 @@ public class QueryTool {
                         showOutput = true;
                         showStats = false;
                         defaultPageSize = 1000;
-                        alwaysSortBy = "docid,hitposition"; // for reproducibility
+                        alwaysSortBy = "right:word:s,hitposition"; // for reproducibility
+                        showDocIds = false; // doc ids are randomly assigned
+                        showCaptures = false; // (temporary)
                     } else if (mode.matches("p(erformance)?")) {
                         // Performance testing: we want timing and no results
                         showOutput = false;
@@ -1582,7 +1590,7 @@ public class QueryTool {
 
         // Display hits
         String format = "%4d. [%04d] %" + leftContextMaxSize + "s[%s]%s\n";
-        if (showDocTitle)
+        if (showDocTitle || !showDocIds)
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
         String titleField = index.metadata().custom().get("titleField", "");
@@ -1600,12 +1608,12 @@ public class QueryTool {
                     title = title + " (doc #" + currentDoc + ")";
                 outprintln("--- " + title + " ---");
             }
-            if (showDocTitle)
+            if (showDocTitle || !showDocIds)
                 outprintf(format, hitNr, hit.left, hit.hitText, hit.right);
             else
                 outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
             hitNr++;
-            if (hit.capturedGroups != null)
+            if (hit.capturedGroups != null && showCaptures)
                 outprintln("CAP: " + hit.capturedGroups);
         }
 
