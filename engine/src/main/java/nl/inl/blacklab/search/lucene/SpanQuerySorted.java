@@ -184,7 +184,7 @@ class SpanQuerySorted extends BLSpanQuery {
 
     @Override
     public boolean hitsAreUnique() {
-        return true;
+        return eliminateDuplicates || src.hitsAreUnique();
     }
 
     @Override

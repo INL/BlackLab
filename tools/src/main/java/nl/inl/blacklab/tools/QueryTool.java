@@ -355,7 +355,7 @@ public class QueryTool {
                         showOutput = true;
                         showStats = false;
                         defaultPageSize = 1000;
-                        alwaysSortBy = "hitposition"; // for reproducibility
+                        alwaysSortBy = "right:word:s,hitposition"; // for reproducibility
                         showDocIds = false; // doc ids are randomly assigned
                         showCaptures = false; // (temporary)
                     } else if (mode.matches("p(erformance)?")) {

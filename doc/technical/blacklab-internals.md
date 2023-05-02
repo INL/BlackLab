@@ -240,3 +240,48 @@ This works as follows:
 - `BlsCacheEntry` submits a `Runnable` to `BlackLabEngine`'s `searchExecutorService`.
 - `SpansReader` is also a `Runnable` that is submitted to `BlackLabEngine`'s `searchExecutorService`. Note that because `SpansReader` is not a `BlsCacheEntry`, we don't actually keep track of these as running searches for load management. It would be better to do this.
 
+### SpanQuery and Spans classes
+
+Ultimately, search in BlackLab is powered by Lucene's `SpanQuery`/`Spans` classes, and a list of derived classes we've developed to support the functionality BlackLab needs.
+
+Below is our `Spans` class hierarchy.
+
+```
+BLSpans
+  # 1 clause, filtered (TODO: maybe make a superclass for BLFilterSpans that always passes match?)
+  BLFilterDocsSpans         (filters docs using single clause)
+    SpansFiSeq                (filter using FI check, which may find multiple endpoints)
+    SpansExpansionRaw         (expand each match to 1 or more new ones)
+    SpansFilterNGramsRaw      (expand each match to 1 or more n-grams)
+    SpansRepetition           (find consecutive matches)
+    PerDocumentSortedSpans    (reorder matches to be startpoint-sorted again)
+    BLFilterSpans             (filters individual matches)
+      BLSpansWrapper            (always pass but it's a BLSpans now)
+      SpansCaptureGroup         (always pass but capture group)
+      SpansEdge                 (always pass but return leading or trailing edge)
+      SpansTagsExternal         (always pass but get tag end from payload)
+      SpansConstrained          (filter using match info constraint)
+      SpansFiltered             (filter using doc list)
+      SpansUnique               (filter by comparing with previous match)
+      SpansRelations            (filter by direction / isRoot)
+      SpansRelationSpanAdjust   (filter by isRoot+source, adjust span start/end according to relation)
+
+  # 2 clauses combined
+  BLConjunctionSpans        (skips doc if either clause has no match)
+    SpansAnd                  (filter by identical start/end)
+    SpansSequenceSimple       (filter by first.end == second.start)
+
+  # 2 clauses combined, second bucketed (so can't use BLConjunctionSpans)
+  SpansSequenceWithGap      (filter by first.end + gap(min,max) == second.start)
+  SpansPositionFilter       (filter by within/containing/etc.)
+
+  # no clause, or approximation of clause doesn't help us skip docs
+  SpansNGrams               (finds all ngrams within doc)
+  SpansNot                  (finds all tokens not contained in clause matches)
+
+  # Bucketed spans allow random access to a group of matches
+  SpansInBucketsPerStartPoint (each startpoint is 1 bucket, multiple endpoints possible for sequence matching)
+  SpansInBucketsPerDocument   (all matches from 1 doc in 1 bucket)
+  SpansInBucketsConsecutive   (all consecutive matches in 1 bucket for repetition matching)
+
+```

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.Constants;
@@ -340,7 +341,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         long hitsRetrieved = 0;
         long docsRetrieved = 0;
         
-        IntHashSet docs = new IntHashSet();
+        MutableIntSet docs = new IntHashSet();
         for (HitGroup h : sample) {
             hitsCounted += h.size();
             for (Hit hh : h.storedResults()) {

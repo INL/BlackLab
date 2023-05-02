@@ -9,10 +9,6 @@ import org.apache.lucene.search.spans.SpanCollector;
  */
 final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
     
-    public static PerDocumentSortedSpans startPointEliminateDuplicates(BLSpans src) {
-        return new PerDocumentSortedSpans(src, true, true);
-    }
-
     public static PerDocumentSortedSpans startPoint(BLSpans src) {
         return new PerDocumentSortedSpans(src, true, false);
     }
@@ -103,6 +99,8 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
             curEnd = in.endPosition(indexInBucket);
         } else {
             // Eliminate any duplicates
+            // FIXME: this doesn't take match info into account, which means we might get rid of
+            //        match info we're interested in
             int prevEnd;
             int prevStart;
             do {

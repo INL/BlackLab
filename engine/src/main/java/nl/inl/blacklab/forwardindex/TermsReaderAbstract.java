@@ -10,6 +10,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
 
@@ -70,16 +71,16 @@ public abstract class TermsReaderAbstract implements Terms {
 
         numberOfTerms = terms.length;
 
-        TIntObjectHashMap<IntArrayList> insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
+        TIntObjectHashMap<IntList> insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
         int numGroupsThatAreNotSizeOne = 0;
         try (BlockTimer ignored = BlockTimer.create(LOG_TIMINGS, name + ": finish > invert mapping")) {
             // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
             for (int termId = 0; termId < termId2InsensitivePosition.length; ++termId) {
                 int insensitivePosition = termId2InsensitivePosition[termId];
-                IntArrayList v = new IntArrayList(1);
+                IntList v = new IntArrayList(1);
                 v.add(termId);
 
-                IntArrayList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
+                IntList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
                 if (prev != null) {
                     v.addAll(prev);
 
@@ -111,7 +112,7 @@ public abstract class TermsReaderAbstract implements Terms {
      * @param numGroupsThatAreNotSizeOne in the insensitive hashmap - used to initialize the groupId2termIds map at the right length.
      */
     protected void fillTermDataGroups(int numberOfTerms, int[] termId2SortPositionSensitive,
-            int[] termId2SortPositionInsensitive, TIntObjectHashMap<IntArrayList> insensitiveSortPosition2TermIds,
+            int[] termId2SortPositionInsensitive, TIntObjectHashMap<IntList> insensitiveSortPosition2TermIds,
             int numGroupsThatAreNotSizeOne) {
         // This is a safe upper bound: one group per sensitive (with one entry) = 2*numberOfTerms.
         // Then for the insensitive side, one group per entry in insensitiveSortPosition2TermIds + 1 int for each term
@@ -142,12 +143,12 @@ public abstract class TermsReaderAbstract implements Terms {
         }
 
         // now place all insensitives
-        TIntObjectIterator<IntArrayList> it = insensitiveSortPosition2TermIds.iterator();
+        TIntObjectIterator<IntList> it = insensitiveSortPosition2TermIds.iterator();
         while (it.hasNext()) {
             it.advance();
 
             final int insensitivePosition = it.key();
-            final IntArrayList termIds = it.value();
+            final IntList termIds = it.value();
             final int numTermIds = termIds.size();
 
             // reuse sensitive group when it contains the same data

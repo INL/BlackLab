@@ -211,4 +211,18 @@ public final class StringUtil {
     public static String desensitize(String str) {
         return stripAccents(str).toLowerCase();
     }
+
+    public static String ord(int pass) {
+        pass++;
+        switch(pass) {
+        case 1:
+            return "1st";
+        case 2:
+            return "2nd";
+        case 3:
+            return "3rd";
+        default:
+            return pass + "th";
+        }
+    }
 }

@@ -134,6 +134,11 @@ public class SpanQueryNoHits extends BLSpanQuery {
     }
 
     @Override
+    public boolean hitsCanOverlap() {
+        return false;
+    }
+
+    @Override
     public boolean canMakeNfa() {
         return false;
     }
