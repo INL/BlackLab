@@ -44,6 +44,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** Relation type we're looking for */
     private final String relationType;
 
+    /** Group name when capturing */
+    private final String groupName;
+
     /**
      * Construct SpansRelations.
      *
@@ -54,9 +57,10 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(String relationType, BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
+    public SpansRelations(String relationType, String groupName, BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
         super(relationsMatches);
         this.relationType = relationType;
+        this.groupName = groupName;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
         this.spanMode = spanMode;
@@ -67,7 +71,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         // Only keep Unicode letters from relationType
         String groupName = relationType.replaceAll("[^\\p{L}]", "");
         // Register our group
-        this.groupIndex = context.registerMatchInfo(groupName, true);
+        this.groupIndex = context.registerMatchInfo(groupName);
     }
 
     @Override

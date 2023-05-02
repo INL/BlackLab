@@ -54,33 +54,15 @@ public class HitQueryContext {
      * Register a match info (e.g. captured group), assigning it a unique index number.
      *
      * @param name the group's name
-     * @param deduplicate if true, make the group name unique if it already exists
-     * @return the group's assigned index
-     */
-    public int registerMatchInfo(String name, boolean deduplicate) {
-        numberOfTimesMatchInfoRegistered++;
-        while (matchInfoNames.contains(name)) {
-            if (deduplicate) {
-                // Ensure the group name is unique
-                name += "_";
-            } else {
-                return matchInfoNames.indexOf(name); // already registered, reuse
-            }
-        }
-        matchInfoNames.add(name);
-        return matchInfoNames.size() - 1; // index in array
-    }
-
-    /**
-     * Register a match info (e.g. captured group), assigning it a unique index number.
-     *
-     * If the group name already exists, the existing index number will be returned.
-     *
-     * @param name the group's name
      * @return the group's assigned index
      */
     public int registerMatchInfo(String name) {
-        return registerMatchInfo(name, false);
+        numberOfTimesMatchInfoRegistered++;
+        while (matchInfoNames.contains(name)) {
+            return matchInfoNames.indexOf(name); // already registered, reuse
+        }
+        matchInfoNames.add(name);
+        return matchInfoNames.size() - 1; // index in array
     }
 
     /**

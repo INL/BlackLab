@@ -209,7 +209,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
         MatchInfo[] previouslyCapturedMatchInfo = matchInfoPerHit.get(indexInBucket);
         if (previouslyCapturedMatchInfo != null) {
             for (int i = 0; i < matchInfo.length; i++) {
-                if (previouslyCapturedMatchInfo[i] != null)
+                if (previouslyCapturedMatchInfo.length > i &&  previouslyCapturedMatchInfo[i] != null)
                     matchInfo[i] = previouslyCapturedMatchInfo[i];
             }
         }
