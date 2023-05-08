@@ -75,6 +75,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     };
     
     protected void sortHits(boolean sortByStartPoint) {
+        // FIXME: match info is not sorted!
         if (sortByStartPoint) { 
             LongArrays.quickSort(startsEnds.elements(), 0, startsEnds.size()); // natural order is startpoint order
         } else {

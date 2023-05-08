@@ -28,7 +28,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
 
     private IntArrayList endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
 
-    private List<MatchInfo[]> capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
+    private List<MatchInfo[]> matchInfoPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
 
     private HitQueryContext hitQueryContext;
 
@@ -98,7 +98,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
     @SuppressWarnings("unused")
     protected int gatherEndPointsAtStartPoint() throws IOException {
         endPoints.clear();
-        capturedGroupsPerEndpoint.clear();
+        matchInfoPerEndpoint.clear();
         doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
                 && hitQueryContext.numberOfMatchInfos() > 0;
 
@@ -108,7 +108,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
             if (doCapturedGroups) {
                 MatchInfo[] capturedGroups = new MatchInfo[hitQueryContext.numberOfMatchInfos()];
                 source.getMatchInfo(capturedGroups);
-                capturedGroupsPerEndpoint.add(capturedGroups);
+                matchInfoPerEndpoint.add(capturedGroups);
             }
             currentSpansStart = source.nextStartPosition();
         }
@@ -159,9 +159,9 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
 
     @Override
     public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
-        if (!doCapturedGroups || capturedGroupsPerEndpoint.isEmpty())
+        if (!doCapturedGroups || matchInfoPerEndpoint.isEmpty())
             return;
-        MatchInfo[] previouslyCapturedGroups = capturedGroupsPerEndpoint.get(indexInBucket);
+        MatchInfo[] previouslyCapturedGroups = matchInfoPerEndpoint.get(indexInBucket);
         if (previouslyCapturedGroups != null) {
             for (int i = 0; i < matchInfo.length; i++) {
                 if (previouslyCapturedGroups[i] != null)

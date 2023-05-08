@@ -393,12 +393,20 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     @Override
     public boolean hitsAreUnique() {
-        if (include.isEmpty())
+        if (include.isEmpty()) {
+            // pure not query always produces unique hits (all tokens that are not part of the matches)
             return true;
-        for (BLSpanQuery clause : include) {
-            if (clause.hitsAreUnique())
-                return true;
         }
+        for (BLSpanQuery clause : include) {
+            if (!clause.hitsAreUnique()) {
+                // At least one clause has multiple hits with same start/end, therefore the resulting matches
+                // may not be unique (note that with how SpansAnd currently works, results will probably have
+                // unique start/end but be technically incorrect, because they didn't capture all possible
+                // match info)
+                return false;
+            }
+        }
+        // All clauses have unique spans, so we can guarantee the resulting matches are
         return true;
     }
 
