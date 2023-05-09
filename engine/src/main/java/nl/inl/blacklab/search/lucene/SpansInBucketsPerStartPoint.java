@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /**
@@ -26,7 +27,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
 
     protected int currentSpansStart = -1;
 
-    private IntArrayList endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
+    private MutableIntList endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
 
     private List<MatchInfo[]> matchInfoPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
 

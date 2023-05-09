@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 public class CollUtil {
 
@@ -42,7 +42,7 @@ public class CollUtil {
         };
     }
 
-    public static List<Integer> toJavaList(final IntArrayList increments) {
+    public static List<Integer> toJavaList(final IntList increments) {
         return new AbstractList<>() {
             @Override
             public Integer get(int index) {

@@ -7,6 +7,7 @@ import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
@@ -32,7 +33,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     protected final BLSpans source;
 
     /** Starts and ends of hits in our bucket */
-    protected final LongArrayList startsEnds = new LongArrayList(LIST_INITIAL_CAPACITY);
+    protected final LongList startsEnds = new LongArrayList(LIST_INITIAL_CAPACITY);
 
     /**
      * For each hit we fetched, store the match info (e.g. captured groups, relations),
