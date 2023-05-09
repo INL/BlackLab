@@ -2,7 +2,9 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.eclipse.collections.api.list.primitive.IntList;
+import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /**
  * Finds all sequences of consecutive hits from the in spans of the
@@ -23,12 +25,18 @@ class SpansRepetitionFix extends BLFilterDocsSpans<SpansInBucketsPerDocumentWith
     /** Maximum number of repetitions */
     private final int max;
 
-    /** Index in bucket of the first match involved in the current repetition. This will start at 0 and only increase. */
+    /** Index in bucket of the first match involved in the current repetition.
+        This will start at 0 and only increase, visiting each match in the bucket and trying to find repetitions from
+        there. */
     private int matchStartIndex;
 
-    /** Index in bucket of the last match involved in the current repetition. This may go up and down if
-     *  matches vary in length. */
-    private int matchEndIndex;
+    /** All the valid end positions found for the current start position.
+     *  These are determined by recursively finding connecting matches.
+     */
+    private MutableIntList endPositions = new IntArrayList();
+
+    /** Index in endPositions list (current end position). */
+    private int endPositonIndex;
 
     /**
      * Current number of repetitions. This will start at min and increase from there as more repetitions can be found.
@@ -70,7 +78,7 @@ class SpansRepetitionFix extends BLFilterDocsSpans<SpansInBucketsPerDocumentWith
             return -1; // .nextStartPosition() not called yet
         if (!moreBuckets)
             return NO_MORE_POSITIONS;
-        return in.endPosition(matchEndIndex);
+        return endPositions.get(endPositonIndex);
     }
 
     @Override
@@ -80,53 +88,58 @@ class SpansRepetitionFix extends BLFilterDocsSpans<SpansInBucketsPerDocumentWith
     }
 
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
-        // See if there's a bucket of matches in this doc
+        // Does this document have any clause matches?
         moreBuckets = in.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
-        if (moreBuckets) {
-            // There are matches in this doc, but we don't know if there's matching repetitions yet.
-            matchStartIndex = 0;
-            //@@@@
-//            while (true) {
-//                int endPos = in.endPosition(matchStartIndex);
-//                matchEndIndex = findNextRepetition(1, endPos);
-//            }
-            alreadyAtFirstMatch = true;
-            return true;
-        }
+        if (!moreBuckets)
+            return false;
 
-        // No more matching buckets.
+        // Are any of the clause matches the start of a matching repetition?
+        for (int i = 0; i < in.bucketSize(); i++) {
+            if (findMatchesFromIndex(i)) {
+                matchStartIndex = i;
+                endPositonIndex = 0;
+                alreadyAtFirstMatch = true;
+                return true;
+            }
+        }
+        // We didn't find any matches
         return false;
     }
 
-    /** Find an extension of the repetition we've found so far, at least min and up to max long. */
-    int findNextRepetition(int numberSoFar, int endPos) {
-        int current = numberSoFar;
-        while (current < max) {
-            IntList indexes = in.indexesForStartpoint(endPos);
-        }
-        return -1; //@@@
+    /**
+     * Find matches, if any, starting at the specified index in the current bucket.
+     *
+     * This will fill the endPositions list with all valid end positions for the current start position.
+     *
+     * @param indexInBucket index in bucket to start looking for matches
+     * @return true if matches were found, false if not
+     */
+    private boolean findMatchesFromIndex(int indexInBucket) {
+        endPositions.clear();
+        findEndpointsForRepetition(indexInBucket, 1);
+        return !endPositions.isEmpty();
     }
 
     /**
-     * Go to the next matching bucket in the current doc, if it has any.
+     * Find all valid end positions for a repetition starting at the specified position.
      *
-     * @return the start position of the bucket, or NO_MORE_BUCKETS if there's no
-     *         more matching buckets
+     * @param fromIndex index in bucket to start looking for further repetitions
+     * @param numberSoFar number of repetitions found so far
      */
-    private int nextBucket() throws IOException {
-        moreBuckets = in.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
-        while (moreBuckets) {
-            if (in.bucketSize() >= min) {
-                // This stretch is large enough to get a repetition hit;
-                // Position us at the first hit and remember we're already there.
-                matchStartIndex = 0;
-                numRepetitions = min;
-                return in.startPosition(matchStartIndex);
-            }
-            // Not large enough; try next bucket
-            moreBuckets = in.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
+    private void findEndpointsForRepetition(int fromIndex, int numberSoFar) {
+        if (numberSoFar >= min && numberSoFar <= max) {
+            // This is a valid repetition; add the end position
+            endPositions.add(in.endPosition(fromIndex));
         }
-        return SpansInBuckets.NO_MORE_BUCKETS;
+        if (numberSoFar >= max) {
+            // Don't continue looking for longer matches
+            return;
+        }
+        int fromPos = in.endPosition(fromIndex);
+        IntIterator it = in.indexesForStartpoint(fromPos).intIterator();
+        while (it.hasNext()) {
+            findEndpointsForRepetition(it.next(), numberSoFar + 1);
+        }
     }
 
     /**
@@ -136,9 +149,11 @@ class SpansRepetitionFix extends BLFilterDocsSpans<SpansInBucketsPerDocumentWith
      */
     @Override
     public int nextStartPosition() throws IOException {
+        // Are we done with this document?
         if (in.docID() == NO_MORE_DOCS || !moreBuckets)
             return NO_MORE_POSITIONS;
 
+        // Did we already find the first match?
         if (alreadyAtFirstMatch) {
             // We're already at the first match in the document, because
             // we needed to check if there were matches at all. Return it now.
@@ -146,29 +161,25 @@ class SpansRepetitionFix extends BLFilterDocsSpans<SpansInBucketsPerDocumentWith
             return in.startPosition(matchStartIndex);
         }
 
-        // Go to the next hit length for this start point in the current bucket.
-        numRepetitions++;
-
-        // Find the first valid hit in the bucket
-        if (numRepetitions > max || matchStartIndex + numRepetitions > in.bucketSize()) {
-            // On to the next start point.
+        // Are there more matches at this start position?
+        if (!endPositions.isEmpty() && endPositonIndex < endPositions.size() - 1) {
+            endPositonIndex++;
+            if (endPositonIndex < endPositions.size()) {
+                // Still more end positions for this start position
+                return in.startPosition(matchStartIndex);
+            }
+        }
+        // No more matches at this start position.
+        // Look for the next start position with matches.
+        endPositions.clear();
+        endPositonIndex = 0;
+        while (matchStartIndex < in.bucketSize() - 1) {
             matchStartIndex++;
-            numRepetitions = min;
+            if (findMatchesFromIndex(matchStartIndex))
+                return in.startPosition(matchStartIndex);
         }
 
-        if (matchStartIndex + numRepetitions <= in.bucketSize()) {
-            // Still a valid rep. hit.
-            return in.startPosition(matchStartIndex);
-        }
-
-        // No valid hits left; on to the next matching bucket
-        int startPos = nextBucket();
-        moreBuckets = startPos != SpansInBuckets.NO_MORE_BUCKETS;
-        if (moreBuckets) {
-            return startPos;
-        }
-
-        // No more matching buckets.
+        // No more matches
         return NO_MORE_POSITIONS;
     }
 
@@ -204,7 +215,7 @@ class SpansRepetitionFix extends BLFilterDocsSpans<SpansInBucketsPerDocumentWith
 
     @Override
     public void getMatchInfo(MatchInfo[] relationInfo) {
-        int index = matchStartIndex + numRepetitions - 1; // use the last match for captured groups
-        in.getMatchInfo(index, relationInfo);
+        // TODO: this uses the first match for match info, but maybe we want something else?
+        in.getMatchInfo(matchStartIndex, relationInfo);
     }
 }
