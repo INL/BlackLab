@@ -313,8 +313,8 @@ public abstract class BLSpanQuery extends SpanQuery {
      * number of hits that have to be filter.
      *
      * @param clause clause we want to internalize
-     * @param onTheRight if true, clause is a right neighbour of this query; if
-     *            false, a left neighbour
+     * @param onTheRight if true, clause is a following clause of this query; if
+     *            false, a preceding clause
      * @return true iff clause can be internalized
      */
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
