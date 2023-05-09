@@ -7,8 +7,6 @@ import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrays;
-import it.unimi.dsi.fastutil.longs.LongComparator;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
@@ -62,24 +60,6 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
             if (matchInfoPerHit == null)
                 matchInfoPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
             matchInfoPerHit.add(matchInfo);
-        }
-    }
-    
-    static final LongComparator longCmpEndPoint = (k1, k2) -> {
-        int a = (int)k1;
-        int b = (int)k2;
-        if (a == b)
-            return (int)(k1 >> 32) - (int)(k2 >> 32); // compare start points
-        else
-            return a - b; // compare endpoints
-    };
-    
-    protected void sortHits(boolean sortByStartPoint) {
-        // FIXME: match info is not sorted!
-        if (sortByStartPoint) { 
-            LongArrays.quickSort(startsEnds.elements(), 0, startsEnds.size()); // natural order is startpoint order
-        } else {
-            LongArrays.quickSort(startsEnds.elements(), 0, startsEnds.size(), longCmpEndPoint);
         }
     }
 
