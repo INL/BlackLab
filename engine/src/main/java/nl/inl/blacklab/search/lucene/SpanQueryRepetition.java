@@ -142,7 +142,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
                 // FIXME: this will throw out any hits with the same span but different match info!
                 spans = BLSpans.optSortUniq(spans, !hitsStartPointSorted(), !hitsAreUnique());
             }
-            return new SpansRepetitionFix(spans, min == 0 ? 1 : min, max);
+            return new SpansRepetition(spans, min == 0 ? 1 : min, max);
         }
 
     }
