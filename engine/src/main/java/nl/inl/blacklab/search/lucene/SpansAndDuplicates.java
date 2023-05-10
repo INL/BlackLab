@@ -198,6 +198,7 @@ class SpansAndDuplicates extends BLSpans {
         int start = synchronizePosition();
         if (start == NO_MORE_DOCS)
             return false;
+        index[0] = index[1] = 0;
         atFirstInCurrentDoc = true;
         return true;
     }

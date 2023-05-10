@@ -37,6 +37,18 @@ public class TestSpansAnd {
         return expectDuplicates ? new SpansAndDuplicates(a, b) : new SpansAnd(a, b);
     }
 
+    private BLSpans getSpansWithDupes() {
+        BLSpans a = MockSpans.fromLists(
+                new int[] {  1,  1,  1,  2,  2,  2,  2,  3 },
+                new int[] { 10, 10, 20, 10, 10, 10, 30, 10 },
+                new int[] { 15, 15, 25, 15, 20, 20, 35, 15 });
+        BLSpans b = MockSpans.fromLists(
+                new int[] {  1,  2,  2,  2,  3,  3 },
+                new int[] { 10, 10, 10, 20, 20, 20 },
+                new int[] { 15, 20, 20, 25, 25, 25 });
+        return new SpansAndDuplicates(a, b);
+    }
+
     @Test
     public void testAndSpans() throws IOException {
         Spans exp = MockSpans.fromLists(
@@ -44,6 +56,15 @@ public class TestSpansAnd {
                 new int[] { 10, 10 },
                 new int[] { 15, 20 });
         TestUtil.assertEquals(exp, getSpans());
+    }
+
+    @Test
+    public void testAndSpansDuplicates() throws IOException {
+        Spans exp = MockSpans.fromLists(
+                new int[] {  1,  1,  2,  2,  2,  2 },
+                new int[] { 10, 10, 10, 10, 10, 10 },
+                new int[] { 15, 15, 20, 20, 20, 20 });
+        TestUtil.assertEquals(exp, getSpansWithDupes());
     }
 
     @Test
