@@ -1,17 +1,31 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.mocks.MockSpans;
 
+@RunWith(Parameterized.class)
 public class TestSpansAnd {
-    private static BLSpans getSpans() {
+
+    @Parameterized.Parameters(name = "and type {0}")
+    public static Collection<Boolean> typeToUse() {
+        return List.of(false, true);
+    }
+
+    @Parameterized.Parameter
+    public boolean expectDuplicates;
+
+    private BLSpans getSpans() {
         BLSpans a = MockSpans.fromLists(
                 new int[] { 1, 1, 2, 2, 2, 3 },
                 new int[] { 10, 20, 10, 10, 30, 10 },
@@ -20,7 +34,7 @@ public class TestSpansAnd {
                 new int[] { 1, 2, 2, 3 },
                 new int[] { 10, 10, 20, 20 },
                 new int[] { 15, 20, 25, 25 });
-        return new SpansAnd(a, b);
+        return expectDuplicates ? new SpansAndDuplicates(a, b) : new SpansAnd(a, b);
     }
 
     @Test

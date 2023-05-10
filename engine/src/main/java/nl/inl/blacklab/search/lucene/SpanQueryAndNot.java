@@ -284,7 +284,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                     return null; // if no hits in one of the clauses, no hits in AND query
                 if (!((BLSpanQuery) weights.get(i).getQuery()).hitsStartPointSorted())
                     si = BLSpans.optSortUniq(si, true, false);
-                combi = new SpansAnd(combi, si);
+                combi = new SpansAndDuplicates(combi, si);
             }
             return combi;
         }

@@ -108,7 +108,8 @@ class SpansAnd extends BLConjunctionSpans {
         int catchUpTo = subSpans[1 - laggingSpans].startPosition();
         int catchUpFrom = subSpans[laggingSpans].startPosition();
         if (catchUpFrom < catchUpTo || catchUpFrom == -1) { // also covers catchUpFrom != NO_MORE_POSITIONS
-            subSpans[laggingSpans].advanceStartPosition(catchUpTo);
+            if (subSpans[laggingSpans].advanceStartPosition(catchUpTo) == NO_MORE_POSITIONS)
+                oneExhaustedInCurrentDoc = true;
         }
     }
 
@@ -118,7 +119,8 @@ class SpansAnd extends BLConjunctionSpans {
         int catchUpToEnd = subSpans[1 - laggingSpans].endPosition();
         while ((subSpans[laggingSpans].startPosition() == catchUpFromStart &&
                 subSpans[laggingSpans].endPosition() < catchUpToEnd) || subSpans[laggingSpans].startPosition() == -1) {
-            subSpans[laggingSpans].nextStartPosition();
+            if (subSpans[laggingSpans].nextStartPosition() == NO_MORE_POSITIONS)
+                oneExhaustedInCurrentDoc = true;
         }
     }
 
@@ -131,7 +133,7 @@ class SpansAnd extends BLConjunctionSpans {
         subSpans[0].nextStartPosition();
         subSpans[1].nextStartPosition();
         int start = synchronizePosition();
-        if (start == NO_MORE_DOCS)
+        if (start == NO_MORE_POSITIONS)
             return false;
         atFirstInCurrentDoc = true;
         return true;

@@ -90,8 +90,10 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
         int sourceStart = currentBucketStart;
         while (sourceStart != Spans.NO_MORE_POSITIONS && sourceStart == currentBucketStart &&
                 source.endPosition() == currentBucketEnd) {
-            MatchInfo[] matchInfo = new MatchInfo[hitQueryContext.numberOfMatchInfos()];
-            source.getMatchInfo(matchInfo);
+            int n = hitQueryContext == null ? 0 : hitQueryContext.numberOfMatchInfos();
+            MatchInfo[] matchInfo = new MatchInfo[n];
+            if (n > 0)
+                source.getMatchInfo(matchInfo);
             matchInfos.add(matchInfo);
             sourceStart = source.nextStartPosition();
         }
