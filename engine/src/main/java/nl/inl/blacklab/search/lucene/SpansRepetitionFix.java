@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
@@ -134,10 +133,14 @@ class SpansRepetitionFix extends BLFilterDocsSpans<SpansInBucketsPerDocumentWith
             // Don't continue looking for longer matches
             return;
         }
+        // Find matches starting at the end of this match
         int fromPos = in.endPosition(fromIndex);
-        IntIterator it = in.indexesForStartpoint(fromPos).intIterator();
-        while (it.hasNext()) {
-            findEndpointsForRepetition(it.next(), numberSoFar + 1);
+        long indexAndCount = in.indexAndCountForStartPoint(fromPos);
+        int firstIndex = (int)(indexAndCount >> 32);
+        int count = (int)indexAndCount;
+        // Iterate over these matches and recursively call ourselves to find our repetitions
+        for (int i = firstIndex; i < firstIndex + count; i++) {
+            findEndpointsForRepetition(i, numberSoFar + 1);
         }
     }
 
