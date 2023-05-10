@@ -5,7 +5,7 @@ import java.io.IOException;
 /**
  * Finds all sequences of consecutive hits from the in spans of the
  * specified min and max lengths. Used to implement repetition operators.
- *
+ * <p>
  * This generates all possible sequences of consecutive hits, so if we search
  * for B+ in the input string ABBBA, we'll get 3 hits of length 1, 2 hits of
  * length 2, and 1 hit of length 3. In the future, this should be made
@@ -26,7 +26,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBuckets> {
 
     /**
      * Construct SpansRepetition.
-     *
+     * <p>
      * Source must be start-point sorted and unique.
      *
      * @param source spans to find repetitions in
@@ -96,7 +96,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBuckets> {
     /**
      * Go to the next match.
      *
-     * @return true if we're on a valid match, false if we're done.
+     * @return start position if we're on a valid match, NO_MORE_POSITIONS if we're done.
      */
     @Override
     public int nextStartPosition() throws IOException {
@@ -141,7 +141,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBuckets> {
      * containing hits.
      *
      * @param target the document number to skip to / over
-     * @return true if we're at a valid hit, false if not
+     * @return start position if we're on a valid match, NO_MORE_POSITIONS if we're done.
      */
     @Override
     public int advance(int target) throws IOException {

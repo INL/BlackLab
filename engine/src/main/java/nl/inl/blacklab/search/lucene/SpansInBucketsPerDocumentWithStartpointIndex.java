@@ -33,7 +33,7 @@ class SpansInBucketsPerDocumentWithStartpointIndex extends SpansInBucketsPerDocu
             addHitFromSource();
             int index = bucketSize() - 1;
             int start = startPosition(index);
-            startpointIndex.getIfAbsent(start, IntArrayList::new).add(index);
+            startpointIndex.getIfAbsentPut(start, IntArrayList::new).add(index);
         } while (source.nextStartPosition() != Spans.NO_MORE_POSITIONS);
     }
 
