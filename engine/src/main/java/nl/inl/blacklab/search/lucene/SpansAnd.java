@@ -6,6 +6,10 @@ import java.util.List;
 /**
  * Combines two Spans using AND. Note that this means that only matches with the
  * same document id, the same start and the same end positions will be kept.
+ *
+ * This version is for the "simple" case where we know both clauses have unique
+ * spans. If clauses may have duplicate spans (i.e. same start/end but different
+ * match info, use SpansAndDuplicates instead).
  */
 class SpansAnd extends BLConjunctionSpans {
 
@@ -14,11 +18,11 @@ class SpansAnd extends BLConjunctionSpans {
      * <p>
      * Clauses must be start-point sorted.
      *
-     * @param leftClause left clause
-     * @param rightClause right clause
+     * @param first first clause
+     * @param second second clause
      */
-    public SpansAnd(BLSpans leftClause, BLSpans rightClause) {
-        super(List.of(leftClause, rightClause));
+    public SpansAnd(BLSpans first, BLSpans second) {
+        super(List.of(first, second));
     }
 
     @Override
@@ -89,8 +93,7 @@ class SpansAnd extends BLConjunctionSpans {
                 catchUpMatchEnd(laggingSpans);
             } else {
                 // Both match
-                leftStart = subSpans[0].startPosition();
-                if (leftStart == NO_MORE_POSITIONS || subSpans[1].startPosition() == NO_MORE_POSITIONS) {
+                if (leftStart == NO_MORE_POSITIONS || rightStart == NO_MORE_POSITIONS) {
                     oneExhaustedInCurrentDoc = true;
                     return NO_MORE_POSITIONS;
                 }

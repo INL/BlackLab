@@ -13,33 +13,37 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits.
  * Allow us to retrieve all hits that start at a certain point.
- *
+ * <p>
  * The reason we don't use SpansInBucketsAbstract here is that it's more
  * efficient to just save the endpoints for the current start point (the source
  * spans is normally startpoint-sorted already).
  */
 class SpansInBucketsPerStartPoint extends SpansInBuckets {
+    /** Source spans we're collecting matches from */
     protected final BLSpans source;
 
+    /** ID of the current document */
     protected int currentDoc = -1;
 
+    /** start position for current bucket */
     protected int currentBucketStart = -1;
 
+    /** source.startPosition() */
     protected int currentSpansStart = -1;
 
-    private MutableIntList endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
+    /** end positions for current bucket */
+    private final MutableIntList endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
 
-    private List<MatchInfo[]> matchInfoPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
+    /** match infos for current bucket */
+    private final List<MatchInfo[]> matchInfos = new ArrayList<>(LIST_INITIAL_CAPACITY);
 
     private HitQueryContext hitQueryContext;
 
-    /** Do we have a hitQueryContext and does it contain captured groups? */
-    private boolean doCapturedGroups = true;
+    /** Do we have a hitQueryContext and does it have match info captures? */
+    private boolean doMatchInfo = true;
 
-    /**
-     * Does our clause capture any groups? If not, we don't need to mess with those
-     */
-    protected boolean clauseCapturesGroups = true;
+    /** Does our clause capture any match info? If not, we don't need to mess with those */
+    protected boolean clauseCapturesMatchInfo = true;
 
     /**
      * Construct SpansInBucketsPerStartPoint.
@@ -47,7 +51,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
      * @param source (startpoint-sorted) source spans
      */
     public SpansInBucketsPerStartPoint(BLSpans source) {
-        this.source = Objects.requireNonNull(source); //Sort
+        this.source = Objects.requireNonNull(source);
     }
 
     @Override
@@ -61,6 +65,8 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
             currentDoc = source.nextDoc();
             if (currentDoc != NO_MORE_DOCS)
                 currentSpansStart = source.nextStartPosition();
+            else
+                currentSpansStart = Spans.NO_MORE_POSITIONS;
             currentBucketStart = -1; // no bucket yet
         }
         return currentDoc;
@@ -80,7 +86,7 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
 
     /**
      * Go to the next bucket at or beyond the specified start point.
-     *
+     * <p>
      * Always at least advances to the next bucket, even if we were already at or
      * beyond the specified target.
      *
@@ -96,20 +102,19 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
         return gatherEndPointsAtStartPoint();
     }
 
-    @SuppressWarnings("unused")
     protected int gatherEndPointsAtStartPoint() throws IOException {
         endPoints.clear();
-        matchInfoPerEndpoint.clear();
-        doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
+        matchInfos.clear();
+        doMatchInfo = clauseCapturesMatchInfo && hitQueryContext != null
                 && hitQueryContext.numberOfMatchInfos() > 0;
 
         currentBucketStart = currentSpansStart;
         while (currentSpansStart != Spans.NO_MORE_POSITIONS && currentSpansStart == currentBucketStart) {
             endPoints.add(source.endPosition());
-            if (doCapturedGroups) {
+            if (doMatchInfo) {
                 MatchInfo[] capturedGroups = new MatchInfo[hitQueryContext.numberOfMatchInfos()];
                 source.getMatchInfo(capturedGroups);
-                matchInfoPerEndpoint.add(capturedGroups);
+                matchInfos.add(capturedGroups);
             }
             currentSpansStart = source.nextStartPosition();
         }
@@ -122,7 +127,10 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
             return nextDoc();
         }
         currentDoc = source.advance(target);
-        currentSpansStart = source.nextStartPosition();
+        if (currentDoc != NO_MORE_DOCS)
+            currentSpansStart = source.nextStartPosition();
+        else
+            currentSpansStart = Spans.NO_MORE_POSITIONS;
         currentBucketStart = -1; // no bucket yet
         return currentDoc;
     }
@@ -154,19 +162,19 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
         source.setHitQueryContext(context);
         if (context.getMatchInfoRegisterNumber() == before) {
             // Our clause doesn't capture any groups; optimize
-            clauseCapturesGroups = false;
+            clauseCapturesMatchInfo = false;
         }
     }
 
     @Override
     public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
-        if (!doCapturedGroups || matchInfoPerEndpoint.isEmpty())
+        if (!doMatchInfo || matchInfos.isEmpty())
             return;
-        MatchInfo[] previouslyCapturedGroups = matchInfoPerEndpoint.get(indexInBucket);
-        if (previouslyCapturedGroups != null) {
+        MatchInfo[] thisMatchInfo = matchInfos.get(indexInBucket);
+        if (thisMatchInfo != null) {
             for (int i = 0; i < matchInfo.length; i++) {
-                if (previouslyCapturedGroups[i] != null)
-                    matchInfo[i] = previouslyCapturedGroups[i];
+                if (thisMatchInfo[i] != null) // don't overwrite other clause's captures!
+                    matchInfo[i] = thisMatchInfo[i];
             }
         }
     }

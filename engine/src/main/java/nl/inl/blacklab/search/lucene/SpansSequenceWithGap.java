@@ -81,12 +81,12 @@ class SpansSequenceWithGap extends BLSpans {
      * clause can be matched with a given span from the first. Then we will start from this index again
      * for the next match from the first clause, etc.
      */
-    int indexFirstPossibleSecondClauseMatch = -2; // -2 == not started yet; -1 == just started a bucket
+    int indexFirstPossibleSecondClauseMatch = -1;
 
     /**
      * Index in the second clause's bucket that we've match to the end of the current span from the first clause.
      */
-    int indexCurrentSecondClauseMatch = -2; // -2 == not started yet; -1 == just started a bucket
+    int indexCurrentSecondClauseMatch = -1;
 
     /** Start of current match in first clause */
     int firstStart = -1;
