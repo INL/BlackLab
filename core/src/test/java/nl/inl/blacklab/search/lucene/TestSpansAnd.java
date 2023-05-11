@@ -17,8 +17,8 @@ import nl.inl.blacklab.mocks.MockSpans;
 @RunWith(Parameterized.class)
 public class TestSpansAnd {
 
-    @Parameterized.Parameters(name = "and type {0}")
-    public static Collection<Boolean> typeToUse() {
+    @Parameterized.Parameters(name = "with dupes: {0}")
+    public static Collection<Boolean> withDupes() {
         return List.of(false, true);
     }
 
@@ -34,7 +34,7 @@ public class TestSpansAnd {
                 new int[] { 1, 2, 2, 3 },
                 new int[] { 10, 10, 20, 20 },
                 new int[] { 15, 20, 25, 25 });
-        return expectDuplicates ? new SpansAndDuplicates(a, b) : new SpansAnd(a, b);
+        return expectDuplicates ? new SpansAnd(a, b) : new SpansAndSimple(a, b);
     }
 
     private BLSpans getSpansWithDupes() {
@@ -46,7 +46,7 @@ public class TestSpansAnd {
                 new int[] {  1,  2,  2,  2,  3,  3 },
                 new int[] { 10, 10, 10, 20, 20, 20 },
                 new int[] { 15, 20, 20, 25, 25, 25 });
-        return new SpansAndDuplicates(a, b);
+        return new SpansAnd(a, b);
     }
 
     @Test
@@ -60,11 +60,13 @@ public class TestSpansAnd {
 
     @Test
     public void testAndSpansDuplicates() throws IOException {
-        Spans exp = MockSpans.fromLists(
-                new int[] {  1,  1,  2,  2,  2,  2 },
-                new int[] { 10, 10, 10, 10, 10, 10 },
-                new int[] { 15, 15, 20, 20, 20, 20 });
-        TestUtil.assertEquals(exp, getSpansWithDupes());
+        if (expectDuplicates) {
+            Spans exp = MockSpans.fromLists(
+                    new int[] { 1, 1, 2, 2, 2, 2 },
+                    new int[] { 10, 10, 10, 10, 10, 10 },
+                    new int[] { 15, 15, 20, 20, 20, 20 });
+            TestUtil.assertEquals(exp, getSpansWithDupes());
+        } // otherwise skip, SpansAnd doesn't handle dupes
     }
 
     @Test

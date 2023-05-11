@@ -3,15 +3,32 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.search.ConjunctionDISI;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.search.spans.SpanCollector;
+
 /**
  * Combines two Spans using AND. Note that this means that only matches with the
  * same document id, the same start and the same end positions will be kept.
  *
- * This version is for the "simple" case where we know both clauses have unique
- * spans. If clauses may have duplicate spans (i.e. same start/end but different
- * match info, use SpansAndDuplicates instead).
+ * This version can deal with clauses where spans may have the  same start/end
+ * but different match info). If your spans don't, prefer the faster SpansAndSimple.
  */
-class SpansAnd extends BLConjunctionSpans {
+class SpansAnd extends BLSpans {
+
+    boolean oneExhaustedInCurrentDoc = false;
+
+    boolean atFirstInCurrentDoc = true;
+
+    /** Bucketed clauses */
+    SpansInBucketsSameStartEnd[] subSpans = new SpansInBucketsSameStartEnd[2];
+
+    /** Index in current bucket */
+    int[] index = new int[] { -1, -1 };
+
+    /** DocIdSetIterator conjunction of our clauses, for two-phase iterator */
+    private final DocIdSetIterator conjunction;
 
     /**
      * Construct SpansAnd.
@@ -22,21 +39,55 @@ class SpansAnd extends BLConjunctionSpans {
      * @param second second clause
      */
     public SpansAnd(BLSpans first, BLSpans second) {
-        super(List.of(first, second));
+        subSpans[0] = new SpansInBucketsSameStartEnd(first);
+        subSpans[1] = new SpansInBucketsSameStartEnd(second);
+        this.conjunction = ConjunctionDISI.intersectIterators(List.of(subSpans[0], subSpans[1]));
+    }
+
+    @Override
+    public int nextDoc() throws IOException {
+        atFirstInCurrentDoc = false;
+        return (conjunction.nextDoc() == NO_MORE_DOCS)
+                ? NO_MORE_DOCS
+                : toMatchDoc();
+    }
+
+    @Override
+    public int advance(int target) throws IOException {
+        atFirstInCurrentDoc = false;
+        return (conjunction.advance(target) == NO_MORE_DOCS)
+                ? NO_MORE_DOCS
+                : toMatchDoc();
+    }
+
+    int toMatchDoc() throws IOException {
+        while (true) {
+            if (twoPhaseCurrentDocMatches()) {
+                return docID();
+            }
+            if (conjunction.nextDoc() == NO_MORE_DOCS) {
+                return NO_MORE_DOCS;
+            }
+        }
+    }
+
+    @Override
+    public int docID() {
+        return subSpans[0].docID();
     }
 
     @Override
     public int startPosition() {
         if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
-        return atFirstInCurrentDoc ? -1 : subSpans[0].startPosition();
+        return atFirstInCurrentDoc ? -1 : subSpans[0].startPosition(index[0]);
     }
 
     @Override
     public int endPosition() {
         if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
-        return atFirstInCurrentDoc ? -1 : subSpans[0].endPosition();
+        return atFirstInCurrentDoc ? -1 : subSpans[0].endPosition(index[0]);
     }
 
     @Override
@@ -45,12 +96,25 @@ class SpansAnd extends BLConjunctionSpans {
             return NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
-            assert subSpans[0].startPosition() >= 0 && subSpans[1].startPosition() >= 0;
-            assert subSpans[0].startPosition() != NO_MORE_POSITIONS && subSpans[1].startPosition() != NO_MORE_POSITIONS;
-            return subSpans[0].startPosition();
+            assert index[0] >= 0 && index[1] >= 0;
+            assert index[0] < subSpans[0].bucketSize() && index[1] < subSpans[1].bucketSize();
+            assert subSpans[0].startPosition(index[0]) >= 0 && subSpans[1].startPosition(index[1]) >= 0;
+            assert subSpans[0].startPosition(index[0]) != NO_MORE_POSITIONS && subSpans[1].startPosition(index[1]) != NO_MORE_POSITIONS;
+            return subSpans[0].startPosition(index[0]);
         }
-        for (BLSpans subSpan: subSpans) {
-            if (subSpan.nextStartPosition() == NO_MORE_POSITIONS) {
+
+        // See if there's more combinations for the current start/end
+        index[1]++;
+        if (index[1] >= subSpans[1].bucketSize()) {
+            index[1] = 0;
+            index[0]++;
+        }
+        if (index[0] < subSpans[0].bucketSize())
+            return startPosition();
+
+        // Go to next bucket
+        for (SpansInBucketsSameStartEnd subSpan: subSpans) {
+            if (subSpan.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
                 oneExhaustedInCurrentDoc = true;
                 return NO_MORE_POSITIONS;
             }
@@ -59,14 +123,14 @@ class SpansAnd extends BLConjunctionSpans {
     }
 
     @Override
-    public int advanceStartPosition(int target) throws IOException {
+    public int advanceStartPosition(int targetPos) throws IOException {
         if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
         int startPos = startPosition();
-        if (startPos >= target)
+        if (startPos >= targetPos)
             return nextStartPosition(); // already at or beyond target. per contract, return next match
-        for (BLSpans subSpan: subSpans) {
-            if (subSpan.advanceStartPosition(target) == NO_MORE_POSITIONS) {
+        for (SpansInBucketsSameStartEnd subSpan: subSpans) {
+            if (subSpan.advanceBucket(targetPos) == SpansInBuckets.NO_MORE_BUCKETS) {
                 oneExhaustedInCurrentDoc = true;
                 return NO_MORE_POSITIONS;
             }
@@ -78,8 +142,8 @@ class SpansAnd extends BLConjunctionSpans {
         while (true) {
             if (oneExhaustedInCurrentDoc)
                 return NO_MORE_POSITIONS;
-            int leftStart = subSpans[0].startPosition();
-            int rightStart = subSpans[1].startPosition();
+            int leftStart = subSpans[0].startPosition(0);
+            int rightStart = subSpans[1].startPosition(0);
 
             // Synch at match start level
             if ((leftStart == -1 && rightStart == -1) ||
@@ -87,17 +151,14 @@ class SpansAnd extends BLConjunctionSpans {
                 // Starts don't match
                 int laggingSpans = leftStart < rightStart ? 0 : 1;
                 catchUpMatchStart(laggingSpans);
-            } else if (subSpans[0].endPosition() != subSpans[1].endPosition()) {
+            } else if (subSpans[0].endPosition(0) != subSpans[1].endPosition(0)) {
                 // Starts match but ends don't
-                int laggingSpans = subSpans[0].endPosition() < subSpans[1].endPosition() ? 0 : 1;
+                int laggingSpans = subSpans[0].endPosition(0) < subSpans[1].endPosition(0) ? 0 : 1;
                 catchUpMatchEnd(laggingSpans);
             } else {
                 // Both match
-                if (leftStart == NO_MORE_POSITIONS || rightStart == NO_MORE_POSITIONS) {
-                    oneExhaustedInCurrentDoc = true;
-                    return NO_MORE_POSITIONS;
-                }
                 assert leftStart >= 0;
+                index[0] = index[1] = 0;
                 return leftStart;
             }
         }
@@ -105,38 +166,89 @@ class SpansAnd extends BLConjunctionSpans {
 
     /** See if we can get starts to line up. */
     private void catchUpMatchStart(int laggingSpans) throws IOException {
-        int catchUpTo = subSpans[1 - laggingSpans].startPosition();
-        int catchUpFrom = subSpans[laggingSpans].startPosition();
+        int catchUpTo = subSpans[1 - laggingSpans].startPosition(0);
+        int catchUpFrom = subSpans[laggingSpans].startPosition(0);
         if (catchUpFrom < catchUpTo || catchUpFrom == -1) { // also covers catchUpFrom != NO_MORE_POSITIONS
-            if (subSpans[laggingSpans].advanceStartPosition(catchUpTo) == NO_MORE_POSITIONS)
+            if (subSpans[laggingSpans].advanceBucket(catchUpTo) == SpansInBuckets.NO_MORE_BUCKETS)
                 oneExhaustedInCurrentDoc = true;
         }
     }
 
     /** Try to get ends to line up without moving starts. */
     private void catchUpMatchEnd(int laggingSpans) throws IOException {
-        int catchUpFromStart = subSpans[laggingSpans].startPosition();
-        int catchUpToEnd = subSpans[1 - laggingSpans].endPosition();
-        while ((subSpans[laggingSpans].startPosition() == catchUpFromStart &&
-                subSpans[laggingSpans].endPosition() < catchUpToEnd) || subSpans[laggingSpans].startPosition() == -1) {
-            if (subSpans[laggingSpans].nextStartPosition() == NO_MORE_POSITIONS)
+        int catchUpFromStart = subSpans[laggingSpans].startPosition(0);
+        int catchUpToEnd = subSpans[1 - laggingSpans].endPosition(0);
+        while ((subSpans[laggingSpans].startPosition(0) == catchUpFromStart &&
+                subSpans[laggingSpans].endPosition(0) < catchUpToEnd) || subSpans[laggingSpans].startPosition(0) == -1) {
+            if (subSpans[laggingSpans].nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
                 oneExhaustedInCurrentDoc = true;
+                break;
+            }
         }
     }
 
-    @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
         // Note that we DON't use our nextStartPosition() here because atFirstInCurrentDoc
         // is not properly set yet at this point in time (we do that below).
         atFirstInCurrentDoc = false;
         oneExhaustedInCurrentDoc = false;
-        subSpans[0].nextStartPosition();
-        subSpans[1].nextStartPosition();
+        subSpans[0].nextBucket();
+        subSpans[1].nextBucket();
         int start = synchronizePosition();
-        if (start == NO_MORE_POSITIONS)
+        if (start == NO_MORE_DOCS)
             return false;
+        index[0] = index[1] = 0;
         atFirstInCurrentDoc = true;
         return true;
+    }
+
+    /**
+     * Return a {@link TwoPhaseIterator} view of this Spans.
+     */
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        float totalMatchCost = 0;
+        // Compute the matchCost as the total matchCost/positionsCostant of the sub spans.
+        for (SpansInBuckets spans : subSpans) {
+            TwoPhaseIterator tpi = spans.asTwoPhaseIterator();
+            totalMatchCost += tpi != null ? tpi.matchCost() : spans.positionsCost();
+        }
+        final float matchCost = totalMatchCost;
+
+        return new TwoPhaseIterator(conjunction) {
+            @Override
+            public boolean matches() throws IOException {
+                return twoPhaseCurrentDocMatches();
+            }
+
+            @Override
+            public float matchCost() {
+                return matchCost;
+            }
+        };
+    }
+
+    @Override
+    public float positionsCost() {
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
+    }
+
+    @Override
+    public void collect(SpanCollector collector) throws IOException {
+        // not implemented, but not needed
+    }
+
+    @Override
+    public void getMatchInfo(MatchInfo[] relationInfo) {
+        subSpans[0].getMatchInfo(index[0], relationInfo);
+        subSpans[1].getMatchInfo(index[1], relationInfo);
+    }
+
+    @Override
+    protected void passHitQueryContextToClauses(HitQueryContext context) {
+        for (SpansInBuckets subSpan: subSpans) {
+            subSpan.setHitQueryContext(context);
+        }
     }
 
     @Override

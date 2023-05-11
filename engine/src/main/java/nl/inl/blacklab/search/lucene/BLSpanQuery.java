@@ -295,6 +295,17 @@ public abstract class BLSpanQuery extends SpanQuery {
     public abstract boolean hitsAreUnique();
 
     /**
+     * Can two hits overlap?
+     *
+     * @return true if they can, false if not
+     */
+    public boolean hitsCanOverlap() {
+        // Subclasses may know more and therefore be able to guarantee non-overlapping in more cases
+        boolean hitsAreDiscrete = hitsAllSameLength() && hitsLengthMax() <= 1 && hitsHaveUniqueStart();
+        return !hitsAreDiscrete;
+    }
+
+    /**
      * Is this query a single "any token", e.g. one that matches all individual tokens?
      * @return true if it is, false if not
      */

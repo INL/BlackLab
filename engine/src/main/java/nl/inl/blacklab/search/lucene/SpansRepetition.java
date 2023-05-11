@@ -13,6 +13,10 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
  * for B+ in the input string ABBBA, we'll get 3 hits of length 1, 2 hits of
  * length 2, and 1 hit of length 3. In the future, this should be made
  * configurable (to specifically support greedy matching, etc.)
+ * <p>
+ * This version can deal with overlapping hits, because it uses a startpoint
+ * index and a recursive search for repetitions. This is slower than SpansRepetitionSimple,
+ * which only looks at consecutive hits. If your hits don't overlap, use that instead.
  */
 class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithStartpointIndex> {
     /** Minimum number of repetitions */
@@ -45,7 +49,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
     /**
      * Construct SpansRepetition.
      * <p>
-     * Source must be start-point sorted and unique.
+     * Source must be start-point sorted.
      *
      * @param source spans to find repetitions in
      * @param min minimum number of repetitions

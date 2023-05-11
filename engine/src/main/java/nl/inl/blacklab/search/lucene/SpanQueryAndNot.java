@@ -276,19 +276,29 @@ public class SpanQueryAndNot extends BLSpanQuery {
             BLSpans combi = weights.get(0).getSpans(context, requiredPostings);
             if (combi == null)
                 return null; // if no hits in one of the clauses, no hits in AND query
-            if (!((BLSpanQuery) weights.get(0).getQuery()).hitsStartPointSorted())
+            BLSpanQuery query = (BLSpanQuery) weights.get(0).getQuery();
+            if (!query.hitsStartPointSorted())
                 combi = BLSpans.optSortUniq(combi, true, false);
+            boolean combiSpansAreUnique = query.hitsAreUnique();
             for (int i = 1; i < weights.size(); i++) {
                 BLSpans si = weights.get(i).getSpans(context, requiredPostings);
                 if (si == null)
                     return null; // if no hits in one of the clauses, no hits in AND query
-                if (!((BLSpanQuery) weights.get(i).getQuery()).hitsStartPointSorted())
+                query = (BLSpanQuery) weights.get(i).getQuery();
+                if (!query.hitsStartPointSorted())
                     si = BLSpans.optSortUniq(si, true, false);
-                combi = new SpansAndDuplicates(combi, si);
+                if (combiSpansAreUnique && query.hitsAreUnique()) {
+                    // No duplicate spans with different match info; use the faster version.
+                    combi = new SpansAndSimple(combi, si);
+                } else {
+                    // We need to use the slower version that takes duplicate spans into account and produces all
+                    // combinations.
+                    combi = new SpansAnd(combi, si);
+                    combiSpansAreUnique = false;
+                }
             }
             return combi;
         }
-
     }
 
     @Override
@@ -407,6 +417,31 @@ public class SpanQueryAndNot extends BLSpanQuery {
             }
         }
         // All clauses have unique spans, so we can guarantee the resulting matches are
+        return true;
+    }
+
+    @Override
+    public boolean hitsCanOverlap() {
+        if (include.isEmpty()) {
+            // pure not query always produces nonoverlapping hits
+            // (all tokens that are not part of the matches)
+            return false;
+        }
+        if (!hitsAreUnique()) {
+            // Even if one of the clauses has non-overlapping hits,
+            // if another clause has duplicate hits, this query will
+            // still produce duplicates (it combinatorically combines
+            // any duplicates to ensure we get all combinations of match info)
+            return true;
+        }
+        for (BLSpanQuery clause : include) {
+            if (!clause.hitsCanOverlap()) {
+                // At least one clause has nonoverlapping hits,
+                // so the resulting hits can never be overlapping.
+                return false;
+            }
+        }
+        // All clauses have overlapping hits.
         return true;
     }
 
