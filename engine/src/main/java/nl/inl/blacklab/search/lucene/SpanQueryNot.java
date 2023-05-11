@@ -59,7 +59,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     }
 
     @Override
-    protected boolean okayToInvertForOptimization() {
+    public boolean okayToInvertForOptimization() {
         // Yes, inverting is actually an improvement
         return true;
     }

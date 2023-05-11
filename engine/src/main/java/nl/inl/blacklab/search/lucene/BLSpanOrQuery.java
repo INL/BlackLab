@@ -422,7 +422,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 //BL we need everything to be a BLSpans, or capturing (and optimizations) won't work properly
                 //   that's why we bypass ScoringWrapperSpans here.
                 return subSpans.get(0) instanceof BLSpans ? (BLSpans) subSpans.get(0)
-                        : new BLSpansWrapper(subSpans.get(0));
+                        : new BLSpansWrapper(subSpans.get(0), BLSpanOrQuery.this);
                 //return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
             }
 
@@ -648,6 +648,27 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                         return;
                     ((BLSpans) topPositionSpans).getMatchInfo(relationInfo);
                 }
+
+                @Override
+                public boolean hitsAllSameLength() { return BLSpanOrQuery.this.hitsAllSameLength(); }
+
+                @Override
+                public int hitsLengthMin() { return BLSpanOrQuery.this.hitsLengthMin(); }
+
+                @Override
+                public int hitsLengthMax() { return BLSpanOrQuery.this.hitsLengthMax(); }
+
+                @Override
+                public boolean hitsStartPointSorted() { return BLSpanOrQuery.this.hitsStartPointSorted(); }
+
+                @Override
+                public boolean hitsEndPointSorted() { return BLSpanOrQuery.this.hitsEndPointSorted(); }
+
+                @Override
+                public boolean hitsHaveUniqueStart() { return BLSpanOrQuery.this.hitsHaveUniqueStart(); }
+
+                @Override
+                public boolean hitsHaveUniqueEnd() { return BLSpanOrQuery.this.hitsHaveUniqueEnd(); }
             };
         }
     }

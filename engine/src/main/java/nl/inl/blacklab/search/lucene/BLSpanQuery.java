@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * if every hit is equal in length, if there may be duplicates, etc. This information
  * will help us optimize certain operations, such as sequence queries, in certain cases.
  */
-public abstract class BLSpanQuery extends SpanQuery {
+public abstract class BLSpanQuery extends SpanQuery implements SpanGuarantees {
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 
@@ -197,7 +197,8 @@ public abstract class BLSpanQuery extends SpanQuery {
      *
      * @return true if it is, false if not
      */
-    boolean okayToInvertForOptimization() {
+    @Override
+    public boolean okayToInvertForOptimization() {
         return false;
     }
 
@@ -209,109 +210,16 @@ public abstract class BLSpanQuery extends SpanQuery {
      *
      * @return true if it's negative-only, false if not
      */
+    @Override
     public boolean isSingleTokenNot() {
         return false;
-    }
-
-    /**
-     * Are all our hits single tokens?
-     * 
-     * @return true if they are, false if not
-     */
-    public boolean producesSingleTokens() {
-        return hitsAllSameLength() && hitsLengthMin() == 1;
-    }
-
-    /**
-     * Do our hits have constant length?
-     * 
-     * @return true if they do, false if not
-     */
-    public abstract boolean hitsAllSameLength();
-
-    /**
-     * How long could our shortest hit be?
-     * 
-     * @return length of the shortest hit possible
-     */
-    public abstract int hitsLengthMin();
-
-    /**
-     * How long could our longest hit be?
-     * 
-     * @return length of the longest hit possible, or Integer.MAX_VALUE if unlimited
-     */
-    public abstract int hitsLengthMax();
-
-    /**
-     * When hit B follows hit A, is it guaranteed that B.end &gt;= A.end? Also, if
-     * A.end == B.end, is B.start &gt; A.start?
-     *
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsEndPointSorted();
-
-    /**
-     * When hit B follows hit A, is it guaranteed that B.start &gt;= A.start? Also,
-     * if A.start == B.start, is B.end &gt; A.end?
-     *
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsStartPointSorted();
-
-    /**
-     * Is it guaranteed that no two hits have the same start position?
-     * 
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsHaveUniqueStart();
-
-    /**
-     * Is it guaranteed that no two hits have the same end position?
-     * 
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsHaveUniqueEnd();
-
-    /**
-     * Is it guaranteed that no two hits are completely identical?
-     * <p>
-     * Two hits are identical if they have the same start and end position,
-     * AND the same match info, if any. If there is no match info, this
-     * method always returns the same as hitsHaveUniqueSpan().
-     *
-     * @return true if this is guaranteed, false if not
-     */
-    public boolean hitsAreUniqueWithMatchInfo() {
-        // Subclass may add additional guarantee if it knows
-        return hitsAreUnique();
-    }
-
-    /**
-     * Is it guaranteed that no two hits have identical start and end?
-     *
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsAreUnique();
-
-    /**
-     * Can two hits overlap?
-     *
-     * @return true if they can, false if not
-     */
-    public boolean hitsCanOverlap() {
-        // Subclasses may know more and therefore be able to guarantee non-overlapping in more cases
-        boolean hitsAreDiscrete = hitsAllSameLength() && hitsLengthMax() <= 1 && hitsHaveUniqueStart();
-        return !hitsAreDiscrete;
     }
 
     /**
      * Is this query a single "any token", e.g. one that matches all individual tokens?
      * @return true if it is, false if not
      */
-    public boolean isSingleAnyToken() {
-        return false;
-    }
+    public boolean isSingleAnyToken() { return false; }
 
     /**
      * Can this query "internalize" the given neighbouring clause?

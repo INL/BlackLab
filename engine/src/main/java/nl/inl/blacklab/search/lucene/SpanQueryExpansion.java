@@ -187,6 +187,50 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         return clauses.get(0);
     }
 
+    public static SpanGuarantees guarantees(BLSpans clause, Direction direction, int min, int max) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                return clause.hitsAllSameLength() && min == max;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return clause.hitsLengthMin() + min;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return addMaxValues(clause.hitsLengthMax(), max);
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return clause.hitsEndPointSorted() && (direction == Direction.LEFT || direction == Direction.RIGHT && min == max);
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return clause.hitsStartPointSorted() && (direction == Direction.RIGHT || direction == Direction.LEFT && min == max);
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return clause.hitsHaveUniqueStart() && min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return clause.hitsHaveUniqueEnd() && min == max;
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                return clause.hitsAreUnique() && min == max;
+            }
+        };
+    }
+
     @Override
     public boolean hitsAllSameLength() {
         return clauses.get(0).hitsAllSameLength() && min == max;

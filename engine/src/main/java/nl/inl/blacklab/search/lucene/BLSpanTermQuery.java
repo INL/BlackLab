@@ -123,7 +123,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
             @Override
             public BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException {
                 Spans spans = weight.getSpans(ctx, requiredPostings);
-                return spans == null ? null : new BLSpansWrapper(spans);
+                return spans == null ? null : new BLSpansWrapper(spans, BLSpanTermQuery.this);
             }
 
             @Override

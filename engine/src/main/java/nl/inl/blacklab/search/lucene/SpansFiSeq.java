@@ -48,8 +48,8 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
     private int currentMatchEndPoint = -1;
 
     public SpansFiSeq(BLSpans anchorSpans, boolean startOfAnchor, NfaState nfa, int direction,
-            ForwardIndexAccessorLeafReader fiAccessor) {
-        super(anchorSpans);
+            ForwardIndexAccessorLeafReader fiAccessor, SpanGuarantees guarantees) {
+        super(anchorSpans, guarantees);
         this.startOfAnchor = startOfAnchor;
         this.nfa = nfa;
         this.direction = direction;

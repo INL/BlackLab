@@ -77,7 +77,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    protected boolean okayToInvertForOptimization() {
+    public boolean okayToInvertForOptimization() {
         // Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
         return producesSingleTokens() && !exclude.isEmpty();
     }

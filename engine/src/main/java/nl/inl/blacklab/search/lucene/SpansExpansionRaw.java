@@ -66,7 +66,7 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
 
     public SpansExpansionRaw(LeafReader reader, String fieldName, BLSpans clause,
             Direction direction, int min, int max) {
-        super(clause);
+        super(clause, SpanQueryExpansion.guarantees(clause, Direction.RIGHT, min, max));
         if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);
@@ -77,8 +77,9 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
         checkMinMax();
     }
 
-    public SpansExpansionRaw(DocFieldLengthGetter lengthGetter, BLSpans clause, Direction direction, int min, int max) {
-        super(clause);
+    public SpansExpansionRaw(DocFieldLengthGetter lengthGetter, BLSpans clause,
+            Direction direction, int min, int max) {
+        super(clause, SpanQueryExpansion.guarantees(clause, Direction.RIGHT, min, max));
         if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             // OPT: cache this in BlackLabIndex..?

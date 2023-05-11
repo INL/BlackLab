@@ -37,7 +37,17 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     private PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean eliminateDuplicates) {
         // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
-        super(new SpansInBucketsPerDocumentSorted(src, sortByStartPoint));
+        super(new SpansInBucketsPerDocumentSorted(src, sortByStartPoint), new SpanGuaranteesAdapter(src) {
+            @Override
+            public boolean hitsStartPointSorted() {
+                return sortByStartPoint || super.hitsStartPointSorted();
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                return eliminateDuplicates || super.hitsAreUnique();
+            }
+        });
         this.eliminateDuplicates = eliminateDuplicates;
         this.sortByStartPoint = sortByStartPoint;
     }

@@ -23,9 +23,74 @@ import nl.inl.blacklab.search.fimatch.Nfa;
  * configurable (to specifically support greedy/reluctant matching, etc.)
  */
 public class SpanQueryRepetition extends BLSpanQueryAbstract {
+
+    public static SpanGuarantees guarantees(SpanGuarantees clause, int min, int max) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                return clause.hitsAllSameLength() && min == max;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return clause.hitsLengthMin() * min;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                int clMax = clause.hitsLengthMax();
+                return max == MAX_UNLIMITED || clMax == MAX_UNLIMITED ? MAX_UNLIMITED : clMax * max;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                if (clause.hitsCanOverlap()) {
+                    // If hits can overlap, we use SpansRepetition, which looks at non-consecutive hits.
+                    // Therefore we don't know if the results will be endpoint-sorted.
+                    return false;
+                }
+                // Hits cannot overlap, so if we always look for the same number of repetitions
+                // and the clause is endpoint-sorted, our results will be too.
+                return clause.hitsEndPointSorted() && min == max;
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                if (clause.hitsCanOverlap()) {
+                    // If hits can overlap, we use SpansRepetition, which can generate duplicates.
+                    return false;
+                }
+                return clause.hitsHaveUniqueStart() && min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                if (clause.hitsCanOverlap()) {
+                    // If hits can overlap, we use SpansRepetition, which can generate duplicates.
+                    return false;
+                }
+                return clause.hitsHaveUniqueEnd() && min == max;
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                // If hits can overlap, we use SpansRepetition, which may generate duplicates.
+                // Otherwise we use SpansRepetitionSimple, which can't.
+                return !clause.hitsCanOverlap();
+            }
+        };
+    }
+
     final int min;
 
     final int max;
+
+    private final SpanGuarantees guarantees;
 
     public SpanQueryRepetition(BLSpanQuery clause, int min, int max) {
         super(clause);
@@ -35,6 +100,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min > max");
         if (min < 0)
             throw new IllegalArgumentException("min or max can't be negative");
+        this.guarantees = guarantees(clause, min, max);
     }
 
     @Override
@@ -140,12 +206,11 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
                 return null;
             spans = BLSpans.optSortUniq(spans, !hitsStartPointSorted(), false);
             if (hitsCanOverlap()) {
-                return new SpansRepetition(spans, min == 0 ? 1 : min, max);
+                return new SpansRepetition(spans, min == 0 ? 1 : min, max, guarantees);
             } else {
-                return new SpansRepetitionSimple(spans, min == 0 ? 1 : min, max);
+                return new SpansRepetitionSimple(spans, min == 0 ? 1 : min, max, guarantees);
             }
         }
-
     }
 
     @Override
@@ -192,60 +257,42 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsAllSameLength() {
-        return clauses.get(0).hitsAllSameLength() && min == max;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return clauses.get(0).hitsLengthMin() * min;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        int clMax = clauses.get(0).hitsLengthMax();
-        return max == MAX_UNLIMITED || clMax == MAX_UNLIMITED ? MAX_UNLIMITED : clMax * max;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        if (clauses.get(0).hitsCanOverlap()) {
-            // If hits can overlap, we use SpansRepetition, which looks at non-consecutive hits.
-            // Therefore we don't know if the results will be endpoint-sorted.
-            return false;
-        }
-        // Hits cannot overlap, so if we always look for the same number of repetitions
-        // and the clause is endpoint-sorted, our results will be too.
-        return clauses.get(0).hitsEndPointSorted() && min == max;
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        if (clauses.get(0).hitsCanOverlap()) {
-            // If hits can overlap, we use SpansRepetition, which can generate duplicates.
-            return false;
-        }
-        return clauses.get(0).hitsHaveUniqueStart() && min == max;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        if (clauses.get(0).hitsCanOverlap()) {
-            // If hits can overlap, we use SpansRepetition, which can generate duplicates.
-            return false;
-        }
-        return clauses.get(0).hitsHaveUniqueEnd() && min == max;
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        // If hits can overlap, we use SpansRepetition, which may generate duplicates.
-        // Otherwise we use SpansRepetitionSimple, which can't.
-        return !clauses.get(0).hitsCanOverlap();
+        return guarantees.hitsAreUnique();
     }
 
     @Override

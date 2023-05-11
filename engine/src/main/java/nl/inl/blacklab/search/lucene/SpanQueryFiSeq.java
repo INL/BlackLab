@@ -31,6 +31,68 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     public static final boolean END_OF_ANCHOR = false;
 
+    public static SpanGuarantees guarantees(SpanGuarantees clause, SpanGuarantees nfaQuery, int direction, boolean startOfAnchor) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                return clause.hitsAllSameLength() && nfaQuery.hitsAllSameLength();
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                if (startOfAnchor && direction == DIR_TO_LEFT || !startOfAnchor && direction == DIR_TO_RIGHT) {
+                    // Non-overlapping; add the two values
+                    return clause.hitsLengthMin() + nfaQuery.hitsLengthMin();
+                }
+                // Overlapping; use the largest value
+                return Math.max(clause.hitsLengthMin(), nfaQuery.hitsLengthMin());
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                if (startOfAnchor && direction == DIR_TO_LEFT || !startOfAnchor && direction == DIR_TO_RIGHT) {
+                    // Non-overlapping; add the two values
+                    return clause.hitsLengthMax() + nfaQuery.hitsLengthMax();
+                }
+                // Overlapping; use the largest value
+                return Math.min(clause.hitsLengthMax(), nfaQuery.hitsLengthMax());
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                if (direction == DIR_TO_RIGHT)
+                    return clause.hitsStartPointSorted();
+                return clause.hitsStartPointSorted() && nfaQuery.hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                if (direction == DIR_TO_LEFT)
+                    return clause.hitsEndPointSorted();
+                return clause.hitsEndPointSorted() && nfaQuery.hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                if (direction == DIR_TO_RIGHT)
+                    return clause.hitsHaveUniqueStart();
+                return clause.hitsHaveUniqueStart() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueStart();
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                if (direction == DIR_TO_LEFT)
+                    return clause.hitsHaveUniqueEnd();
+                return clause.hitsHaveUniqueEnd() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueEnd();
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
+            }
+        };
+    }
+
     final boolean startOfAnchor;
 
     /** Our NFA, both in our own direction and the opposite direction. */
@@ -41,6 +103,8 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     final int direction;
 
     final ForwardIndexAccessor fiAccessor;
+
+    private final SpanGuarantees guarantees;
 
     /**
      *
@@ -63,6 +127,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         this.nfaQuery = nfaQuery;
         this.direction = direction;
         this.fiAccessor = fiAccessor;
+        this.guarantees = guarantees(anchor, nfaQuery, direction, startOfAnchor);
     }
 
     @Override
@@ -120,7 +185,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
             //    anchorSpans = BLSpans.optSortUniq(anchorSpans, !clauses.get(0).hitsStartPointSorted(), true);
 
             BLSpans result = new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
-                    fiAccessor.getForwardIndexAccessorLeafReader(context));
+                    fiAccessor.getForwardIndexAccessorLeafReader(context), guarantees);
 
             // Re-sort the results if necessary (if we FI-matched a non-fixed amount to the left)
             if (mustSort)
@@ -147,60 +212,42 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsAllSameLength() {
-        return clauses.get(0).hitsAllSameLength() && nfaQuery.hitsAllSameLength();
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        if (startOfAnchor && direction == DIR_TO_LEFT || !startOfAnchor && direction == DIR_TO_RIGHT) {
-            // Non-overlapping; add the two values
-            return clauses.get(0).hitsLengthMin() + nfaQuery.hitsLengthMin();
-        }
-        // Overlapping; use the largest value
-        return Math.max(clauses.get(0).hitsLengthMin(), nfaQuery.hitsLengthMin());
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        if (startOfAnchor && direction == DIR_TO_LEFT || !startOfAnchor && direction == DIR_TO_RIGHT) {
-            // Non-overlapping; add the two values
-            return clauses.get(0).hitsLengthMax() + nfaQuery.hitsLengthMax();
-        }
-        // Overlapping; use the largest value
-        return Math.min(clauses.get(0).hitsLengthMax(), nfaQuery.hitsLengthMax());
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        if (direction == DIR_TO_RIGHT)
-            return clauses.get(0).hitsStartPointSorted();
-        return clauses.get(0).hitsStartPointSorted() && nfaQuery.hitsAllSameLength();
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        if (direction == DIR_TO_LEFT)
-            return clauses.get(0).hitsEndPointSorted();
-        return clauses.get(0).hitsEndPointSorted() && nfaQuery.hitsAllSameLength();
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        if (direction == DIR_TO_RIGHT)
-            return clauses.get(0).hitsHaveUniqueStart();
-        return clauses.get(0).hitsHaveUniqueStart() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueStart();
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        if (direction == DIR_TO_LEFT)
-            return clauses.get(0).hitsHaveUniqueEnd();
-        return clauses.get(0).hitsHaveUniqueEnd() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueEnd();
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
+        return guarantees.hitsAreUnique();
     }
 
     @Override

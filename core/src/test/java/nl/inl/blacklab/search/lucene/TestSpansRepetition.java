@@ -28,7 +28,9 @@ public class TestSpansRepetition {
         int[] aStart = { 1, 2, 3, 5, 6, 10 };
         int[] aEnd   = { 2, 3, 4, 6, 7, 11 };
         BLSpans a = new MockSpans(aDoc, aStart, aEnd);
-        return hitsCanOverlap ? new SpansRepetition(a, 2, 4) : new SpansRepetitionSimple(a, 2, 4);
+        return hitsCanOverlap ?
+                new SpansRepetition(a, 2, 4, SpanGuarantees.NONE) :
+                new SpansRepetitionSimple(a, 2, 4, SpanGuarantees.NONE);
     }
 
     @Test

@@ -11,8 +11,8 @@ import org.apache.lucene.search.spans.TermSpans;
  */
 public final class BLSpansWrapper extends BLFilterSpans<Spans> {
 
-    public BLSpansWrapper(Spans in) {
-        super(in);
+    public BLSpansWrapper(Spans in, SpanGuarantees guarantees) {
+        super(in, guarantees);
         if (in instanceof BLSpans) {
             throw new IllegalArgumentException("No need to wrap spans, already a BLSpans");
         }
@@ -37,5 +37,7 @@ public final class BLSpansWrapper extends BLFilterSpans<Spans> {
     protected FilterSpans.AcceptStatus accept(Spans candidate) throws IOException {
         return FilterSpans.AcceptStatus.YES;
     }
+
+
 
 }

@@ -126,7 +126,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     }
 
     @Override
-    protected boolean okayToInvertForOptimization() {
+    public boolean okayToInvertForOptimization() {
         // Yes, inverting is actually an improvement
         return isSingleAnyToken();
     }
