@@ -2,9 +2,11 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -46,16 +48,84 @@ import nl.inl.util.StringUtil;
 public class SpanQuerySequence extends BLSpanQueryAbstract {
     protected static final Logger logger = LogManager.getLogger(SpanQuerySequence.class);
 
+    public static SpanGuarantees createGuarantees(List<SpanGuarantees> clauses) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                for (SpanGuarantees clause : clauses) {
+                    if (!clause.hitsAllSameLength())
+                        return false;
+                }
+                return true;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                int n = 0;
+                for (SpanGuarantees clause : clauses) {
+                    n += clause.hitsLengthMin();
+                }
+                return n;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                int n = 0;
+                for (SpanGuarantees clause : clauses) {
+                    int max = clause.hitsLengthMax();
+                    if (max == Integer.MAX_VALUE)
+                        return max; // infinite
+                    n += max;
+                }
+                return n;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsStartPointSorted() && hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                // Both SpansSequenceSimple and SpansSequenceWithGaps guarantee this
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                for (SpanGuarantees clause : clauses) {
+                    if (!clause.hitsHaveUniqueStart())
+                        return false;
+                }
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                for (SpanGuarantees clause : clauses) {
+                    if (!clause.hitsHaveUniqueEnd())
+                        return false;
+                }
+                return true;
+            }
+        };
+    }
+
     public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
-        super(first, second);
+        this(List.of(first, second));
+    }
+
+    public SpanQuerySequence(BLSpanQuery[] clauses) {
+        this(Arrays.asList(clauses));
     }
 
     public SpanQuerySequence(List<BLSpanQuery> clauscol) {
         super(clauscol);
-    }
 
-    public SpanQuerySequence(BLSpanQuery[] clauses) {
-        super(clauses);
+        List<SpanGuarantees> clauseGuarantees = clauscol.stream()
+                .map(BLSpanQuery::guarantees)
+                .collect(Collectors.toList());
+        this.guarantees = createGuarantees(clauseGuarantees);
     }
 
     /**
@@ -691,62 +761,42 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsAllSameLength() {
-        for (BLSpanQuery clause : clauses) {
-            if (!clause.hitsAllSameLength())
-                return false;
-        }
-        return true;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        int n = 0;
-        for (BLSpanQuery clause : clauses) {
-            n += clause.hitsLengthMin();
-        }
-        return n;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        int n = 0;
-        for (BLSpanQuery clause : clauses) {
-            int max = clause.hitsLengthMax();
-            if (max == Integer.MAX_VALUE)
-                return max; // infinite
-            n += max;
-        }
-        return n;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return hitsStartPointSorted() && hitsAllSameLength();
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        // Both SpansSequenceSimple and SpansSequenceWithGaps guarantee this
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        for (BLSpanQuery clause : clauses) {
-            if (!clause.hitsHaveUniqueStart())
-                return false;
-        }
-        return true;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        for (BLSpanQuery clause : clauses) {
-            if (!clause.hitsHaveUniqueEnd())
-                return false;
-        }
-        return true;
+        return guarantees.hitsHaveUniqueEnd();
+    }
 
+    @Override
+    public boolean hitsAreUnique() {
+        return guarantees.hitsAreUnique();
     }
 
     @Override

@@ -32,7 +32,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuarantees {
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 
-    protected SpanGuarantees guarantees = this; // should eventually be a separate object!
+    protected SpanGuarantees guarantees; // should eventually be a separate object!
 
     public BLSpanQuery(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
