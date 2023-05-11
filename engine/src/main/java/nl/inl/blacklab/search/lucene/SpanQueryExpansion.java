@@ -114,7 +114,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min > max");
         if (min < 0 || this.max < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
-        this.guarantees = createGuarantees(clause, direction, min, max);
+        this.guarantees = createGuarantees(clause.guarantees(), direction, min, max);
     }
 
     @Override
@@ -175,7 +175,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
             // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
             BLSpanQuery q = (BLSpanQuery) weight.getQuery();
-            if (q != null && !q.hitsStartPointSorted())
+            if (q != null && !q.guarantees().hitsStartPointSorted())
                 return BLSpans.ensureStartPointSorted(expanded);
 
             return expanded;
@@ -230,46 +230,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
     public BLSpanQuery getClause() {
         return clauses.get(0);
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
     }
 
     @Override
@@ -342,7 +302,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             return new SpanQueryExpansion(seq, direction, min, max);
         }
         // Add any token to our expansion.
-        return addExpand(clause.hitsLengthMin(), clause.hitsLengthMax());
+        return addExpand(clause.guarantees().hitsLengthMin(), clause.guarantees().hitsLengthMax());
     }
 
 }

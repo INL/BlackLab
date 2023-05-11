@@ -120,7 +120,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
             // Re-sort the results if necessary (if we took the right edge)
             BLSpanQuery q = (BLSpanQuery) weight.getQuery();
-            if (q != null && !q.hitsStartPointSorted())
+            if (q != null && !q.guarantees().hitsStartPointSorted())
                 return BLSpans.ensureStartPointSorted(edge);
 
             return edge;
@@ -147,46 +147,6 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
     public BLSpanQuery getClause() {
         return clauses.get(0);
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
     }
 
     @Override

@@ -74,7 +74,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
 
     @Override
     public boolean isAnyTokenQuery() {
-        return spanQuery.isSingleAnyToken();
+        return spanQuery.guarantees().isSingleAnyToken();
     }
 
     @Override

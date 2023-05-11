@@ -60,51 +60,6 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
     }
 
     @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
-    }
-
-    @Override
-    public boolean hitsCanOverlap() {
-        return guarantees.hitsCanOverlap();
-    }
-
-    @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         BLSpanWeight weight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Query rewrite = filter.rewrite(searcher.getIndexReader());
@@ -165,11 +120,6 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
     @Override
     public int forwardMatchingCost() {
         return clauses.get(0).forwardMatchingCost();
-    }
-
-   @Override
-    public boolean isSingleAnyToken() {
-        return clauses.stream().allMatch(BLSpanQuery::isSingleAnyToken);
     }
 
     @Override

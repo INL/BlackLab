@@ -87,8 +87,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                     return fixedHitLength;
                 int n = Integer.MAX_VALUE;
                 for (SpanGuarantees cl: clauses) {
-                    BLSpanQuery clause = (BLSpanQuery) cl;
-                    n = Math.min(n, clause.hitsLengthMin());
+                    n = Math.min(n, cl.hitsLengthMin());
                 }
                 return n == Integer.MAX_VALUE ? 0 : n;
             }
@@ -99,8 +98,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                     return fixedHitLength;
                 int n = 0;
                 for (SpanGuarantees cl : clauses) {
-                    BLSpanQuery clause = (BLSpanQuery) cl;
-                    int l = clause.hitsLengthMax();
+                    int l = cl.hitsLengthMax();
                     n = Math.max(n, l);
                     if (n == Integer.MAX_VALUE)
                         return n; // infinite
@@ -249,17 +247,19 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 // Replace the child, incorporating its children into this OR operation.
                 for (SpanQuery cl : ((BLSpanOrQuery) rewritten).getClauses()) {
                     BLSpanQuery clause = (BLSpanQuery) cl;
-                    if (!clause.hitsAllSameLength() || clause.hitsLengthMax() != 1)
+                    SpanGuarantees g = clause.guarantees();
+                    if (!g.hitsAllSameLength() || g.hitsLengthMax() != 1)
                         allClausesSingleToken = false;
-                    if (!clause.isSingleTokenNot())
+                    if (!g.isSingleTokenNot())
                         onlyNotClauses = false;
                     rewrittenCl.add(clause);
                 }
                 anyRewritten = true;
             } else {
-                if (!rewritten.hitsAllSameLength() || rewritten.hitsLengthMax() != 1)
+                SpanGuarantees g = rewritten.guarantees();
+                if (!g.hitsAllSameLength() || g.hitsLengthMax() != 1)
                     allClausesSingleToken = false;
-                if (!rewritten.isSingleTokenNot())
+                if (!g.isSingleTokenNot())
                     onlyNotClauses = false;
                 // Just add it.
                 rewrittenCl.add(rewritten);
@@ -341,46 +341,6 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         result.setHitsAreFixedLength(fixedHitLength);
         result.setClausesAreSimpleTermsInSameAnnotation(clausesAreSimpleTermsInSameAnnotation);
         return result;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
     }
 
     @Override
@@ -478,7 +438,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 //BL we need everything to be a BLSpans, or capturing (and optimizations) won't work properly
                 //   that's why we bypass ScoringWrapperSpans here.
                 return subSpans.get(0) instanceof BLSpans ? (BLSpans) subSpans.get(0)
-                        : new BLSpansWrapper(subSpans.get(0), BLSpanOrQuery.this);
+                        : new BLSpansWrapper(subSpans.get(0), guarantees());
                 //return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
             }
 
@@ -733,7 +693,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             states.add(frag.getStartingState());
 //			dangling.addAll(frag.getDanglingArrows());
         }
-        NfaState orAcyclic = NfaState.or(false, states, hitsAllSameLength());
+        NfaState orAcyclic = NfaState.or(false, states, guarantees().hitsAllSameLength());
         return new Nfa(orAcyclic, List.of(orAcyclic));
     }
 
@@ -747,7 +707,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      */
     protected boolean getNfaTokenStateTerms(Set<String> terms) {
         boolean canBeTokenState = false;
-        if (hitsAllSameLength() && hitsLengthMax() == 1) {
+        if (guarantees().hitsAllSameLength() && guarantees().hitsLengthMax() == 1) {
             canBeTokenState = true;
             if (terms == null && clausesAreSimpleTermsInSameAnnotation) {
                 // We know all our clauses are simple terms, and we

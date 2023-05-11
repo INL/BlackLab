@@ -49,7 +49,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
 
         // Can we cancel out a double not?
-        if (rewritten.okayToInvertForOptimization())
+        if (rewritten.guarantees().okayToInvertForOptimization())
             return rewritten.inverted(); // yes
 
         // No, must remain a NOT
@@ -97,7 +97,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         @Override
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
             BLSpans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
-            if (!clauses.get(0).hitsStartPointSorted())
+            if (!clauses.get(0).guarantees().hitsStartPointSorted())
                 spans = BLSpans.optSortUniq(spans, true, false);
             if (spans == null)
                 return new SpansNGrams(context.reader(), baseFieldName, 1, 1);
@@ -109,46 +109,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     @Override
     public String toString(String field) {
         return "NOT(" + (clauses.get(0) == null ? "" : clausesToString(field)) + ")";
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
     }
 
     @Override

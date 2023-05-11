@@ -188,7 +188,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                                     boolean startAny = false;
                                     if (search.get(0) instanceof SpanQueryAnyToken) {
                                         SpanQueryAnyToken any1 = (SpanQueryAnyToken) search.get(0);
-                                        if (any1.hitsLengthMin() == 0 && any1.hitsLengthMax() == MAX_UNLIMITED) {
+                                        if (any1.guarantees().hitsLengthMin() == 0 &&
+                                                any1.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
                                             startAny = true;
                                             search.remove(0);
                                         }
@@ -197,7 +198,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                                     int last = search.size() - 1;
                                     if (search.get(last) instanceof SpanQueryAnyToken) {
                                         SpanQueryAnyToken any2 = (SpanQueryAnyToken) search.get(last);
-                                        if (any2.hitsLengthMin() == 0 && any2.hitsLengthMax() == MAX_UNLIMITED) {
+                                        if (any2.guarantees().hitsLengthMin() == 0 &&
+                                                any2.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
                                             endAny = true;
                                             search.remove(last);
                                         }
@@ -609,11 +611,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 this.spans = weight.getSpans(context, requiredPostings);
                 BLSpanQuery q = (BLSpanQuery) weight.getQuery();
                 if (q != null) {
-                    this.uniqueStart = q.hitsHaveUniqueStart();
-                    this.uniqueEnd = q.hitsHaveUniqueEnd();
-                    this.startSorted = q.hitsStartPointSorted();
-                    this.endSorted = q.hitsEndPointSorted();
-                    this.sameLength = q.hitsAllSameLength();
+                    SpanGuarantees g = q.guarantees();
+                    this.uniqueStart = g.hitsHaveUniqueStart();
+                    this.uniqueEnd = g.hitsHaveUniqueEnd();
+                    this.startSorted = g.hitsStartPointSorted();
+                    this.endSorted = g.hitsEndPointSorted();
+                    this.sameLength = g.hitsAllSameLength();
                 }
             }
 
@@ -757,46 +760,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public String toString(String field) {
         return "SEQ(" + clausesToString(field) + ")";
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
     }
 
     @Override

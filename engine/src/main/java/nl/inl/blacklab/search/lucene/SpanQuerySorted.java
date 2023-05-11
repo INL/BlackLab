@@ -54,9 +54,9 @@ class SpanQuerySorted extends BLSpanQuery {
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         BLSpanQuery rewritten = src.rewrite(reader);
         if (rewritten != src) {
-            boolean mustDedupe = eliminateDuplicates && !rewritten.hitsAreUnique();
-            boolean mustSort = !sortByEndpoint && !rewritten.hitsStartPointSorted() ||
-                    sortByEndpoint && !rewritten.hitsEndPointSorted();
+            boolean mustDedupe = eliminateDuplicates && !rewritten.guarantees().hitsAreUnique();
+            boolean mustSort = !sortByEndpoint && !rewritten.guarantees().hitsStartPointSorted() ||
+                    sortByEndpoint && !rewritten.guarantees().hitsEndPointSorted();
             if (!mustDedupe && !mustSort)
                 return rewritten;
             BLSpanQuery r = new SpanQuerySorted(rewritten, sortByEndpoint, eliminateDuplicates);
@@ -162,46 +162,6 @@ class SpanQuerySorted extends BLSpanQuery {
         } else if (!src.equals(other.src))
             return false;
         return true;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
     }
 
     @Override

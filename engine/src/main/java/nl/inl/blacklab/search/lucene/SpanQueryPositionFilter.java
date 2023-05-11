@@ -83,7 +83,8 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
             // We're filtering "all n-grams of length min-max".
             // Use the special optimized SpanQueryFilterNGrams.
             SpanQueryAnyToken tp = (SpanQueryAnyToken) producer;
-            return new SpanQueryFilterNGrams(filter, op, tp.hitsLengthMin(), tp.hitsLengthMax(), leftAdjust, rightAdjust);
+            return new SpanQueryFilterNGrams(filter, op, tp.guarantees().hitsLengthMin(),
+                    tp.guarantees().hitsLengthMax(), leftAdjust, rightAdjust);
         }
 
         if (producer != clauses.get(0) || filter != clauses.get(1)) {
@@ -131,7 +132,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
             BLSpans spansProd = prodWeight.getSpans(context, requiredPostings);
             if (spansProd == null)
                 return null;
-            if (!clauses.get(0).hitsStartPointSorted())
+            if (!clauses.get(0).guarantees().hitsStartPointSorted())
                 spansProd = PerDocumentSortedSpans.startPoint(spansProd);
             BLSpans spansFilter = filterWeight.getSpans(context, requiredPostings);
             if (spansFilter == null) {
@@ -139,9 +140,9 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
                 // If it's a negative filter, all producer hits match.
                 return invert ? spansProd : null;
             }
-            boolean filterFixedLength = clauses.get(1).hitsAllSameLength();
+            boolean filterFixedLength = clauses.get(1).guarantees().hitsAllSameLength();
             SpansInBucketsPerDocument filter;
-            if (clauses.get(1).hitsStartPointSorted()) {
+            if (clauses.get(1).guarantees().hitsStartPointSorted()) {
                 // Already start point sorted; no need to sort buckets again
                 filter = new SpansInBucketsPerDocument(spansFilter);
             } else {
@@ -223,46 +224,6 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
     }
 
     @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
-    }
-
-    @Override
     public long reverseMatchingCost(IndexReader reader) {
         return clauses.get(0).reverseMatchingCost(reader);
     }
@@ -274,12 +235,12 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
     @Override
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        return clause.hitsAllSameLength();
+        return clause.guarantees().hitsAllSameLength();
     }
 
     @Override
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean addToRight) {
-        if (!clause.hitsAllSameLength())
+        if (!clause.guarantees().hitsAllSameLength())
             throw new BlackLabRuntimeException("Trying to internalize non-constant-length clause: " + clause);
         // Create a new position filter query with a constant-length clause added to our producer.
         // leftAdjust and rightAdjust are updated according to the clause's length, so it is not
@@ -288,9 +249,9 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(producer, clause, addToRight);
         if (addToRight)
             return new SpanQueryPositionFilter(seq, clauses.get(1), op, invert, leftAdjust,
-                    rightAdjust - clause.hitsLengthMin());
-        return new SpanQueryPositionFilter(seq, clauses.get(1), op, invert, leftAdjust + clause.hitsLengthMin(),
-                rightAdjust);
+                    rightAdjust - clause.guarantees().hitsLengthMin());
+        return new SpanQueryPositionFilter(seq, clauses.get(1), op, invert,
+                leftAdjust + clause.guarantees().hitsLengthMin(), rightAdjust);
     }
 
     @Override

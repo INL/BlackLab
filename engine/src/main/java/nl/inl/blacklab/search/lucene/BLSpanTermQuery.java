@@ -128,7 +128,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
             @Override
             public BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException {
                 Spans spans = weight.getSpans(ctx, requiredPostings);
-                return spans == null ? null : new BLSpansWrapper(spans, BLSpanTermQuery.this);
+                return spans == null ? null : new BLSpansWrapper(spans, guarantees());
             }
 
             @Override
@@ -174,49 +174,6 @@ public class BLSpanTermQuery extends BLSpanQuery {
             return false;
         return true;
     }
-    
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
-    }
-
-    @Override
-    public boolean hitsCanOverlap() { return guarantees.hitsCanOverlap(); }
 
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {

@@ -118,7 +118,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
                 int n = min * tp.min;
                 return new SpanQueryAnyToken(queryInfo, n, n, base.getRealField());
             }
-        } else if (baseRewritten.isSingleTokenNot() && min > 0) {
+        } else if (baseRewritten.guarantees().isSingleTokenNot() && min > 0) {
             // Rewrite to anytokens-not-containing form so we can optimize it
             // (note the check for min > 0 above, because position filter cannot match the empty sequence)
             BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(queryInfo, 1, 1, base.getRealField()), min, max);
@@ -202,8 +202,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            spans = BLSpans.optSortUniq(spans, !hitsStartPointSorted(), false);
-            if (hitsCanOverlap()) {
+            spans = BLSpans.optSortUniq(spans, !guarantees().hitsStartPointSorted(), false);
+            if (guarantees().hitsCanOverlap()) {
                 return new SpansRepetition(spans, min == 0 ? 1 : min, max, guarantees);
             } else {
                 return new SpansRepetitionSimple(spans, min == 0 ? 1 : min, max, guarantees);
@@ -251,46 +251,6 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
     public int getMaxRep() {
         return max;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
     }
 
     @Override

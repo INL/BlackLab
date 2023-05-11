@@ -31,8 +31,24 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryAndNot extends BLSpanQuery {
 
-    public static SpanGuarantees createGuarantees(List<SpanGuarantees> include) {
+    public static SpanGuarantees createGuarantees(List<SpanGuarantees> include, boolean hasExclude) {
         return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean okayToInvertForOptimization() {
+                // Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
+                return producesSingleTokens() && hasExclude;
+            }
+
+            @Override
+            public boolean isSingleAnyToken() {
+                return include.stream().allMatch(SpanGuarantees::isSingleAnyToken) && !hasExclude;
+            }
+
+            @Override
+            public boolean isSingleTokenNot() {
+                return producesSingleTokens() && include.isEmpty();
+            }
+
             @Override
             public boolean hitsAllSameLength() {
                 if (include.isEmpty())
@@ -161,7 +177,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         List<SpanGuarantees> clauseGuarantees = include.stream()
                 .map(cl -> cl.guarantees())
                 .collect(Collectors.toList());
-        this.guarantees = createGuarantees(clauseGuarantees);
+        this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
     }
 
     private void checkBaseFieldName() {
@@ -197,17 +213,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    public boolean okayToInvertForOptimization() {
-        // Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
-        return producesSingleTokens() && !exclude.isEmpty();
-    }
-
-    @Override
-    public boolean isSingleTokenNot() {
-        return producesSingleTokens() && include.isEmpty();
-    }
-
-    @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 
         // Flatten nested AND queries, and invert negative-only clauses.
@@ -221,7 +226,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 List<BLSpanQuery> clPos = isNot ? flatNotCl : flatCl;
                 List<BLSpanQuery> clNeg = isNot ? flatCl : flatNotCl;
                 boolean isTPAndNot = child instanceof SpanQueryAndNot;
-                if (!isTPAndNot && child.isSingleTokenNot()) {
+                if (!isTPAndNot && child.guarantees().isSingleTokenNot()) {
                     // "Switch sides": invert the clause, and
                     // swap the lists we add clauses to.
                     child = child.inverted();
@@ -256,7 +261,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 List<BLSpanQuery> clNeg = isNot ? rewrCl : rewrNotCl;
                 BLSpanQuery rewritten = child.rewrite(reader);
                 boolean isTPAndNot = rewritten instanceof SpanQueryAndNot;
-                if (!isTPAndNot && rewritten.isSingleTokenNot()) {
+                if (!isTPAndNot && rewritten.guarantees().isSingleTokenNot()) {
                     // "Switch sides": invert the clause, and
                     // swap the lists we add clauses to.
                     rewritten = rewritten.inverted();
@@ -397,17 +402,17 @@ public class SpanQueryAndNot extends BLSpanQuery {
             if (combi == null)
                 return null; // if no hits in one of the clauses, no hits in AND query
             BLSpanQuery query = (BLSpanQuery) weights.get(0).getQuery();
-            if (!query.hitsStartPointSorted())
+            if (!query.guarantees().hitsStartPointSorted())
                 combi = BLSpans.optSortUniq(combi, true, false);
-            boolean combiSpansAreUnique = query.hitsAreUnique();
+            boolean combiSpansAreUnique = query.guarantees().hitsAreUnique();
             for (int i = 1; i < weights.size(); i++) {
                 BLSpans si = weights.get(i).getSpans(context, requiredPostings);
                 if (si == null)
                     return null; // if no hits in one of the clauses, no hits in AND query
                 query = (BLSpanQuery) weights.get(i).getQuery();
-                if (!query.hitsStartPointSorted())
+                if (!query.guarantees().hitsStartPointSorted())
                     si = BLSpans.optSortUniq(si, true, false);
-                if (combiSpansAreUnique && query.hitsAreUnique()) {
+                if (combiSpansAreUnique && query.guarantees().hitsAreUnique()) {
                     // No duplicate spans with different match info; use the faster version.
                     combi = new SpansAndSimple(combi, si);
                 } else {
@@ -444,51 +449,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
         if (!exclude.isEmpty())
             return exclude.get(0).getRealField();
         throw new BlackLabRuntimeException("Query has no clauses");
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
-    }
-
-    @Override
-    public boolean hitsCanOverlap() {
-        return guarantees.hitsCanOverlap();
     }
 
     @Override

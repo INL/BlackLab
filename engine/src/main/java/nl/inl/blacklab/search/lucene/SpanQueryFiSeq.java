@@ -120,7 +120,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         this.nfaQuery = nfaQuery;
         this.direction = direction;
         this.fiAccessor = fiAccessor;
-        this.guarantees = createGuarantees(anchor.guarantees(), nfaQuery, direction, startOfAnchor);
+        this.guarantees = createGuarantees(anchor.guarantees(), nfaQuery.guarantees(), direction, startOfAnchor);
     }
 
     @Override
@@ -141,7 +141,8 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
         BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(anchorWeight) : null;
-        return new SpanWeightFiSeq(anchorWeight, searcher, contexts, boost, !hitsStartPointSorted());
+        return new SpanWeightFiSeq(anchorWeight, searcher, contexts, boost,
+                !guarantees().hitsStartPointSorted());
     }
 
     class SpanWeightFiSeq extends BLSpanWeight {
@@ -201,46 +202,6 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery noEmpty() {
         return this;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
     }
 
     @Override

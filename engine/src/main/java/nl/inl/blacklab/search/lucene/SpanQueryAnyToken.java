@@ -183,56 +183,6 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     }
 
     @Override
-    public boolean okayToInvertForOptimization() {
-        return guarantees.okayToInvertForOptimization();
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
-    }
-
-    @Override
-    public boolean isSingleAnyToken() {
-        return guarantees.isSingleAnyToken();
-    }
-
-    @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
         NfaState state = NfaState.anyToken(luceneField, null);

@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * if every hit is equal in length, if there may be duplicates, etc. This information
  * will help us optimize certain operations, such as sequence queries, in certain cases.
  */
-public abstract class BLSpanQuery extends SpanQuery implements SpanGuarantees {
+public abstract class BLSpanQuery extends SpanQuery {
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 
@@ -109,7 +109,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuarantees {
     }
 
     public static BLSpanQuery ensureSorted(BLSpanQuery spanQuery) {
-        if (spanQuery.hitsStartPointSorted()) {
+        if (spanQuery.guarantees().hitsStartPointSorted()) {
             return spanQuery;
         }
         return new SpanQuerySorted(spanQuery, false, false);
@@ -189,84 +189,6 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuarantees {
      */
     public BLSpanQuery inverted() {
         return new SpanQueryNot(this);
-    }
-
-    /**
-     * Is it okay to invert this query for optimization?
-     * <p>
-     * Heuristic used to determine when to optimize a query by inverting one or more
-     * of its subqueries.
-     *
-     * @return true if it is, false if not
-     */
-    @Override
-    public boolean okayToInvertForOptimization() {
-        return guarantees == this ? false : guarantees.okayToInvertForOptimization();
-    }
-
-    /**
-     * Is this query only a negative clause, producing all tokens that don't satisfy
-     * certain conditions?
-     * <p>
-     * Used for optimization decisions, i.e. in BLSpanOrQuery.rewrite().
-     *
-     * @return true if it's negative-only, false if not
-     */
-    @Override
-    public boolean isSingleTokenNot() {
-        return guarantees == this ? false : guarantees.isSingleTokenNot();
-    }
-
-    /**
-     * Is this query a single "any token", e.g. one that matches all individual tokens?
-     * @return true if it is, false if not
-     */
-    @Override
-    public boolean isSingleAnyToken() {
-        return guarantees == this ? false : guarantees.isSingleAnyToken();
-    }
-
-    /**
-     * Is it guaranteed that no two hits are completely identical?
-     * <p>
-     * Two hits are identical if they have the same start and end position,
-     * AND the same match info, if any. If there is no match info, this
-     * method always returns the same as hitsHaveUniqueSpan().
-     *
-     * @return true if this is guaranteed, false if not
-     */
-    @Override
-    public boolean hitsAreUniqueWithMatchInfo() {
-        // Subclass may add additional guarantee if it knows
-        return guarantees == this ? hitsAreUnique() : guarantees.hitsAreUniqueWithMatchInfo();
-    }
-
-    /**
-     * Is it guaranteed that no two hits have identical start and end?
-     *
-     * @return true if this is guaranteed, false if not
-     */
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees == this ?
-                hitsHaveUniqueStart() || hitsHaveUniqueEnd() :
-                guarantees.hitsAreUnique();
-    }
-
-    /**
-     * Can two hits overlap?
-     *
-     * @return true if they can, false if not
-     */
-    @Override
-    public boolean hitsCanOverlap() {
-        if (guarantees == this) {
-            // Subclasses may know more and therefore be able to guarantee non-overlapping in more cases
-            boolean hitsAreDiscrete = hitsAllSameLength() && hitsLengthMax() <= 1 && hitsHaveUniqueStart();
-            return !hitsAreDiscrete;
-        } else {
-            return guarantees.hitsCanOverlap();
-        }
     }
 
     /**
@@ -356,8 +278,8 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuarantees {
         this.queryInfo = queryInfo;
     }
 
-    SpanGuarantees guarantees() {
-        return this.guarantees; // will eventually be a separate object
+    public SpanGuarantees guarantees() {
+        return this.guarantees;
     }
 
 }
