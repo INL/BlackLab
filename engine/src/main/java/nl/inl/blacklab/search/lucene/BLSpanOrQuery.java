@@ -650,25 +650,9 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
 
                 @Override
-                public boolean hitsAllSameLength() { return BLSpanOrQuery.this.hitsAllSameLength(); }
-
-                @Override
-                public int hitsLengthMin() { return BLSpanOrQuery.this.hitsLengthMin(); }
-
-                @Override
-                public int hitsLengthMax() { return BLSpanOrQuery.this.hitsLengthMax(); }
-
-                @Override
-                public boolean hitsStartPointSorted() { return BLSpanOrQuery.this.hitsStartPointSorted(); }
-
-                @Override
-                public boolean hitsEndPointSorted() { return BLSpanOrQuery.this.hitsEndPointSorted(); }
-
-                @Override
-                public boolean hitsHaveUniqueStart() { return BLSpanOrQuery.this.hitsHaveUniqueStart(); }
-
-                @Override
-                public boolean hitsHaveUniqueEnd() { return BLSpanOrQuery.this.hitsHaveUniqueEnd(); }
+                public SpanGuarantees guarantees() {
+                    return BLSpanOrQuery.this.guarantees();
+                }
             };
         }
     }

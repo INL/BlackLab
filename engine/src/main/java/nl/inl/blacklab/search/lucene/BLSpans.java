@@ -13,7 +13,7 @@ import org.apache.lucene.search.spans.Spans;
  * Note that Spans will iterate through a Lucene index segment in a single thread,
  * therefore Spans and subclasses don't need to be thread-safe.
  */
-public abstract class BLSpans extends Spans implements SpanGuarantees {
+public abstract class BLSpans extends Spans {
 
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 
@@ -169,78 +169,8 @@ public abstract class BLSpans extends Spans implements SpanGuarantees {
         return null;
     }
 
-    @Override
-    public boolean okayToInvertForOptimization() {
-        return guarantees.okayToInvertForOptimization();
-    }
-
-    @Override
-    public boolean isSingleTokenNot() {
-        return guarantees.isSingleTokenNot();
-    }
-
-    @Override
-    public boolean producesSingleTokens() {
-        return guarantees.producesSingleTokens();
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return guarantees.hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return guarantees.hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return guarantees.hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return guarantees.hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return guarantees.hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return guarantees.hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return guarantees.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUniqueWithMatchInfo() {
-        return guarantees.hitsAreUniqueWithMatchInfo();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return guarantees.hitsAreUnique();
-    }
-
-    @Override
-    public boolean hitsCanOverlap() {
-        return guarantees.hitsCanOverlap();
-    }
-
-    @Override
-    public boolean isSingleAnyToken() {
-        return guarantees.isSingleAnyToken();
-    }
-
     public SpanGuarantees guarantees() {
         // (Eventually guarantees may live in a separate object)
-        return this;
+        return guarantees;
     }
 }

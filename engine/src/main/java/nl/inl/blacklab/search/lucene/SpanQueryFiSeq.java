@@ -31,7 +31,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     public static final boolean END_OF_ANCHOR = false;
 
-    public static SpanGuarantees guarantees(SpanGuarantees clause, SpanGuarantees nfaQuery, int direction, boolean startOfAnchor) {
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, SpanGuarantees nfaQuery, int direction, boolean startOfAnchor) {
         return new SpanGuaranteesAdapter() {
             @Override
             public boolean hitsAllSameLength() {
@@ -104,8 +104,6 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     final ForwardIndexAccessor fiAccessor;
 
-    private final SpanGuarantees guarantees;
-
     /**
      *
      * @param anchor hits to use as anchor to start NFA matching
@@ -127,7 +125,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         this.nfaQuery = nfaQuery;
         this.direction = direction;
         this.fiAccessor = fiAccessor;
-        this.guarantees = guarantees(anchor, nfaQuery, direction, startOfAnchor);
+        this.guarantees = createGuarantees(anchor, nfaQuery, direction, startOfAnchor);
     }
 
     @Override

@@ -64,6 +64,71 @@ public interface SpanGuarantees {
         }
     };
 
+    /**
+     * Guarantees for a regular term query.
+     */
+    SpanGuarantees TERM = new SpanGuarantees() {
+        @Override
+        public boolean okayToInvertForOptimization() {
+            return false;
+        }
+
+        @Override
+        public boolean isSingleTokenNot() {
+            return false;
+        }
+
+        @Override
+        public boolean hitsAllSameLength() {
+            return true;
+        }
+
+        @Override
+        public int hitsLengthMin() {
+            return 1;
+        }
+
+        @Override
+        public int hitsLengthMax() {
+            return 1;
+        }
+
+        @Override
+        public boolean hitsEndPointSorted() {
+            return true;
+        }
+
+        @Override
+        public boolean hitsStartPointSorted() {
+            return true;
+        }
+
+        @Override
+        public boolean hitsHaveUniqueStart() {
+            return true;
+        }
+
+        @Override
+        public boolean hitsHaveUniqueEnd() {
+            return true;
+        }
+
+        @Override
+        public boolean hitsAreUnique() {
+            return true;
+        }
+
+        @Override
+        public boolean hitsCanOverlap() {
+            return false;
+        }
+
+        @Override
+        public boolean isSingleAnyToken() {
+            return false;
+        }
+    };
+
     static <T extends DocIdSetIterator> SpanGuarantees of(DocIdSetIterator in) {
         if (in instanceof SpanGuarantees)
             return (SpanGuarantees) in;

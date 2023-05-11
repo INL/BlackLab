@@ -17,7 +17,7 @@ import org.apache.lucene.search.ScoreMode;
  */
 public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
-    public static SpanGuarantees guarantees(SpanGuarantees clause, int min, int max) {
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, int min, int max) {
         return new SpanGuaranteesAdapter() {
             @Override
             public boolean hitsAllSameLength() {
@@ -79,8 +79,6 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     /** How to adjust right n-gram border relative to the filter clause */
     private final int rightAdjust;
 
-    private final SpanGuarantees guarantees;
-
     public SpanQueryFilterNGrams(BLSpanQuery clause, SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
         super(clause);
         this.op = op;
@@ -92,7 +90,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min, max cannot be negative");
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
-        this.guarantees = guarantees(clause, min, max);
+        this.guarantees = createGuarantees(clause, min, max);
     }
 
     @Override

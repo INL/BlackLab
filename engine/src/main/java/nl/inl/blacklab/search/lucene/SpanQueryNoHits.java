@@ -19,11 +19,16 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryNoHits extends BLSpanQuery {
 
+    public static SpanGuarantees createGuarantees() {
+        return TERM;
+    }
+
     private final String luceneField;
 
     public SpanQueryNoHits(QueryInfo queryInfo, String luceneField) {
         super(queryInfo);
         this.luceneField = luceneField;
+        this.guarantees = createGuarantees();
     }
 
     @Override
@@ -95,48 +100,46 @@ public class SpanQueryNoHits extends BLSpanQuery {
 
     @Override
     public boolean hitsAllSameLength() {
-        return true;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return 1;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return 1;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return hitsAllSameLength();
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return true;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return true;
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return true;
+        return guarantees.hitsAreUnique();
     }
 
     @Override
-    public boolean hitsCanOverlap() {
-        return false;
-    }
+    public boolean hitsCanOverlap() { return guarantees.hitsCanOverlap(); }
 
     @Override
     public boolean canMakeNfa() {

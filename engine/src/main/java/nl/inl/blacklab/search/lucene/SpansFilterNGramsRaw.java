@@ -69,7 +69,7 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
 
     public SpansFilterNGramsRaw(LeafReader reader, String fieldName, BLSpans clause,
             SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
-        super(clause, SpanQueryFilterNGrams.guarantees(clause, min, max));
+        super(clause, SpanQueryFilterNGrams.createGuarantees(clause.guarantees(), min, max));
         if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT
                 && op != SpanQueryPositionFilter.Operation.MATCHES) {
             // We need to know document length to properly do expansion to the right

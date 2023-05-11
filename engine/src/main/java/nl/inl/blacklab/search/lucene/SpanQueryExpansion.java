@@ -187,7 +187,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         return clauses.get(0);
     }
 
-    public static SpanGuarantees guarantees(BLSpans clause, Direction direction, int min, int max) {
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction, int min, int max) {
         return new SpanGuaranteesAdapter() {
             @Override
             public boolean hitsAllSameLength() {

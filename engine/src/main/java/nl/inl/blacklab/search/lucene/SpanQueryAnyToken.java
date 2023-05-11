@@ -24,6 +24,62 @@ import nl.inl.util.LuceneUtil;
  */
 public class SpanQueryAnyToken extends BLSpanQuery {
 
+    public static SpanGuarantees createGuarantees(int min, int max) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean okayToInvertForOptimization() {
+                // Yes, inverting is actually an improvement
+                return isSingleAnyToken();
+            }
+
+            @Override
+            public boolean hitsAllSameLength() {
+                return min == max;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return min;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return max;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return min == max;
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                return true;
+            }
+
+            @Override
+            public boolean isSingleAnyToken() {
+                return min == 1 && max == 1;
+            }
+
+        };
+    }
+
     /** The minimum number of tokens in this stretch. */
     protected final int min;
 
@@ -37,6 +93,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
         this.min = min;
         this.max = max;
         this.luceneField = luceneField;
+        this.guarantees = createGuarantees(min, max);
     }
 
     @Override
@@ -127,53 +184,52 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
     @Override
     public boolean okayToInvertForOptimization() {
-        // Yes, inverting is actually an improvement
-        return isSingleAnyToken();
+        return guarantees.okayToInvertForOptimization();
     }
 
     @Override
     public boolean hitsAllSameLength() {
-        return min == max;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return min;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return max;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return hitsAllSameLength();
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return min == max;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return min == max;
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return true;
+        return guarantees.hitsAreUnique();
     }
 
     @Override
     public boolean isSingleAnyToken() {
-        return min == 1 && max == 1;
+        return guarantees.isSingleAnyToken();
     }
 
     @Override

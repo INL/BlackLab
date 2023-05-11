@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.fimatch.Nfa;
  */
 public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
-    public static SpanGuarantees guarantees(SpanGuarantees clause, int min, int max) {
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, int min, int max) {
         return new SpanGuaranteesAdapter() {
             @Override
             public boolean hitsAllSameLength() {
@@ -90,8 +90,6 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
     final int max;
 
-    private final SpanGuarantees guarantees;
-
     public SpanQueryRepetition(BLSpanQuery clause, int min, int max) {
         super(clause);
         this.min = min;
@@ -100,7 +98,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min > max");
         if (min < 0)
             throw new IllegalArgumentException("min or max can't be negative");
-        this.guarantees = guarantees(clause, min, max);
+        this.guarantees = createGuarantees(clause, min, max);
     }
 
     @Override
