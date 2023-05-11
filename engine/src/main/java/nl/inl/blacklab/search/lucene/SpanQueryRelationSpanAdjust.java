@@ -21,6 +21,15 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
+    public static SpanGuarantees createGuarantees(MatchInfo.SpanMode mode) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsStartPointSorted() {
+                return mode == MatchInfo.SpanMode.FULL_SPAN;
+            }
+        };
+    }
+
     private final BLSpanQuery clause;
 
     private final MatchInfo.SpanMode mode;
@@ -29,6 +38,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
         super(clause.queryInfo);
         this.clause = clause;
         this.mode = mode;
+        this.guarantees = createGuarantees(mode);
     }
 
     @Override
@@ -122,42 +132,42 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     @Override
     public boolean hitsAllSameLength() {
-        return false;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return 0;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return Integer.MAX_VALUE;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return false;
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return mode == MatchInfo.SpanMode.FULL_SPAN;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return false;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return false;
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return false;
+        return guarantees.hitsAreUnique();
     }
 
     @Override

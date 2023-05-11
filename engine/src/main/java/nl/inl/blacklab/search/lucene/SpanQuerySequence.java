@@ -750,11 +750,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     }
 
     @Override
-    public boolean hitsAreUnique() {
-        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
-    }
-
-    @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         Nfa frag = null;
         int start = direction == SpanQueryFiSeq.DIR_TO_RIGHT ? 0 : clauses.size() - 1;

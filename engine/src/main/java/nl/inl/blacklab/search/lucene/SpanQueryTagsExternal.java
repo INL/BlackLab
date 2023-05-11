@@ -235,11 +235,6 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
     }
 
     @Override
-    public boolean hitsAreUnique() {
-        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
-    }
-
-    @Override
     public long reverseMatchingCost(IndexReader reader) {
         return clause.reverseMatchingCost(reader);
     }

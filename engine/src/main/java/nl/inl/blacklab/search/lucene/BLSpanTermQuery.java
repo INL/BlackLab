@@ -57,6 +57,10 @@ public class BLSpanTermQuery extends BLSpanQuery {
         return new BLSpanTermQuery(queryInfo, q);
     }
 
+    public static SpanGuarantees createGuarantees() {
+        return SpanGuarantees.TERM;
+    }
+
     final SpanTermQuery query;
 
     private final TermStates termStates;
@@ -74,6 +78,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
         super(queryInfo);
         query = new SpanTermQuery(term);
         termStates = null;
+        this.guarantees = createGuarantees();
     }
 
     BLSpanTermQuery(QueryInfo queryInfo, SpanTermQuery termQuery) {
@@ -169,46 +174,49 @@ public class BLSpanTermQuery extends BLSpanQuery {
             return false;
         return true;
     }
-
+    
     @Override
     public boolean hitsAllSameLength() {
-        return true;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return 1;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return 1;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return true;
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return true;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return true;
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return true;
+        return guarantees.hitsAreUnique();
     }
+
+    @Override
+    public boolean hitsCanOverlap() { return guarantees.hitsCanOverlap(); }
 
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {

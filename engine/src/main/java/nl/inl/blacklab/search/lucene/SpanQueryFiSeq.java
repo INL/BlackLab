@@ -85,11 +85,6 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
                     return clause.hitsHaveUniqueEnd();
                 return clause.hitsHaveUniqueEnd() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueEnd();
             }
-
-            @Override
-            public boolean hitsAreUnique() {
-                return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
-            }
         };
     }
 

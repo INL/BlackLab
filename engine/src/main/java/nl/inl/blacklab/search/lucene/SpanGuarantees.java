@@ -65,6 +65,18 @@ public interface SpanGuarantees {
     };
 
     /**
+     * Only guarantees that the hits are sorted by start point.
+     *
+     * (normally true for regular Lucene queries, not always true in BlackLab)
+     */
+    SpanGuarantees SORTED = new SpanGuaranteesAdapter(NONE) {
+        @Override
+        public boolean hitsStartPointSorted() {
+            return true;
+        }
+    };
+
+    /**
      * Guarantees for a regular term query.
      */
     SpanGuarantees TERM = new SpanGuarantees() {
@@ -236,7 +248,7 @@ public interface SpanGuarantees {
      * @return true if this is guaranteed, false if not
      */
     default boolean hitsAreUnique() {
-        return hitsHaveUniqueStart() && hitsHaveUniqueEnd();
+        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
     }
 
     /**

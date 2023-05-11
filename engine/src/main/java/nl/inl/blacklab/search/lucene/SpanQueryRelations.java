@@ -89,7 +89,6 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         String regexp = AnnotatedFieldNameUtil.relationSearchRegex(relationType, attributes);
         RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp));
         BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
-
         init(relationFieldName, relationType, clause, direction, spanMode);
     }
 
@@ -106,6 +105,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         this.clause = clause;
         this.direction = direction;
         this.spanMode = spanMode;
+        this.guarantees = createGuarantees();
     }
 
     @Override
@@ -208,44 +208,43 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         return AnnotatedFieldNameUtil.relationClassAndType(relationType)[1];
     }
 
+    public static SpanGuarantees createGuarantees() {
+        return SpanGuarantees.SORTED;
+    }
+
     @Override
     public boolean hitsAllSameLength() {
-        return false;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return 0;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return Integer.MAX_VALUE;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return false;
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return false;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return false;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override

@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class SpanQueryNoHits extends BLSpanQuery {
 
     public static SpanGuarantees createGuarantees() {
-        return TERM;
+        return SpanGuarantees.TERM;
     }
 
     private final String luceneField;
