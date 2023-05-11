@@ -125,7 +125,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         this.nfaQuery = nfaQuery;
         this.direction = direction;
         this.fiAccessor = fiAccessor;
-        this.guarantees = createGuarantees(anchor, nfaQuery, direction, startOfAnchor);
+        this.guarantees = createGuarantees(anchor.guarantees(), nfaQuery, direction, startOfAnchor);
     }
 
     @Override

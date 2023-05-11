@@ -20,6 +20,22 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * document), and optionally eliminate duplicate hits.
  */
 class SpanQuerySorted extends BLSpanQuery {
+
+    public static SpanGuarantees createGuarantees(SpanGuarantees src, boolean sortByEndpoint,
+            boolean eliminateDuplicates) {
+        return new SpanGuaranteesAdapter(src) {
+            @Override
+            public boolean hitsStartPointSorted() {
+                return sortByEndpoint || super.hitsStartPointSorted();
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                return eliminateDuplicates || super.hitsAreUnique();
+            }
+        };
+    }
+
     private final BLSpanQuery src;
 
     final boolean sortByEndpoint;
@@ -31,6 +47,7 @@ class SpanQuerySorted extends BLSpanQuery {
         this.src = src;
         this.sortByEndpoint = sortByEndpoint;
         this.eliminateDuplicates = eliminateDuplicates;
+        this.guarantees = createGuarantees(src.guarantees(), sortByEndpoint, eliminateDuplicates);
     }
 
     @Override
@@ -149,42 +166,42 @@ class SpanQuerySorted extends BLSpanQuery {
 
     @Override
     public boolean hitsAllSameLength() {
-        return src.hitsAllSameLength();
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return src.hitsLengthMin();
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return src.hitsLengthMax();
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return src.hitsEndPointSorted();
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return src.hitsHaveUniqueStart();
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return src.hitsHaveUniqueEnd();
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return eliminateDuplicates || src.hitsAreUnique();
+        return guarantees.hitsAreUnique();
     }
 
     @Override

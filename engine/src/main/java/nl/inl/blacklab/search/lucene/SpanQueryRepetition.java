@@ -98,7 +98,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min > max");
         if (min < 0)
             throw new IllegalArgumentException("min or max can't be negative");
-        this.guarantees = createGuarantees(clause, min, max);
+        this.guarantees = createGuarantees(clause.guarantees(), min, max);
     }
 
     @Override

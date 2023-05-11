@@ -19,10 +19,12 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -55,6 +57,88 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public final class BLSpanOrQuery extends BLSpanQuery {
 
+    public static SpanGuarantees createGuarantees(List<SpanGuarantees> clauses) {
+        return new SpanGuaranteesAdapter() {
+
+            /**
+             * If we know all our hits have the same length, this will be that length. If
+             * not, or if we don't know, this will be -1.
+             */
+            int fixedHitLength = -1;
+
+            @Override
+            public boolean hitsAllSameLength() {
+                if (fixedHitLength >= 0)
+                    return true;
+                if (clauses.isEmpty())
+                    return true;
+                int l = clauses.get(0).hitsLengthMin();
+                for (SpanGuarantees clause: clauses) {
+                    if (!clause.hitsAllSameLength() || clause.hitsLengthMin() != l)
+                        return false;
+                }
+                fixedHitLength = l; // save for next time
+                return true;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                if (fixedHitLength >= 0)
+                    return fixedHitLength;
+                int n = Integer.MAX_VALUE;
+                for (SpanGuarantees cl: clauses) {
+                    BLSpanQuery clause = (BLSpanQuery) cl;
+                    n = Math.min(n, clause.hitsLengthMin());
+                }
+                return n == Integer.MAX_VALUE ? 0 : n;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                if (fixedHitLength >= 0)
+                    return fixedHitLength;
+                int n = 0;
+                for (SpanGuarantees cl : clauses) {
+                    BLSpanQuery clause = (BLSpanQuery) cl;
+                    int l = clause.hitsLengthMax();
+                    n = Math.max(n, l);
+                    if (n == Integer.MAX_VALUE)
+                        return n; // infinite
+                }
+                return n;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                // Our way of merging guarantees this
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                // Cannot guarantee because we're merging from different sources.
+                return false;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                // Cannot guarantee because we're merging from different sources.
+                return false;
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                // Cannot guarantee because we're merging from different sources.
+                return false;
+            }
+        };
+    }
+
     final SpanOrQuery inner;
 
     String field;
@@ -81,6 +165,11 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         inner = new SpanOrQuery(clauses);
         this.field = inner.getField();
         this.luceneField = clauses.length > 0 ? clauses[0].getRealField() : field;
+
+        List<SpanGuarantees> clauseGuarantees = Arrays.stream(clauses)
+                .map(cl -> cl.guarantees())
+                .collect(Collectors.toList());
+        this.guarantees = createGuarantees(clauseGuarantees);
     }
 
     static BLSpanOrQuery from(QueryInfo queryInfo, SpanOrQuery in) {
@@ -256,75 +345,42 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
     @Override
     public boolean hitsAllSameLength() {
-        if (fixedHitLength >= 0)
-            return true;
-        if (getClauses().length == 0) {
-            return true;
-        }
-        int l = ((BLSpanQuery) getClauses()[0]).hitsLengthMin();
-        for (SpanQuery cl : getClauses()) {
-            BLSpanQuery clause = (BLSpanQuery) cl;
-            if (!clause.hitsAllSameLength() || clause.hitsLengthMin() != l)
-                return false;
-        }
-        fixedHitLength = l; // save for next time
-        return true;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        if (fixedHitLength >= 0)
-            return fixedHitLength;
-        int n = Integer.MAX_VALUE;
-        for (SpanQuery cl : getClauses()) {
-            BLSpanQuery clause = (BLSpanQuery) cl;
-            n = Math.min(n, clause.hitsLengthMin());
-        }
-        return n == Integer.MAX_VALUE ? 0 : n;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        if (fixedHitLength >= 0)
-            return fixedHitLength;
-        int n = 0;
-        for (SpanQuery cl : getClauses()) {
-            BLSpanQuery clause = (BLSpanQuery) cl;
-            int l = clause.hitsLengthMax();
-            n = Math.max(n, l);
-            if (n == Integer.MAX_VALUE)
-                return n; // infinite
-        }
-        return n;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return hitsAllSameLength();
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        // Our way of merging guarantees this
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        // Cannot guarantee because we're merging from different sources.
-        return false;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        // Cannot guarantee because we're merging from different sources.
-        return false;
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        // Cannot guarantee because we're merging from different sources.
-        return false;
+        return guarantees.hitsAreUnique();
     }
 
     @Override

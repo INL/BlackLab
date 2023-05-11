@@ -90,7 +90,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min, max cannot be negative");
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
-        this.guarantees = createGuarantees(clause, min, max);
+        this.guarantees = createGuarantees(clause.guarantees(), min, max);
     }
 
     @Override
