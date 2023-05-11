@@ -46,6 +46,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
         this.name = name;
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
+        this.guarantees = query.guarantees();
     }
 
     @Override
@@ -110,47 +111,47 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsAllSameLength() {
-        return clauses.get(0).hitsAllSameLength();
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return clauses.get(0).hitsLengthMin();
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return clauses.get(0).hitsLengthMax();
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return clauses.get(0).hitsStartPointSorted();
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return clauses.get(0).hitsEndPointSorted();
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return clauses.get(0).hitsHaveUniqueStart();
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return clauses.get(0).hitsHaveUniqueEnd();
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return clauses.get(0).hitsAreUnique();
+        return guarantees.hitsAreUnique();
     }
 
     @Override
     public boolean hitsCanOverlap() {
-        return clauses.get(0).hitsCanOverlap();
+        return guarantees.hitsCanOverlap();
     }
 
     @Override

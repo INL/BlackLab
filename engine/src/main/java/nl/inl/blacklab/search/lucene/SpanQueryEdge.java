@@ -19,6 +19,50 @@ import org.apache.lucene.search.ScoreMode;
  */
 public class SpanQueryEdge extends BLSpanQueryAbstract {
 
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, boolean rightEdge) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                return true;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return 0;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return 0;
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return rightEdge ? clause.hitsEndPointSorted() : clause.hitsStartPointSorted();
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsStartPointSorted();
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return rightEdge ? clause.hitsHaveUniqueEnd() : clause.hitsHaveUniqueStart();
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return hitsHaveUniqueStart();
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                return hitsHaveUniqueStart();
+            }
+        };
+    }
+
     /** if true, return the right edges; if false, the left */
     final boolean rightEdge;
 
@@ -31,6 +75,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
     public SpanQueryEdge(BLSpanQuery query, boolean rightEdge) {
         super(query);
         this.rightEdge = rightEdge;
+        this.guarantees = createGuarantees(query.guarantees(), rightEdge);
     }
 
     @Override
@@ -106,42 +151,42 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsAllSameLength() {
-        return true;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return 0;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return 0;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return rightEdge ? clauses.get(0).hitsEndPointSorted() : clauses.get(0).hitsStartPointSorted();
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return hitsStartPointSorted();
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return rightEdge ? clauses.get(0).hitsHaveUniqueEnd() : clauses.get(0).hitsHaveUniqueStart();
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return hitsHaveUniqueStart();
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return hitsHaveUniqueStart();
+        return guarantees.hitsAreUnique();
     }
 
     @Override
