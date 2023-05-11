@@ -201,7 +201,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuarantees {
      */
     @Override
     public boolean okayToInvertForOptimization() {
-        return false;
+        return guarantees == this ? false : guarantees.okayToInvertForOptimization();
     }
 
     /**
@@ -214,14 +214,60 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuarantees {
      */
     @Override
     public boolean isSingleTokenNot() {
-        return false;
+        return guarantees == this ? false : guarantees.isSingleTokenNot();
     }
 
     /**
      * Is this query a single "any token", e.g. one that matches all individual tokens?
      * @return true if it is, false if not
      */
-    public boolean isSingleAnyToken() { return false; }
+    @Override
+    public boolean isSingleAnyToken() {
+        return guarantees == this ? false : guarantees.isSingleAnyToken();
+    }
+
+    /**
+     * Is it guaranteed that no two hits are completely identical?
+     * <p>
+     * Two hits are identical if they have the same start and end position,
+     * AND the same match info, if any. If there is no match info, this
+     * method always returns the same as hitsHaveUniqueSpan().
+     *
+     * @return true if this is guaranteed, false if not
+     */
+    @Override
+    public boolean hitsAreUniqueWithMatchInfo() {
+        // Subclass may add additional guarantee if it knows
+        return guarantees == this ? hitsAreUnique() : guarantees.hitsAreUniqueWithMatchInfo();
+    }
+
+    /**
+     * Is it guaranteed that no two hits have identical start and end?
+     *
+     * @return true if this is guaranteed, false if not
+     */
+    @Override
+    public boolean hitsAreUnique() {
+        return guarantees == this ?
+                hitsHaveUniqueStart() || hitsHaveUniqueEnd() :
+                guarantees.hitsAreUnique();
+    }
+
+    /**
+     * Can two hits overlap?
+     *
+     * @return true if they can, false if not
+     */
+    @Override
+    public boolean hitsCanOverlap() {
+        if (guarantees == this) {
+            // Subclasses may know more and therefore be able to guarantee non-overlapping in more cases
+            boolean hitsAreDiscrete = hitsAllSameLength() && hitsLengthMax() <= 1 && hitsHaveUniqueStart();
+            return !hitsAreDiscrete;
+        } else {
+            return guarantees.hitsCanOverlap();
+        }
+    }
 
     /**
      * Can this query "internalize" the given neighbouring clause?

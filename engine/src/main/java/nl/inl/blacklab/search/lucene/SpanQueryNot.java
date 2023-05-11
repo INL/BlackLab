@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,16 +24,24 @@ import nl.inl.util.LuceneUtil;
  */
 public class SpanQueryNot extends BLSpanQueryAbstract {
 
+    public static SpanGuarantees createGuarantees() {
+        return new SpanGuaranteesAdapter(SpanGuarantees.TERM) {
+            @Override
+            public boolean okayToInvertForOptimization() {
+                // Yes, inverting is actually an improvement
+                return true;
+            }
+
+            @Override
+            public boolean isSingleTokenNot() {
+                return true;
+            }
+        };
+    }
+
     public SpanQueryNot(BLSpanQuery query) {
         super(query);
-    }
-
-    public SpanQueryNot(Collection<BLSpanQuery> clauscol) {
-        super(clauscol);
-    }
-
-    public SpanQueryNot(BLSpanQuery[] clauses) {
-        super(clauses);
+        this.guarantees = createGuarantees();
     }
 
     @Override
@@ -56,17 +63,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery inverted() {
         return clauses.get(0); // Just return our clause, dropping the NOT operation
-    }
-
-    @Override
-    public boolean okayToInvertForOptimization() {
-        // Yes, inverting is actually an improvement
-        return true;
-    }
-
-    @Override
-    public boolean isSingleTokenNot() {
-        return true;
     }
 
 	@Override
@@ -117,42 +113,42 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsAllSameLength() {
-        return true;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return 1;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return 1;
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return true;
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return true;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return true;
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return true;
+        return guarantees.hitsAreUnique();
     }
 
     @Override

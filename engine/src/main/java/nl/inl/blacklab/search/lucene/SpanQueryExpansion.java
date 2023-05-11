@@ -35,6 +35,50 @@ import nl.inl.blacklab.search.fimatch.NfaStateAnyToken;
  */
 public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction, int min, int max) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                return clause.hitsAllSameLength() && min == max;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return clause.hitsLengthMin() + min;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return addMaxValues(clause.hitsLengthMax(), max);
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return clause.hitsEndPointSorted() && (direction == Direction.LEFT || direction == Direction.RIGHT && min == max);
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return clause.hitsStartPointSorted() && (direction == Direction.RIGHT || direction == Direction.LEFT && min == max);
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return clause.hitsHaveUniqueStart() && min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return clause.hitsHaveUniqueEnd() && min == max;
+            }
+
+            @Override
+            public boolean hitsAreUnique() {
+                return clause.hitsAreUnique() && min == max;
+            }
+        };
+    }
+
     public enum Direction {
         LEFT,
         RIGHT;
@@ -70,6 +114,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min > max");
         if (min < 0 || this.max < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
+        this.guarantees = createGuarantees(clause, direction, min, max);
     }
 
     @Override
@@ -187,88 +232,44 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         return clauses.get(0);
     }
 
-    public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction, int min, int max) {
-        return new SpanGuaranteesAdapter() {
-            @Override
-            public boolean hitsAllSameLength() {
-                return clause.hitsAllSameLength() && min == max;
-            }
-
-            @Override
-            public int hitsLengthMin() {
-                return clause.hitsLengthMin() + min;
-            }
-
-            @Override
-            public int hitsLengthMax() {
-                return addMaxValues(clause.hitsLengthMax(), max);
-            }
-
-            @Override
-            public boolean hitsEndPointSorted() {
-                return clause.hitsEndPointSorted() && (direction == Direction.LEFT || direction == Direction.RIGHT && min == max);
-            }
-
-            @Override
-            public boolean hitsStartPointSorted() {
-                return clause.hitsStartPointSorted() && (direction == Direction.RIGHT || direction == Direction.LEFT && min == max);
-            }
-
-            @Override
-            public boolean hitsHaveUniqueStart() {
-                return clause.hitsHaveUniqueStart() && min == max;
-            }
-
-            @Override
-            public boolean hitsHaveUniqueEnd() {
-                return clause.hitsHaveUniqueEnd() && min == max;
-            }
-
-            @Override
-            public boolean hitsAreUnique() {
-                return clause.hitsAreUnique() && min == max;
-            }
-        };
-    }
-
     @Override
     public boolean hitsAllSameLength() {
-        return clauses.get(0).hitsAllSameLength() && min == max;
+        return guarantees.hitsAllSameLength();
     }
 
     @Override
     public int hitsLengthMin() {
-        return clauses.get(0).hitsLengthMin() + min;
+        return guarantees.hitsLengthMin();
     }
 
     @Override
     public int hitsLengthMax() {
-        return addMaxValues(clauses.get(0).hitsLengthMax(), max);
+        return guarantees.hitsLengthMax();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        return clauses.get(0).hitsEndPointSorted() && (direction == Direction.LEFT || direction == Direction.RIGHT && min == max);
+        return guarantees.hitsEndPointSorted();
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return clauses.get(0).hitsStartPointSorted() && (direction == Direction.RIGHT || direction == Direction.LEFT && min == max);
+        return guarantees.hitsStartPointSorted();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return clauses.get(0).hitsHaveUniqueStart() && min == max;
+        return guarantees.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return clauses.get(0).hitsHaveUniqueEnd() && min == max;
+        return guarantees.hitsHaveUniqueEnd();
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return clauses.get(0).hitsAreUnique() && min == max;
+        return guarantees.hitsAreUnique();
     }
 
     @Override
