@@ -40,6 +40,10 @@ class SpansAnd extends BLSpans {
      */
     public SpansAnd(BLSpans first, BLSpans second) {
         super(SpanQueryAnd.createGuarantees(List.of(first.guarantees(), second.guarantees()), false));
+        if (!first.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("First clause is not start-point sorted");
+        if (!second.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Second clause is not start-point sorted");
         subSpans[0] = new SpansInBucketsSameStartEnd(first);
         subSpans[1] = new SpansInBucketsSameStartEnd(second);
         this.conjunction = ConjunctionDISI.intersectIterators(List.of(subSpans[0], subSpans[1]));

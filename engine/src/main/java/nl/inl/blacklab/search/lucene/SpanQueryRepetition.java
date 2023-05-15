@@ -92,6 +92,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
     public SpanQueryRepetition(BLSpanQuery clause, int min, int max) {
         super(clause);
+
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
@@ -202,8 +203,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            spans = BLSpans.optSortUniq(spans, !guarantees().hitsStartPointSorted(), false);
-            if (guarantees().hitsCanOverlap()) {
+            spans = BLSpans.ensureStartPointSorted(spans);
+            if (spans.guarantees().hitsCanOverlap()) {
                 return new SpansRepetition(spans, min == 0 ? 1 : min, max);
             } else {
                 return new SpansRepetitionSimple(spans, min == 0 ? 1 : min, max);

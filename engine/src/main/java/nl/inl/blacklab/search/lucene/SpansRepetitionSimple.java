@@ -38,6 +38,10 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
             throw new IllegalArgumentException("min > max");
         if (min < 1)
             throw new IllegalArgumentException("min and max must be at least 1");
+        if (!source.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Source is not start point sorted!");
+        if (!source.guarantees().hitsAreUnique())
+            throw new IllegalArgumentException("Source does not guarantee unique hits!");
     }
 
     @Override

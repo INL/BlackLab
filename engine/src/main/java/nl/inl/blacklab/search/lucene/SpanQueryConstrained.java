@@ -29,11 +29,7 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
     final ForwardIndexAccessor fiAccessor;
 
     public SpanQueryConstrained(BLSpanQuery clause, MatchFilter constraint, ForwardIndexAccessor fiAccessor) {
-        // NOTE: we used to make the clause unique using ensureSortedUnique(), but stopped
-        // because of MatchInfo. We could in theory still do it if we know there's no matchInfo -
-        // but usually there is with this query type (that's kind of what constraints are for), so we don't bother.
-        // Sorted is still important so we can use advanceStartPosition().
-        super(BLSpanQuery.ensureSorted(clause));
+        super(clause);
         this.constraint = constraint;
         this.fiAccessor = fiAccessor;
         this.guarantees = clause.guarantees();
@@ -69,10 +65,10 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
 
         private final MatchFilter constraint;
 
-        public SpanWeightConstrained(BLSpanWeight prodWeight2, MatchFilter constraint, IndexSearcher searcher,
+        public SpanWeightConstrained(BLSpanWeight prodWeight, MatchFilter constraint, IndexSearcher searcher,
                 Map<Term, TermStates> contexts, float boost) throws IOException {
             super(SpanQueryConstrained.this, searcher, contexts, boost);
-            this.prodWeight = prodWeight2;
+            this.prodWeight = prodWeight;
             this.constraint = constraint;
         }
 

@@ -66,7 +66,7 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
 
     public SpansExpansionRaw(LeafReader reader, String fieldName, BLSpans clause,
             Direction direction, int min, int max) {
-        super(clause, SpanQueryExpansion.createGuarantees(clause.guarantees(), Direction.RIGHT, min, max));
+        super(clause, SpanQueryExpansion.createGuarantees(clause.guarantees(), direction, min, max));
         if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);

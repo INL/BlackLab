@@ -71,12 +71,14 @@ class SpansNot extends BLSpans {
      *
      * @param reader the index reader, for getting field lengths
      * @param fieldName the field name, for getting field lengths
-     * @param clause the clause to invert
+     * @param clause the clause to invert (must be startpoint-sorted)
      */
     public SpansNot(LeafReader reader, String fieldName, BLSpans clause) {
         super(SpanQueryNot.createGuarantees());
         if (clause == null)
             throw new IllegalArgumentException("clause == null; use SpansNGrams(1,1) instead");
+        if (!clause.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("clause must be start-point sorted");
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiBits.getLiveDocs(reader);
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);

@@ -50,6 +50,13 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
         });
         this.eliminateDuplicates = eliminateDuplicates;
         this.sortByStartPoint = sortByStartPoint;
+
+        SpanGuarantees g = src.guarantees();
+        if (eliminateDuplicates && g.hitsAreUnique())
+            throw new IllegalArgumentException("Uniqueness requested but hits are already unique");
+        if (sortByStartPoint && g.hitsStartPointSorted()) {
+            throw new IllegalArgumentException("Hits are already startpoint sorted, use SpansUnique instead");
+        }
     }
 
     @Override

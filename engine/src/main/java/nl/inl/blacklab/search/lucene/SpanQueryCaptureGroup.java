@@ -36,7 +36,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
     /**
      * Construct SpanQueryCaptureGroup object.
      * 
-     * @param query the query to determine edges from
+     * @param query the query to capture a group from
      * @param name captured group name
      * @param leftAdjust how to adjust the captured group's start position
      * @param rightAdjust how to adjust the captured group's end position

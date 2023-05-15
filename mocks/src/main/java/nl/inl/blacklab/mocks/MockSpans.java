@@ -143,13 +143,17 @@ public class MockSpans extends BLSpans {
 
     private int endPos = -1;
 
-    public MockSpans(int[] doc, int[] start, int[] end) {
-        super(SpanGuarantees.SORTED);
+    public MockSpans(int[] doc, int[] start, int[] end, SpanGuarantees guarantees) {
+        super(guarantees);
         this.doc = doc;
         this.start = start;
         this.end = end;
         postings = new MockPostingsEnum();
         spans = new MyTermSpans(postings, new Term("test", "dummy"), 1);
+    }
+
+    public MockSpans(int[] doc, int[] start, int[] end) {
+        this(doc, start, end, SpanGuarantees.SORTED_UNIQUE);
     }
 
     @Override

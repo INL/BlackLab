@@ -23,6 +23,11 @@ class SpansAndSimple extends BLConjunctionSpans {
      */
     public SpansAndSimple(BLSpans first, BLSpans second) {
         super(List.of(first, second), SpanQueryAnd.createGuarantees(List.of(first.guarantees(), second.guarantees()), false));
+
+        if (!first.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("First clause is not start point sorted!");
+        if (!second.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Second clause is not start point sorted!");
     }
 
     @Override

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Simple version of sequence Spans. Assumes that:
+ * Simple version of sequence Spans. Requires that:
  *
  * <ul>
  * <li>1st clause is ordered by end point, and end points are unique</li>
@@ -17,6 +17,17 @@ class SpansSequenceSimple extends BLConjunctionSpans {
 
     public SpansSequenceSimple(BLSpans firstClause, BLSpans secondClause) {
         super(List.of(firstClause, secondClause), SpanQuerySequence.createGuarantees(List.of(firstClause.guarantees(), secondClause.guarantees())));
+
+        // Validate clause guarantees
+        if (!firstClause.guarantees().hitsEndPointSorted())
+            throw new IllegalArgumentException("First clause is not end point sorted!");
+        if (!firstClause.guarantees().hitsHaveUniqueEnd())
+            throw new IllegalArgumentException("First clause does not have unique ends!");
+        if (!secondClause.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Second clause is not start point sorted!");
+        if (!secondClause.guarantees().hitsHaveUniqueStart())
+            throw new IllegalArgumentException("Second clause does have unique starts!");
+
         atFirstInCurrentDoc = false;
     }
 

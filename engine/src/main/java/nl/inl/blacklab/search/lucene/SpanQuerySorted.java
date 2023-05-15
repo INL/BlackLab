@@ -114,6 +114,14 @@ class SpanQuerySorted extends BLSpanQuery {
             BLSpans srcSpans = weight.getSpans(context, requiredPostings);
             if (srcSpans == null)
                 return null;
+
+            // Make sure we don't do any unnecessary work (sort/unique)
+            SpanGuarantees g = srcSpans.guarantees();
+            boolean alreadyHasRequestedSorted = sortByEndpoint && g.hitsEndPointSorted() ||
+                    !sortByEndpoint && g.hitsStartPointSorted();
+            if (alreadyHasRequestedSorted) {
+                return eliminateDuplicates ? new SpansUnique(srcSpans) : srcSpans;
+            }
             return PerDocumentSortedSpans.get(srcSpans, !sortByEndpoint, eliminateDuplicates);
         }
     }

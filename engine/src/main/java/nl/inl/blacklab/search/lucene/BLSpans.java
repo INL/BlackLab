@@ -34,12 +34,6 @@ public abstract class BLSpans extends Spans {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
     }
 
-    public static BLSpans ensureSorted(BLSpans spans) {
-        if (!spans.guarantees().hitsStartPointSorted())
-            return PerDocumentSortedSpans.startPoint(spans);
-        return spans;
-    }
-
     /**
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
@@ -149,16 +143,19 @@ public abstract class BLSpans extends Spans {
         return optSortUniq(spans, true, false);
     }
 
-    public static BLSpans optSortUniq(BLSpans spans, boolean sort, boolean removeDuplicates) {
+    public static BLSpans optSortUniq(BLSpans spans, boolean ensureSorted, boolean ensureUnique) {
         if (spans == null)
             return null;
-        if (!sort && removeDuplicates) {
-            // Make already-sorted spans unique. 
+        boolean mustRemoveDupes = ensureUnique && !spans.guarantees().hitsAreUnique();
+        boolean alreadySorted = spans.guarantees().hitsStartPointSorted();
+        if (mustRemoveDupes && alreadySorted) {
+            // Make already-sorted spans unique.
+            // FIXME: we don't want to throw away duplicate spans with different match info, do we..?
             return new SpansUnique(spans);
         }
-        if (sort) {
+        if (ensureSorted && !alreadySorted || mustRemoveDupes) {
             // Sort spans by document and start point, then optionally make them unique too.
-            return PerDocumentSortedSpans.startPoint(spans, removeDuplicates);
+            return PerDocumentSortedSpans.startPoint(spans, ensureUnique);
         }
         return spans;
     }

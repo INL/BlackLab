@@ -98,7 +98,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
             BLSpans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
             if (!clauses.get(0).guarantees().hitsStartPointSorted())
-                spans = BLSpans.optSortUniq(spans, true, false);
+                spans = BLSpans.ensureStartPointSorted(spans);
             if (spans == null)
                 return new SpansNGrams(context.reader(), baseFieldName, 1, 1);
             return new SpansNot(context.reader(), baseFieldName, spans);

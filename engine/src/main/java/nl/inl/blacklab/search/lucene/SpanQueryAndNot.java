@@ -171,7 +171,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
         if (this.include.size() == 0 && this.exclude.size() == 0)
-            throw new BlackLabRuntimeException("ANDNOT query without clauses");
+            throw new IllegalArgumentException("ANDNOT query without clauses");
         checkBaseFieldName();
 
         List<SpanGuarantees> clauseGuarantees = include.stream()
@@ -401,25 +401,20 @@ public class SpanQueryAndNot extends BLSpanQuery {
             BLSpans combi = weights.get(0).getSpans(context, requiredPostings);
             if (combi == null)
                 return null; // if no hits in one of the clauses, no hits in AND query
-            BLSpanQuery query = (BLSpanQuery) weights.get(0).getQuery();
-            if (!query.guarantees().hitsStartPointSorted())
-                combi = BLSpans.optSortUniq(combi, true, false);
-            boolean combiSpansAreUnique = query.guarantees().hitsAreUnique();
+            combi = BLSpans.ensureStartPointSorted(combi);
             for (int i = 1; i < weights.size(); i++) {
                 BLSpans si = weights.get(i).getSpans(context, requiredPostings);
                 if (si == null)
                     return null; // if no hits in one of the clauses, no hits in AND query
-                query = (BLSpanQuery) weights.get(i).getQuery();
-                if (!query.guarantees().hitsStartPointSorted())
-                    si = BLSpans.optSortUniq(si, true, false);
-                if (combiSpansAreUnique && query.guarantees().hitsAreUnique()) {
+                if (!si.guarantees().hitsStartPointSorted())
+                    si = BLSpans.ensureStartPointSorted(si);
+                if (combi.guarantees().hitsAreUnique() && si.guarantees().hitsAreUnique()) {
                     // No duplicate spans with different match info; use the faster version.
                     combi = new SpansAndSimple(combi, si);
                 } else {
                     // We need to use the slower version that takes duplicate spans into account and produces all
                     // combinations.
                     combi = new SpansAnd(combi, si);
-                    combiSpansAreUnique = false;
                 }
             }
             return combi;
