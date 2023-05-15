@@ -19,7 +19,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
      * @param mode how to adjust spans
      */
     public SpansRelationSpanAdjust(BLSpans in, MatchInfo.SpanMode mode) {
-        super(in);
+        super(in, SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), mode));
         this.mode = mode;
     }
 

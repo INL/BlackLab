@@ -204,9 +204,9 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
                 return null;
             spans = BLSpans.optSortUniq(spans, !guarantees().hitsStartPointSorted(), false);
             if (guarantees().hitsCanOverlap()) {
-                return new SpansRepetition(spans, min == 0 ? 1 : min, max, guarantees);
+                return new SpansRepetition(spans, min == 0 ? 1 : min, max);
             } else {
-                return new SpansRepetitionSimple(spans, min == 0 ? 1 : min, max, guarantees);
+                return new SpansRepetitionSimple(spans, min == 0 ? 1 : min, max);
             }
         }
     }

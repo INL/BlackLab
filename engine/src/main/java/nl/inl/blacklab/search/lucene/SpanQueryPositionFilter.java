@@ -23,6 +23,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  */
 public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
+    public static SpanGuarantees createGuarantees(SpanGuarantees producer) {
+        return producer;
+    }
+
     /** Filter operation to apply */
     final SpanQueryPositionFilter.Operation op;
 
@@ -69,7 +73,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         this.invert = invert;
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
-        this.guarantees = producer.guarantees();
+        this.guarantees = createGuarantees(producer.guarantees());
     }
 
     @Override

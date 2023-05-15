@@ -13,6 +13,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
 
 /**
  * Stub Spans class for testing. Takes arrays and iterates through 'hits' from
@@ -143,6 +144,7 @@ public class MockSpans extends BLSpans {
     private int endPos = -1;
 
     public MockSpans(int[] doc, int[] start, int[] end) {
+        super(SpanGuarantees.SORTED);
         this.doc = doc;
         this.start = start;
         this.end = end;

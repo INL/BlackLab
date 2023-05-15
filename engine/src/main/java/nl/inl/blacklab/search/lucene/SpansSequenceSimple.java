@@ -16,7 +16,7 @@ import java.util.List;
 class SpansSequenceSimple extends BLConjunctionSpans {
 
     public SpansSequenceSimple(BLSpans firstClause, BLSpans secondClause) {
-        super(List.of(firstClause, secondClause));
+        super(List.of(firstClause, secondClause), SpanQuerySequence.createGuarantees(List.of(firstClause.guarantees(), secondClause.guarantees())));
         atFirstInCurrentDoc = false;
     }
 

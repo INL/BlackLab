@@ -75,6 +75,7 @@ class SpansPositionFilter extends BLSpans {
      */
     public SpansPositionFilter(BLSpans producer, SpansInBucketsPerDocument filter, boolean filterFixedLength, Operation op,
             boolean invert, int leftAdjust, int rightAdjust) {
+        super(SpanQueryPositionFilter.createGuarantees(producer.guarantees()));
         this.producer = producer; // Sort
         this.op = op;
         this.invert = invert;

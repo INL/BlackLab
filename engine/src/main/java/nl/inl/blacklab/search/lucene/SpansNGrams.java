@@ -65,6 +65,7 @@ class SpansNGrams extends BLSpans {
      * @param max maximum n-gram length
      */
     public SpansNGrams(LeafReader reader, String fieldName, int min, int max) {
+        super(SpanQueryAnyToken.createGuarantees(min, max));
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiBits.getLiveDocs(reader);
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);

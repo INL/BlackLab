@@ -24,7 +24,10 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
      * @param in (startpoint-sorted) Spans to make unique
      */
     public SpansUnique(BLSpans in) {
-        super(in); // NOTE: must be startpoint sorted! (caller's responsibility)
+        super(in);
+        // Validate clause guarantees
+        if (!in.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Clause must be startpoint sorted");
     }
 
     @Override

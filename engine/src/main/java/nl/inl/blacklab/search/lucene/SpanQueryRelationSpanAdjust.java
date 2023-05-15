@@ -21,13 +21,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
-    public static SpanGuarantees createGuarantees(MatchInfo.SpanMode mode) {
-        return new SpanGuaranteesAdapter() {
-            @Override
-            public boolean hitsStartPointSorted() {
-                return mode == MatchInfo.SpanMode.FULL_SPAN;
-            }
-        };
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, MatchInfo.SpanMode mode) {
+        // NOTE: we don't know the direction here, so choose the one that gives the fewest guarantees
+        //   (maybe SpanGuarantees could have a guarantee to help with this? Or maybe not worth it just for relations)
+        SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.BOTH_DIRECTIONS;
+        return SpanQueryRelations.createGuarantees(clause, direction, mode);
     }
 
     private final BLSpanQuery clause;
@@ -38,7 +36,8 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
         super(clause.queryInfo);
         this.clause = clause;
         this.mode = mode;
-        this.guarantees = createGuarantees(mode);
+
+        this.guarantees = createGuarantees(clause.guarantees(), mode);
     }
 
     @Override

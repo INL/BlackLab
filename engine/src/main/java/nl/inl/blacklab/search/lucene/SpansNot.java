@@ -74,6 +74,7 @@ class SpansNot extends BLSpans {
      * @param clause the clause to invert
      */
     public SpansNot(LeafReader reader, String fieldName, BLSpans clause) {
+        super(SpanQueryNot.createGuarantees());
         if (clause == null)
             throw new IllegalArgumentException("clause == null; use SpansNGrams(1,1) instead");
         maxDoc = reader == null ? -1 : reader.maxDoc();

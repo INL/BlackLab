@@ -31,6 +31,36 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction,
+            MatchInfo.SpanMode spanMode) {
+        if (!clause.hitsStartPointSorted())
+            return clause;
+        boolean sorted;
+        switch (spanMode) {
+        case SOURCE:
+            // Forward relations are indexed at the source, we know these will be sorted.
+            // Root relations don't have a source and are indexed at the target, therefore also sorted.
+            sorted = direction == Direction.FORWARD || direction == Direction.ROOT;
+            break;
+        case FULL_SPAN:
+            // Relations are indexed at source or target, whichever comes first in the document.
+            // Because full span covers both source and target, it will always be sorted.
+            sorted = true;
+            break;
+        case TARGET:
+        default:
+            // Target may be anywhere before or after source, so we don't know if these will be sorted.
+            sorted = false;
+            break;
+        }
+        return sorted ? new SpanGuaranteesAdapter(clause) {
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+        } : clause;
+    }
+
     public enum Direction {
         // Only return root relations (relations without a source)
         ROOT("root"),
@@ -98,14 +128,15 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         init(relationFieldName, relationType, clause, direction, spanMode);
     }
 
-    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction, MatchInfo.SpanMode spanMode) {
+    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction,
+            MatchInfo.SpanMode spanMode) {
         this.relationType = relationType;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
         this.relationFieldName = relationFieldName;
         this.clause = clause;
         this.direction = direction;
         this.spanMode = spanMode;
-        this.guarantees = createGuarantees();
+        this.guarantees = createGuarantees(clause.guarantees(), direction, spanMode);
     }
 
     @Override
@@ -206,10 +237,6 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     public String getElementName() {
         return AnnotatedFieldNameUtil.relationClassAndType(relationType)[1];
-    }
-
-    public static SpanGuarantees createGuarantees() {
-        return SpanGuarantees.SORTED;
     }
 
     @Override

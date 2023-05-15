@@ -22,7 +22,7 @@ class SpansAndSimple extends BLConjunctionSpans {
      * @param second second clause
      */
     public SpansAndSimple(BLSpans first, BLSpans second) {
-        super(List.of(first, second));
+        super(List.of(first, second), SpanQueryAnd.createGuarantees(List.of(first.guarantees(), second.guarantees()), false));
     }
 
     @Override

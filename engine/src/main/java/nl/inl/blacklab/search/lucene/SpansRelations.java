@@ -57,8 +57,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(String relationType, String groupName, BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
-        super(relationsMatches);
+    public SpansRelations(String relationType, String groupName, BLSpans relationsMatches,
+            boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
+        super(relationsMatches, SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
         this.relationType = relationType;
         this.groupName = groupName;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;

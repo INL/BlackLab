@@ -55,6 +55,60 @@ import org.apache.lucene.search.spans.Spans;
  */
 class SpansSequenceWithGap extends BLSpans {
 
+    private static SpanGuarantees createGuarantees(SpanGuarantees first, SequenceGap gap, SpanGuarantees second) {
+        return new SpanGuarantees() {
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return first.hitsAreUnique() && gap.isFixed() && second.hitsHaveUniqueStart();
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return first.hitsHaveUniqueEnd() && gap.isFixed() && second.hitsAreUnique();
+            }
+
+            @Override
+            public boolean isSingleAnyToken() {
+                return false;
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return first.hitsEndPointSorted() && gap.isFixed() && second.hitsAllSameLength();
+            }
+
+            @Override
+            public boolean okayToInvertForOptimization() {
+                return false;
+            }
+
+            @Override
+            public boolean isSingleTokenNot() {
+                return false;
+            }
+
+            @Override
+            public boolean hitsAllSameLength() {
+                return first.hitsAllSameLength() && gap.isFixed() && second.hitsAllSameLength();
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return first.hitsLengthMin() + gap.minSize() + second.hitsLengthMin();
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return first.hitsLengthMax() + gap.maxSize() + second.hitsLengthMax();
+            }
+        };
+    }
+
     /** First clause matches, sorted by start point.
      *  (you would think this needs to be sorted by end point, but we take this into account, see above) */
     private final BLSpans first;
@@ -113,6 +167,14 @@ class SpansSequenceWithGap extends BLSpans {
      * @param second (startpoint-sorted) second clause
      */
     public SpansSequenceWithGap(BLSpans first, SequenceGap gap, BLSpans second) {
+        super(createGuarantees(first.guarantees(), gap, second.guarantees()));
+
+        // Validate clause guarantees
+        if (!first.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("First clause is not start point sorted!");
+        if (!second.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Second clause is not start point sorted!");
+
         this.first = first;
         this.gap = gap;
         this.second = new SpansInBucketsPerDocument(second);

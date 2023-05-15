@@ -142,8 +142,10 @@ public interface SpanGuarantees {
     };
 
     static <T extends DocIdSetIterator> SpanGuarantees of(DocIdSetIterator in) {
+        if (in instanceof BLSpans)
+            return ((BLSpans)in).guarantees();
         if (in instanceof SpanGuarantees)
-            return (SpanGuarantees) in;
+            return (SpanGuarantees)in;
         else
             return NONE;
     }

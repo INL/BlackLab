@@ -39,6 +39,7 @@ class SpansAnd extends BLSpans {
      * @param second second clause
      */
     public SpansAnd(BLSpans first, BLSpans second) {
+        super(SpanQueryAnd.createGuarantees(List.of(first.guarantees(), second.guarantees()), false));
         subSpans[0] = new SpansInBucketsSameStartEnd(first);
         subSpans[1] = new SpansInBucketsSameStartEnd(second);
         this.conjunction = ConjunctionDISI.intersectIterators(List.of(subSpans[0], subSpans[1]));

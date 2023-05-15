@@ -29,9 +29,9 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
      * @param min minimum number of repetitions
      * @param max maximum number of repetitions
      */
-    public SpansRepetitionSimple(BLSpans source, int min, int max, SpanGuarantees guarantees) {
+    public SpansRepetitionSimple(BLSpans source, int min, int max) {
         // Find all consecutive matches in this Spans
-        super(new SpansInBucketsConsecutive(source), guarantees);
+        super(new SpansInBucketsConsecutive(source), SpanQueryRepetition.createGuarantees(source.guarantees(), min, max));
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)

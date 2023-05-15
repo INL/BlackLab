@@ -21,7 +21,7 @@ class SpansEdge extends BLFilterSpans<BLSpans> {
      * @param trailingEdge if true, return trailing edge, otherwise leading one
      */
     public SpansEdge(BLSpans clause, boolean trailingEdge) {
-        super(clause);
+        super(clause, SpanQueryEdge.createGuarantees(clause.guarantees(), trailingEdge));
         this.trailingEdge = trailingEdge;
     }
 

@@ -42,7 +42,7 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
      * @param name group name
      */
     public SpansCaptureGroup(BLSpans clause, String name, int leftAdjust, int rightAdjust) {
-        super(clause, clause.guarantees());
+        super(clause);
         this.name = name;
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
