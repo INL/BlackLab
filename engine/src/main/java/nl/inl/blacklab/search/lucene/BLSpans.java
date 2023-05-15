@@ -34,6 +34,12 @@ public abstract class BLSpans extends Spans {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
     }
 
+    public static BLSpans ensureSorted(BLSpans spans) {
+        if (!spans.guarantees().hitsStartPointSorted())
+            return PerDocumentSortedSpans.startPoint(spans);
+        return spans;
+    }
+
     /**
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
