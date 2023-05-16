@@ -175,12 +175,15 @@ class SpansReader implements Runnable {
         try {
             this.isInitialized = true;
             this.docBase = this.leafReaderContext.docBase;
-            this.spans = this.weight.getSpans(this.leafReaderContext, Postings.OFFSETS); // do we need to synchronize this call between SpansReaders?
-            this.weight = null;
-            if (spans == null) { // This is normal, sometimes a section of the index does not contain hits.
+            BLSpans spansForWeight = this.weight.getSpans(this.leafReaderContext,
+                    Postings.OFFSETS); // do we need to synchronize this call between SpansReaders?
+            if (spansForWeight == null) { // This is normal, sometimes a section of the index does not contain hits.
                 this.isDone = true;
                 return;
             }
+            this.weight = null;
+            // If the resulting spans are not known to be sorted and unique, ensure that now.
+            this.spans = BLSpans.ensureSortedUnique(spansForWeight);
             this.twoPhaseIt = spans.asTwoPhaseIterator();
             this.twoPhaseApproximation = twoPhaseIt == null ? spans : twoPhaseIt.approximation();
 

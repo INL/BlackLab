@@ -59,12 +59,12 @@ class SpansSequenceWithGap extends BLSpans {
         return new SpanGuarantees() {
             @Override
             public boolean hitsHaveUniqueStart() {
-                return first.hitsAreUnique() && gap.isFixed() && second.hitsHaveUniqueStart();
+                return first.hitsHaveUniqueStartEnd() && gap.isFixed() && second.hitsHaveUniqueStart();
             }
 
             @Override
             public boolean hitsHaveUniqueEnd() {
-                return first.hitsHaveUniqueEnd() && gap.isFixed() && second.hitsAreUnique();
+                return first.hitsHaveUniqueEnd() && gap.isFixed() && second.hitsHaveUniqueStartEnd();
             }
 
             @Override

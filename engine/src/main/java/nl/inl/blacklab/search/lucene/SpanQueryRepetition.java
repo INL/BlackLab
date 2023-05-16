@@ -78,7 +78,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             }
 
             @Override
-            public boolean hitsAreUnique() {
+            public boolean hitsHaveUniqueStartEnd() {
                 // If hits can overlap, we use SpansRepetition, which may generate duplicates.
                 // Otherwise we use SpansRepetitionSimple, which can't.
                 return !clause.hitsCanOverlap();
@@ -203,7 +203,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            spans = BLSpans.ensureStartPointSorted(spans);
+            spans = BLSpans.ensureSorted(spans);
             if (spans.guarantees().hitsCanOverlap()) {
                 return new SpansRepetition(spans, min == 0 ? 1 : min, max);
             } else {

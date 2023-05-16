@@ -28,7 +28,7 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
         // Validate clause guarantees
         if (! (in.guarantees().hitsStartPointSorted() || in.guarantees().hitsEndPointSorted()))
             throw new IllegalArgumentException("Clause must be either start- or endpoint sorted");
-        if (in.guarantees().hitsAreUnique())
+        if (in.guarantees().hitsHaveUniqueStartEnd())
             throw new IllegalArgumentException("Clause already has unique hits");
     }
 

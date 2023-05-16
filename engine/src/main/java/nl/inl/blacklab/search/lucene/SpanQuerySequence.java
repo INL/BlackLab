@@ -168,7 +168,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             BLSpanQuery clause = clauses.get(i);
             if (clause instanceof SpanQueryEdge) {
                 SpanQueryEdge start = (SpanQueryEdge) clause;
-                if (!start.isRightEdge()) {
+                if (!start.isTrailingEdge()) {
                     String tagName = start.getElementName();
                     if (tagName != null) {
                         // Start tag found. Is there a matching end tag?
@@ -176,7 +176,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                             BLSpanQuery clause2 = clauses.get(j);
                             if (clause2 instanceof SpanQueryEdge) {
                                 SpanQueryEdge end = (SpanQueryEdge) clause2;
-                                if (end.isRightEdge() && end.getElementName().equals(tagName)) {
+                                if (end.isTrailingEdge() && end.getElementName().equals(tagName)) {
                                     // Found start and end tags in sequence. Convert to containing
                                     // query.
                                     List<BLSpanQuery> search = new ArrayList<>();
@@ -688,7 +688,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
 
         BLSpans sorted(BLSpans spans) {
-            return BLSpans.ensureStartPointSorted(spans);
+            return BLSpans.ensureSorted(spans);
         }
 
         private void replaceCombiParts(List<BLSpans> parts, int partIndex, BLSpans newSpans) {

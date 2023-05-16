@@ -17,6 +17,50 @@ public abstract class BLSpans extends Spans {
 
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 
+    private static BLSpans ensureSortedUnique(BLSpans srcSpans, boolean removeDuplicates) {
+        if (srcSpans == null)
+            throw new IllegalArgumentException("srcSpans cannot be null");
+
+        // Make sure we don't do any unnecessary work (sort/unique)
+        SpanGuarantees g = srcSpans.guarantees();
+        removeDuplicates = removeDuplicates && !g.hitsHaveUniqueStartEnd();
+        if (g.hitsStartPointSorted()) {
+            // No need to sort again; just remove duplicates if requested
+            return removeDuplicates ? new SpansUnique(srcSpans) : srcSpans;
+        }
+        return new PerDocumentSortedSpans(srcSpans, true, removeDuplicates);
+    }
+
+
+    /**
+     * Ensure that given spans are sorted and unique.
+     * <p>
+     * It is assumed that they are already document-sorted, or at least
+     * all hits from one document are contiguous.
+     *
+     * @param srcSpans         spans that may not be startpoint sorted
+     * @return startpoint sorted spans
+     */
+    public static BLSpans ensureSortedUnique(BLSpans srcSpans) {
+        return ensureSortedUnique(srcSpans, true);
+    }
+
+    /**
+     * Ensure that given spans are startpoint-sorted within documents.
+     * <p>
+     * It is assumed that they are already document-sorted, or at least
+     * all hits from one document are contiguous.
+     * <p>
+     * Just uses PerDocumentSortedSpans for now, but could be perhaps be
+     * optimized to only look at startpoints within the document.
+     *
+     * @param spans spans that may not be startpoint sorted
+     * @return startpoint sorted spans
+     */
+    public static BLSpans ensureSorted(BLSpans spans) {
+        return ensureSortedUnique(spans, false);
+    }
+
     /**
      * Should we ask our clauses for match info? If the clauses don't capture
      * any match info, this will be set to false to improve performance.
@@ -89,7 +133,7 @@ public abstract class BLSpans extends Spans {
      * <b>CAUTION:</b> if your spans are not start point sorted, this method can
      * not guarantee to skip over all hits that start before the target.
      * Any class that uses this method should be aware of this.
-     * {@link BLSpanQuery#ensureSorted(BLSpanQuery)} can be used to ensure
+     * {@link BLSpans#ensureSorted(BLSpans)} can be used to ensure
      * that the spans are start point sorted.
      *
      * @param target target start position to advance to
@@ -125,39 +169,6 @@ public abstract class BLSpans extends Spans {
         // returns a completely arbitrary constant value, but it's for
         // optimizing scoring and we don't generally use that
         return 100;
-    }
-
-    /**
-     * Ensure that given spans are startpoint-sorted within documents.
-     * <p>
-     * It is assumed that they are already document-sorted, or at least
-     * all hits from one document are contiguous.
-     * <p>
-     * Just uses PerDocumentSortedSpans for now, but could be perhaps be
-     * optimized to only look at startpoints within the document.
-     *
-     * @param spans spans that may not be startpoint sorted
-     * @return startpoint sorted spans
-     */
-    public static BLSpans ensureStartPointSorted(BLSpans spans) {
-        return optSortUniq(spans, true, false);
-    }
-
-    public static BLSpans optSortUniq(BLSpans spans, boolean ensureSorted, boolean ensureUnique) {
-        if (spans == null)
-            return null;
-        boolean mustRemoveDupes = ensureUnique && !spans.guarantees().hitsAreUnique();
-        boolean alreadySorted = spans.guarantees().hitsStartPointSorted();
-        if (mustRemoveDupes && alreadySorted) {
-            // Make already-sorted spans unique.
-            // FIXME: we don't want to throw away duplicate spans with different match info, do we..?
-            return new SpansUnique(spans);
-        }
-        if (ensureSorted && !alreadySorted || mustRemoveDupes) {
-            // Sort spans by document and start point, then optionally make them unique too.
-            return PerDocumentSortedSpans.startPoint(spans, ensureUnique);
-        }
-        return spans;
     }
 
     /**

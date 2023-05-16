@@ -68,7 +68,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
             }
 
             @Override
-            public boolean hitsAreUnique() {
+            public boolean hitsHaveUniqueStartEnd() {
                 return true;
             }
 

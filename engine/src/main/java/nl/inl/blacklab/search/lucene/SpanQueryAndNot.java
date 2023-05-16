@@ -117,13 +117,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
             }
 
             @Override
-            public boolean hitsAreUnique() {
+            public boolean hitsHaveUniqueStartEnd() {
                 if (include.isEmpty()) {
                     // pure not query always produces unique hits (all tokens that are not part of the matches)
                     return true;
                 }
                 for (SpanGuarantees clause : include) {
-                    if (!clause.hitsAreUnique()) {
+                    if (!clause.hitsHaveUniqueStartEnd()) {
                         // At least one clause has multiple hits with same start/end, therefore the resulting matches
                         // may not be unique (note that with how SpansAnd currently works, results will probably have
                         // unique start/end but be technically incorrect, because they didn't capture all possible
@@ -142,7 +142,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                     // (all tokens that are not part of the matches)
                     return false;
                 }
-                if (!hitsAreUnique()) {
+                if (!hitsHaveUniqueStartEnd()) {
                     // Even if one of the clauses has non-overlapping hits,
                     // if another clause has duplicate hits, this query will
                     // still produce duplicates (it combinatorically combines
@@ -402,14 +402,14 @@ public class SpanQueryAndNot extends BLSpanQuery {
             BLSpans combi = weights.get(0).getSpans(context, requiredPostings);
             if (combi == null)
                 return null; // if no hits in one of the clauses, no hits in AND query
-            combi = BLSpans.ensureStartPointSorted(combi);
+            combi = BLSpans.ensureSorted(combi);
             for (int i = 1; i < weights.size(); i++) {
                 BLSpans si = weights.get(i).getSpans(context, requiredPostings);
                 if (si == null)
                     return null; // if no hits in one of the clauses, no hits in AND query
                 if (!si.guarantees().hitsStartPointSorted())
-                    si = BLSpans.ensureStartPointSorted(si);
-                if (combi.guarantees().hitsAreUnique() && si.guarantees().hitsAreUnique()) {
+                    si = BLSpans.ensureSorted(si);
+                if (combi.guarantees().hitsHaveUniqueStartEnd() && si.guarantees().hitsHaveUniqueStartEnd()) {
                     // No duplicate spans with different match info; use the faster version.
                     combi = new SpansAndSimple(combi, si);
                 } else {

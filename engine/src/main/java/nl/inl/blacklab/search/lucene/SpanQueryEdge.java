@@ -13,13 +13,16 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
 /**
- * Returns either the left edge or right edge of the specified query.
+ * Returns either the leading edge or trailing edge of the specified query.
+ *
+ * E.g. for left-to-right languages, the leading edge is the left edge
+ * and the trailing edge is the right edge.
  *
  * Note that the results of this query are zero-length spans.
  */
 public class SpanQueryEdge extends BLSpanQueryAbstract {
 
-    public static SpanGuarantees createGuarantees(SpanGuarantees clause, boolean rightEdge) {
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, boolean trailingEdge) {
         return new SpanGuaranteesAdapter() {
             @Override
             public boolean hitsAllSameLength() {
@@ -38,7 +41,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
             @Override
             public boolean hitsStartPointSorted() {
-                return rightEdge ? clause.hitsEndPointSorted() : clause.hitsStartPointSorted();
+                return trailingEdge ? clause.hitsEndPointSorted() : clause.hitsStartPointSorted();
             }
 
             @Override
@@ -48,7 +51,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
             @Override
             public boolean hitsHaveUniqueStart() {
-                return rightEdge ? clause.hitsHaveUniqueEnd() : clause.hitsHaveUniqueStart();
+                return trailingEdge ? clause.hitsHaveUniqueEnd() : clause.hitsHaveUniqueStart();
             }
 
             @Override
@@ -57,31 +60,31 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
             }
 
             @Override
-            public boolean hitsAreUnique() {
+            public boolean hitsHaveUniqueStartEnd() {
                 return hitsHaveUniqueStart();
             }
         };
     }
 
-    /** if true, return the right edges; if false, the left */
-    final boolean rightEdge;
+    /** if true, return the trailing edges; if false, the leading ones */
+    final boolean trailingEdge;
 
     /**
      * Construct SpanQueryEdge object.
      * 
      * @param query the query to determine edges from
-     * @param rightEdge if true, return the right edges; if false, the left
+     * @param trailingEdge if true, return the trailing edges; if false, the leading ones
      */
-    public SpanQueryEdge(BLSpanQuery query, boolean rightEdge) {
+    public SpanQueryEdge(BLSpanQuery query, boolean trailingEdge) {
         super(query);
-        this.rightEdge = rightEdge;
-        this.guarantees = createGuarantees(query.guarantees(), rightEdge);
+        this.trailingEdge = trailingEdge;
+        this.guarantees = createGuarantees(query.guarantees(), trailingEdge);
     }
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
-        return rewritten == null ? this : new SpanQueryEdge(rewritten.get(0), rightEdge);
+        return rewritten == null ? this : new SpanQueryEdge(rewritten.get(0), trailingEdge);
     }
 
     @Override
@@ -116,25 +119,23 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            BLSpans edge = new SpansEdge(spans, rightEdge);
-
-            // Re-sort the results if necessary (if we took the right edge)
-            BLSpanQuery q = (BLSpanQuery) weight.getQuery();
-            if (q != null && !q.guarantees().hitsStartPointSorted())
-                return BLSpans.ensureStartPointSorted(edge);
-
-            return edge;
+            return BLSpans.ensureSorted(new SpansEdge(spans, trailingEdge));
         }
 
     }
 
     @Override
     public String toString(String field) {
-        return "EDGE(" + clausesToString(field) + ", " + (rightEdge ? "R" : "L") + ")";
+        return "EDGE(" + clausesToString(field) + ", " + (trailingEdge ? "R" : "L") + ")";
     }
 
+    @Deprecated
     public boolean isRightEdge() {
-        return rightEdge;
+        return isTrailingEdge();
+    }
+
+    public boolean isTrailingEdge() {
+        return trailingEdge;
     }
 
     public String getElementName() {
@@ -163,7 +164,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + (rightEdge ? 1231 : 1237);
+        result = prime * result + (trailingEdge ? 1231 : 1237);
         return result;
     }
 
@@ -176,6 +177,6 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
         if (getClass() != obj.getClass())
             return false;
         SpanQueryEdge other = (SpanQueryEdge) obj;
-        return rightEdge == other.rightEdge;
+        return trailingEdge == other.trailingEdge;
     }
 }

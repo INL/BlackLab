@@ -95,7 +95,7 @@ public class HitsFromQuery extends HitsMutable {
                 // NOTE: we used to call ensureSortedUnique() here, but we cannot
                 // determine uniqueness without looking at the matchInfo too. Instead
                 // we'll do it in SpansReader, where we already have access to the matchInfo.
-                optimizedQuery = BLSpanQuery.ensureSorted(optimizedQuery);
+                //optimizedQuery = BLSpanQuery.ensureSorted(optimizedQuery);
 
                 // Restore previous FI match threshold
                 if (searchSettings.fiMatchFactor() != -1) {

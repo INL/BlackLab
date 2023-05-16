@@ -130,7 +130,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             }
 
             @Override
-            public boolean hitsAreUnique() {
+            public boolean hitsHaveUniqueStartEnd() {
                 // Cannot guarantee because we're merging from different sources.
                 return false;
             }

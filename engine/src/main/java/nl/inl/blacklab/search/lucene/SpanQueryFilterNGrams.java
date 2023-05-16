@@ -58,8 +58,8 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             }
 
             @Override
-            public boolean hitsAreUnique() {
-                return clause.hitsAreUnique() && clause.hitsLengthMax() >= min;
+            public boolean hitsHaveUniqueStartEnd() {
+                return clause.hitsHaveUniqueStartEnd() && clause.hitsLengthMax() >= min;
             }
         };
     }

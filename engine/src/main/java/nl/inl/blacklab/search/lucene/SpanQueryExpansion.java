@@ -73,8 +73,8 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             }
 
             @Override
-            public boolean hitsAreUnique() {
-                return clause.hitsAreUnique() && min == max;
+            public boolean hitsHaveUniqueStartEnd() {
+                return clause.hitsHaveUniqueStartEnd() && min == max;
             }
         };
     }
@@ -176,7 +176,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
             BLSpanQuery q = (BLSpanQuery) weight.getQuery();
             if (q != null && !q.guarantees().hitsStartPointSorted())
-                return BLSpans.ensureStartPointSorted(expanded);
+                return BLSpans.ensureSorted(expanded);
 
             return expanded;
         }

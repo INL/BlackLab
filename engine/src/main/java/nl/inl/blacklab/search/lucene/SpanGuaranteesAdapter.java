@@ -66,13 +66,13 @@ public abstract class SpanGuaranteesAdapter implements SpanGuarantees {
     }
 
     @Override
-    public boolean hitsAreUniqueWithMatchInfo() {
-        return wrapped.hitsAreUniqueWithMatchInfo();
+    public boolean hitsHaveUniqueStartEndAndInfo() {
+        return wrapped.hitsHaveUniqueStartEndAndInfo();
     }
 
     @Override
-    public boolean hitsAreUnique() {
-        return wrapped.hitsAreUnique();
+    public boolean hitsHaveUniqueStartEnd() {
+        return wrapped.hitsHaveUniqueStartEnd();
     }
 
     @Override

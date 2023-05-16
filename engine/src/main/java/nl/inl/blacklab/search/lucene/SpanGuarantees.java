@@ -69,7 +69,7 @@ public interface SpanGuarantees {
      */
     SpanGuarantees UNIQUE = new SpanGuaranteesAdapter() {
         @Override
-        public boolean hitsAreUnique() {
+        public boolean hitsHaveUniqueStartEnd() {
             return true;
         }
 
@@ -180,7 +180,7 @@ public interface SpanGuarantees {
         }
 
         @Override
-        public boolean hitsAreUnique() {
+        public boolean hitsHaveUniqueStartEnd() {
             return true;
         }
 
@@ -287,23 +287,25 @@ public interface SpanGuarantees {
     /**
      * Is it guaranteed that no two hits are completely identical?
      * <p>
-     * Two hits are identical if they have the same start and end position,
-     * AND the same match info, if any. If there is no match info, this
-     * method always returns the same as hitsHaveUniqueSpan().
+     * Two hits are considered completely identical if they have the
+     * same start and end position AND the same match info (if any).
+     * If there is no match info, this method always returns the same as {@link #hitsHaveUniqueStartEnd()}.
      *
      * @return true if this is guaranteed, false if not
      */
-    default boolean hitsAreUniqueWithMatchInfo() {
+    default boolean hitsHaveUniqueStartEndAndInfo() {
         // Subclass may add additional guarantee
-        return hitsAreUnique();
+        return hitsHaveUniqueStartEnd();
     }
 
     /**
      * Is it guaranteed that no two hits have identical start and end?
      *
+     * If this returns true, {@link #hitsHaveUniqueStartEndAndInfo()} must also return true.
+     *
      * @return true if this is guaranteed, false if not
      */
-    default boolean hitsAreUnique() {
+    default boolean hitsHaveUniqueStartEnd() {
         return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
     }
 

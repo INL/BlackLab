@@ -8,34 +8,18 @@ import org.apache.lucene.search.spans.SpanCollector;
  * Sort the given Spans per document, according to the given comparator.
  */
 final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
-    
-    public static PerDocumentSortedSpans startPoint(BLSpans src) {
-        return new PerDocumentSortedSpans(src, true, false);
-    }
-
-    public static PerDocumentSortedSpans startPoint(BLSpans src, boolean removeDuplicates) {
-        return new PerDocumentSortedSpans(src, true, removeDuplicates);
-    }
-
-    public static PerDocumentSortedSpans endPoint(BLSpans src) {
-        return new PerDocumentSortedSpans(src, false, false);
-    }
-
-    public static PerDocumentSortedSpans get(BLSpans src, boolean sortByStartPoint, boolean removeDuplicates) {
-        return new PerDocumentSortedSpans(src, sortByStartPoint, removeDuplicates);
-    }
 
     private int curStart = -1;
 
     private int curEnd = -1;
 
-    private final boolean eliminateDuplicates;
+    private final boolean removeDuplicates;
 
     private final boolean sortByStartPoint;
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
-    private PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean eliminateDuplicates) {
+    PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean removeDuplicates) {
         // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
         super(new SpansInBucketsPerDocumentSorted(src, sortByStartPoint), new SpanGuaranteesAdapter(src.guarantees()) {
             @Override
@@ -44,15 +28,15 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
             }
 
             @Override
-            public boolean hitsAreUnique() {
-                return eliminateDuplicates || super.hitsAreUnique();
+            public boolean hitsHaveUniqueStartEnd() {
+                return removeDuplicates || super.hitsHaveUniqueStartEnd();
             }
         });
-        this.eliminateDuplicates = eliminateDuplicates;
+        this.removeDuplicates = removeDuplicates;
         this.sortByStartPoint = sortByStartPoint;
 
         SpanGuarantees g = src.guarantees();
-        if (eliminateDuplicates && g.hitsAreUnique())
+        if (removeDuplicates && g.hitsHaveUniqueStartEnd())
             throw new IllegalArgumentException("Uniqueness requested but hits are already unique");
         if (sortByStartPoint && g.hitsStartPointSorted()) {
             throw new IllegalArgumentException("Hits are already startpoint sorted, use SpansUnique instead");
@@ -101,7 +85,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     public int nextStartPosition() throws IOException {
-        if (!eliminateDuplicates) {
+        if (!removeDuplicates) {
             // No need to eliminate duplicates
             if (indexInBucket == -2 || indexInBucket >= in.bucketSize() - 1) {
                 // Bucket exhausted or no bucket yet; get one
@@ -145,7 +129,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     public String toString() {
-        String name = "sort" + (sortByStartPoint ? "Start" : "End") + (eliminateDuplicates ? "Uniq" : "");
+        String name = "sort" + (sortByStartPoint ? "Start" : "End") + (removeDuplicates ? "Uniq" : "");
         return name + "(" + in + ")";
     }
 

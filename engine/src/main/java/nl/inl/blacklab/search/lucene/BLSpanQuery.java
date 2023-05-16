@@ -108,13 +108,6 @@ public abstract class BLSpanQuery extends SpanQuery {
         return clausesToString(field, Arrays.asList(clauses));
     }
 
-    public static BLSpanQuery ensureSorted(BLSpanQuery spanQuery) {
-        if (spanQuery.guarantees().hitsStartPointSorted()) {
-            return spanQuery;
-        }
-        return new SpanQuerySorted(spanQuery, false, false);
-    }
-
     public static String inf(int max) {
         return max == MAX_UNLIMITED ? "INF" : Integer.toString(max);
     }

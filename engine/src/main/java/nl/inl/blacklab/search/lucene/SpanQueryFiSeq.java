@@ -175,15 +175,15 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
                 return null;
 
             // OPT: we could still do this if we know there's no matchInfo
-            //if (!clauses.get(0).hitsAreUnique())
-            //    anchorSpans = BLSpans.optSortUniq(anchorSpans, !clauses.get(0).hitsStartPointSorted(), true);
+//            if (!clauses.get(0).guarantees().hitsHaveUniqueStartEnd())
+//                anchorSpans = BLSpans.ensureSorted(anchorSpans, true, true);
 
             BLSpans result = new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
                     fiAccessor.getForwardIndexAccessorLeafReader(context), guarantees);
 
             // Re-sort the results if necessary (if we FI-matched a non-fixed amount to the left)
             if (mustSort)
-                return BLSpans.ensureStartPointSorted(result);
+                return BLSpans.ensureSorted(result);
 
             return result;
         }
