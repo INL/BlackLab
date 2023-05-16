@@ -76,6 +76,11 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             public boolean hitsHaveUniqueStartEnd() {
                 return clause.hitsHaveUniqueStartEnd() && min == max;
             }
+
+            @Override
+            public boolean hitsHaveUniqueStartEndAndInfo() {
+                return clause.hitsHaveUniqueStartEndAndInfo() && min == max;
+            }
         };
     }
 

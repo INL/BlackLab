@@ -23,7 +23,7 @@ public abstract class BLSpans extends Spans {
 
         // Make sure we don't do any unnecessary work (sort/unique)
         SpanGuarantees g = srcSpans.guarantees();
-        removeDuplicates = removeDuplicates && !g.hitsHaveUniqueStartEnd();
+        removeDuplicates = removeDuplicates && !g.hitsHaveUniqueStartEndAndInfo();
         if (g.hitsStartPointSorted()) {
             // No need to sort again; just remove duplicates if requested
             return removeDuplicates ? new SpansUnique(srcSpans) : srcSpans;
@@ -95,7 +95,7 @@ public abstract class BLSpans extends Spans {
      *
      * @param context the hit query context, that e.g. keeps track of captured groups
      */
-    public void setHitQueryContext(HitQueryContext context) {
+    public final void setHitQueryContext(HitQueryContext context) {
         int before = context.getMatchInfoRegisterNumber();
         passHitQueryContextToClauses(context);
         if (context.getMatchInfoRegisterNumber() == before) {

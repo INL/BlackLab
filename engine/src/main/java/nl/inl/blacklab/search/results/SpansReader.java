@@ -184,6 +184,10 @@ class SpansReader implements Runnable {
             this.weight = null;
             // If the resulting spans are not known to be sorted and unique, ensure that now.
             this.spans = BLSpans.ensureSortedUnique(spansForWeight);
+
+            // We use two-phase iteration which allows us to skip to matching documents quickly.
+            // Determine two-phase iterator and approximation now (approximation will return documents
+            // that may match; iterator can check if one actually does match).
             this.twoPhaseIt = spans.asTwoPhaseIterator();
             this.twoPhaseApproximation = twoPhaseIt == null ? spans : twoPhaseIt.approximation();
 

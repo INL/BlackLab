@@ -41,7 +41,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
         if (!source.guarantees().hitsStartPointSorted())
             throw new IllegalArgumentException("Source is not start point sorted!");
         if (!source.guarantees().hitsHaveUniqueStartEnd())
-            throw new IllegalArgumentException("Source does not guarantee unique hits!");
+            throw new IllegalArgumentException("Source does not guarantee unique starts/ends!");
     }
 
     @Override

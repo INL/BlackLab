@@ -141,21 +141,17 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
         BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(anchorWeight) : null;
-        return new SpanWeightFiSeq(anchorWeight, searcher, contexts, boost,
-                !guarantees().hitsStartPointSorted());
+        return new SpanWeightFiSeq(anchorWeight, searcher, contexts, boost);
     }
 
     class SpanWeightFiSeq extends BLSpanWeight {
 
         final BLSpanWeight anchorWeight;
 
-        private final boolean mustSort;
-
-        public SpanWeightFiSeq(BLSpanWeight anchorWeight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost, boolean mustSort)
-                throws IOException {
+        public SpanWeightFiSeq(BLSpanWeight anchorWeight, IndexSearcher searcher, Map<Term, TermStates> terms,
+                float boost) throws IOException {
             super(SpanQueryFiSeq.this, searcher, terms, boost);
             this.anchorWeight = anchorWeight;
-            this.mustSort = mustSort;
         }
 
         @Override
@@ -174,18 +170,15 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
             if (anchorSpans == null)
                 return null;
 
-            // OPT: we could still do this if we know there's no matchInfo
-//            if (!clauses.get(0).guarantees().hitsHaveUniqueStartEnd())
-//                anchorSpans = BLSpans.ensureSorted(anchorSpans, true, true);
+            // If the anchor spans could contain duplicates, remove them now
+            // (disabled because not necessary and probably costs more performance than it saves?)
+            //anchorSpans = BLSpans.ensureSortedUnique(anchorSpans);
 
             BLSpans result = new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
                     fiAccessor.getForwardIndexAccessorLeafReader(context), guarantees);
 
             // Re-sort the results if necessary (if we FI-matched a non-fixed amount to the left)
-            if (mustSort)
-                return BLSpans.ensureSorted(result);
-
-            return result;
+            return BLSpans.ensureSorted(result);
         }
     }
 

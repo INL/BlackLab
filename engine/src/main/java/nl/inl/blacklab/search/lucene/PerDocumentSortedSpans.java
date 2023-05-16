@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
@@ -19,6 +20,8 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
+    private HitQueryContext hitQueryContext;
+
     PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean removeDuplicates) {
         // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
         super(new SpansInBucketsPerDocumentSorted(src, sortByStartPoint), new SpanGuaranteesAdapter(src.guarantees()) {
@@ -28,15 +31,15 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
             }
 
             @Override
-            public boolean hitsHaveUniqueStartEnd() {
-                return removeDuplicates || super.hitsHaveUniqueStartEnd();
+            public boolean hitsHaveUniqueStartEndAndInfo() {
+                return removeDuplicates || super.hitsHaveUniqueStartEndAndInfo();
             }
         });
         this.removeDuplicates = removeDuplicates;
         this.sortByStartPoint = sortByStartPoint;
 
         SpanGuarantees g = src.guarantees();
-        if (removeDuplicates && g.hitsHaveUniqueStartEnd())
+        if (removeDuplicates && g.hitsHaveUniqueStartEndAndInfo())
             throw new IllegalArgumentException("Uniqueness requested but hits are already unique");
         if (sortByStartPoint && g.hitsStartPointSorted()) {
             throw new IllegalArgumentException("Hits are already startpoint sorted, use SpansUnique instead");
@@ -100,10 +103,10 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
             curEnd = in.endPosition(indexInBucket);
         } else {
             // Eliminate any duplicates
-            // FIXME: this doesn't take match info into account, which means we might get rid of
-            //        match info we're interested in
             int prevEnd;
             int prevStart;
+            MatchInfo[] prevInfo = childClausesCaptureMatchInfo ? new MatchInfo[hitQueryContext.numberOfMatchInfos()] : null;
+            MatchInfo[] curInfo = childClausesCaptureMatchInfo ? new MatchInfo[hitQueryContext.numberOfMatchInfos()] : null;
             do {
                 if (indexInBucket == -2 || indexInBucket >= in.bucketSize() - 1) {
                     // Bucket exhausted or no bucket yet; get one
@@ -116,13 +119,25 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
                 if (indexInBucket >= 0) {
                     prevStart = in.startPosition(indexInBucket);
                     prevEnd = in.endPosition(indexInBucket);
+                    if (childClausesCaptureMatchInfo) {
+                        Arrays.fill(prevInfo, null);
+                        for (int i = 0; i < prevInfo.length; i++)
+                            prevInfo[i] = curInfo[i];
+                        in.getMatchInfo(indexInBucket, prevInfo);
+                    }
                 } else {
                     prevStart = prevEnd = -1;
+                    if (childClausesCaptureMatchInfo)
+                        Arrays.fill(prevInfo, null);
                 }
                 indexInBucket++;
                 curStart = in.startPosition(indexInBucket);
                 curEnd = in.endPosition(indexInBucket);
-            } while (prevStart == curStart && prevEnd == curEnd);
+                if (childClausesCaptureMatchInfo) {
+                    Arrays.fill(curInfo, null);
+                    in.getMatchInfo(indexInBucket, curInfo);
+                }
+            } while (prevStart == curStart && prevEnd == curEnd && (prevInfo == null || Arrays.equals(prevInfo, curInfo)));
         }
         return curStart;
     }
@@ -135,6 +150,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     public void passHitQueryContextToClauses(HitQueryContext context) {
+        this.hitQueryContext = context;
         in.setHitQueryContext(context);
     }
 
