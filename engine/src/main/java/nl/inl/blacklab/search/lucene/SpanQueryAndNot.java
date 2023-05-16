@@ -174,8 +174,8 @@ public class SpanQueryAndNot extends BLSpanQuery {
             throw new IllegalArgumentException("ANDNOT query without clauses");
         checkBaseFieldName();
 
-        List<SpanGuarantees> clauseGuarantees = include.stream()
-                .map(cl -> cl.guarantees())
+        List<SpanGuarantees> clauseGuarantees = this.include.stream()
+                .map(BLSpanQuery::guarantees)
                 .collect(Collectors.toList());
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
     }
@@ -291,7 +291,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         if (rewrCl.isEmpty()) {
             // All-negative; node should be rewritten to OR.
             if (rewrNotCl.size() == 1)
-                return rewrCl.get(0).inverted().rewrite(reader);
+                return rewrNotCl.get(0).inverted().rewrite(reader);
             return (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
         }
 
@@ -383,6 +383,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         }
 
         @Override
+        @Deprecated
         public void extractTerms(Set<Term> terms) {
             for (BLSpanWeight weight : weights) {
                 weight.extractTerms(terms);
@@ -489,8 +490,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         // Add the costs of our clauses.
         int cost = 1;
         for (BLSpanQuery cl : include) {
-            BLSpanQuery clause = cl;
-            cost += clause.forwardMatchingCost();
+            cost += cl.forwardMatchingCost();
         }
         return cost * 2 / 3; // we expect to be able to short-circuit AND in a significant number of cases
     }
