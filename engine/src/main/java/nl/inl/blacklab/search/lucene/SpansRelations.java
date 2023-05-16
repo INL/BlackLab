@@ -44,9 +44,6 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** Relation type we're looking for */
     private final String relationType;
 
-    /** Group name when capturing */
-    private final String groupName;
-
     /**
      * Construct SpansRelations.
      *
@@ -54,14 +51,14 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * we also need to know if there's "is primary value" indicators in (some of) the payloads,
      * so we can skip these. See {@link PayloadUtils}.
      *
+     * @param relationType type of relation we're looking for
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(String relationType, String groupName, BLSpans relationsMatches,
+    public SpansRelations(String relationType, BLSpans relationsMatches,
             boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
         super(relationsMatches, SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
         this.relationType = relationType;
-        this.groupName = groupName;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
         this.spanMode = spanMode;
@@ -70,6 +67,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         // Only keep Unicode letters from relationType
+        // FIXME: how do we avoid collisions when matching multiple of the same relation type?
         String groupName = relationType.replaceAll("[^\\p{L}]", "");
         // Register our group
         this.groupIndex = context.registerMatchInfo(groupName);

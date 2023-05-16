@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.ints.IntComparator;
  */
 class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
 
-    private static final int compareEnds(long a, long b) {
+    private static int compareEnds(long a, long b) {
         int ea = (int)a;
         int eb = (int)b;
         if (ea == eb) {

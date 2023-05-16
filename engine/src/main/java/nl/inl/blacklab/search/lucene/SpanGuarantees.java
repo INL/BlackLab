@@ -294,7 +294,7 @@ public interface SpanGuarantees {
      * @return true if this is guaranteed, false if not
      */
     default boolean hitsAreUniqueWithMatchInfo() {
-        // Subclass may add additional guarantee if it knows
+        // Subclass may add additional guarantee
         return hitsAreUnique();
     }
 

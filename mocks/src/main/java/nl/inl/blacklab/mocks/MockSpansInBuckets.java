@@ -1,5 +1,8 @@
 package nl.inl.blacklab.mocks;
 
+import java.io.IOException;
+
+import org.apache.commons.compress.archivers.dump.UnsupportedCompressionAlgorithmException;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
@@ -72,6 +75,11 @@ public class MockSpansInBuckets extends SpansInBuckets {
             return NO_MORE_BUCKETS; // no more in this doc
         currentBucket++;
         return docID();
+    }
+
+    @Override
+    public int advanceBucket(int targetPos) throws IOException {
+        throw new UnsupportedCompressionAlgorithmException("Not implemented");
     }
 
     @Override

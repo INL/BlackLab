@@ -98,7 +98,7 @@ class SpansAndSimple extends BLConjunctionSpans {
                 catchUpMatchEnd(laggingSpans);
             } else {
                 // Both match
-                if (leftStart == NO_MORE_POSITIONS || rightStart == NO_MORE_POSITIONS) {
+                if (leftStart == NO_MORE_POSITIONS) {
                     oneExhaustedInCurrentDoc = true;
                     return NO_MORE_POSITIONS;
                 }
