@@ -9,6 +9,7 @@ import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
 import nl.inl.blacklab.search.lucene.SpansInBuckets;
 
 /**
@@ -16,6 +17,11 @@ import nl.inl.blacklab.search.lucene.SpansInBuckets;
  * 'hits' from these arrays.
  */
 public class MockSpansInBuckets extends SpansInBuckets {
+
+    public static SpansInBuckets fromLists(int[] bDoc, int[] bStart,
+            int[] hStart, int[] hEnd) {
+        return new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);
+    }
 
     private final int[] start;
 
@@ -135,9 +141,9 @@ public class MockSpansInBuckets extends SpansInBuckets {
         return false;
     }
 
-    public static SpansInBuckets fromLists(int[] bDoc, int[] bStart,
-            int[] hStart, int[] hEnd) {
-        return new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);
+    @Override
+    public SpanGuarantees guarantees() {
+        return SpanGuarantees.NONE;
     }
 
     @Override

@@ -280,7 +280,6 @@ BLSpans
   SpansNot                  (finds all tokens not contained in clause matches)
 
   # Bucketed spans allow random access to a group of matches
-  SpansInBucketsPerStartPoint (each startpoint is 1 bucket, multiple endpoints possible for sequence matching)
   SpansInBucketsPerDocument   (all matches from 1 doc in 1 bucket)
   SpansInBucketsConsecutive   (all consecutive matches in 1 bucket for repetition matching)
 

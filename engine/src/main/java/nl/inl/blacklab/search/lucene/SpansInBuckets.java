@@ -27,7 +27,7 @@ import org.apache.lucene.search.spans.Spans;
  * Note that SpansInBuckets assumes all hits in a bucket are from a single
  * document.
  */
-public abstract class SpansInBuckets extends DocIdSetIterator {
+public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGuaranteeGiver {
     
     /** What initial capacity to reserve for lists to avoid too much reallocation */
     public static final int LIST_INITIAL_CAPACITY = 1000;

@@ -30,7 +30,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     private HitQueryContext hitQueryContext;
 
     /**
-     * Construct SpansInBucketsPerStartPoint.
+     * Construct SpansInBucketsSameStartEnd.
      *
      * @param source (startpoint-sorted) source spans
      */
@@ -157,11 +157,14 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     }
 
     @Override
+    public SpanGuarantees guarantees() {
+        return source.guarantees();
+    }
+
+    @Override
     public long cost() {
         return source.cost();
     }
-
-
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {

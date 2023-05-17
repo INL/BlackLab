@@ -201,12 +201,9 @@ public interface SpanGuarantees {
     };
 
     static <T extends DocIdSetIterator> SpanGuarantees from(DocIdSetIterator in) {
-        if (in instanceof BLSpans)
-            return ((BLSpans)in).guarantees();
-        if (in instanceof SpanGuarantees)
-            return (SpanGuarantees)in;
-        else
-            return NONE;
+        if (in instanceof SpanGuaranteeGiver)
+            return ((SpanGuaranteeGiver)in).guarantees();
+        return NONE;
     }
 
     static <T extends SpanGuaranteeGiver> List<SpanGuarantees> from(T[] clauses) {

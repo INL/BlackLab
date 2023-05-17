@@ -27,7 +27,12 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
         super(new SpansInBucketsPerDocumentSorted(src, sortByStartPoint), new SpanGuaranteesAdapter(src.guarantees()) {
             @Override
             public boolean hitsStartPointSorted() {
-                return sortByStartPoint || super.hitsStartPointSorted();
+                return sortByStartPoint || src.guarantees().hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return !sortByStartPoint || src.guarantees().hitsAllSameLength();
             }
 
             @Override
