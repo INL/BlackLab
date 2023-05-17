@@ -136,7 +136,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
 
     @Override
     public float positionsCost() {
-        return in instanceof Spans ? ((Spans) in).positionsCost() : in.cost(); // overestimate
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
     /**

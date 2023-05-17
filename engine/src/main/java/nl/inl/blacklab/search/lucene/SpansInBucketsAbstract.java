@@ -218,7 +218,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public float positionsCost() {
-        return source.positionsCost();
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
     @Override

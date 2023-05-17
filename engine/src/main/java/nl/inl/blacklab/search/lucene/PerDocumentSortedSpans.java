@@ -189,10 +189,5 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
         return in.width();
     }
 
-    @Override
-    public float positionsCost() {
-        return in.positionsCost();
-    }
-
 
 }

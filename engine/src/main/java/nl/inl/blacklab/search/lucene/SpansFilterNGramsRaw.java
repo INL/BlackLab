@@ -348,9 +348,4 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
     public void collect(SpanCollector collector) throws IOException {
         in.collect(collector);
     }
-
-    @Override
-    public float positionsCost() {
-        return in.positionsCost();
-    }
 }
