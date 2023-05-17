@@ -514,6 +514,29 @@ public class TestSearches {
     }
 
     @Test
+    public void testCaptureGroups2() {
+        // There's two ways to capture A, so we expect two identical concordances
+        List<String> expected = List.of(
+            "mier [aap mier mier] mier",
+            "mier [aap mier mier] mier"
+        );
+        String query = "(A:'aap' 'mier' []|'aap' 'mier' A:[])";
+        List<String> result = testIndex.findConc(query);
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals(expected, result);
+        // Validate the actual captures as well
+        Hits hits = testIndex.find(query);
+        Assert.assertEquals(2, hits.size());
+        Assert.assertTrue(hits.hasMatchInfo());
+        Assert.assertEquals(1, hits.get(0).doc());
+        Assert.assertEquals(2, hits.get(0).matchInfo()[0].getFullSpanStart());
+        Assert.assertEquals(3, hits.get(0).matchInfo()[0].getFullSpanEnd());
+        Assert.assertEquals(1, hits.get(1).doc());
+        Assert.assertEquals(4, hits.get(1).matchInfo()[0].getFullSpanStart());
+        Assert.assertEquals(5, hits.get(1).matchInfo()[0].getFullSpanEnd());
+    }
+
+    @Test
     public void testDocResults() {
         DocResults allDocs = testIndex.index().queryDocuments(new MatchAllDocsQuery());
 
