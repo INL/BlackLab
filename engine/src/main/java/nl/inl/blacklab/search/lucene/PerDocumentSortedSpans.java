@@ -34,6 +34,11 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
             public boolean hitsHaveUniqueStartEndAndInfo() {
                 return removeDuplicates || super.hitsHaveUniqueStartEndAndInfo();
             }
+
+            @Override
+            public boolean hitsHaveUniqueStartEnd() {
+                return (removeDuplicates && !src.childClausesCaptureMatchInfo) || super.hitsHaveUniqueStartEnd();
+            }
         });
         this.removeDuplicates = removeDuplicates;
         this.sortByStartPoint = sortByStartPoint;
@@ -124,8 +129,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
                     prevEnd = in.endPosition(indexInBucket);
                     if (childClausesCaptureMatchInfo) {
                         Arrays.fill(prevInfo, null);
-                        for (int i = 0; i < prevInfo.length; i++)
-                            prevInfo[i] = curInfo[i];
+                        System.arraycopy(curInfo, 0, prevInfo, 0, prevInfo.length);
                         in.getMatchInfo(indexInBucket, prevInfo);
                     }
                 } else {

@@ -38,6 +38,11 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
             public boolean hitsHaveUniqueStartEndAndInfo() {
                 return true;
             }
+
+            @Override
+            public boolean hitsHaveUniqueStartEnd() {
+                return !in.childClausesCaptureMatchInfo;
+            }
         });
         // Validate clause guarantees
         if (! (in.guarantees().hitsStartPointSorted() || in.guarantees().hitsEndPointSorted()))
@@ -87,8 +92,7 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
             if (prevMatchInfo == null)
                 prevMatchInfo = new MatchInfo[context == null ? 0 : context.numberOfMatchInfos()];
             Arrays.fill(prevMatchInfo, null);
-            for (int i = 0; i < prevMatchInfo.length; i++)
-                prevMatchInfo[i] = curMatchInfo[i];
+            System.arraycopy(curMatchInfo, 0, prevMatchInfo, 0, prevMatchInfo.length);
         }
         return FilterSpans.AcceptStatus.YES;
     }
