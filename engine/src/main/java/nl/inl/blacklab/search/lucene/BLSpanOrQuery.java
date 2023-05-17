@@ -659,10 +659,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
 
                 @Override
-                public void getMatchInfo(MatchInfo[] relationInfo) {
+                public void getMatchInfo(MatchInfo[] matchInfo) {
                     if (!childClausesCaptureMatchInfo)
                         return;
-                    ((BLSpans) topPositionSpans).getMatchInfo(relationInfo);
+                    ((BLSpans) topPositionSpans).getMatchInfo(matchInfo);
                 }
 
                 @Override

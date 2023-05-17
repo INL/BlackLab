@@ -287,10 +287,10 @@ class SpansNot extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         if (!childClausesCaptureMatchInfo)
             return;
-        clause.getMatchInfo(relationInfo);
+        clause.getMatchInfo(matchInfo);
     }
 
     @Override

@@ -17,9 +17,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 public class MatchInfo implements Comparable<MatchInfo> {
 
     public static MatchInfo captureGroupSpan(int start, int end) {
-        MatchInfo relationInfo = new MatchInfo(null, false, start, start, end, end);
-        relationInfo.span = true;
-        return relationInfo;
+        MatchInfo matchInfo = new MatchInfo(null, false, start, start, end, end);
+        matchInfo.span = true;
+        return matchInfo;
     }
 
     public static boolean equal(MatchInfo[] a, MatchInfo[] b) {

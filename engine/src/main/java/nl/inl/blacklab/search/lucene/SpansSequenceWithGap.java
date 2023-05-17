@@ -363,11 +363,11 @@ class SpansSequenceWithGap extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         if (!childClausesCaptureMatchInfo)
             return;
-        first.getMatchInfo(relationInfo);
-        second.getMatchInfo(indexCurrentSecondClauseMatch, relationInfo);
+        first.getMatchInfo(matchInfo);
+        second.getMatchInfo(indexCurrentSecondClauseMatch, matchInfo);
     }
 
     @Override

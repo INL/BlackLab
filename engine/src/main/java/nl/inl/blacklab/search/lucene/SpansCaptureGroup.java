@@ -66,10 +66,10 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        super.getMatchInfo(relationInfo);
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        super.getMatchInfo(matchInfo);
         // Place our start and end position at the correct index in the array
-        relationInfo[groupIndex] = MatchInfo.captureGroupSpan(startPosition() + leftAdjust, endPosition() + rightAdjust);
+        matchInfo[groupIndex] = MatchInfo.captureGroupSpan(startPosition() + leftAdjust, endPosition() + rightAdjust);
     }
 
 }

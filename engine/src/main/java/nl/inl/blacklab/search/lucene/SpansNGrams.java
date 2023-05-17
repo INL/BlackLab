@@ -223,7 +223,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         // no clause, no groups
     }
 

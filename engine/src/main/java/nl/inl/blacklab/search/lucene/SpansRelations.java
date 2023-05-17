@@ -74,8 +74,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        relationInfo[groupIndex] = this.relationInfo.copy();
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        matchInfo[groupIndex] = this.relationInfo.copy();
     }
 
     @Override

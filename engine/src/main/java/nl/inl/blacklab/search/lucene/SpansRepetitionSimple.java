@@ -167,8 +167,8 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         int index = firstToken + numRepetitions - 1; // use the last match for captured groups
-        in.getMatchInfo(index, relationInfo);
+        in.getMatchInfo(index, matchInfo);
     }
 }

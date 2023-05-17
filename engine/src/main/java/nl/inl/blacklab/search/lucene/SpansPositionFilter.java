@@ -519,11 +519,11 @@ class SpansPositionFilter extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         if (!childClausesCaptureMatchInfo)
             return;
-        producer.getMatchInfo(relationInfo);
-        filter.getMatchInfo(filterIndex, relationInfo);
+        producer.getMatchInfo(matchInfo);
+        filter.getMatchInfo(filterIndex, matchInfo);
     }
 
     @Override

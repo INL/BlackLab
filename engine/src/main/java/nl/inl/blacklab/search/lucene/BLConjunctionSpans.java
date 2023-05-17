@@ -147,9 +147,9 @@ abstract class BLConjunctionSpans extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         for (BLSpans subSpan : subSpans) {
-            subSpan.getMatchInfo(relationInfo);
+            subSpan.getMatchInfo(matchInfo);
         }
     }
 }

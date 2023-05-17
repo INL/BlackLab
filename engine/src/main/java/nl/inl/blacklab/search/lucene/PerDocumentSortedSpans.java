@@ -155,10 +155,10 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         if (indexInBucket < 0 || indexInBucket >= in.bucketSize())
             return;
-        in.getMatchInfo(indexInBucket, relationInfo);
+        in.getMatchInfo(indexInBucket, matchInfo);
     }
 
     @Override

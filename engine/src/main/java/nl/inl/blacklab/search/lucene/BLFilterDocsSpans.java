@@ -153,9 +153,9 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         if (childClausesCaptureMatchInfo && in instanceof BLSpans)
-            ((BLSpans) in).getMatchInfo(relationInfo);
+            ((BLSpans) in).getMatchInfo(matchInfo);
     }
 
 }
