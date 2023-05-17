@@ -420,8 +420,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 BLSpans si = weights.get(i).getSpans(context, requiredPostings);
                 if (si == null)
                     return null; // if no hits in one of the clauses, no hits in AND query
-                if (!si.guarantees().hitsStartPointSorted())
-                    si = BLSpans.ensureSortedUnique(si);
+                si = BLSpans.ensureSortedUnique(si);
                 if (combi.guarantees().hitsHaveUniqueStartEnd() && si.guarantees().hitsHaveUniqueStartEnd()) {
                     // No duplicate start/end (with different match info); use the faster version.
                     combi = new SpansAndSimple(combi, si);

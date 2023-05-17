@@ -13,7 +13,9 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 
 /**
@@ -169,16 +171,9 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
             BLSpans anchorSpans = anchorWeight.getSpans(context, requiredPostings);
             if (anchorSpans == null)
                 return null;
-
-            // If the anchor spans could contain duplicates, remove them now
-            // (disabled because not necessary and probably costs more performance than it saves?)
-            //anchorSpans = BLSpans.ensureSortedUnique(anchorSpans);
-
-            BLSpans result = new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
-                    fiAccessor.getForwardIndexAccessorLeafReader(context), guarantees);
-
-            // Re-sort the results if necessary (if we FI-matched a non-fixed amount to the left)
-            return BLSpans.ensureSorted(result);
+            ForwardIndexAccessorLeafReader fiLeafReader = fiAccessor.getForwardIndexAccessorLeafReader(context);
+            NfaState startingState = nfa.getNfa().getStartingState();
+            return new SpansFiSeq(anchorSpans, startOfAnchor, startingState, direction, fiLeafReader, guarantees);
         }
     }
 

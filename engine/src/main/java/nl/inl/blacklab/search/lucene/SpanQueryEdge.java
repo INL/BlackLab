@@ -119,9 +119,8 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            return BLSpans.ensureSorted(new SpansEdge(spans, trailingEdge));
+            return new SpansEdge(spans, trailingEdge);
         }
-
     }
 
     @Override

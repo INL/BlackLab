@@ -24,7 +24,12 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
     public static SpanGuarantees createGuarantees(SpanGuarantees producer) {
-        return producer;
+        return new SpanGuaranteesAdapter(producer) {
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+        };
     }
 
     /** Filter operation to apply */
@@ -136,7 +141,6 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
             BLSpans spansProd = prodWeight.getSpans(context, requiredPostings);
             if (spansProd == null)
                 return null;
-            spansProd = BLSpans.ensureSorted(spansProd);
             BLSpans spansFilter = filterWeight.getSpans(context, requiredPostings);
             if (spansFilter == null) {
                 // No filter hits. If it's a positive filter, that means no producer hits can match.

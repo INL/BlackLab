@@ -162,22 +162,16 @@ class SpansSequenceWithGap extends BLSpans {
     /**
      * Construct SpansSequenceWithGap.
      *
-     * @param first (startpoint-sorted) first clause
+     * @param first first clause
      * @param gap allowable gap between the clauses
-     * @param second (startpoint-sorted) second clause
+     * @param second second clause
      */
-    public SpansSequenceWithGap(BLSpans first, SequenceGap gap, BLSpans second) {
+    SpansSequenceWithGap(BLSpans first, SequenceGap gap, BLSpans second) {
         super(createGuarantees(first.guarantees(), gap, second.guarantees()));
 
-        // Validate clause guarantees
-        if (!first.guarantees().hitsStartPointSorted())
-            throw new IllegalArgumentException("First clause is not start point sorted!");
-        if (!second.guarantees().hitsStartPointSorted())
-            throw new IllegalArgumentException("Second clause is not start point sorted!");
-
-        this.first = first;
+        this.first = BLSpans.ensureSorted(first);
         this.gap = gap;
-        this.second = new SpansInBucketsPerDocument(second);
+        this.second = SpansInBucketsPerDocument.sorted(second);
         this.conjunction = ConjunctionDISI.intersectIterators(List.of(first, this.second));
     }
 

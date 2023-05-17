@@ -65,8 +65,6 @@ class SpansNot extends BLSpans {
     /**
      * Constructs a SpansNot.
      *
-     * Clause must be start-point sorted.
-     *
      * Clause may not be null; use SpansNGrams(1,1) instead.
      *
      * @param reader the index reader, for getting field lengths
@@ -77,12 +75,10 @@ class SpansNot extends BLSpans {
         super(SpanQueryNot.createGuarantees());
         if (clause == null)
             throw new IllegalArgumentException("clause == null; use SpansNGrams(1,1) instead");
-        if (!clause.guarantees().hitsStartPointSorted())
-            throw new IllegalArgumentException("clause must be start-point sorted");
+        this.clause = BLSpans.ensureSorted(clause);
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiBits.getLiveDocs(reader);
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
-        this.clause = clause;
     }
 
     /**

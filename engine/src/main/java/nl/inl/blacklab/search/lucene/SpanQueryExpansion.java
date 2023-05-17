@@ -176,10 +176,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             BLSpans spansSource = weight.getSpans(context, requiredPostings);
             if (spansSource == null)
                 return null;
-            BLSpans expanded = new SpansExpansionRaw(context.reader(), clauses.get(0).getField(), spansSource, direction, min, max);
-
-            // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
-            return BLSpans.ensureSorted(expanded);
+            return new SpansExpansionRaw(context.reader(), clauses.get(0).getField(), spansSource, direction, min, max);
         }
     }
 

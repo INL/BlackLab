@@ -99,7 +99,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
             BLSpans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return new SpansNGrams(context.reader(), baseFieldName, 1, 1);
-            spans = BLSpans.ensureSorted(spans);
             return new SpansNot(context.reader(), baseFieldName, spans);
         }
 

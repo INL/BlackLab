@@ -638,15 +638,16 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                         SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
                         SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
                         // Note that the first clause is startpoint-sorted
-                        BLSpans gapped = new SpansSequenceWithGap(sorted(expFirst.clause()),
-                                expFirst.gap(), sorted(expSecond.clause()));
+                        BLSpans spans = expSecond.clause();
+                        BLSpans gapped = new SpansSequenceWithGap(expFirst.clause(),
+                                expFirst.gap(), spans);
                         newSpans = new SpansExpansionRaw(expSecond.lengthGetter(), gapped,
                                 Direction.RIGHT, expSecond.gap().minSize(), expSecond.gap().maxSize());
                     } else {
                         // Only first is a forward expansion.
                         SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
-                        newSpans = new SpansSequenceWithGap(sorted(expFirst.clause()),
-                                expFirst.gap(), sorted(second));
+                        newSpans = new SpansSequenceWithGap(expFirst.clause(),
+                                expFirst.gap(), second);
                     }
                     i--;
                     replaceCombiParts(parts, i, newSpans);
@@ -658,14 +659,17 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                         //   instead, so we can repeat the sequence-with-gaps trick.
                         SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
                         SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
-                        BLSpans gapped = new SpansSequenceWithGap(sorted(expFirst.clause()),
-                                expSecond.gap(), sorted(expSecond.clause()));
+                        BLSpans spans = expSecond.clause();
+                        BLSpans spans1 = expFirst.clause();
+                        BLSpans gapped = new SpansSequenceWithGap(spans1,
+                                expSecond.gap(), spans);
                         newSpans = new SpansExpansionRaw(expFirst.lengthGetter(), gapped,
                                 Direction.LEFT, expFirst.gap().minSize(), expFirst.gap().maxSize());
                     } else {
                         // Only second is a backward expansion
                         SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
-                        newSpans = new SpansSequenceWithGap(sorted(first), expSecond.gap(), sorted(expSecond.clause()));
+                        BLSpans spans = expSecond.clause();
+                        newSpans = new SpansSequenceWithGap(first, expSecond.gap(), spans);
                     }
                     i--;
                     replaceCombiParts(parts, i, newSpans);
@@ -680,22 +684,17 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
                 // Note: the spans coming from SpansSequenceWithGap may not be sorted by end point.
                 // We keep track of this and sort them manually if necessary.
-                BLSpans newSpans = new SpansSequenceWithGap(sorted(first), SequenceGap.NONE, sorted(second));
+                BLSpans newSpans = new SpansSequenceWithGap(first, SequenceGap.NONE, second);
                 replaceCombiParts(parts, 0, newSpans);
             }
 
             return parts.get(0);
         }
 
-        BLSpans sorted(BLSpans spans) {
-            return BLSpans.ensureSorted(spans);
-        }
-
         private void replaceCombiParts(List<BLSpans> parts, int partIndex, BLSpans newSpans) {
             parts.remove(partIndex);
             parts.set(partIndex, newSpans);
         }
-
     }
 
     @Override
