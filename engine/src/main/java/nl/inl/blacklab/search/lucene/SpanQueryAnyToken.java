@@ -24,6 +24,62 @@ import nl.inl.util.LuceneUtil;
  */
 public class SpanQueryAnyToken extends BLSpanQuery {
 
+    public static SpanGuarantees createGuarantees(int min, int max) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean okayToInvertForOptimization() {
+                // Yes, inverting is actually an improvement
+                return isSingleAnyToken();
+            }
+
+            @Override
+            public boolean hitsAllSameLength() {
+                return min == max;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return min;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return max;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEnd() {
+                return true;
+            }
+
+            @Override
+            public boolean isSingleAnyToken() {
+                return min == 1 && max == 1;
+            }
+
+        };
+    }
+
     /** The minimum number of tokens in this stretch. */
     protected final int min;
 
@@ -37,6 +93,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
         this.min = min;
         this.max = max;
         this.luceneField = luceneField;
+        this.guarantees = createGuarantees(min, max);
     }
 
     @Override
@@ -123,57 +180,6 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     @Override
     public BLSpanQuery inverted() {
         return new SpanQueryNoHits(queryInfo, luceneField); // Just return our clause, dropping the NOT operation
-    }
-
-    @Override
-    protected boolean okayToInvertForOptimization() {
-        // Yes, inverting is actually an improvement
-        return isSingleAnyToken();
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return min == max;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return min;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return max;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return hitsAllSameLength();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return min == max;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return min == max;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return true;
-    }
-
-    @Override
-    public boolean isSingleAnyToken() {
-        return min == 1 && max == 1;
     }
 
     @Override

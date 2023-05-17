@@ -59,13 +59,9 @@ class SpansPositionFilter extends BLSpans {
 
     /**
      * Find hits from producer, filtered by the filter according to the specified op
-     * <p>
-     * Both producer and filter should be start-point sorted.
      *
      * @param producer the hits we may be interested in
      * @param filter the hits used to filter the producer hits
-     * @param filterFixedLength true if the filter hits are all the same length.
-     *            Used for optimization.
      * @param op filter operation to use
      * @param invert if true, produce hits that DON'T match the filter instead
      * @param leftAdjust how to adjust the left edge of the producer hits while
@@ -73,13 +69,14 @@ class SpansPositionFilter extends BLSpans {
      * @param rightAdjust how to adjust the right edge of the producer hits while
      *            matching
      */
-    public SpansPositionFilter(BLSpans producer, SpansInBucketsPerDocument filter, boolean filterFixedLength, Operation op,
-            boolean invert, int leftAdjust, int rightAdjust) {
-        this.producer = producer; // Sort
+    public SpansPositionFilter(BLSpans producer, BLSpans filter, Operation op, boolean invert,
+            int leftAdjust, int rightAdjust) {
+        super(SpanQueryPositionFilter.createGuarantees(producer.guarantees()));
+        this.producer = BLSpans.ensureSorted(producer);
         this.op = op;
         this.invert = invert;
-        this.filter = filter;
-        this.filterFixedLength = filterFixedLength;
+        this.filter = SpansInBucketsPerDocument.sorted(filter);
+        this.filterFixedLength = filter.guarantees().hitsAllSameLength();
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
         if (invert) {
@@ -518,11 +515,17 @@ class SpansPositionFilter extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         if (!childClausesCaptureMatchInfo)
             return;
-        producer.getMatchInfo(relationInfo);
-        filter.getMatchInfo(filterIndex, relationInfo);
+        producer.getMatchInfo(matchInfo);
+        if (!invert)
+            filter.getMatchInfo(filterIndex, matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return producer.hasMatchInfo() || (!invert && filter.hasMatchInfo());
     }
 
     @Override

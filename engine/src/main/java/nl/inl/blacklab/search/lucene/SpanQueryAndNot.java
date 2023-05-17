@@ -31,6 +31,152 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryAndNot extends BLSpanQuery {
 
+    public static SpanGuarantees createGuarantees(List<SpanGuarantees> include, boolean hasExclude) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean okayToInvertForOptimization() {
+                // Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
+                return producesSingleTokens() && hasExclude;
+            }
+
+            @Override
+            public boolean isSingleAnyToken() {
+                return include.stream().allMatch(SpanGuarantees::isSingleAnyToken) && !hasExclude;
+            }
+
+            @Override
+            public boolean isSingleTokenNot() {
+                return producesSingleTokens() && include.isEmpty();
+            }
+
+            @Override
+            public boolean hitsAllSameLength() {
+                if (include.isEmpty())
+                    return true;
+                for (SpanGuarantees clause : include) {
+                    if (clause.hitsAllSameLength())
+                        return true;
+                }
+                return true;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                if (include.isEmpty())
+                    return 1;
+                int l = 0;
+                for (SpanGuarantees clause : include) {
+                    if (clause.hitsLengthMin() > l)
+                        l = clause.hitsLengthMin();
+                }
+                return l;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                if (include.isEmpty())
+                    return 1;
+                int l = Integer.MAX_VALUE;
+                for (SpanGuarantees clause : include) {
+                    if (clause.hitsLengthMax() < l)
+                        l = clause.hitsLengthMax();
+                }
+                return l;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsStartPointSorted() && hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                if (include.isEmpty())
+                    return true;
+                for (SpanGuarantees clause : include) {
+                    if (clause.hitsHaveUniqueStart())
+                        return true;
+                }
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                if (include.isEmpty())
+                    return true;
+                for (SpanGuarantees clause : include) {
+                    if (clause.hitsHaveUniqueEnd())
+                        return true;
+                }
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEnd() {
+                if (include.isEmpty()) {
+                    // pure not query always produces unique hits (all tokens that are not part of the matches)
+                    return true;
+                }
+                for (SpanGuarantees clause : include) {
+                    if (!clause.hitsHaveUniqueStartEnd()) {
+                        // At least one clause has multiple hits with same start/end, therefore the resulting matches
+                        // may not be unique
+                        return false;
+                    }
+                }
+                // All clauses have unique spans, so we can guarantee the resulting matches are
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEndAndInfo() {
+                if (include.isEmpty()) {
+                    // pure not query always produces unique hits (all tokens that are not part of the matches)
+                    return true;
+                }
+                for (SpanGuarantees clause : include) {
+                    if (!clause.hitsHaveUniqueStartEndAndInfo()) {
+                        // At least one clause has multiple hits with same start/end/info, therefore the resulting matches
+                        // may not be unique
+                        return false;
+                    }
+                }
+                // All clauses have unique spans, so we can guarantee the resulting matches are
+                return true;
+            }
+
+            @Override
+            public boolean hitsCanOverlap() {
+                if (include.isEmpty()) {
+                    // pure not query always produces nonoverlapping hits
+                    // (all tokens that are not part of the matches)
+                    return false;
+                }
+                if (!hitsHaveUniqueStartEnd()) {
+                    // Even if one of the clauses has non-overlapping hits,
+                    // if another clause has duplicate starts/ends, this query will
+                    // still produce duplicates (it combinatorically combines
+                    // any duplicates to ensure we get all combinations of match info)
+                    return true;
+                }
+                for (SpanGuarantees clause : include) {
+                    if (!clause.hitsCanOverlap()) {
+                        // At least one clause has nonoverlapping hits,
+                        // so the resulting hits can never be overlapping.
+                        return false;
+                    }
+                }
+                // All clauses have overlapping hits.
+                return true;
+            }
+        };
+    }
+
     private final List<BLSpanQuery> include;
 
     private final List<BLSpanQuery> exclude;
@@ -40,8 +186,11 @@ public class SpanQueryAndNot extends BLSpanQuery {
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
         if (this.include.size() == 0 && this.exclude.size() == 0)
-            throw new BlackLabRuntimeException("ANDNOT query without clauses");
+            throw new IllegalArgumentException("ANDNOT query without clauses");
         checkBaseFieldName();
+
+        List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(this.include);
+        this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
     }
 
     private void checkBaseFieldName() {
@@ -77,17 +226,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    protected boolean okayToInvertForOptimization() {
-        // Inverting is "free" if it will still be an AND NOT query (i.e. will have a positive component).
-        return producesSingleTokens() && !exclude.isEmpty();
-    }
-
-    @Override
-    public boolean isSingleTokenNot() {
-        return producesSingleTokens() && include.isEmpty();
-    }
-
-    @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 
         // Flatten nested AND queries, and invert negative-only clauses.
@@ -101,7 +239,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 List<BLSpanQuery> clPos = isNot ? flatNotCl : flatCl;
                 List<BLSpanQuery> clNeg = isNot ? flatCl : flatNotCl;
                 boolean isTPAndNot = child instanceof SpanQueryAndNot;
-                if (!isTPAndNot && child.isSingleTokenNot()) {
+                if (!isTPAndNot && child.guarantees().isSingleTokenNot()) {
                     // "Switch sides": invert the clause, and
                     // swap the lists we add clauses to.
                     child = child.inverted();
@@ -136,7 +274,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 List<BLSpanQuery> clNeg = isNot ? rewrCl : rewrNotCl;
                 BLSpanQuery rewritten = child.rewrite(reader);
                 boolean isTPAndNot = rewritten instanceof SpanQueryAndNot;
-                if (!isTPAndNot && rewritten.isSingleTokenNot()) {
+                if (!isTPAndNot && rewritten.guarantees().isSingleTokenNot()) {
                     // "Switch sides": invert the clause, and
                     // swap the lists we add clauses to.
                     rewritten = rewritten.inverted();
@@ -166,7 +304,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         if (rewrCl.isEmpty()) {
             // All-negative; node should be rewritten to OR.
             if (rewrNotCl.size() == 1)
-                return rewrCl.get(0).inverted().rewrite(reader);
+                return rewrNotCl.get(0).inverted().rewrite(reader);
             return (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
         }
 
@@ -258,6 +396,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         }
 
         @Override
+        @Deprecated
         public void extractTerms(Set<Term> terms) {
             for (BLSpanWeight weight : weights) {
                 weight.extractTerms(terms);
@@ -276,25 +415,19 @@ public class SpanQueryAndNot extends BLSpanQuery {
             BLSpans combi = weights.get(0).getSpans(context, requiredPostings);
             if (combi == null)
                 return null; // if no hits in one of the clauses, no hits in AND query
-            BLSpanQuery query = (BLSpanQuery) weights.get(0).getQuery();
-            if (!query.hitsStartPointSorted())
-                combi = BLSpans.optSortUniq(combi, true, false);
-            boolean combiSpansAreUnique = query.hitsAreUnique();
+            combi = BLSpans.ensureSortedUnique(combi);
             for (int i = 1; i < weights.size(); i++) {
                 BLSpans si = weights.get(i).getSpans(context, requiredPostings);
                 if (si == null)
                     return null; // if no hits in one of the clauses, no hits in AND query
-                query = (BLSpanQuery) weights.get(i).getQuery();
-                if (!query.hitsStartPointSorted())
-                    si = BLSpans.optSortUniq(si, true, false);
-                if (combiSpansAreUnique && query.hitsAreUnique()) {
-                    // No duplicate spans with different match info; use the faster version.
+                si = BLSpans.ensureSortedUnique(si);
+                if (combi.guarantees().hitsHaveUniqueStartEnd() && si.guarantees().hitsHaveUniqueStartEnd()) {
+                    // No duplicate start/end (with different match info); use the faster version.
                     combi = new SpansAndSimple(combi, si);
                 } else {
                     // We need to use the slower version that takes duplicate spans into account and produces all
                     // combinations.
                     combi = new SpansAnd(combi, si);
-                    combiSpansAreUnique = false;
                 }
             }
             return combi;
@@ -324,125 +457,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
         if (!exclude.isEmpty())
             return exclude.get(0).getRealField();
         throw new BlackLabRuntimeException("Query has no clauses");
-    }
-
-    public List<BLSpanQuery> getIncludeClauses() {
-        return include;
-    }
-
-    public List<BLSpanQuery> getExcludeClauses() {
-        return include;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        if (include.isEmpty())
-            return true;
-        for (BLSpanQuery clause : include) {
-            if (clause.hitsAllSameLength())
-                return true;
-        }
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        if (include.isEmpty())
-            return 1;
-        int l = 0;
-        for (BLSpanQuery clause : include) {
-            if (clause.hitsLengthMin() > l)
-                l = clause.hitsLengthMin();
-        }
-        return l;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        if (include.isEmpty())
-            return 1;
-        int l = Integer.MAX_VALUE;
-        for (BLSpanQuery clause : include) {
-            if (clause.hitsLengthMax() < l)
-                l = clause.hitsLengthMax();
-        }
-        return l;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return hitsStartPointSorted() && hitsAllSameLength();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        if (include.isEmpty())
-            return true;
-        for (BLSpanQuery clause : include) {
-            if (clause.hitsHaveUniqueStart())
-                return true;
-        }
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        if (include.isEmpty())
-            return true;
-        for (BLSpanQuery clause : include) {
-            if (clause.hitsHaveUniqueEnd())
-                return true;
-        }
-        return true;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        if (include.isEmpty()) {
-            // pure not query always produces unique hits (all tokens that are not part of the matches)
-            return true;
-        }
-        for (BLSpanQuery clause : include) {
-            if (!clause.hitsAreUnique()) {
-                // At least one clause has multiple hits with same start/end, therefore the resulting matches
-                // may not be unique (note that with how SpansAnd currently works, results will probably have
-                // unique start/end but be technically incorrect, because they didn't capture all possible
-                // match info)
-                return false;
-            }
-        }
-        // All clauses have unique spans, so we can guarantee the resulting matches are
-        return true;
-    }
-
-    @Override
-    public boolean hitsCanOverlap() {
-        if (include.isEmpty()) {
-            // pure not query always produces nonoverlapping hits
-            // (all tokens that are not part of the matches)
-            return false;
-        }
-        if (!hitsAreUnique()) {
-            // Even if one of the clauses has non-overlapping hits,
-            // if another clause has duplicate hits, this query will
-            // still produce duplicates (it combinatorically combines
-            // any duplicates to ensure we get all combinations of match info)
-            return true;
-        }
-        for (BLSpanQuery clause : include) {
-            if (!clause.hitsCanOverlap()) {
-                // At least one clause has nonoverlapping hits,
-                // so the resulting hits can never be overlapping.
-                return false;
-            }
-        }
-        // All clauses have overlapping hits.
-        return true;
     }
 
     @Override
@@ -488,8 +502,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         // Add the costs of our clauses.
         int cost = 1;
         for (BLSpanQuery cl : include) {
-            BLSpanQuery clause = cl;
-            cost += clause.forwardMatchingCost();
+            cost += cl.forwardMatchingCost();
         }
         return cost * 2 / 3; // we expect to be able to short-circuit AND in a significant number of cases
     }

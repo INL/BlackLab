@@ -31,13 +31,17 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
      */
     public SpansRepetitionSimple(BLSpans source, int min, int max) {
         // Find all consecutive matches in this Spans
-        super(new SpansInBucketsConsecutive(source));
+        super(new SpansInBucketsConsecutive(source), SpanQueryRepetition.createGuarantees(source.guarantees(), min, max));
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
             throw new IllegalArgumentException("min > max");
         if (min < 1)
             throw new IllegalArgumentException("min and max must be at least 1");
+        if (!source.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Source is not start point sorted!");
+        if (!source.guarantees().hitsHaveUniqueStartEnd())
+            throw new IllegalArgumentException("Source does not guarantee unique starts/ends!");
     }
 
     @Override
@@ -163,8 +167,13 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         int index = firstToken + numRepetitions - 1; // use the last match for captured groups
-        in.getMatchInfo(index, relationInfo);
+        in.getMatchInfo(index, matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return in.hasMatchInfo();
     }
 }

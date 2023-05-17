@@ -43,16 +43,18 @@ class ClauseCombinerAnyExpansion extends ClauseCombiner {
         case LEFT_ANY:
             // Expand to left
             any = (SpanQueryAnyToken) left;
-            return new SpanQueryExpansion(right, Direction.LEFT, any.hitsLengthMin(), any.hitsLengthMax());
+            return new SpanQueryExpansion(right, Direction.LEFT,
+                    any.guarantees().hitsLengthMin(), any.guarantees().hitsLengthMax());
         case RIGHT_ANY:
             // Expand to right
             any = (SpanQueryAnyToken) right;
-            return new SpanQueryExpansion(left, Direction.RIGHT, any.hitsLengthMin(), any.hitsLengthMax());
+            return new SpanQueryExpansion(left, Direction.RIGHT,
+                    any.guarantees().hitsLengthMin(), any.guarantees().hitsLengthMax());
         case BOTH_ANY:
             // Combine two anytoken clauses
             any = (SpanQueryAnyToken) left;
             any2 = (SpanQueryAnyToken) right;
-            return any.addRep(any2.hitsLengthMin(), any2.hitsLengthMax());
+            return any.addRep(any2.guarantees().hitsLengthMin(), any2.guarantees().hitsLengthMax());
         }
         throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
     }

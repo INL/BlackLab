@@ -65,21 +65,20 @@ class SpansNot extends BLSpans {
     /**
      * Constructs a SpansNot.
      *
-     * Clause must be start-point sorted.
-     *
      * Clause may not be null; use SpansNGrams(1,1) instead.
      *
      * @param reader the index reader, for getting field lengths
      * @param fieldName the field name, for getting field lengths
-     * @param clause the clause to invert
+     * @param clause the clause to invert (must be startpoint-sorted)
      */
     public SpansNot(LeafReader reader, String fieldName, BLSpans clause) {
+        super(SpanQueryNot.createGuarantees());
         if (clause == null)
             throw new IllegalArgumentException("clause == null; use SpansNGrams(1,1) instead");
+        this.clause = BLSpans.ensureSorted(clause);
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiBits.getLiveDocs(reader);
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
-        this.clause = clause;
     }
 
     /**
@@ -284,10 +283,15 @@ class SpansNot extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         if (!childClausesCaptureMatchInfo)
             return;
-        clause.getMatchInfo(relationInfo);
+        clause.getMatchInfo(matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return clause.hasMatchInfo();
     }
 
     @Override

@@ -181,7 +181,7 @@ public class ResultHits {
         // (we can't enhance multi-token queries such as ngrams yet)
         TextPattern tp = params.pattern().orElseThrow();
         BlackLabIndex index = params.blIndex();
-        if (!tp.toQuery(QueryInfo.create(index)).producesSingleTokens())
+        if (!tp.toQuery(QueryInfo.create(index)).guarantees().producesSingleTokens())
             return null;
 
         // Alright, the original query for the Hits lends itself to enhancement.

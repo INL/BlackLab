@@ -36,7 +36,7 @@ public class TestSpansSequence {
         int[] aDoc =   { 1, 1, 1 };
         int[] aStart = { 1, 2, 4 };
         int[] aEnd =   { 2, 3, 5 };
-        BLSpans a = new MockSpans(aDoc, aStart, aEnd);
+        BLSpans a = new MockSpans(aDoc, aStart, aEnd, SpanGuarantees.END_SORTED_UNIQUE);
 
         int[] bDoc =   { 1, 1, 1 };
         int[] bStart = { 2, 4, 5 };

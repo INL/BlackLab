@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.ints.IntComparator;
  */
 class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
 
-    private static final int compareEnds(long a, long b) {
+    private static int compareEnds(long a, long b) {
         int ea = (int)a;
         int eb = (int)b;
         if (ea == eb) {
@@ -40,9 +40,22 @@ class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
         return compareEnds(a, b);
     };
 
+    private final SpanGuaranteesAdapter guarantees;
+
     public SpansInBucketsPerDocumentSorted(BLSpans source, boolean sortByStartPoint) {
         super(source);
         this.sortByStartPoint = sortByStartPoint;
+        this.guarantees = new SpanGuaranteesAdapter(source.guarantees()) {
+            @Override
+            public boolean hitsStartPointSorted() {
+                return sortByStartPoint || source.guarantees().hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return !sortByStartPoint || source.guarantees().hitsAllSameLength();
+            }
+        };
     }
 
     @Override
@@ -76,4 +89,8 @@ class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
         super.getMatchInfo(sortIndexes.getInt(indexInBucket), matchInfo);
     }
 
+    @Override
+    public SpanGuarantees guarantees() {
+        return this.guarantees;
+    }
 }

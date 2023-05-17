@@ -53,7 +53,14 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
      * Wrap the given {@link T}.
      */
     protected BLFilterSpans(T in) {
-        super(in);
+        this(in, null);
+    }
+
+    /**
+     * Wrap the given {@link T}.
+     */
+    protected BLFilterSpans(T in, SpanGuarantees guarantees) {
+        super(in, guarantees);
     }
 
     /**
