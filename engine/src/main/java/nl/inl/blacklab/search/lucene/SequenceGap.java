@@ -43,6 +43,10 @@ public class SequenceGap {
         return maxSize;
     }
 
+    public boolean isFixed() {
+        return minSize == maxSize;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

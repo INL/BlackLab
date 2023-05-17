@@ -41,7 +41,8 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     /**
      * Wrap the given {@link T}.
      */
-    protected BLFilterDocsSpans(T in) {
+    protected BLFilterDocsSpans(T in, SpanGuarantees guarantees) {
+        super(guarantees == null ? SpanGuarantees.from(in) : guarantees);
         this.in = Objects.requireNonNull(in);
     }
 
@@ -152,9 +153,15 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (childClausesCaptureMatchInfo && in instanceof BLSpans)
-            ((BLSpans) in).getMatchInfo(relationInfo);
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        if (!childClausesCaptureMatchInfo)
+            return;
+        if (in instanceof BLSpans)
+            ((BLSpans) in).getMatchInfo(matchInfo);
     }
 
+    @Override
+    public boolean hasMatchInfo() {
+        return in instanceof BLSpans ? ((BLSpans)in).hasMatchInfo() : false;
+    }
 }

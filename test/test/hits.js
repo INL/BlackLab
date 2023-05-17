@@ -56,6 +56,7 @@ expectHitsUnchanged("phrase a succesful with _FI2", '_FI2("a", [lemma="successfu
 
 // Simple capture group
 expectHitsUnchanged("simple capture group", '"one" A:[]');
+expectHitsUnchanged("same hit, different captures", '"one" A:([]{1,2}) []{1,2}');
 
 // A few simpler tests, just checking matching text
 expectHitsUnchanged("any token", '[]');

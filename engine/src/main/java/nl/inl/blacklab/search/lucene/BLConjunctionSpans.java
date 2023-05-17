@@ -18,6 +18,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,7 +38,8 @@ abstract class BLConjunctionSpans extends BLSpans {
     boolean atFirstInCurrentDoc; // a first start position is available in current doc for nextStartPosition
     boolean oneExhaustedInCurrentDoc; // one subspans exhausted in current doc
 
-    BLConjunctionSpans(List<BLSpans> subSpans) {
+    BLConjunctionSpans(List<BLSpans> subSpans, SpanGuarantees guarantees) {
+        super(guarantees);
         if (subSpans.size() < 2) {
             throw new IllegalArgumentException("Less than 2 subSpans.size():" + subSpans.size());
         }
@@ -146,9 +148,14 @@ abstract class BLConjunctionSpans extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         for (BLSpans subSpan : subSpans) {
-            subSpan.getMatchInfo(relationInfo);
+            subSpan.getMatchInfo(matchInfo);
         }
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return Arrays.stream(subSpans).anyMatch(BLSpans::hasMatchInfo);
     }
 }

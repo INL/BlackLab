@@ -1,11 +1,15 @@
 package nl.inl.blacklab.mocks;
 
+import java.io.IOException;
+
+import org.apache.commons.compress.archivers.dump.UnsupportedCompressionAlgorithmException;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
 import nl.inl.blacklab.search.lucene.SpansInBuckets;
 
 /**
@@ -13,6 +17,11 @@ import nl.inl.blacklab.search.lucene.SpansInBuckets;
  * 'hits' from these arrays.
  */
 public class MockSpansInBuckets extends SpansInBuckets {
+
+    public static SpansInBuckets fromLists(int[] bDoc, int[] bStart,
+            int[] hStart, int[] hEnd) {
+        return new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);
+    }
 
     private final int[] start;
 
@@ -75,6 +84,11 @@ public class MockSpansInBuckets extends SpansInBuckets {
     }
 
     @Override
+    public int advanceBucket(int targetPos) throws IOException {
+        throw new UnsupportedCompressionAlgorithmException("Not implemented");
+    }
+
+    @Override
     public int nextDoc() {
         if (currentBucket >= bucketDoc.length)
             return DocIdSetIterator.NO_MORE_DOCS;
@@ -122,9 +136,14 @@ public class MockSpansInBuckets extends SpansInBuckets {
         // NOP
     }
 
-    public static SpansInBuckets fromLists(int[] bDoc, int[] bStart,
-            int[] hStart, int[] hEnd) {
-        return new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);
+    @Override
+    public boolean hasMatchInfo() {
+        return false;
+    }
+
+    @Override
+    public SpanGuarantees guarantees() {
+        return SpanGuarantees.NONE;
     }
 
     @Override

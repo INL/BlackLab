@@ -27,16 +27,10 @@ import org.apache.lucene.search.spans.Spans;
  * Note that SpansInBuckets assumes all hits in a bucket are from a single
  * document.
  */
-public abstract class SpansInBuckets extends DocIdSetIterator {
+public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGuaranteeGiver {
     
     /** What initial capacity to reserve for lists to avoid too much reallocation */
     public static final int LIST_INITIAL_CAPACITY = 1000;
-    
-    /** Load factor determines when a HashMap is rehashed to increase its size (percentage filled) */
-    public static final double HASHMAP_DEFAULT_LOAD_FACTOR = 0.75;
-    
-    /** Initial capacity for HashMap to avoid too much reallocation */
-    public static final int HASHMAP_INITIAL_CAPACITY = (int)(LIST_INITIAL_CAPACITY / HASHMAP_DEFAULT_LOAD_FACTOR);
 
     public static final int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
@@ -71,6 +65,19 @@ public abstract class SpansInBuckets extends DocIdSetIterator {
     public abstract int nextBucket() throws IOException;
 
     /**
+     * Go to the next bucket at or beyond the specified start point.
+     *
+     * Always at least advances to the next bucket, even if we were already at or
+     * beyond the specified target.
+     *
+     * Note that this will only work correctly if the underlying Spans is startpoint-sorted.
+     *
+     * @param targetPos the target start point
+     * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
+     */
+    public abstract int advanceBucket(int targetPos) throws IOException;
+
+    /**
      * Skip to specified document id.
      *
      * If we're already at the target id, go to the next document (just like Spans).
@@ -95,6 +102,17 @@ public abstract class SpansInBuckets extends DocIdSetIterator {
      * @param matchInfo where to add the captured group information
      */
     public abstract void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo);
+
+    /**
+     * Does any of our descendants capture match info?
+     *
+     * This will recursively call this method on all subclauses.
+     * Can be used before hit query context is set. After that, it's
+     * more efficient to just remember whether any clauses added capture groups.
+     *
+     * @return true if any of our subclauses capture match info
+     */
+    public abstract boolean hasMatchInfo();
 
     public abstract TwoPhaseIterator asTwoPhaseIterator();
 

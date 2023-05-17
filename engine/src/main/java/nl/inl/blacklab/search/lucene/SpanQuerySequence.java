@@ -2,9 +2,11 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -46,16 +48,84 @@ import nl.inl.util.StringUtil;
 public class SpanQuerySequence extends BLSpanQueryAbstract {
     protected static final Logger logger = LogManager.getLogger(SpanQuerySequence.class);
 
+    public static SpanGuarantees createGuarantees(List<SpanGuarantees> clauses) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                for (SpanGuarantees clause : clauses) {
+                    if (!clause.hitsAllSameLength())
+                        return false;
+                }
+                return true;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                int n = 0;
+                for (SpanGuarantees clause : clauses) {
+                    n += clause.hitsLengthMin();
+                }
+                return n;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                int n = 0;
+                for (SpanGuarantees clause : clauses) {
+                    int max = clause.hitsLengthMax();
+                    if (max == Integer.MAX_VALUE)
+                        return max; // infinite
+                    n += max;
+                }
+                return n;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsStartPointSorted() && hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                // Both SpansSequenceSimple and SpansSequenceWithGaps guarantee this
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                for (SpanGuarantees clause : clauses) {
+                    if (!clause.hitsHaveUniqueStart())
+                        return false;
+                }
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                for (SpanGuarantees clause : clauses) {
+                    if (!clause.hitsHaveUniqueEnd())
+                        return false;
+                }
+                return true;
+            }
+        };
+    }
+
     public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
-        super(first, second);
+        this(List.of(first, second));
+    }
+
+    public SpanQuerySequence(BLSpanQuery[] clauses) {
+        this(Arrays.asList(clauses));
     }
 
     public SpanQuerySequence(List<BLSpanQuery> clauscol) {
         super(clauscol);
-    }
 
-    public SpanQuerySequence(BLSpanQuery[] clauses) {
-        super(clauses);
+        List<SpanGuarantees> clauseGuarantees = clauscol.stream()
+                .map(BLSpanQuery::guarantees)
+                .collect(Collectors.toList());
+        this.guarantees = createGuarantees(clauseGuarantees);
     }
 
     /**
@@ -98,7 +168,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             BLSpanQuery clause = clauses.get(i);
             if (clause instanceof SpanQueryEdge) {
                 SpanQueryEdge start = (SpanQueryEdge) clause;
-                if (!start.isRightEdge()) {
+                if (!start.isTrailingEdge()) {
                     String tagName = start.getElementName();
                     if (tagName != null) {
                         // Start tag found. Is there a matching end tag?
@@ -106,7 +176,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                             BLSpanQuery clause2 = clauses.get(j);
                             if (clause2 instanceof SpanQueryEdge) {
                                 SpanQueryEdge end = (SpanQueryEdge) clause2;
-                                if (end.isRightEdge() && end.getElementName().equals(tagName)) {
+                                if (end.isTrailingEdge() && end.getElementName().equals(tagName)) {
                                     // Found start and end tags in sequence. Convert to containing
                                     // query.
                                     List<BLSpanQuery> search = new ArrayList<>();
@@ -118,7 +188,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                                     boolean startAny = false;
                                     if (search.get(0) instanceof SpanQueryAnyToken) {
                                         SpanQueryAnyToken any1 = (SpanQueryAnyToken) search.get(0);
-                                        if (any1.hitsLengthMin() == 0 && any1.hitsLengthMax() == MAX_UNLIMITED) {
+                                        if (any1.guarantees().hitsLengthMin() == 0 &&
+                                                any1.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
                                             startAny = true;
                                             search.remove(0);
                                         }
@@ -127,7 +198,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                                     int last = search.size() - 1;
                                     if (search.get(last) instanceof SpanQueryAnyToken) {
                                         SpanQueryAnyToken any2 = (SpanQueryAnyToken) search.get(last);
-                                        if (any2.hitsLengthMin() == 0 && any2.hitsLengthMax() == MAX_UNLIMITED) {
+                                        if (any2.guarantees().hitsLengthMin() == 0 &&
+                                                any2.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
                                             endAny = true;
                                             search.remove(last);
                                         }
@@ -521,57 +593,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             }
         }
 
-        private class CombiPart {
-            BLSpans spans;
-
-            boolean uniqueStart;
-
-            boolean uniqueEnd;
-
-            boolean startSorted;
-
-            boolean endSorted;
-
-            boolean sameLength;
-
-            public CombiPart(BLSpanWeight weight, final LeafReaderContext context, Postings requiredPostings)
-                    throws IOException {
-                this.spans = weight.getSpans(context, requiredPostings);
-                BLSpanQuery q = (BLSpanQuery) weight.getQuery();
-                if (q != null) {
-                    this.uniqueStart = q.hitsHaveUniqueStart();
-                    this.uniqueEnd = q.hitsHaveUniqueEnd();
-                    this.startSorted = q.hitsStartPointSorted();
-                    this.endSorted = q.hitsEndPointSorted();
-                    this.sameLength = q.hitsAllSameLength();
-                }
-            }
-
-            public CombiPart(BLSpans spans, boolean hitsHaveUniqueStart, boolean hitsHaveUniqueEnd,
-                    boolean hitsStartPointSorted,
-                    boolean hitsEndPointSorted, boolean hitsAllSameLength) {
-                super();
-                this.spans = spans;
-                this.uniqueStart = hitsHaveUniqueStart;
-                this.uniqueEnd = hitsHaveUniqueEnd;
-                this.startSorted = hitsStartPointSorted;
-                this.endSorted = hitsEndPointSorted;
-                this.sameLength = hitsAllSameLength;
-            }
-
-            @Override
-            public String toString() {
-                return spans.toString();
-            }
-
-        }
-
         @Override
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-            List<CombiPart> parts = new ArrayList<>();
+            List<BLSpans> parts = new ArrayList<>();
             for (BLSpanWeight weight : weights) {
-                CombiPart part = new CombiPart(weight, context, requiredPostings);
-                if (part.spans == null)
+                BLSpans part = weight.getSpans(context, requiredPostings);
+                if (part == null)
                     return null;
                 parts.add(part);
             }
@@ -583,175 +610,96 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             // as that minimizes useless skipping through non-matching docs (but this should
             // be solved by two-phase iterators now).
             for (int i = 1; i < parts.size(); i++) {
-                CombiPart first = parts.get(i - 1);
-                CombiPart second = parts.get(i);
-                CombiPart newPart;
-                if (first.uniqueEnd && first.endSorted && second.startSorted && second.uniqueStart) {
+                BLSpans first = parts.get(i - 1);
+                BLSpans second = parts.get(i);
+                SpanGuarantees g1 = first.guarantees();
+                SpanGuarantees g2 = second.guarantees();
+                if (g1.hitsHaveUniqueEnd() && g1.hitsEndPointSorted() &&
+                        g2.hitsStartPointSorted() && g2.hitsHaveUniqueStart()) {
                     // We can take a shortcut because of what we know about the Spans we're
                     // combining.
-                    BLSpans newSpans = new SpansSequenceSimple(first.spans, second.spans);
-                    newPart = new CombiPart(newSpans, first.uniqueStart, second.uniqueEnd,
-                            first.startSorted, second.sameLength,
-                            first.sameLength && second.sameLength);
+                    BLSpans newSpans = new SpansSequenceSimple(first, second);
                     parts.remove(i - 1);
-                    parts.set(i - 1, newPart);
+                    parts.set(i - 1, newSpans);
                     i--;
                 }
             }
 
             // Next, see if we have SpansExpansion that we can resolve using SpansSequenceWithGap.
             for (int i = 1; i < parts.size(); i++) {
-                CombiPart first = parts.get(i - 1);
-                CombiPart second = parts.get(i);
-                BLSpans sp1 = first.spans;
-                BLSpans sp2 = second.spans;
-                if (sp1 instanceof SpansExpansionRaw && ((SpansExpansionRaw)sp1).direction() == Direction.RIGHT) {
+                BLSpans first = parts.get(i - 1);
+                BLSpans second = parts.get(i);
+                if (first instanceof SpansExpansionRaw && ((SpansExpansionRaw)first).direction() == Direction.RIGHT) {
                     // First is a forward expansion. Make a SpansSequenceWithGap.
                     BLSpans newSpans;
-                    if (sp2 instanceof SpansExpansionRaw && ((SpansExpansionRaw)sp2).direction() == Direction.RIGHT) {
+                    if (second instanceof SpansExpansionRaw && ((SpansExpansionRaw)second).direction() == Direction.RIGHT) {
                         // Second is a forward expansion too. Make the whole resulting clause a forward expansion
                         //   instead, so we can repeat the sequence-with-gaps trick.
-                        SpansExpansionRaw expFirst = (SpansExpansionRaw)sp1;
-                        SpansExpansionRaw expSecond = (SpansExpansionRaw)sp2;
+                        SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
+                        SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
                         // Note that the first clause is startpoint-sorted
-                        BLSpans gapped = new SpansSequenceWithGap(ensureSorted(first, expFirst.clause()),
-                                expFirst.gap(), ensureSorted(second, expSecond.clause()));
+                        BLSpans spans = expSecond.clause();
+                        BLSpans gapped = new SpansSequenceWithGap(expFirst.clause(),
+                                expFirst.gap(), spans);
                         newSpans = new SpansExpansionRaw(expSecond.lengthGetter(), gapped,
                                 Direction.RIGHT, expSecond.gap().minSize(), expSecond.gap().maxSize());
                     } else {
                         // Only first is a forward expansion.
-                        SpansExpansionRaw expFirst = (SpansExpansionRaw)sp1;
-                        newSpans = new SpansSequenceWithGap(ensureSorted(first, expFirst.clause()),
-                                expFirst.gap(), ensureSorted(second, sp2));
+                        SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
+                        newSpans = new SpansSequenceWithGap(expFirst.clause(),
+                                expFirst.gap(), second);
                     }
                     i--;
-                    replaceCombiParts(parts, i, first, second, newSpans);
-                } else if (sp2 instanceof SpansExpansionRaw && ((SpansExpansionRaw)sp2).direction() == Direction.LEFT) {
+                    replaceCombiParts(parts, i, newSpans);
+                } else if (second instanceof SpansExpansionRaw && ((SpansExpansionRaw)second).direction() == Direction.LEFT) {
                     // Second is a backward expansion (much less common, but can probably occur sometimes)
                     BLSpans newSpans;
-                    if (sp1 instanceof SpansExpansionRaw && ((SpansExpansionRaw)sp1).direction() == Direction.LEFT) {
+                    if (first instanceof SpansExpansionRaw && ((SpansExpansionRaw)first).direction() == Direction.LEFT) {
                         // First is a backward expansion too. Make the whole resulting clause a backward expansion
                         //   instead, so we can repeat the sequence-with-gaps trick.
-                        SpansExpansionRaw expFirst = (SpansExpansionRaw)sp1;
-                        SpansExpansionRaw expSecond = (SpansExpansionRaw)sp2;
-                        BLSpans gapped = new SpansSequenceWithGap(ensureSorted(first, expFirst.clause()),
-                                expSecond.gap(), ensureSorted(second, expSecond.clause()));
+                        SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
+                        SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
+                        BLSpans spans = expSecond.clause();
+                        BLSpans spans1 = expFirst.clause();
+                        BLSpans gapped = new SpansSequenceWithGap(spans1,
+                                expSecond.gap(), spans);
                         newSpans = new SpansExpansionRaw(expFirst.lengthGetter(), gapped,
                                 Direction.LEFT, expFirst.gap().minSize(), expFirst.gap().maxSize());
                     } else {
                         // Only second is a backward expansion
-                        SpansExpansionRaw expSecond = (SpansExpansionRaw)sp2;
-                        newSpans = new SpansSequenceWithGap(ensureSorted(first, sp1), expSecond.gap(),
-                                ensureSorted(second, expSecond.clause()));
+                        SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
+                        BLSpans spans = expSecond.clause();
+                        newSpans = new SpansSequenceWithGap(first, expSecond.gap(), spans);
                     }
                     i--;
-                    replaceCombiParts(parts, i, first, second, newSpans);
+                    replaceCombiParts(parts, i, newSpans);
                 }
             }
 
             // Now, combine the rest (if any) using the more expensive SpansSequenceWithGap,
             // that takes more complex sequences into account.
             while (parts.size() > 1) {
-                CombiPart first = parts.get(0);
-                CombiPart second = parts.get(1);
+                BLSpans first = parts.get(0);
+                BLSpans second = parts.get(1);
 
                 // Note: the spans coming from SpansSequenceWithGap may not be sorted by end point.
                 // We keep track of this and sort them manually if necessary.
-                BLSpans newSpans = new SpansSequenceWithGap(ensureSorted(first, first.spans), SequenceGap.NONE,
-                        ensureSorted(second, second.spans));
-                replaceCombiParts(parts, 0, first, second, newSpans);
+                BLSpans newSpans = new SpansSequenceWithGap(first, SequenceGap.NONE, second);
+                replaceCombiParts(parts, 0, newSpans);
             }
 
-            return parts.get(0).spans;
+            return parts.get(0);
         }
 
-        private void replaceCombiParts(List<CombiPart> parts, int partIndex, CombiPart first, CombiPart second,
-                BLSpans newSpans) {
-            CombiPart newPart = new CombiPart(newSpans,
-                    first.uniqueStart && first.uniqueEnd && second.uniqueStart,
-                    first.uniqueEnd && second.uniqueStart && second.uniqueEnd,
-                    true, first.endSorted && second.sameLength,
-                    first.sameLength && second.sameLength);
+        private void replaceCombiParts(List<BLSpans> parts, int partIndex, BLSpans newSpans) {
             parts.remove(partIndex);
-            parts.set(partIndex, newPart);
+            parts.set(partIndex, newSpans);
         }
-
-        private BLSpans ensureSorted(CombiPart part, BLSpans spans) {
-            if (!part.startSorted)
-                return PerDocumentSortedSpans.startPoint(spans);
-            return spans;
-        }
-
     }
 
     @Override
     public String toString(String field) {
         return "SEQ(" + clausesToString(field) + ")";
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        for (BLSpanQuery clause : clauses) {
-            if (!clause.hitsAllSameLength())
-                return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        int n = 0;
-        for (BLSpanQuery clause : clauses) {
-            n += clause.hitsLengthMin();
-        }
-        return n;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        int n = 0;
-        for (BLSpanQuery clause : clauses) {
-            int max = clause.hitsLengthMax();
-            if (max == Integer.MAX_VALUE)
-                return max; // infinite
-            n += max;
-        }
-        return n;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return hitsStartPointSorted() && hitsAllSameLength();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        // Both SpansSequenceSimple and SpansSequenceWithGaps guarantee this
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        for (BLSpanQuery clause : clauses) {
-            if (!clause.hitsHaveUniqueStart())
-                return false;
-        }
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        for (BLSpanQuery clause : clauses) {
-            if (!clause.hitsHaveUniqueEnd())
-                return false;
-        }
-        return true;
-
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
     }
 
     @Override

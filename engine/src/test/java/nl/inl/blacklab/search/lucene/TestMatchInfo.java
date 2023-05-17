@@ -41,21 +41,21 @@ public class TestMatchInfo {
                 sourceStart = targetStart;
                 sourceEnd = targetEnd;
             }
-            MatchInfo relationInfo = new MatchInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+            MatchInfo matchInfo = new MatchInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
 
             // Randomly index at either source or target
             int currentPos = random.nextBoolean() ? sourceStart : targetStart;
 
             // Encode the payload
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            relationInfo.serialize(currentPos, new OutputStreamDataOutput(os));
+            matchInfo.serialize(currentPos, new OutputStreamDataOutput(os));
             byte[] payload = new BytesRef(os.toByteArray()).bytes;
 
             // Decode it again
             MatchInfo decoded = new MatchInfo();
             decoded.deserialize(currentPos, new ByteArrayDataInput(payload));
 
-            Assert.assertEquals(relationInfo, decoded);
+            Assert.assertEquals(matchInfo, decoded);
         }
     }
 }

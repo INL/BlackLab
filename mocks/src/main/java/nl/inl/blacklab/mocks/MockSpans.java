@@ -13,6 +13,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
 
 /**
  * Stub Spans class for testing. Takes arrays and iterates through 'hits' from
@@ -108,8 +109,9 @@ public class MockSpans extends BLSpans {
         public int freq() {
             // Find start of next document
             int i;
-            for (i = currentHit + 1; i < doc.length && doc[i] == currentDoc; i++) {
-                // NOP
+            i = currentHit + 1;
+            while (i < doc.length && doc[i] == currentDoc) {
+                i++;
             }
             return i - currentHit;
         }
@@ -124,30 +126,41 @@ public class MockSpans extends BLSpans {
         }
     }
 
-    final int[] doc;
+    private final int[] doc;
 
-    final int[] start;
+    private final int[] start;
 
-    final int[] end;
+    private final int[] end;
 
     private final MockPostingsEnum postings;
 
     private final MyTermSpans spans;
 
+    private int currentHitIndex;
+
     private boolean noMoreDocs = false;
 
     private boolean noMoreHitsInDoc = true;
 
-    BytesRef[] payloads = null;
+    private BytesRef[] payloads = null;
 
     private int endPos = -1;
 
-    public MockSpans(int[] doc, int[] start, int[] end) {
+    public void setGuarantees(SpanGuarantees guarantees) {
+        this.guarantees = guarantees;
+    }
+
+    public MockSpans(int[] doc, int[] start, int[] end, SpanGuarantees guarantees) {
+        super(guarantees);
         this.doc = doc;
         this.start = start;
         this.end = end;
         postings = new MockPostingsEnum();
         spans = new MyTermSpans(postings, new Term("test", "dummy"), 1);
+    }
+
+    public MockSpans(int[] doc, int[] start, int[] end) {
+        this(doc, start, end, SpanGuarantees.SORTED_UNIQUE);
     }
 
     @Override
@@ -182,6 +195,13 @@ public class MockSpans extends BLSpans {
         }
     }
 
+    private void setPayloadsMatchInfo(int[] aStart, int[] aEnd, MatchInfo[] matchInfo) {
+        this.payloads = new BytesRef[aEnd.length];
+        for (int i = 0; i < aEnd.length; i++) {
+            this.payloads[i] = matchInfo[i].serialize(aStart[i]);
+        }
+    }
+
     @Override
     public int nextDoc() throws IOException {
         if (noMoreDocs)
@@ -192,6 +212,7 @@ public class MockSpans extends BLSpans {
             noMoreDocs = true;
         else
             noMoreHitsInDoc = false;
+        currentHitIndex = -1;
         return docId;
     }
 
@@ -200,6 +221,7 @@ public class MockSpans extends BLSpans {
         if (noMoreHitsInDoc)
             throw new BlackLabRuntimeException("Called nextStartPosition() on hit-exhausted spans!");
         int startPos = spans.nextStartPosition();
+        currentHitIndex++;
         endPos = startPos == NO_MORE_POSITIONS ? NO_MORE_POSITIONS : postings.endOffset();
         if (startPos == NO_MORE_POSITIONS) {
             noMoreHitsInDoc = true;
@@ -219,6 +241,7 @@ public class MockSpans extends BLSpans {
             noMoreDocs = true;
         else
             noMoreHitsInDoc = false;
+        currentHitIndex = -1;
         return docId;
     }
 
@@ -233,8 +256,13 @@ public class MockSpans extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        // just ignore this here
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        // NOP
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return false;
     }
 
     public static MockSpans emptySpans() {
@@ -249,15 +277,21 @@ public class MockSpans extends BLSpans {
         return new MockSpans(doc, start, end);
     }
 
-    public static BLSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+    public static MockSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
         spans.setPayloadsInt(aStart, aEnd, aIsPrimary);
         return spans;
     }
 
-    public static BLSpans withRelationInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+    public static MockSpans withRelationInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
         spans.setPayloadsRelationsInt(aStart, aEnd, aIsPrimary);
+        return spans;
+    }
+
+    public static MockSpans withMatchInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, MatchInfo[] aMatchInfo) {
+        MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
+        spans.setPayloadsMatchInfo(aStart, aEnd, aMatchInfo);
         return spans;
     }
 
