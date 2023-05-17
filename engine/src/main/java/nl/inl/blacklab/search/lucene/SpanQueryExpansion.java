@@ -179,13 +179,8 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             BLSpans expanded = new SpansExpansionRaw(context.reader(), clauses.get(0).getField(), spansSource, direction, min, max);
 
             // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
-            BLSpanQuery q = (BLSpanQuery) weight.getQuery();
-            if (q != null && !q.guarantees().hitsStartPointSorted())
-                return BLSpans.ensureSorted(expanded);
-
-            return expanded;
+            return BLSpans.ensureSorted(expanded);
         }
-
     }
 
     @Override

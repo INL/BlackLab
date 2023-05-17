@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * if every hit is equal in length, if there may be duplicates, etc. This information
  * will help us optimize certain operations, such as sequence queries, in certain cases.
  */
-public abstract class BLSpanQuery extends SpanQuery {
+public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGiver {
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 
@@ -271,6 +271,7 @@ public abstract class BLSpanQuery extends SpanQuery {
         this.queryInfo = queryInfo;
     }
 
+    @Override
     public SpanGuarantees guarantees() {
         return this.guarantees;
     }

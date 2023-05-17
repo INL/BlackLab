@@ -19,12 +19,10 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -44,6 +42,7 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 import org.apache.lucene.util.PriorityQueue;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -164,9 +163,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         this.field = inner.getField();
         this.luceneField = clauses.length > 0 ? clauses[0].getRealField() : field;
 
-        List<SpanGuarantees> clauseGuarantees = Arrays.stream(clauses)
-                .map(cl -> cl.guarantees())
-                .collect(Collectors.toList());
+        List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(clauses);
         this.guarantees = createGuarantees(clauseGuarantees);
     }
 
@@ -437,8 +434,13 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             } else if (subSpans.size() == 1) {
                 //BL we need everything to be a BLSpans, or capturing (and optimizations) won't work properly
                 //   that's why we bypass ScoringWrapperSpans here.
-                return subSpans.get(0) instanceof BLSpans ? (BLSpans) subSpans.get(0)
-                        : new BLSpansWrapper(subSpans.get(0), guarantees());
+                Spans clause = subSpans.get(0);
+                if (clause instanceof BLSpans)
+                    return (BLSpans) clause;
+                else if (clause instanceof TermSpans)
+                    return BLSpans.wrapTermSpans((TermSpans)clause);
+                else
+                    throw new IllegalArgumentException("BLSpanOrQuery clause must be BLSpans or TermSpans");
                 //return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
             }
 

@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 
 /**
  * Base class for all our own Spans classes.
@@ -13,7 +14,7 @@ import org.apache.lucene.search.spans.Spans;
  * Note that Spans will iterate through a Lucene index segment in a single thread,
  * therefore Spans and subclasses don't need to be thread-safe.
  */
-public abstract class BLSpans extends Spans {
+public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
 
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 
@@ -59,6 +60,16 @@ public abstract class BLSpans extends Spans {
      */
     public static BLSpans ensureSorted(BLSpans spans) {
         return ensureSortedUnique(spans, false);
+    }
+
+    /**
+     * Wrap a TermSpans in a BLSpans object.
+     *
+     * @param clause the clause to wrap
+     * @return the wrapped clause
+     */
+    public static BLSpans wrapTermSpans(TermSpans clause) {
+        return new TermSpansWrapper(clause);
     }
 
     /**
@@ -148,7 +159,7 @@ public abstract class BLSpans extends Spans {
 
     /**
      * Advance the start position by calling nextStartPosition() repeatedly.
-     *
+     * <p>
      * Useful for twice-derived classes that don't have a more efficient way to advance.
      *
      * @param spans spans to advance
@@ -183,6 +194,7 @@ public abstract class BLSpans extends Spans {
         return null;
     }
 
+    @Override
     public SpanGuarantees guarantees() {
         // (Eventually guarantees may live in a separate object)
         return guarantees;

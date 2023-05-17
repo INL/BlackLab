@@ -83,6 +83,9 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         // If our clause matches, we match as well; we just reorder the matches.
+        indexInBucket = -2; // no bucket yet
+        curStart = -1;
+        curEnd = -1;
         return true;
     }
 

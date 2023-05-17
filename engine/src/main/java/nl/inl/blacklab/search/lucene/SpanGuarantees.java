@@ -1,5 +1,10 @@
 package nl.inl.blacklab.search.lucene;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.lucene.search.DocIdSetIterator;
 
 /**
@@ -195,13 +200,29 @@ public interface SpanGuarantees {
         }
     };
 
-    static <T extends DocIdSetIterator> SpanGuarantees of(DocIdSetIterator in) {
+    static <T extends DocIdSetIterator> SpanGuarantees from(DocIdSetIterator in) {
         if (in instanceof BLSpans)
             return ((BLSpans)in).guarantees();
         if (in instanceof SpanGuarantees)
             return (SpanGuarantees)in;
         else
             return NONE;
+    }
+
+    static <T extends SpanGuaranteeGiver> List<SpanGuarantees> from(T[] clauses) {
+        Stream<T> stream = Arrays.stream(clauses);
+        return from(stream);
+    }
+
+    static <T extends SpanGuaranteeGiver> List<SpanGuarantees> from(List<T> clauses) {
+        Stream<T> stream = clauses.stream();
+        return from(stream);
+    }
+
+    static <T extends SpanGuaranteeGiver> List<SpanGuarantees> from(Stream<T> stream) {
+        return stream
+                .map(T::guarantees)
+                .collect(Collectors.toList());
     }
 
     /**

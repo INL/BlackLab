@@ -189,9 +189,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             throw new IllegalArgumentException("ANDNOT query without clauses");
         checkBaseFieldName();
 
-        List<SpanGuarantees> clauseGuarantees = this.include.stream()
-                .map(BLSpanQuery::guarantees)
-                .collect(Collectors.toList());
+        List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(this.include);
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
     }
 

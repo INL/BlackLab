@@ -73,14 +73,14 @@ class SpansPositionFilter extends BLSpans {
      * @param rightAdjust how to adjust the right edge of the producer hits while
      *            matching
      */
-    public SpansPositionFilter(BLSpans producer, SpansInBucketsPerDocument filter, boolean filterFixedLength, Operation op,
-            boolean invert, int leftAdjust, int rightAdjust) {
+    public SpansPositionFilter(BLSpans producer, BLSpans filter, Operation op, boolean invert,
+            int leftAdjust, int rightAdjust) {
         super(SpanQueryPositionFilter.createGuarantees(producer.guarantees()));
         this.producer = producer; // Sort
         this.op = op;
         this.invert = invert;
-        this.filter = filter;
-        this.filterFixedLength = filterFixedLength;
+        this.filter = SpansInBucketsPerDocument.sorted(filter);
+        this.filterFixedLength = filter.guarantees().hitsAllSameLength();
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
         if (invert) {

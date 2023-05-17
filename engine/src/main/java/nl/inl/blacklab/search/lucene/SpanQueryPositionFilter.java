@@ -143,16 +143,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
                 // If it's a negative filter, all producer hits match.
                 return invert ? spansProd : null;
             }
-            boolean filterFixedLength = clauses.get(1).guarantees().hitsAllSameLength();
-            SpansInBucketsPerDocument filter;
-            if (clauses.get(1).guarantees().hitsStartPointSorted()) {
-                // Already start point sorted; no need to sort buckets again
-                filter = new SpansInBucketsPerDocument(spansFilter);
-            } else {
-                // Not sorted yet; sort buckets
-                filter = new SpansInBucketsPerDocumentSorted(spansFilter, true);
-            }
-            return new SpansPositionFilter(spansProd, filter, filterFixedLength, op, invert, leftAdjust, rightAdjust);
+            return new SpansPositionFilter(spansProd, spansFilter, op, invert, leftAdjust, rightAdjust);
         }
     }
 

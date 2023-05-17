@@ -33,7 +33,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -127,8 +127,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
             @Override
             public BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException {
-                Spans spans = weight.getSpans(ctx, requiredPostings);
-                return spans == null ? null : new BLSpansWrapper(spans, guarantees());
+                TermSpans spans = (TermSpans)weight.getSpans(ctx, requiredPostings);
+                return spans == null ? null : BLSpans.wrapTermSpans(spans);
             }
 
             @Override

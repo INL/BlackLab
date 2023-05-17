@@ -42,7 +42,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
      * Wrap the given {@link T}.
      */
     protected BLFilterDocsSpans(T in, SpanGuarantees guarantees) {
-        super(guarantees == null ? SpanGuarantees.of(in) : guarantees);
+        super(guarantees == null ? SpanGuarantees.from(in) : guarantees);
         this.in = Objects.requireNonNull(in);
     }
 
