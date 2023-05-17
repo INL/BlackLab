@@ -41,6 +41,11 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
      */
     protected ObjectArrayList<MatchInfo[]> matchInfoPerHit = null;
 
+    /**
+     * For each hit we fetched, store the active relation info, if any.
+     */
+    protected ObjectArrayList<MatchInfo> activeRelationPerHit = null;
+
     private HitQueryContext hitQueryContext;
 
     /** Is there match info (e.g. captured groups) for each hit that we need to store? */
@@ -55,12 +60,15 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
         long span = ((long)source.startPosition() << 32) | source.endPosition();
         startsEnds.add(span);
         if (doMatchInfo) {
-            // Store match information such as captured groups
+            // Store match information such as captured groups and active relation (if any)
             MatchInfo[] matchInfo = new MatchInfo[hitQueryContext.numberOfMatchInfos()];
             source.getMatchInfo(matchInfo);
             if (matchInfoPerHit == null)
                 matchInfoPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
             matchInfoPerHit.add(matchInfo);
+            if (activeRelationPerHit == null)
+                activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+            activeRelationPerHit.add(source.getRelationInfo());
         }
     }
 
@@ -155,10 +163,15 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     private int gatherHitsInternal() throws IOException {
         startsEnds.clear();
-        if (doMatchInfo)
+        if (doMatchInfo) {
             matchInfoPerHit.clear();
-        doMatchInfo = clauseCapturesMatchInfo && hitQueryContext != null
-                && hitQueryContext.numberOfMatchInfos() > 0;
+            activeRelationPerHit.clear();
+        }
+        doMatchInfo = clauseCapturesMatchInfo && hitQueryContext != null && hitQueryContext.numberOfMatchInfos() > 0;
+        if (doMatchInfo && matchInfoPerHit == null) {
+            matchInfoPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+            activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+        }
         gatherHits();
         return source.docID();
     }
@@ -175,13 +188,9 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public void setHitQueryContext(HitQueryContext context) {
+        clauseCapturesMatchInfo = hasMatchInfo();
         this.hitQueryContext = context;
-        int before = context.getMatchInfoRegisterNumber();
         source.setHitQueryContext(context);
-        if (context.getMatchInfoRegisterNumber() == before) {
-            // Our clause doesn't capture any match info; optimize
-            clauseCapturesMatchInfo = false;
-        }
     }
 
     @Override
@@ -203,6 +212,13 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     }
 
     @Override
+    public MatchInfo getRelationInfo(int indexInBucket) {
+        if (!doMatchInfo)
+            return null;
+        return activeRelationPerHit.get(indexInBucket);
+    }
+
+    @Override
     public SpanGuarantees guarantees() {
         return source.guarantees();
     }
@@ -218,7 +234,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public float positionsCost() {
-        return source.positionsCost();
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
     @Override

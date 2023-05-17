@@ -83,6 +83,10 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         return true;
     }
 
+    public MatchInfo getRelationInfo() {
+        return relationInfo;
+    }
+
     @Override
     public int nextDoc() throws IOException {
         startPos = endPos = NOT_YET_NEXTED;
@@ -170,10 +174,10 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             acc = relationInfo.isRoot();
             break;
         case FORWARD:
-            acc = relationInfo.getSourceStart() <= getRelationInfo().getTargetStart();
+            acc = relationInfo.getSourceStart() <= relationInfo.getTargetStart();
             break;
         case BACKWARD:
-            acc = relationInfo.getSourceStart() >= getRelationInfo().getTargetStart();
+            acc = relationInfo.getSourceStart() >= relationInfo.getTargetStart();
             break;
         case BOTH_DIRECTIONS:
             acc = true;
@@ -217,10 +221,6 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     }
 
     private final PayloadAndTermCollector collector = new PayloadAndTermCollector();
-
-    public MatchInfo getRelationInfo() {
-        return relationInfo;
-    }
 
     @Override
     public String toString() {

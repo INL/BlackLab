@@ -256,6 +256,16 @@ class SpansAnd extends BLSpans {
     }
 
     @Override
+    public MatchInfo getRelationInfo() {
+        for (int i = 0; i < subSpans.length; i++) {
+            MatchInfo info = subSpans[i].getRelationInfo(index[i]);
+            if (info != null)
+                return info;
+        }
+        return null;
+    }
+
+    @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         for (SpansInBuckets subSpan: subSpans) {
             subSpan.setHitQueryContext(context);

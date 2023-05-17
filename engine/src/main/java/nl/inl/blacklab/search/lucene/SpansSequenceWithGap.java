@@ -370,6 +370,12 @@ class SpansSequenceWithGap extends BLSpans {
     }
 
     @Override
+    public MatchInfo getRelationInfo() {
+        MatchInfo info = first.getRelationInfo();
+        return info == null ? second.getRelationInfo(indexCurrentSecondClauseMatch) : info;
+    }
+
+    @Override
     public int width() {
         return first.width() + second.width();
     }
@@ -383,7 +389,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return first.positionsCost() + second.positionsCost();
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
     @Override

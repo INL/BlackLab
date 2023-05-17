@@ -114,6 +114,20 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
      */
     public abstract boolean hasMatchInfo();
 
+    /**
+     * Get the "active" relation info.
+     * <p>
+     * A query that finds and combines several relations always has one
+     * active relation. This relation is used when we call rspan(),
+     * or if we combine the query with another relation query, e.g. using the
+     * &amp; operator.
+     *
+     * @return the relation info, or null if active relation available
+     */
+    public MatchInfo getRelationInfo(int indexInBucket) {
+        return null;
+    }
+
     public abstract TwoPhaseIterator asTwoPhaseIterator();
 
     public abstract long cost();

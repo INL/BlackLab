@@ -158,4 +158,14 @@ abstract class BLConjunctionSpans extends BLSpans {
     public boolean hasMatchInfo() {
         return Arrays.stream(subSpans).anyMatch(BLSpans::hasMatchInfo);
     }
+
+    @Override
+    public MatchInfo getRelationInfo() {
+        for (int i = 0; i < subSpans.length; i++) {
+            MatchInfo info = subSpans[i].getRelationInfo();
+            if (info != null)
+                return info;
+        }
+        return null;
+    }
 }

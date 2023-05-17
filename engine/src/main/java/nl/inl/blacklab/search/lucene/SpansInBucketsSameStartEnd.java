@@ -1,12 +1,12 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * Gather buckets where all hits have the same start and end position.
@@ -19,15 +19,34 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     protected final BLSpans source;
 
     /** Current start position */
-    protected int currentBucketStart = -1;
+    protected int currentStartPosition = -1;
 
     /** Current end position */
-    protected int currentBucketEnd = -1;
+    protected int currentEndPosition = -1;
 
-    /** Match infos for this start and end position */
-    private final List<MatchInfo[]> matchInfos = new ArrayList<>(LIST_INITIAL_CAPACITY);
+    /** How many hits with this start and end? */
+    protected int currentBucketSize = 0;
+
+    /**
+     * For each hit we fetched, store the match info (e.g. captured groups, relations),
+     * so we don't lose this information.
+     */
+    private ObjectArrayList<MatchInfo[]> matchInfos = null;
+
+    /**
+     * For each hit we fetched, store the active relation info, if any.
+     */
+    protected ObjectArrayList<MatchInfo> activeRelationPerHit = null;
 
     private HitQueryContext hitQueryContext;
+
+    /** Is there match info (e.g. captured groups) for each hit that we need to store? */
+    private boolean doMatchInfo;
+
+    /**
+     * Does our clause capture any match info? If not, we don't need to mess with those
+     */
+    private boolean clauseCapturesMatchInfo = true;
 
     /**
      * Construct SpansInBucketsSameStartEnd.
@@ -48,7 +67,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
         int docId = source.nextDoc();
         if (docId != NO_MORE_DOCS)
             source.nextStartPosition();
-        currentBucketStart = -1; // no bucket yet
+        currentStartPosition = -1; // no bucket yet
         return docId;
     }
 
@@ -84,17 +103,29 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
      * @return current doc id
      */
     protected int gatherHitsWithSameStartEnd() throws IOException {
-        matchInfos.clear();
-        currentBucketStart = source.startPosition();
-        currentBucketEnd = source.endPosition();
-        int sourceStart = currentBucketStart;
-        while (sourceStart != Spans.NO_MORE_POSITIONS && sourceStart == currentBucketStart &&
-                source.endPosition() == currentBucketEnd) {
-            int n = hitQueryContext == null ? 0 : hitQueryContext.numberOfMatchInfos();
-            MatchInfo[] matchInfo = new MatchInfo[n];
-            if (n > 0)
+        if (doMatchInfo) {
+            matchInfos.clear();
+            activeRelationPerHit.clear();
+        }
+        doMatchInfo = clauseCapturesMatchInfo && hitQueryContext != null && hitQueryContext.numberOfMatchInfos() > 0;
+        if (doMatchInfo && matchInfos == null) {
+            matchInfos = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+            activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+        }
+        currentStartPosition = source.startPosition();
+        currentEndPosition = source.endPosition();
+        currentBucketSize = 0;
+        int sourceStart = currentStartPosition;
+        while (sourceStart != Spans.NO_MORE_POSITIONS && sourceStart == currentStartPosition &&
+                source.endPosition() == currentEndPosition) {
+            if (doMatchInfo) {
+                int n = hitQueryContext == null ? 0 : hitQueryContext.numberOfMatchInfos();
+                MatchInfo[] matchInfo = new MatchInfo[n];
                 source.getMatchInfo(matchInfo);
-            matchInfos.add(matchInfo);
+                matchInfos.add(matchInfo);
+                activeRelationPerHit.add(source.getRelationInfo());
+            }
+            currentBucketSize++;
             sourceStart = source.nextStartPosition();
         }
         return source.docID();
@@ -108,7 +139,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
         int docId = source.advance(target);
         if (docId != NO_MORE_DOCS)
             source.nextStartPosition();
-        currentBucketStart = -1; // no bucket yet
+        currentStartPosition = -1; // no bucket yet
         return docId;
     }
 
@@ -119,28 +150,29 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
 
     @Override
     public int bucketSize() {
-        return matchInfos.size();
+        return currentBucketSize;
     }
 
     @Override
     public int startPosition(int indexInBucket) {
-        return currentBucketStart;
+        return currentStartPosition;
     }
 
     @Override
     public int endPosition(int indexInBucket) {
-        return currentBucketEnd;
+        return currentEndPosition;
     }
 
     @Override
     public void setHitQueryContext(HitQueryContext context) {
+        clauseCapturesMatchInfo = hasMatchInfo();
         this.hitQueryContext = context;
         source.setHitQueryContext(context);
     }
 
     @Override
     public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
-        if (matchInfos.isEmpty())
+        if (!doMatchInfo)
             return;
         MatchInfo[] thisMatchInfo = matchInfos.get(indexInBucket);
         if (thisMatchInfo != null) {
@@ -154,6 +186,11 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     @Override
     public boolean hasMatchInfo() {
         return source.hasMatchInfo();
+    }
+
+    @Override
+    public MatchInfo getRelationInfo(int indexInBucket) {
+        return doMatchInfo ? activeRelationPerHit.get(indexInBucket) : null;
     }
 
     @Override
@@ -173,7 +210,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
 
     @Override
     public float positionsCost() {
-        return source.positionsCost();
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
     @Override

@@ -35,6 +35,7 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
@@ -589,7 +590,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 if (name != null) {
                     // This is the external index, and this is an attribute name and value.
                     // Encode it as such.
-                    value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value,
+                    value = RelationUtil.tagAttributeIndexValue(name, value,
                             BlackLabIndex.IndexType.EXTERNAL_FILES);
                 } else {
                     // If name == null, value is the span name (external index format) or the

@@ -24,9 +24,9 @@ import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
@@ -264,24 +264,24 @@ public class TestSearches {
             List<String> targets = List.of("fox [] jumps", "dog []", "Force [] be");
             List<String> sources = List.of("[] The", "over [] the", "May [] the");
             List<String> none = Collections.emptyList();
-            String type = AnnotatedFieldNameUtil.tagFullRelationType("entity");
+            String type = RelationUtil.inlineTagFullType("entity");
 
-            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', _, 'full')"));
-            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', 'forward', 'full')"));
+            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', 'full')"));
+            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', 'full', 'forward')"));
             Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "'), 'full')"));
-            Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "', _, 'source'), 'full')"));
+            Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "', 'source'), 'full')"));
 
             Assert.assertEquals(targets, testIndex.findConc("rel('" + type + "')"));
-            Assert.assertEquals(targets, testIndex.findConc("rel('" + type + "', 'forward', 'target')"));
-            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', _, 'full'), 'target')"));
-            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', _, 'source'), 'target')"));
+            Assert.assertEquals(targets, testIndex.findConc("rel('" + type + "', 'target', 'forward')"));
+            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', 'full'), 'target')"));
+            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', 'source'), 'target')"));
 
-            Assert.assertEquals(sources, testIndex.findConc("rel('" + type + "', _, 'source')"));
-            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', _, 'full'), 'source')"));
-            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', _, 'target'), 'source')"));
+            Assert.assertEquals(sources, testIndex.findConc("rel('" + type + "', 'source')"));
+            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', 'full'), 'source')"));
+            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', 'target'), 'source')"));
 
-            Assert.assertEquals(none, testIndex.findConc("rel('" + type + "', 'backward')"));
-            Assert.assertEquals(none, testIndex.findConc("rel('" + type + "', 'root')"));
+            Assert.assertEquals(none, testIndex.findConc("rel('" + type + "', _, 'backward')"));
+            Assert.assertEquals(none, testIndex.findConc("rel('" + type + "', _, 'root')"));
         }
     }
 

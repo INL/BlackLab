@@ -1,3 +1,6 @@
+# CoNLL-U format with dependency relations
+# example data: https://github.com/UniversalDependencies/UD_Dutch-LassySmall/
+
 # For displaying in user interface (optional)
 displayName: CoNLL-U
 

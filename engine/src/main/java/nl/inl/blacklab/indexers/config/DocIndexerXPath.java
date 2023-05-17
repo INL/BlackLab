@@ -45,6 +45,7 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
@@ -506,7 +507,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                 processAnnotation(annotation, tokenPositions, spanEndPos,
                                 (annot, values) -> attributes.put(annot.getName(), values));
                             }
-                            String valueToIndex = AnnotatedFieldNameUtil.relationIndexTermMulti(spanName, attributes);
+                            String valueToIndex = RelationUtil.indexTermMulti(spanName, attributes);
                             annotation(null, valueToIndex, 1, tokenPositions, spanEndPos);
                         }
                     } else {

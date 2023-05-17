@@ -9,7 +9,7 @@ import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**
  * Position information about a relation's source and target
@@ -39,14 +39,18 @@ public class MatchInfo implements Comparable<MatchInfo> {
      * Different spans we can return for a relation
      */
     public enum SpanMode {
-        // Only return root relations (relations without a source)
+        // Return the source span
         SOURCE("source"),
 
-        // Only return relations where target occurs after source
+        // Return the target span
         TARGET("target"),
 
-        // Only return relations where target occurs before source
-        FULL_SPAN("full");
+        // Return a span covering both source and target
+        FULL_SPAN("full"),
+
+        // Return a span covering source and target of all matched relations
+        // (only valid for rspan(), not rel())
+        ALL_SPANS("all");
 
         private final String code;
 
@@ -93,11 +97,26 @@ public class MatchInfo implements Comparable<MatchInfo> {
      */
     private static final int DEFAULT_LENGTH = 0;
 
+    /**
+     * Default length for the source and target if {@link #FLAG_DEFAULT_LENGTH_ALT} is set.
+     *
+     * See there for details.
+     */
+    private static final int DEFAULT_LENGTH_ALT = 1;
+
     /** Was the relationship indexed at the target instead of the source? */
     public static final byte FLAG_INDEXED_AT_TARGET = 0x01;
 
     /** Is it a root relationship, that only has a target, no source? */
     public static final byte FLAG_ONLY_HAS_TARGET = 0x02;
+
+    /** If set, use DEFAULT_LENGTH_ALT (1) as the default length
+     * (dependency relations) instead of 0 (tags).
+     *
+     * Doing it this way saves us a byte in the payload for dependency relations, as
+     * we don't have to store two 1s, just one flags value.
+     */
+    public static final byte FLAG_DEFAULT_LENGTH_ALT = 0x04;
 
     /** Is this just a span, not an actual relation? (capture groups) */
     private boolean span = false;
@@ -129,6 +148,10 @@ public class MatchInfo implements Comparable<MatchInfo> {
     public MatchInfo(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
         this.fullRelationType = fullRelationType;
         this.onlyHasTarget = onlyHasTarget;
+        if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd)) {
+            throw new IllegalArgumentException("By convention, root relations should have a 'fake source' that coincides with their target " +
+                    "(values here are SRC " + sourceStart + ", " + sourceEnd + " - TGT " + targetStart + ", " + targetEnd + ").");
+        }
         this.sourceStart = sourceStart;
         this.sourceEnd = sourceEnd;
         this.targetStart = targetStart;
@@ -143,6 +166,11 @@ public class MatchInfo implements Comparable<MatchInfo> {
             relOtherStart = dataInput.readZInt();
             if (!dataInput.eof()) {
                 flags = dataInput.readByte();
+                if ((flags & FLAG_DEFAULT_LENGTH_ALT) != 0) {
+                    // Use alternate default length
+                    thisLength = DEFAULT_LENGTH_ALT;
+                    otherLength = DEFAULT_LENGTH_ALT;
+                }
                 if (!dataInput.eof()) {
                     thisLength = dataInput.readVInt();
                     if (!dataInput.eof()) {
@@ -189,8 +217,6 @@ public class MatchInfo implements Comparable<MatchInfo> {
     public void serialize(int currentTokenPosition, DataOutput dataOutput) throws IOException {
         // Determine values to write from our source and target, and the position we're being indexed at
         boolean indexedAtTarget = targetStart == currentTokenPosition;
-        byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
-                        | (indexedAtTarget ? FLAG_INDEXED_AT_TARGET : 0));
         int relOtherStart, thisLength, otherLength;
         if (indexedAtTarget) {
             // this == target, other == source
@@ -204,9 +230,17 @@ public class MatchInfo implements Comparable<MatchInfo> {
             otherLength = targetEnd - targetStart;
         }
 
+        // Which default length should we use? (can save 1 byte per relation)
+        boolean useAlternateDefaultLength = thisLength == DEFAULT_LENGTH_ALT && otherLength == DEFAULT_LENGTH_ALT;
+        int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
+
+        byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
+                | (indexedAtTarget ? FLAG_INDEXED_AT_TARGET : 0)
+                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0));
+
         // Only write as much as we need (omitting default values from the end)
-        boolean writeOtherLength = otherLength != DEFAULT_LENGTH;
-        boolean writeThisLength = writeOtherLength || thisLength != DEFAULT_LENGTH;
+        boolean writeOtherLength = otherLength != defaultLength;
+        boolean writeThisLength = writeOtherLength || thisLength != defaultLength;
         boolean writeFlags = writeThisLength || flags != DEFAULT_FLAGS;
         boolean writeRelOtherStart = writeFlags || relOtherStart != DEFAULT_REL_OTHER_START;
         if (writeRelOtherStart)
@@ -275,6 +309,8 @@ public class MatchInfo implements Comparable<MatchInfo> {
             return getTargetStart();
         case FULL_SPAN:
             return getFullSpanStart();
+        case ALL_SPANS:
+            throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
             throw new IllegalArgumentException("Unknown mode: " + mode);
         }
@@ -288,6 +324,8 @@ public class MatchInfo implements Comparable<MatchInfo> {
             return getTargetEnd();
         case FULL_SPAN:
             return getFullSpanEnd();
+        case ALL_SPANS:
+            throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
             throw new IllegalArgumentException("Unknown mode: " + mode);
         }
@@ -315,7 +353,7 @@ public class MatchInfo implements Comparable<MatchInfo> {
      * @param term indexed term
      */
     public void setRelationTerm(String term) {
-        this.fullRelationType = AnnotatedFieldNameUtil.fullRelationTypeFromIndexedTerm(term);
+        this.fullRelationType = RelationUtil.fullTypeFromIndexedTerm(term);
     }
 
     /**

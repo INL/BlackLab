@@ -150,14 +150,21 @@ Find relations by type and direction.
 
 `spanMode` can take the values:
 - `"source"` (span becomes the source of the relation)
-- `"target"` (span becomes the target of the relation - this is how relations start)
+- `"target"` (span becomes the target of the relation - this is the default value)
 - `"full"` (span becomes the full span of the relation, including source and target)
 
 `direction` can take the values:
 - `"root"` (only root relations)
-- `"forward"` (only relations pointing forward in the document)
-- `"backward"` (only relations pointing backward in the document)
-- `"both"` (the default)
+- `"forward"` (only relations pointing forward in the document - this includes root relations)
+- `"backward"` (only relations pointing backward in the document - this includes root relations)
+- `"both"` (forward, backward and root relations - this is the default value)
+
+By default `rel(...)` returns spans that match the target of the relation. So e.g.
+`rel('nsubj')` will find subjects, and `rel('nsubj'), 'source')` will find words
+that have a subject, and `rel('nsubj'), 'full')` will find spans that include both
+the source and target.
+
+NOTE: there is currently no way to filter out root relations. Should we add this?
 
 #### rspan
 
@@ -166,14 +173,13 @@ We can also change the spanMode of the spans returned by `rel(...)` according to
     rspan(relation_matches, spanMode = "full", relationNumber = 1)
 
 This will return the same relation matches, but with the span start and end set 
-according to the value of `spanMode`.
+according to the value of `spanMode` (see above). The default is `full`, i.e. a span
+covering both the source and target of the relation.
 
-By default `rel(...)` returns spans that match the target of the relation. So e.g.
-`rel('nsubj')` will find subjects, and `rel('nsubj'), _, 'source')` will find words
-that have a subject, and `rel('nsubj'), _, 'full')` will find spans that include both
-the source and target.
+NOTE: for `rspan`, there is a special extra spanMode `"all"`, that will return a span covering
+the sources and targets of all relations matched.
 
-**TODO:** `relationNumber` can be used to select a specific relation if multiple relations have been combined using `&`. Relations are numbered in the order they appear in the query.
+**NOT YET IMPLEMENTED:** `relationNumber` could be used to select a specific relation if multiple relations have been matched in a query. Relations are numbered in the order they appear in the query. (might be a problem though because match info numbers may not always match query order)
 
 ### rtype
 
@@ -228,7 +234,7 @@ Find sentences with happy sentiment:
 
     <s sentiment='happy' confidence='10' />
     rel(rtype('__tag', 's', list('sentiment', 'happy', 'confidence', '10')))
-    rel('__tag::s\u0001confidence\u000210\u0001sentiment\u0002happy'))
+    rel('__tag::s\u0001confidence\u000210\u0001sentiment\u0002happy\u0001'))
 
 ### Extract source or target
 
@@ -259,11 +265,34 @@ Find words that have `man` as their object and `dog` as their subject (i.e. find
 Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
 
     rspan(
-        rel('dep::subject', 'source') & rspan( rel('dep::object') & 'man' , 'source'),
+        rel('dep::subject', 'source') & rspan( rel('dep::object') & 'man' , 'source' ),
         'target'
     )
 
 Note in the above that when combining two relations matches with `&`, a new relations match is created that stores the information for both relations. The third `rspan` parameter can be used to select the relation, but the default is the first of the two relations combined.
+
+
+### Examples Lassy Small
+
+Find `case` and `nmod` relations with same source (returns that source):
+
+    rel('dep::case', 'source') & rel('dep::nmod', 'source')
+
+Same, but return target for `case`:
+
+    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'target')
+
+Same, but return the full span for `case`:
+
+    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'full')
+
+Same, but return the full span covering both relations:
+
+    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'all')
+
+Match target of one relation to source of another:
+
+    rspan(rel('dep::nmod') & rel('dep::acl:relcl', 'source'), 'all')
 
 
 ### Capturing parts
@@ -297,11 +326,11 @@ A potential downside of is that this could greatly increase the number of unique
 
 For example, to encode a tag `<s sentiment="happy" confidence="10" />` into a single term we can index this term in the `_relation` attribute:
 
-    __tag::s\u0001confidence\u000210\u0001sentiment\u0002happy
+    __tag::s\u0001confidence\u000210\u0001sentiment\u0002happy\u0001
 
-So the "full relation type" here is `__tag::s` (consisting of relation class `__tag` and relation type `s`), from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a fast prefix query.
+So the "full relation type" here is `__tag::s` (consisting of relation class `__tag` and relation type `s`), from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a fast prefix query. The full relation type is always followed by a separator character `\u0001`.
 
-After that, the attributes follow, in alphabetical order, each attribute name preceded by `\u0001` and each value preceded by `\u0002`. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
+After that, the attributes follow, in alphabetical order, with each attribute name followed by `\u0002` and each attribute value followed by `\u0001` again. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
 
 #### Source and target
 
@@ -311,13 +340,13 @@ Instead, we'll opt to store a 0-length source and target for the tag. This sourc
 
 ### rtype function
 
-Because we have XML-style syntax for spans, we likely won't need it, but just in case, a utility function  `rtspan` could be provided, so that:
+Because we have XML-style syntax for spans, we likely won't need it, but just in case, a utility function  `rtype` could be provided, so that:
 
-    rtype('__tag', s', list('sentiment', 'happy', 'confidence', '10'))
+    rtype('__tag', 's', list('sentiment', 'happy', 'confidence', '10'))
 
 would return the regex:
 
-    __tag::s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
+    __tag::s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*\u0001
 
 
 ### Better keep track of spans hierarchy?
@@ -363,13 +392,15 @@ The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an imple
 The payload for a relation consists of the following fields:
 
 * `relOtherStart: VInt`: relative position of the (start of the) other end. This should always be non-negative if we index relations at the first position in the document. Default: `1`.
-* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). The other bits are reserved for future use and must not be set. Default: `0`.
-* `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0`
-* `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0`
+* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. The other bits are reserved for future use and must not be set. Default: `0`.
+* `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
+* `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
 
 Fields may be ommitted from the end if they have the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 0, otherLength: 0 }`.
 
-In the future, we likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
+As another example, the payload `0x81; 0x04` would mean `{ relOtherStart: 1, flags: 4, thisLength: 1, otherLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`. 
+
+In the future, we will likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
 
 ### Calculate Lucene span from relation term
 
