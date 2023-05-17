@@ -383,7 +383,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return first.positionsCost() + second.positionsCost();
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
     @Override

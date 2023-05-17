@@ -141,9 +141,4 @@ class SpansSequenceSimple extends BLConjunctionSpans {
         return subSpans[0].width() + subSpans[1].width();
     }
 
-    @Override
-    public float positionsCost() {
-        return subSpans[0].positionsCost() + subSpans[1].positionsCost();
-    }
-
 }
