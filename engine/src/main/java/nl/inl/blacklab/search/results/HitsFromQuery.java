@@ -92,11 +92,6 @@ public class HitsFromQuery extends HitsMutable {
                 if (traceOptimization)
                     logger.debug("Query after rewrite(): " + optimizedQuery);
 
-                // NOTE: we used to call ensureSortedUnique() here, but we cannot
-                // determine uniqueness without looking at the matchInfo too. Instead
-                // we'll do it in SpansReader, where we already have access to the matchInfo.
-                optimizedQuery = BLSpanQuery.ensureSorted(optimizedQuery);
-
                 // Restore previous FI match threshold
                 if (searchSettings.fiMatchFactor() != -1) {
                     ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);

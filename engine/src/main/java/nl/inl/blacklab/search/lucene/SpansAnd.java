@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.search.ConjunctionDISI;
@@ -39,6 +40,11 @@ class SpansAnd extends BLSpans {
      * @param second second clause
      */
     public SpansAnd(BLSpans first, BLSpans second) {
+        super(SpanQueryAnd.createGuarantees(List.of(first.guarantees(), second.guarantees()), false));
+        if (!first.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("First clause is not start-point sorted");
+        if (!second.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Second clause is not start-point sorted");
         subSpans[0] = new SpansInBucketsSameStartEnd(first);
         subSpans[1] = new SpansInBucketsSameStartEnd(second);
         this.conjunction = ConjunctionDISI.intersectIterators(List.of(subSpans[0], subSpans[1]));
@@ -239,9 +245,14 @@ class SpansAnd extends BLSpans {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        subSpans[0].getMatchInfo(index[0], relationInfo);
-        subSpans[1].getMatchInfo(index[1], relationInfo);
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        subSpans[0].getMatchInfo(index[0], matchInfo);
+        subSpans[1].getMatchInfo(index[1], matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return Arrays.stream(subSpans).anyMatch(SpansInBuckets::hasMatchInfo);
     }
 
     @Override

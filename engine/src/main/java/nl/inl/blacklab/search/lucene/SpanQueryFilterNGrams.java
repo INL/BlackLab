@@ -17,6 +17,58 @@ import org.apache.lucene.search.ScoreMode;
  */
 public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, int min, int max) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                return min == max;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return min;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return max;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                // OPT: There are some very specific situations in which we can say that the start points are sorted,
+                //   (e.g. probably when op == CONTAINING_AT_START && clause.hitsStartPointSorted())
+                //   but for now we'll just say that they are not.
+                return false;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEnd() {
+                return clause.hitsHaveUniqueStartEnd() && clause.hitsLengthMax() >= min;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEndAndInfo() {
+                return clause.hitsHaveUniqueStartEndAndInfo() && clause.hitsLengthMax() >= min;
+            }
+        };
+    }
+
     /** How to expand the hits */
     final SpanQueryPositionFilter.Operation op;
 
@@ -43,6 +95,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min, max cannot be negative");
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
+        this.guarantees = createGuarantees(clause.guarantees(), min, max);
     }
 
     @Override
@@ -151,49 +204,6 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     public String toString(String field) {
         return "FILTERNGRAMS(" + clauses.get(0) + ", " + op + ", " + min + ", " + inf(max)
                 + ")";
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return min == max;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return min;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return max;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return hitsAllSameLength();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        // OPT: There are some very specific situations in which we can say that the start points are sorted,
-        //   (e.g. probably when op == CONTAINING_AT_START && clause.hitsStartPointSorted())
-        //   but for now we'll just say that they are not.
-        return false;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return min == max;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return min == max;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return clauses.get(0).hitsAreUnique() && clauses.get(0).hitsLengthMax() >= min;
     }
 
     @Override

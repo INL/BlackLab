@@ -52,6 +52,10 @@ import nl.inl.util.StringUtil;
 public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         extends BLSpanQuery {
 
+    public static SpanGuarantees createGuarantees() {
+        return SpanGuarantees.TERM;
+    }
+
     SpanMultiTermQueryWrapper<Q> query;
 
     Term term;
@@ -68,6 +72,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             throw BlackLabRuntimeException.wrap(e);
         }
         this.query = new SpanMultiTermQueryWrapper<>(query);
+        this.guarantees = createGuarantees();
     }
 
     @Override
@@ -130,46 +135,6 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
                 return false;
         } else if (!query.equals(other.query))
             return false;
-        return true;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return 1;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return 1;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
         return true;
     }
 

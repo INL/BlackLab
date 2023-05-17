@@ -22,7 +22,12 @@ class SpansAndSimple extends BLConjunctionSpans {
      * @param second second clause
      */
     public SpansAndSimple(BLSpans first, BLSpans second) {
-        super(List.of(first, second));
+        super(List.of(first, second), SpanQueryAnd.createGuarantees(List.of(first.guarantees(), second.guarantees()), false));
+
+        if (!first.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("First clause is not start point sorted!");
+        if (!second.guarantees().hitsStartPointSorted())
+            throw new IllegalArgumentException("Second clause is not start point sorted!");
     }
 
     @Override
@@ -93,7 +98,7 @@ class SpansAndSimple extends BLConjunctionSpans {
                 catchUpMatchEnd(laggingSpans);
             } else {
                 // Both match
-                if (leftStart == NO_MORE_POSITIONS || rightStart == NO_MORE_POSITIONS) {
+                if (leftStart == NO_MORE_POSITIONS) {
                     oneExhaustedInCurrentDoc = true;
                     return NO_MORE_POSITIONS;
                 }

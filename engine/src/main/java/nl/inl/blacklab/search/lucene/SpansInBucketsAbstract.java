@@ -198,6 +198,16 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     }
 
     @Override
+    public boolean hasMatchInfo() {
+        return source.hasMatchInfo();
+    }
+
+    @Override
+    public SpanGuarantees guarantees() {
+        return source.guarantees();
+    }
+
+    @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
         return getTwoPhaseIterator(source);
     }

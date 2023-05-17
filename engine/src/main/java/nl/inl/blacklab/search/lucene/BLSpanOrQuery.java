@@ -42,6 +42,7 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 import org.apache.lucene.util.PriorityQueue;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -54,6 +55,86 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * Matches the union of its clauses.
  */
 public final class BLSpanOrQuery extends BLSpanQuery {
+
+    public static SpanGuarantees createGuarantees(List<SpanGuarantees> clauses) {
+        return new SpanGuaranteesAdapter() {
+
+            /**
+             * If we know all our hits have the same length, this will be that length. If
+             * not, or if we don't know, this will be -1.
+             */
+            int fixedHitLength = -1;
+
+            @Override
+            public boolean hitsAllSameLength() {
+                if (fixedHitLength >= 0)
+                    return true;
+                if (clauses.isEmpty())
+                    return true;
+                int l = clauses.get(0).hitsLengthMin();
+                for (SpanGuarantees clause: clauses) {
+                    if (!clause.hitsAllSameLength() || clause.hitsLengthMin() != l)
+                        return false;
+                }
+                fixedHitLength = l; // save for next time
+                return true;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                if (fixedHitLength >= 0)
+                    return fixedHitLength;
+                int n = Integer.MAX_VALUE;
+                for (SpanGuarantees cl: clauses) {
+                    n = Math.min(n, cl.hitsLengthMin());
+                }
+                return n == Integer.MAX_VALUE ? 0 : n;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                if (fixedHitLength >= 0)
+                    return fixedHitLength;
+                int n = 0;
+                for (SpanGuarantees cl : clauses) {
+                    int l = cl.hitsLengthMax();
+                    n = Math.max(n, l);
+                    if (n == Integer.MAX_VALUE)
+                        return n; // infinite
+                }
+                return n;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                // Our way of merging guarantees this
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                // Cannot guarantee because we're merging from different sources.
+                return false;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                // Cannot guarantee because we're merging from different sources.
+                return false;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEnd() {
+                // Cannot guarantee because we're merging from different sources.
+                return false;
+            }
+        };
+    }
 
     final SpanOrQuery inner;
 
@@ -81,6 +162,9 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         inner = new SpanOrQuery(clauses);
         this.field = inner.getField();
         this.luceneField = clauses.length > 0 ? clauses[0].getRealField() : field;
+
+        List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(clauses);
+        this.guarantees = createGuarantees(clauseGuarantees);
     }
 
     static BLSpanOrQuery from(QueryInfo queryInfo, SpanOrQuery in) {
@@ -160,17 +244,19 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 // Replace the child, incorporating its children into this OR operation.
                 for (SpanQuery cl : ((BLSpanOrQuery) rewritten).getClauses()) {
                     BLSpanQuery clause = (BLSpanQuery) cl;
-                    if (!clause.hitsAllSameLength() || clause.hitsLengthMax() != 1)
+                    SpanGuarantees g = clause.guarantees();
+                    if (!g.hitsAllSameLength() || g.hitsLengthMax() != 1)
                         allClausesSingleToken = false;
-                    if (!clause.isSingleTokenNot())
+                    if (!g.isSingleTokenNot())
                         onlyNotClauses = false;
                     rewrittenCl.add(clause);
                 }
                 anyRewritten = true;
             } else {
-                if (!rewritten.hitsAllSameLength() || rewritten.hitsLengthMax() != 1)
+                SpanGuarantees g = rewritten.guarantees();
+                if (!g.hitsAllSameLength() || g.hitsLengthMax() != 1)
                     allClausesSingleToken = false;
-                if (!rewritten.isSingleTokenNot())
+                if (!g.isSingleTokenNot())
                     onlyNotClauses = false;
                 // Just add it.
                 rewrittenCl.add(rewritten);
@@ -252,79 +338,6 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         result.setHitsAreFixedLength(fixedHitLength);
         result.setClausesAreSimpleTermsInSameAnnotation(clausesAreSimpleTermsInSameAnnotation);
         return result;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        if (fixedHitLength >= 0)
-            return true;
-        if (getClauses().length == 0) {
-            return true;
-        }
-        int l = ((BLSpanQuery) getClauses()[0]).hitsLengthMin();
-        for (SpanQuery cl : getClauses()) {
-            BLSpanQuery clause = (BLSpanQuery) cl;
-            if (!clause.hitsAllSameLength() || clause.hitsLengthMin() != l)
-                return false;
-        }
-        fixedHitLength = l; // save for next time
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        if (fixedHitLength >= 0)
-            return fixedHitLength;
-        int n = Integer.MAX_VALUE;
-        for (SpanQuery cl : getClauses()) {
-            BLSpanQuery clause = (BLSpanQuery) cl;
-            n = Math.min(n, clause.hitsLengthMin());
-        }
-        return n == Integer.MAX_VALUE ? 0 : n;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        if (fixedHitLength >= 0)
-            return fixedHitLength;
-        int n = 0;
-        for (SpanQuery cl : getClauses()) {
-            BLSpanQuery clause = (BLSpanQuery) cl;
-            int l = clause.hitsLengthMax();
-            n = Math.max(n, l);
-            if (n == Integer.MAX_VALUE)
-                return n; // infinite
-        }
-        return n;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return hitsAllSameLength();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        // Our way of merging guarantees this
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        // Cannot guarantee because we're merging from different sources.
-        return false;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        // Cannot guarantee because we're merging from different sources.
-        return false;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        // Cannot guarantee because we're merging from different sources.
-        return false;
     }
 
     @Override
@@ -421,8 +434,13 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             } else if (subSpans.size() == 1) {
                 //BL we need everything to be a BLSpans, or capturing (and optimizations) won't work properly
                 //   that's why we bypass ScoringWrapperSpans here.
-                return subSpans.get(0) instanceof BLSpans ? (BLSpans) subSpans.get(0)
-                        : new BLSpansWrapper(subSpans.get(0));
+                Spans clause = subSpans.get(0);
+                if (clause instanceof BLSpans)
+                    return (BLSpans) clause;
+                else if (clause instanceof TermSpans)
+                    return BLSpans.wrapTermSpans((TermSpans)clause);
+                else
+                    throw new IllegalArgumentException("BLSpanOrQuery clause must be BLSpans or TermSpans");
                 //return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
             }
 
@@ -643,10 +661,20 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
 
                 @Override
-                public void getMatchInfo(MatchInfo[] relationInfo) {
+                public void getMatchInfo(MatchInfo[] matchInfo) {
                     if (!childClausesCaptureMatchInfo)
                         return;
-                    ((BLSpans) topPositionSpans).getMatchInfo(relationInfo);
+                    ((BLSpans) topPositionSpans).getMatchInfo(matchInfo);
+                }
+
+                @Override
+                public boolean hasMatchInfo() {
+                    return subSpans.stream().anyMatch(s -> ((BLSpans) s).hasMatchInfo());
+                }
+
+                @Override
+                public SpanGuarantees guarantees() {
+                    return BLSpanOrQuery.this.guarantees();
                 }
             };
         }
@@ -672,7 +700,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             states.add(frag.getStartingState());
 //			dangling.addAll(frag.getDanglingArrows());
         }
-        NfaState orAcyclic = NfaState.or(false, states, hitsAllSameLength());
+        NfaState orAcyclic = NfaState.or(false, states, guarantees().hitsAllSameLength());
         return new Nfa(orAcyclic, List.of(orAcyclic));
     }
 
@@ -686,7 +714,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      */
     protected boolean getNfaTokenStateTerms(Set<String> terms) {
         boolean canBeTokenState = false;
-        if (hitsAllSameLength() && hitsLengthMax() == 1) {
+        if (guarantees().hitsAllSameLength() && guarantees().hitsLengthMax() == 1) {
             canBeTokenState = true;
             if (terms == null && clausesAreSimpleTermsInSameAnnotation) {
                 // We know all our clauses are simple terms, and we

@@ -69,7 +69,7 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
 
     public SpansFilterNGramsRaw(LeafReader reader, String fieldName, BLSpans clause,
             SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
-        super(clause);
+        super(clause, SpanQueryFilterNGrams.createGuarantees(clause.guarantees(), min, max));
         if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT
                 && op != SpanQueryPositionFilter.Operation.MATCHES) {
             // We need to know document length to properly do expansion to the right
@@ -337,13 +337,6 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
     @Override
     public void passHitQueryContextToClauses(HitQueryContext context) {
         in.setHitQueryContext(context);
-    }
-
-    @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
-        if (!childClausesCaptureMatchInfo)
-            return;
-        in.getMatchInfo(relationInfo);
     }
 
     @Override

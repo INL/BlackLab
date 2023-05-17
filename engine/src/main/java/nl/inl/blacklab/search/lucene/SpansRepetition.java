@@ -57,7 +57,8 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
      */
     public SpansRepetition(BLSpans source, int min, int max) {
         // Find all consecutive matches in this Spans
-        super(new SpansInBucketsPerDocumentWithStartpointIndex(source));
+        super(new SpansInBucketsPerDocumentWithStartpointIndex(source),
+                SpanQueryRepetition.createGuarantees(source.guarantees(), min, max));
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
@@ -223,8 +224,13 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] relationInfo) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         // TODO: this uses the first match for match info, but maybe we want something else?
-        in.getMatchInfo(matchStartIndex, relationInfo);
+        in.getMatchInfo(matchStartIndex, matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return in.hasMatchInfo();
     }
 }

@@ -36,7 +36,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
     /**
      * Construct SpanQueryCaptureGroup object.
      * 
-     * @param query the query to determine edges from
+     * @param query the query to capture a group from
      * @param name captured group name
      * @param leftAdjust how to adjust the captured group's start position
      * @param rightAdjust how to adjust the captured group's end position
@@ -46,6 +46,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
         this.name = name;
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
+        this.guarantees = query.guarantees();
     }
 
     @Override
@@ -109,62 +110,17 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
     }
 
     @Override
-    public boolean hitsAllSameLength() {
-        return clauses.get(0).hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return clauses.get(0).hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return clauses.get(0).hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return clauses.get(0).hitsStartPointSorted();
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return clauses.get(0).hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return clauses.get(0).hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return clauses.get(0).hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return clauses.get(0).hitsAreUnique();
-    }
-
-    @Override
-    public boolean hitsCanOverlap() {
-        return clauses.get(0).hitsCanOverlap();
-    }
-
-    @Override
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        return clause.hitsAllSameLength();
+        return clause.guarantees().hitsAllSameLength();
     }
 
     @Override
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        if (!clause.hitsAllSameLength())
+        if (!clause.guarantees().hitsAllSameLength())
             throw new IllegalArgumentException("Can only internalize fixed-length clause!");
         // Check how to adjust the capture group edges after internalization
         int nla = leftAdjust, nra = rightAdjust;
-        int clauseLength = clause.hitsLengthMin();
+        int clauseLength = clause.guarantees().hitsLengthMin();
         if (onTheRight)
             nra -= clauseLength;
         else

@@ -34,6 +34,10 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
 
+    public static SpanGuarantees createGuarantees() {
+        return SpanGuarantees.SORTED;
+    }
+
     final BLSpanTermQuery clause;
 
     private final String tagName;
@@ -51,6 +55,7 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
         this.startTagFieldName = startTagFieldName;
         this.clause = new BLSpanTermQuery(queryInfo, new Term(startTagFieldName, tagName));
         this.attr = attr != null && attr.isEmpty() ? null : attr;
+        this.guarantees = createGuarantees();
     }
 
     @Override
@@ -197,46 +202,6 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
 
     public String getElementName() {
         return tagName;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return false;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return 0;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return Integer.MAX_VALUE;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return false;
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return false;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
     }
 
     @Override
