@@ -73,8 +73,8 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
     }
 
     /**
-     * Should we ask our clauses for match info? If the clauses don't capture
-     * any match info, this will be set to false to improve performance.
+     * For efficiency while matching, this will store the result of hasMatchInfo().
+     * Only valid after setHitQueryContext() has been called.
      */
     protected boolean childClausesCaptureMatchInfo = true;
 
@@ -107,12 +107,8 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * @param context the hit query context, that e.g. keeps track of captured groups
      */
     public final void setHitQueryContext(HitQueryContext context) {
-        int before = context.getMatchInfoRegisterNumber();
+        childClausesCaptureMatchInfo = hasMatchInfo();
         passHitQueryContextToClauses(context);
-        if (context.getMatchInfoRegisterNumber() == before) {
-            // Our clauses don't capture any match info; optimize
-            childClausesCaptureMatchInfo = false;
-        }
     }
 
     /**
