@@ -180,6 +180,11 @@ class SpansInBucketsPerStartPoint extends SpansInBuckets {
     }
 
     @Override
+    public boolean hasMatchInfo() {
+        return source.hasMatchInfo();
+    }
+
+    @Override
     public long cost() {
         return source.cost();
     }

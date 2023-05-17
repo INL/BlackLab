@@ -41,7 +41,7 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
 
             @Override
             public boolean hitsHaveUniqueStartEnd() {
-                return !in.childClausesCaptureMatchInfo;
+                return !in.hasMatchInfo();
             }
         });
         // Validate clause guarantees

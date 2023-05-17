@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.search.ConjunctionDISI;
@@ -247,6 +248,11 @@ class SpansAnd extends BLSpans {
     public void getMatchInfo(MatchInfo[] matchInfo) {
         subSpans[0].getMatchInfo(index[0], matchInfo);
         subSpans[1].getMatchInfo(index[1], matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return Arrays.stream(subSpans).anyMatch(SpansInBuckets::hasMatchInfo);
     }
 
     @Override

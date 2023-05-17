@@ -18,6 +18,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -151,5 +152,10 @@ abstract class BLConjunctionSpans extends BLSpans {
         for (BLSpans subSpan : subSpans) {
             subSpan.getMatchInfo(matchInfo);
         }
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return Arrays.stream(subSpans).anyMatch(BLSpans::hasMatchInfo);
     }
 }

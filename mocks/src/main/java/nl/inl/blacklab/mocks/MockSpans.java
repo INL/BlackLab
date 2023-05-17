@@ -109,8 +109,9 @@ public class MockSpans extends BLSpans {
         public int freq() {
             // Find start of next document
             int i;
-            for (i = currentHit + 1; i < doc.length && doc[i] == currentDoc; i++) {
-                // NOP
+            i = currentHit + 1;
+            while (i < doc.length && doc[i] == currentDoc) {
+                i++;
             }
             return i - currentHit;
         }
@@ -131,8 +132,6 @@ public class MockSpans extends BLSpans {
 
     private final int[] end;
 
-    private final MatchInfo[][] matchInfo;
-
     private final MockPostingsEnum postings;
 
     private final MyTermSpans spans;
@@ -147,26 +146,21 @@ public class MockSpans extends BLSpans {
 
     private int endPos = -1;
 
-    public MockSpans(int[] doc, int[] start, int[] end, SpanGuarantees guarantees) {
-        this(doc, start, end, null, guarantees);
-    }
-
     public void setGuarantees(SpanGuarantees guarantees) {
         this.guarantees = guarantees;
     }
 
-    public MockSpans(int[] doc, int[] start, int[] end, MatchInfo[][] matchInfo, SpanGuarantees guarantees) {
+    public MockSpans(int[] doc, int[] start, int[] end, SpanGuarantees guarantees) {
         super(guarantees);
         this.doc = doc;
         this.start = start;
         this.end = end;
-        this.matchInfo = matchInfo;
         postings = new MockPostingsEnum();
         spans = new MyTermSpans(postings, new Term("test", "dummy"), 1);
     }
 
     public MockSpans(int[] doc, int[] start, int[] end) {
-        this(doc, start, end, null, SpanGuarantees.SORTED_UNIQUE);
+        this(doc, start, end, SpanGuarantees.SORTED_UNIQUE);
     }
 
     @Override
@@ -263,9 +257,12 @@ public class MockSpans extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
-        for (int i = 0; i < matchInfo.length; i++) {
-            matchInfo[i] = this.matchInfo[currentHitIndex][i];
-        }
+        // NOP
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return false;
     }
 
     public static MockSpans emptySpans() {

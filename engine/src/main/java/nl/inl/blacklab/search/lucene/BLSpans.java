@@ -123,7 +123,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * @param context the hit query context, that e.g. keeps track of captured
      *            groups
      */
-    abstract protected void passHitQueryContextToClauses(HitQueryContext context);
+    protected abstract void passHitQueryContextToClauses(HitQueryContext context);
 
     /**
      * Get the start and end position for the captured groups contained in this
@@ -133,7 +133,18 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      *            query; the start and end positions for the groups in this subtree
      *            will be placed in here.
      */
-    abstract public void getMatchInfo(MatchInfo[] matchInfo);
+    public abstract void getMatchInfo(MatchInfo[] matchInfo);
+
+    /**
+     * Does any of our descendants capture match info?
+     *
+     * This will recursively call this method on all subclauses.
+     * Can be used before hit query context is set. After that, it's
+     * more efficient to just remember whether any clauses added capture groups.
+     *
+     * @return true if any of our subclauses capture match info
+     */
+    public abstract boolean hasMatchInfo();
 
     /**
      * Advance the start position in the current doc to target or beyond.

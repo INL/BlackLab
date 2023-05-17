@@ -72,4 +72,8 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
         matchInfo[groupIndex] = MatchInfo.captureGroupSpan(startPosition() + leftAdjust, endPosition() + rightAdjust);
     }
 
+    @Override
+    public boolean hasMatchInfo() {
+        return true;
+    }
 }

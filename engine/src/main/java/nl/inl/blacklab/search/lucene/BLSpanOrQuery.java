@@ -668,6 +668,11 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
 
                 @Override
+                public boolean hasMatchInfo() {
+                    return subSpans.stream().anyMatch(s -> ((BLSpans) s).hasMatchInfo());
+                }
+
+                @Override
                 public SpanGuarantees guarantees() {
                     return BLSpanOrQuery.this.guarantees();
                 }

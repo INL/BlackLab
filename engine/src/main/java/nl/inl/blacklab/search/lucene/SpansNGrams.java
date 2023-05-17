@@ -228,6 +228,11 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
+    public boolean hasMatchInfo() {
+        return false;
+    }
+
+    @Override
     public int width() {
         return 0;
     }

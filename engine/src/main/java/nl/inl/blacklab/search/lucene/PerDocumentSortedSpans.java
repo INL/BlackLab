@@ -37,7 +37,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
             @Override
             public boolean hitsHaveUniqueStartEnd() {
-                return (removeDuplicates && !src.childClausesCaptureMatchInfo) || super.hitsHaveUniqueStartEnd();
+                return (removeDuplicates && !src.hasMatchInfo()) || super.hitsHaveUniqueStartEnd();
             }
         });
         this.removeDuplicates = removeDuplicates;
@@ -166,6 +166,11 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
         if (indexInBucket < 0 || indexInBucket >= in.bucketSize())
             return;
         in.getMatchInfo(indexInBucket, matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return in.hasMatchInfo();
     }
 
     @Override

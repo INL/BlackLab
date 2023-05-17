@@ -340,13 +340,6 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
     }
 
     @Override
-    public void getMatchInfo(MatchInfo[] matchInfo) {
-        if (!childClausesCaptureMatchInfo)
-            return;
-        in.getMatchInfo(matchInfo);
-    }
-
-    @Override
     public int width() {
         return in.width();
     }

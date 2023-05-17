@@ -130,6 +130,11 @@ public class MockSpansInBuckets extends SpansInBuckets {
         // NOP
     }
 
+    @Override
+    public boolean hasMatchInfo() {
+        return false;
+    }
+
     public static SpansInBuckets fromLists(int[] bDoc, int[] bStart,
             int[] hStart, int[] hEnd) {
         return new MockSpansInBuckets(bDoc, bStart, hStart, hEnd);

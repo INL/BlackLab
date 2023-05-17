@@ -171,4 +171,9 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
         int index = firstToken + numRepetitions - 1; // use the last match for captured groups
         in.getMatchInfo(index, matchInfo);
     }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return in.hasMatchInfo();
+    }
 }

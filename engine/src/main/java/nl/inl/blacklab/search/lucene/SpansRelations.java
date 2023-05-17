@@ -79,6 +79,11 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     }
 
     @Override
+    public boolean hasMatchInfo() {
+        return true;
+    }
+
+    @Override
     public int nextDoc() throws IOException {
         startPos = endPos = NOT_YET_NEXTED;
         return super.nextDoc();

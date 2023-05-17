@@ -519,7 +519,13 @@ class SpansPositionFilter extends BLSpans {
         if (!childClausesCaptureMatchInfo)
             return;
         producer.getMatchInfo(matchInfo);
-        filter.getMatchInfo(filterIndex, matchInfo);
+        if (!invert)
+            filter.getMatchInfo(filterIndex, matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return producer.hasMatchInfo() || (!invert && filter.hasMatchInfo());
     }
 
     @Override

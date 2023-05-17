@@ -290,6 +290,11 @@ class SpansNot extends BLSpans {
     }
 
     @Override
+    public boolean hasMatchInfo() {
+        return clause.hasMatchInfo();
+    }
+
+    @Override
     public int width() {
         return 0;
     }

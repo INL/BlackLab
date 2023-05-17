@@ -365,6 +365,11 @@ class SpansSequenceWithGap extends BLSpans {
     }
 
     @Override
+    public boolean hasMatchInfo() {
+        return first.hasMatchInfo() || second.hasMatchInfo();
+    }
+
+    @Override
     public int width() {
         return first.width() + second.width();
     }

@@ -103,6 +103,17 @@ public abstract class SpansInBuckets extends DocIdSetIterator {
      */
     public abstract void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo);
 
+    /**
+     * Does any of our descendants capture match info?
+     *
+     * This will recursively call this method on all subclauses.
+     * Can be used before hit query context is set. After that, it's
+     * more efficient to just remember whether any clauses added capture groups.
+     *
+     * @return true if any of our subclauses capture match info
+     */
+    public abstract boolean hasMatchInfo();
+
     public abstract TwoPhaseIterator asTwoPhaseIterator();
 
     public abstract long cost();
