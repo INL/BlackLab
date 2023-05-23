@@ -68,7 +68,8 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
             // Make sure we have match info for this candidate, to compare to previous and next hit
             if (curMatchInfo == null)
                 curMatchInfo = new MatchInfo[context == null ? 0 : context.numberOfMatchInfos()];
-            Arrays.fill(curMatchInfo, null);
+            else
+                Arrays.fill(curMatchInfo, null);
             candidate.getMatchInfo(curMatchInfo);
         }
         if (candidate.docID() == prevDoc && candidate.startPosition() == prevStart && candidate.endPosition() == prevEnd) {
@@ -91,7 +92,8 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
             // Remember previous match info
             if (prevMatchInfo == null)
                 prevMatchInfo = new MatchInfo[context == null ? 0 : context.numberOfMatchInfos()];
-            Arrays.fill(prevMatchInfo, null);
+            else
+                Arrays.fill(prevMatchInfo, null);
             System.arraycopy(curMatchInfo, 0, prevMatchInfo, 0, prevMatchInfo.length);
         }
         return FilterSpans.AcceptStatus.YES;

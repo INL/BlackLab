@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -115,6 +116,11 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
             Map<String, String> attributes, Direction direction, MatchInfo.SpanMode spanMode) {
         super(queryInfo);
+
+        if (StringUtils.isEmpty(relationFieldName))
+            throw new IllegalArgumentException("relationFieldName must be non-empty");
+        if (spanMode == MatchInfo.SpanMode.ALL_SPANS)
+            throw new IllegalArgumentException("ALL_SPANS makes no sense for SpanQueryRelations");
 
         // Construct the clause from the field, relation type and attributes
         String regexp = RelationUtil.searchRegex(relationType, attributes);

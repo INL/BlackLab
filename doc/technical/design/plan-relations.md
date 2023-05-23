@@ -146,18 +146,22 @@ For example, a syntax specific to dependency relations (the likely most common u
 
 Find relations by type and direction.
 
-    rel(reltype = ".*", spanMode = "target", direction = "both")
-
-`spanMode` can take the values:
-- `"source"` (span becomes the source of the relation)
-- `"target"` (span becomes the target of the relation - this is how relations start)
-- `"full"` (span becomes the full span of the relation, including source and target)
+    rel(reltype = ".*", direction = "both", spanMode = "target")
 
 `direction` can take the values:
 - `"root"` (only root relations)
-- `"forward"` (only relations pointing forward in the document)
-- `"backward"` (only relations pointing backward in the document)
-- `"both"` (the default)
+- `"forward"` (only relations pointing forward in the document - this includes root relations)
+- `"backward"` (only relations pointing backward in the document - this includes root relations)
+- `"both"` (forward, backward and root relations - this is the default value)
+
+`spanMode` can take the values:
+- `"source"` (span becomes the source of the relation)
+- `"target"` (span becomes the target of the relation - this is the default value)
+- `"full"` (span becomes the full span of the relation, including source and target)
+
+NOTE: there is currently no way to filter out root relations. Should we add this?
+
+NOTE2: there is not yet a way to get a span covering all matched relations in a query.
 
 #### rspan
 
@@ -173,7 +177,7 @@ By default `rel(...)` returns spans that match the target of the relation. So e.
 that have a subject, and `rel('nsubj'), _, 'full')` will find spans that include both
 the source and target.
 
-**TODO:** `relationNumber` can be used to select a specific relation if multiple relations have been combined using `&`. Relations are numbered in the order they appear in the query.
+**TODO:** `relationNumber` can be used to select a specific relation if multiple relations have been matched in a query. Relations are numbered in the order they appear in the query.
 
 ### rtype
 

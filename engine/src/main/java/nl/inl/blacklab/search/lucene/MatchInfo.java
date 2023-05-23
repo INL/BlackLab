@@ -39,14 +39,18 @@ public class MatchInfo implements Comparable<MatchInfo> {
      * Different spans we can return for a relation
      */
     public enum SpanMode {
-        // Only return root relations (relations without a source)
+        // Return the source span
         SOURCE("source"),
 
-        // Only return relations where target occurs after source
+        // Return the target span
         TARGET("target"),
 
-        // Only return relations where target occurs before source
-        FULL_SPAN("full");
+        // Return a span covering both source and target
+        FULL_SPAN("full"),
+
+        // Return a span covering source and target of all matched relations
+        // (only valid for rspan(), not rel())
+        ALL_SPANS("all");
 
         private final String code;
 
@@ -144,6 +148,10 @@ public class MatchInfo implements Comparable<MatchInfo> {
     public MatchInfo(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
         this.fullRelationType = fullRelationType;
         this.onlyHasTarget = onlyHasTarget;
+        if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd)) {
+            throw new IllegalArgumentException("By convention, root relations should have a 'fake source' that coincides with their target " +
+                    "(values here are SRC " + sourceStart + ", " + sourceEnd + " - TGT " + targetStart + ", " + targetEnd + ").");
+        }
         this.sourceStart = sourceStart;
         this.sourceEnd = sourceEnd;
         this.targetStart = targetStart;
@@ -301,6 +309,8 @@ public class MatchInfo implements Comparable<MatchInfo> {
             return getTargetStart();
         case FULL_SPAN:
             return getFullSpanStart();
+        case ALL_SPANS:
+            throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
             throw new IllegalArgumentException("Unknown mode: " + mode);
         }
@@ -314,6 +324,8 @@ public class MatchInfo implements Comparable<MatchInfo> {
             return getTargetEnd();
         case FULL_SPAN:
             return getFullSpanEnd();
+        case ALL_SPANS:
+            throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
             throw new IllegalArgumentException("Unknown mode: " + mode);
         }
