@@ -122,12 +122,11 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
     protected abstract void passHitQueryContextToClauses(HitQueryContext context);
 
     /**
-     * Get the start and end position for the captured groups contained in this
+     * Get the match infos (captured groups, relations) contained in this
      * BLSpans (sub)tree.
      *
-     * @param matchInfo an array the size of the total number of groups in the
-     *            query; the start and end positions for the groups in this subtree
-     *            will be placed in here.
+     * @param matchInfo an array the size of the total number of match info in the
+     *            query; the current match info for this subtree will be copied here.
      */
     public abstract void getMatchInfo(MatchInfo[] matchInfo);
 
@@ -190,16 +189,16 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
     }
 
     /**
-     * Get the match info for this BLSpans object.
+     * Get the "active" relation info for this BLSpans object.
      * <p>
-     * Only SpansCaptureGroup and SpansRelations have match info
-     * (capture group and relation, respectively).
+     * A query that finds and combines several relations always has one
+     * active relation. This relation is used when we call rspan(),
+     * or if we combine the query with another relation query, e.g. using the
+     * &amp; operator.
      *
-     * @return the match info, or null if none available
+     * @return the relation info, or null if no active relation available
      */
-    public MatchInfo getRelationInfo() {
-        return null;
-    }
+    public abstract MatchInfo getRelationInfo();
 
     @Override
     public SpanGuarantees guarantees() {

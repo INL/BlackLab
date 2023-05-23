@@ -18,6 +18,7 @@ import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -116,7 +117,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         super(queryInfo);
 
         // Construct the clause from the field, relation type and attributes
-        String regexp = AnnotatedFieldNameUtil.relationSearchRegex(relationType, attributes);
+        String regexp = RelationUtil.searchRegex(relationType, attributes);
         RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp));
         BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
         init(relationFieldName, relationType, clause, direction, spanMode);
@@ -234,7 +235,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     }
 
     public String getElementName() {
-        return AnnotatedFieldNameUtil.relationClassAndType(relationType)[1];
+        return RelationUtil.classAndType(relationType)[1];
     }
 
     @Override

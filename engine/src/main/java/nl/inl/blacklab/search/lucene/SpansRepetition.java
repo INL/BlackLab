@@ -225,12 +225,17 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
 
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
-        // TODO: this uses the first match for match info, but maybe we want something else?
+        // NOTE: this uses the first match in the repetition for match info!
         in.getMatchInfo(matchStartIndex, matchInfo);
     }
 
     @Override
     public boolean hasMatchInfo() {
         return in.hasMatchInfo();
+    }
+
+    @Override
+    public MatchInfo getRelationInfo() {
+        return in.getRelationInfo(matchStartIndex);
     }
 }

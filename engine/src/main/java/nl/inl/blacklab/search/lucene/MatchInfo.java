@@ -9,7 +9,7 @@ import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**
  * Position information about a relation's source and target
@@ -341,7 +341,7 @@ public class MatchInfo implements Comparable<MatchInfo> {
      * @param term indexed term
      */
     public void setRelationTerm(String term) {
-        this.fullRelationType = AnnotatedFieldNameUtil.fullRelationTypeFromIndexedTerm(term);
+        this.fullRelationType = RelationUtil.fullTypeFromIndexedTerm(term);
     }
 
     /**

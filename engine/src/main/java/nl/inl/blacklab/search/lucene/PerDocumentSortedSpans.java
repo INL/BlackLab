@@ -179,6 +179,11 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
     }
 
     @Override
+    public MatchInfo getRelationInfo() {
+        return in.getRelationInfo(indexInBucket);
+    }
+
+    @Override
     public void collect(SpanCollector collector) {
         // BucketedSpans doesn't collect payload. We could update it to do so for queries that need it,
         // but for now, we don't use payload beyond a "simple" Spans like SpansRelations.

@@ -265,6 +265,11 @@ public class MockSpans extends BLSpans {
         return false;
     }
 
+    @Override
+    public MatchInfo getRelationInfo() {
+        return null;
+    }
+
     public static MockSpans emptySpans() {
         return new MockSpans(new int[0], new int[0], new int[0]);
     }

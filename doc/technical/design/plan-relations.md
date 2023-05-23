@@ -228,7 +228,7 @@ Find sentences with happy sentiment:
 
     <s sentiment='happy' confidence='10' />
     rel(rtype('__tag', 's', list('sentiment', 'happy', 'confidence', '10')))
-    rel('__tag::s\u0001confidence\u000210\u0001sentiment\u0002happy'))
+    rel('__tag::s\u0001confidence\u000210\u0001sentiment\u0002happy\u0001'))
 
 ### Extract source or target
 
@@ -297,11 +297,11 @@ A potential downside of is that this could greatly increase the number of unique
 
 For example, to encode a tag `<s sentiment="happy" confidence="10" />` into a single term we can index this term in the `_relation` attribute:
 
-    __tag::s\u0001confidence\u000210\u0001sentiment\u0002happy
+    __tag::s\u0001confidence\u000210\u0001sentiment\u0002happy\u0001
 
-So the "full relation type" here is `__tag::s` (consisting of relation class `__tag` and relation type `s`), from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a fast prefix query.
+So the "full relation type" here is `__tag::s` (consisting of relation class `__tag` and relation type `s`), from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a fast prefix query. The full relation type is always followed by a separator character `\u0001`.
 
-After that, the attributes follow, in alphabetical order, each attribute name preceded by `\u0001` and each value preceded by `\u0002`. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
+After that, the attributes follow, in alphabetical order, with each attribute name followed by `\u0002` and each attribute value followed by `\u0001` again. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
 
 #### Source and target
 
@@ -311,13 +311,13 @@ Instead, we'll opt to store a 0-length source and target for the tag. This sourc
 
 ### rtype function
 
-Because we have XML-style syntax for spans, we likely won't need it, but just in case, a utility function  `rtspan` could be provided, so that:
+Because we have XML-style syntax for spans, we likely won't need it, but just in case, a utility function  `rtype` could be provided, so that:
 
-    rtype('__tag', s', list('sentiment', 'happy', 'confidence', '10'))
+    rtype('__tag', 's', list('sentiment', 'happy', 'confidence', '10'))
 
 would return the regex:
 
-    __tag::s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
+    __tag::s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*\u0001
 
 
 ### Better keep track of spans hierarchy?

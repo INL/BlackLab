@@ -38,6 +38,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
@@ -184,7 +185,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     @Override
     public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
             Map<String, String> attributes) {
-        return relationQuery(queryInfo, luceneField, AnnotatedFieldNameUtil.tagFullRelationType(tagName),
+        return relationQuery(queryInfo, luceneField, RelationUtil.inlineTagFullType(tagName),
                 attributes, SpanQueryRelations.Direction.BOTH_DIRECTIONS, MatchInfo.SpanMode.FULL_SPAN);
     }
 

@@ -20,6 +20,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -66,7 +67,7 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
         // Construct attribute filters
         List<BLSpanQuery> attrFilters = new ArrayList<>();
         for (Map.Entry<String, String> e : attr.entrySet()) {
-            String value = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
+            String value = RelationUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
                     BlackLabIndex.IndexType.EXTERNAL_FILES);
             attrFilters.add(new BLSpanTermQuery(queryInfo, new Term(startTagFieldName, value)));
         }

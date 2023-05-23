@@ -673,6 +673,11 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
 
                 @Override
+                public MatchInfo getRelationInfo() {
+                    return ((BLSpans) topPositionSpans).getRelationInfo();
+                }
+
+                @Override
                 public SpanGuarantees guarantees() {
                     return BLSpanOrQuery.this.guarantees();
                 }

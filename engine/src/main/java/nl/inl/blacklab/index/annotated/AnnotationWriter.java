@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.util.CollUtil;
 
@@ -421,7 +422,7 @@ public class AnnotationWriter {
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         MatchInfo matchInfo = new MatchInfo(null, false, startPos, startPos, endPos, endPos);
-        String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : AnnotatedFieldNameUtil.tagFullRelationType(tagName);
+        String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : RelationUtil.inlineTagFullType(tagName);
         return indexRelation(fullRelationType, startPos, attributes, indexType, matchInfo);
     }
 
@@ -449,7 +450,7 @@ public class AnnotationWriter {
             addValueAtPosition(fullRelationType, indexAt, payload);
             tagIndexInAnnotation = lastValueIndex();
             for (Map.Entry<String, String> e: attributes.entrySet()) {
-                String term = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
+                String term = RelationUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
                         BlackLabIndex.IndexType.EXTERNAL_FILES);
                 addValueAtPosition(term, indexAt, null);
             }
@@ -462,7 +463,7 @@ public class AnnotationWriter {
                 throw new RuntimeException(e);
             }
             payload = new BytesRef(os.toByteArray());
-            String value = AnnotatedFieldNameUtil.relationIndexTerm(fullRelationType, attributes);
+            String value = RelationUtil.indexTerm(fullRelationType, attributes);
             addValueAtPosition(value, indexAt, payload);
             tagIndexInAnnotation = lastValueIndex();
         }
