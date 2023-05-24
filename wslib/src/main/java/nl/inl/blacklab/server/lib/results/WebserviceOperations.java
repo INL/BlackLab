@@ -525,6 +525,8 @@ public class WebserviceOperations {
         BlackLabIndex blIndex = params.blIndex();
         AnnotatedField cfd = blIndex.mainAnnotatedField();
         String annotName = params.getAnnotationName();
+        if (annotName.isEmpty())
+            annotName = cfd.mainAnnotation().name();
         Annotation annotation = cfd.annotation(annotName);
         MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
