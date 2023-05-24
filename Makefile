@@ -1,5 +1,8 @@
 # Makefile for BlackLab Docker images
 #
+# This provides some convenient shorthands for common Docker (Compose) commands
+# related to building and tagging images, running and deploying the application.
+#
 # Build images:
 #   make build                      # will be tagged as "latest"
 #   make build   VERSION=4-alpha    # will be tagged as "4-alpha"
@@ -63,13 +66,13 @@ CURRENT_DIR = $(shell basename $(PWD))
 # (if we didn't do this, container names would vary based on the directory name)
 opt-project-name:
 ifneq ($(PROJECT_NAME),$(CURRENT_DIR))
-  OPT_PROJECT_NAME = $(EMPTY_STRING) --project-name $(PROJECT_NAME)
+	OPT_PROJECT_NAME = $(EMPTY_STRING) --project-name $(PROJECT_NAME)
 endif
 -include opt-project-name
 
 # Pass CONTEXT=<name> to use that Docker context
 ifdef CONTEXT
-  CONTEXT_PARAM = $(EMPTY_STRING) --context $(CONTEXT)
+	CONTEXT_PARAM = $(EMPTY_STRING) --context $(CONTEXT)
 endif
 
 # Our standard commands for calling Docker and Compose
@@ -80,16 +83,19 @@ COMPOSE_COMMAND_DEV  = $(COMPOSE_NO_FILE)
 
 # Make sure VERSION defaults to 'latest'
 ifndef VERSION
-  VERSION = latest
+	VERSION = latest
 endif
 
 # Short hash of latest Git commit
-#GIT_COMMIT_HASH := $$(git log -1 --pretty=%h)
 GIT_COMMIT_HASH = $$(git log -1 --pretty=%h)
 
 # For build, push, etc.: apply to all profiles, not just default
 ALL_PROFILES = $(EMPTY_STRING) --profile default --profile tools
 
+# By default, don't add any options to docker compose build
+ifndef BUILD_OPT
+	BUILD_OPT =
+endif
 
 # Application management targets
 #-------------------------------------------
@@ -105,7 +111,7 @@ down:
 
 # Build images
 build:
-	$(COMPOSE_COMMAND)$(ALL_PROFILES) build
+	$(COMPOSE_COMMAND)$(ALL_PROFILES) build$(BUILD_OPT)
 	# Make sure images are always tagged as latest, even if we override VERSION
 	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX):$(VERSION)        $(IMAGE_NAME_PREFIX):latest
 	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-solr:$(VERSION)   $(IMAGE_NAME_PREFIX)-solr:latest
@@ -113,11 +119,7 @@ build:
 
 # Build images (plain output for CI)
 build-plain:
-	$(COMPOSE_COMMAND)$(ALL_PROFILES) build --progress plain
-	# Make sure images are always tagged as latest, even if we override VERSION
-	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX):$(VERSION)        $(IMAGE_NAME_PREFIX):latest
-	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-solr:$(VERSION)   $(IMAGE_NAME_PREFIX)-solr:latest
-	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)  $(IMAGE_NAME_PREFIX)-proxy:latest
+	BUILD_OPT="$(BUILD_OPT) --progress plain" $(MAKE) build
 
 # Tag latest images with tag VERSION (default: latest)
 tag:
@@ -139,11 +141,17 @@ rmi:
 	$(DOCKER_COMMAND) rmi $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
 	$(DOCKER_COMMAND) rmi $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
 
+rmi-commit:
+	VERSION=$(GIT_COMMIT_HASH) $(MAKE) rmi
+
 # Tag latest images with VERSION (default: latest) and push to Docker Hub
 push: tag
 	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX):$(VERSION)
 	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
 	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
+	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX):latest
+	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-solr:latest
+	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-proxy:latest
 
 # Tag images with most recent git commit hash and push them to Docker Hub
 push-commit:
@@ -162,6 +170,10 @@ pull:
 	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX):$(VERSION)
 	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
 	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
+
+# Pull images with version VERSION (default: latest) from Docker Hub
+pull-commit:
+	VERSION=$(GIT_COMMIT_HASH) $(MAKE) pull
 
 # Stop application
 stop:

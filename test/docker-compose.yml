@@ -8,8 +8,6 @@ services:
   # (remote debugging is always enabled)
   testserver:
 
-    image: instituutnederlandsetaal/blacklab
-
     build:
         context: ..
         dockerfile: docker/Dockerfile

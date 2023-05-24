@@ -77,7 +77,6 @@ We assume here that you are familiar with the BlackLab indexing process; see [in
 Create a file named `test.env` with your indexing configuration:
 
 ```ini
-IMAGE_VERSION=latest
 BLACKLAB_FORMATS_DIR=/path/to/my/formats
 INDEX_NAME=my-index
 INDEX_FORMAT=my-file-format
