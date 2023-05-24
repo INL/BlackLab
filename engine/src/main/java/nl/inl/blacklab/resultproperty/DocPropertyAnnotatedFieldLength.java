@@ -59,7 +59,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         try {
             for (LeafReaderContext rc : index.reader().leaves()) {
                 LeafReader r = rc.reader();
-                NumericDocValues numericDocValues = r.getNumericDocValues(fieldName);
+                NumericDocValues numericDocValues = r.getNumericDocValues(this.fieldName);
                 if (numericDocValues == null) {
                     // (should never happen)
                     throw new UnsupportedOperationException("no DocValues available");

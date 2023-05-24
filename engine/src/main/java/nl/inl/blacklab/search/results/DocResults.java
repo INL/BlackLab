@@ -357,7 +357,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
 
-        String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().tokenLengthField();
+        String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().name();
         DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(queryInfo().index(), tokenLengthFieldName);
 
         for (DocResult r : this) {
