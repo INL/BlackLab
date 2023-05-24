@@ -1,10 +1,40 @@
 # Makefile for BlackLab Docker images
 #
-# How to use:
+# Build images:
+#   make build                      # will be tagged as "latest"
+#   make build   VERSION=4-alpha    # will be tagged as "4-alpha"
+#	make build-plain				# Build images with plain output (for CI)
 #
-# make build                     # Build images
-# make push                      # Push images to Docker Hub
-# make deploy CONTEXT=my-server  # Pull images on server and (re)deploy application
+# Tag images:
+#   make tag     VERSION=4-alpha    # Tag latest images as "4-alpha"
+#   make tag-commit                 # Tag latest images with commit hash
+#
+# Tag and push to Docker Hub:
+#   make push                       # Push version "latest"
+#   make push    VERSION=4-alpha    # Tag as "4-alpha" and push
+#	make push-commit		        # Tag with commit hash and push
+#
+# Build, tag and push:
+#   make release VERSION=4-alpha    # Build, tag and push images
+#   make release-commit             # Build, tag with commit hash and push
+#
+# Deploy to server (i.e. pull and (re)deploy application):
+# (specified Docker context must exist)
+#   make deploy VERSION=4.0-alpha CONTEXT=my-server
+#   make deploy-commit CONTEXT=my-server              # Deploy current commit image (must exist)
+#
+# Running application:
+#   make dev                        # Run development server (with docker-compose.override.yml)
+#   make up                         # Start application
+#   make stop 					    # Stop application
+#   make down                       # Stop application and remove containers
+#   make restart                    # Restart application
+#   make logs 		                # Show logs
+#   make logs-f                     # Show and follow logs (Ctrl+C to exit)
+#
+# Image management:
+#   make lsi                        # List local blacklab images
+#   make rmi VERSION=4-alpha        # Remove "4-alpha" images
 
 
 # Config variables
@@ -48,15 +78,14 @@ COMPOSE_NO_FILE = $(DOCKER_COMMAND) compose$(OPT_PROJECT_NAME)
 COMPOSE_COMMAND      = $(COMPOSE_NO_FILE) -f docker-compose.yml
 COMPOSE_COMMAND_DEV  = $(COMPOSE_NO_FILE)
 
-
-# IMAGE_VERSION defined in our .env file (for tagging)
-IMAGE_VERSION := $$(grep IMAGE_VERSION .env | cut -d "=" -f 2)
+# Make sure VERSION defaults to 'latest'
+ifndef VERSION
+  VERSION = latest
+endif
 
 # Short hash of latest Git commit
-GIT_COMMIT_HASH := $$(git log -1 --pretty=%h)
-
-# Tag comprised of IMAGE_VERSION and short hash of latest Git commit
-GIT_COMMIT_TAG := $(IMAGE_VERSION)-$(GIT_COMMIT_HASH)
+#GIT_COMMIT_HASH := $$(git log -1 --pretty=%h)
+GIT_COMMIT_HASH = $$(git log -1 --pretty=%h)
 
 # For build, push, etc.: apply to all profiles, not just default
 ALL_PROFILES = $(EMPTY_STRING) --profile default --profile tools
@@ -66,7 +95,7 @@ ALL_PROFILES = $(EMPTY_STRING) --profile default --profile tools
 #-------------------------------------------
 
 show-info:
-	echo Git commit tag: $(GIT_COMMIT_TAG)
+	echo Git commit hash: $(GIT_COMMIT_HASH)
 	echo current dir name: $(CURRENT_DIR)
 	echo OPT_PROJECT_NAME:$(OPT_PROJECT_NAME)
 
@@ -77,36 +106,62 @@ down:
 # Build images
 build:
 	$(COMPOSE_COMMAND)$(ALL_PROFILES) build
+	# Make sure images are always tagged as latest, even if we override VERSION
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX):$(VERSION)        $(IMAGE_NAME_PREFIX):latest
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-solr:$(VERSION)   $(IMAGE_NAME_PREFIX)-solr:latest
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)  $(IMAGE_NAME_PREFIX)-proxy:latest
 
 # Build images (plain output for CI)
 build-plain:
 	$(COMPOSE_COMMAND)$(ALL_PROFILES) build --progress plain
+	# Make sure images are always tagged as latest, even if we override VERSION
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX):$(VERSION)        $(IMAGE_NAME_PREFIX):latest
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-solr:$(VERSION)   $(IMAGE_NAME_PREFIX)-solr:latest
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)  $(IMAGE_NAME_PREFIX)-proxy:latest
 
-# Tag images with most recent git commit hash and push to Docker Hub
+# Tag latest images with tag VERSION (default: latest)
+tag:
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX):latest        $(IMAGE_NAME_PREFIX):$(VERSION)
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-solr:latest   $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
+	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-proxy:latest  $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
+
+# Tag latest images with most recent git commit hash
+tag-commit:
+	VERSION=$(GIT_COMMIT_HASH) $(MAKE) tag
+
+# List images
+lsi:
+	docker image ls 'instituutnederlandsetaal/blacklab*'
+
+# Remove images with tag VERSION (default: latest)
+rmi:
+	$(DOCKER_COMMAND) rmi $(IMAGE_NAME_PREFIX):$(VERSION)
+	$(DOCKER_COMMAND) rmi $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
+	$(DOCKER_COMMAND) rmi $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
+
+# Tag latest images with VERSION (default: latest) and push to Docker Hub
+push: tag
+	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX):$(VERSION)
+	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
+	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
+
+# Tag images with most recent git commit hash and push them to Docker Hub
 push-commit:
-	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX):$(IMAGE_VERSION)        $(IMAGE_NAME_PREFIX):$(GIT_COMMIT_TAG)
-	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-solr:$(IMAGE_VERSION)   $(IMAGE_NAME_PREFIX)-solr:$(GIT_COMMIT_TAG)
-	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-proxy:$(IMAGE_VERSION)  $(IMAGE_NAME_PREFIX)-proxy:$(GIT_COMMIT_TAG)
-	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX):$(GIT_COMMIT_TAG)
-	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-solr:$(GIT_COMMIT_TAG)
-	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-proxy:$(GIT_COMMIT_TAG)
+	VERSION=$(GIT_COMMIT_HASH) $(MAKE) push
 
-# Push images to Docker Hub
-push:
-	# Push configured version tags
-	$(COMPOSE_COMMAND)$(ALL_PROFILES) push
-    # Push latest tags as well
-	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX):latest
-	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-solr:latest
-	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-proxy:latest
-
-# Build images and push them to Docker Hub
+# Build images and push them to Docker Hub.
+# Pass VERSION to tag images with a specific version.
 release: build push
 	:
 
-# Pull images from Docker Hub
+release-commit:
+	VERSION=$(GIT_COMMIT_HASH) $(MAKE) release
+
+# Pull images with version VERSION (default: latest) from Docker Hub
 pull:
-	$(COMPOSE_COMMAND)$(ALL_PROFILES) pull --quiet
+	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX):$(VERSION)
+	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
+	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
 
 # Stop application
 stop:
@@ -138,3 +193,7 @@ up:
 # by pulling the newest versions of images, then using them to bring the application up
 deploy: pull
 	$(COMPOSE_COMMAND) up -d --no-build
+
+# Tag images with most recent git commit hash and push them to Docker Hub
+deploy-commit:
+	VERSION=$(GIT_COMMIT_HASH) $(MAKE) deploy
