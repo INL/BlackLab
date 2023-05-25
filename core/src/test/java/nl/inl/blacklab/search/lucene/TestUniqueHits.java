@@ -31,11 +31,11 @@ public class TestUniqueHits {
      *  we therefore expect the last two hits to both be returned, and not reduced to 1 using SpansUnique.
      */
     MatchInfo[] aMatchInfo = {
-            new MatchInfo("abc", false, 10, 10, 11, 11),
-            new MatchInfo("abc", false, 10, 10, 11, 11),
-            new MatchInfo("abc", false, 10, 10, 11, 11),
-            new MatchInfo("abc", false, 1, 1, 2, 2),
-            new MatchInfo("abc", false, 1, 1, 1, 2),
+            new RelationInfo("abc", false, 10, 10, 11, 11),
+            new RelationInfo("abc", false, 10, 10, 11, 11),
+            new RelationInfo("abc", false, 10, 10, 11, 11),
+            new RelationInfo("abc", false, 1, 1, 2, 2),
+            new RelationInfo("abc", false, 1, 1, 1, 2),
     };
 
     @Test
@@ -43,7 +43,7 @@ public class TestUniqueHits {
         BLSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aMatchInfo);
         BLSpans tags = new SpansRelations("test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
-                MatchInfo.SpanMode.FULL_SPAN);
+                RelationInfo.SpanMode.FULL_SPAN);
         BLSpans spans = new SpansUnique(tags);
         HitQueryContext context = new HitQueryContext();
         context.registerMatchInfo("abc");
@@ -62,7 +62,7 @@ public class TestUniqueHits {
         a.setGuarantees(SpanGuarantees.NONE); // so PerDocumentSortedSpans doesn't complain we're already sorted
         BLSpans tags = new SpansRelations("test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
-                MatchInfo.SpanMode.FULL_SPAN);
+                RelationInfo.SpanMode.FULL_SPAN);
         BLSpans spans = new PerDocumentSortedSpans(tags, true, true);
         HitQueryContext context = new HitQueryContext();
         context.registerMatchInfo("abc");

@@ -90,7 +90,7 @@ class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
     }
 
     @Override
-    public MatchInfo getRelationInfo(int indexInBucket) {
+    public RelationInfo getRelationInfo(int indexInBucket) {
         return super.getRelationInfo(sortIndexes.getInt(indexInBucket));
     }
 

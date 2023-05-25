@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
  * A HitsInternal implementation that locks and can handle huge result sets.

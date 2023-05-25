@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction,
-            MatchInfo.SpanMode spanMode) {
+            RelationInfo.SpanMode spanMode) {
         if (!clause.hitsStartPointSorted())
             return clause;
         boolean sorted;
@@ -111,15 +111,15 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private Direction direction;
 
-    private MatchInfo.SpanMode spanMode;
+    private RelationInfo.SpanMode spanMode;
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
-            Map<String, String> attributes, Direction direction, MatchInfo.SpanMode spanMode) {
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
         super(queryInfo);
 
         if (StringUtils.isEmpty(relationFieldName))
             throw new IllegalArgumentException("relationFieldName must be non-empty");
-        if (spanMode == MatchInfo.SpanMode.ALL_SPANS)
+        if (spanMode == RelationInfo.SpanMode.ALL_SPANS)
             throw new IllegalArgumentException("ALL_SPANS makes no sense for SpanQueryRelations");
 
         // Construct the clause from the field, relation type and attributes
@@ -130,13 +130,13 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     }
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause,
-            Direction direction, MatchInfo.SpanMode spanMode) {
+            Direction direction, RelationInfo.SpanMode spanMode) {
         super(queryInfo);
         init(relationFieldName, relationType, clause, direction, spanMode);
     }
 
     private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction,
-            MatchInfo.SpanMode spanMode) {
+            RelationInfo.SpanMode spanMode) {
         this.relationType = relationType;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
         this.relationFieldName = relationFieldName;

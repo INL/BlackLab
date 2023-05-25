@@ -256,9 +256,9 @@ class SpansAnd extends BLSpans {
     }
 
     @Override
-    public MatchInfo getRelationInfo() {
+    public RelationInfo getRelationInfo() {
         for (int i = 0; i < subSpans.length; i++) {
-            MatchInfo info = subSpans[i].getRelationInfo(index[i]);
+            RelationInfo info = subSpans[i].getRelationInfo(index[i]);
             if (info != null)
                 return info;
         }

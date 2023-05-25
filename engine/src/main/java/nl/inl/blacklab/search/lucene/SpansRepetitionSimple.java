@@ -179,7 +179,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
     }
 
     @Override
-    public MatchInfo getRelationInfo() {
+    public RelationInfo getRelationInfo() {
         // NOTE: this uses the first match in the repetition for match info!
         // (for the last match, we would use firstToken + numRepetitions - 1)
         return in.getRelationInfo(firstToken);

@@ -529,8 +529,8 @@ class SpansPositionFilter extends BLSpans {
     }
 
     @Override
-    public MatchInfo getRelationInfo() {
-        MatchInfo producerInfo = producer.getRelationInfo();
+    public RelationInfo getRelationInfo() {
+        RelationInfo producerInfo = producer.getRelationInfo();
         if (producerInfo != null)
             return producerInfo;
         return invert ? null : filter.getRelationInfo(filterIndex);

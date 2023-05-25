@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.CollUtil;
 
 /**
@@ -421,20 +421,20 @@ public class AnnotationWriter {
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        MatchInfo matchInfo = new MatchInfo(null, false, startPos, startPos, endPos, endPos);
+        RelationInfo matchInfo = new RelationInfo(null, false, startPos, startPos, endPos, endPos);
         String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : RelationUtil.inlineTagFullType(tagName);
         return indexRelation(fullRelationType, startPos, attributes, indexType, matchInfo);
     }
 
     public int indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        MatchInfo matchInfo = new MatchInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+        RelationInfo matchInfo = new RelationInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
         int indexAt = Math.min(sourceStart, targetStart);
         return indexRelation(fullRelationType, indexAt, attributes, indexType, matchInfo);
     }
 
     private int indexRelation(String fullRelationType, int indexAt, Map<String, String> attributes,
-            BlackLabIndex.IndexType indexType, MatchInfo relationInfo) {
+            BlackLabIndex.IndexType indexType, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
