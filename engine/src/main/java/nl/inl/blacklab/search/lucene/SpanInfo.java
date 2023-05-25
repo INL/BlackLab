@@ -10,13 +10,13 @@ import org.apache.lucene.util.BytesRef;
 /**
  * Position information about a relation's source and target
  */
-public class CaptureInfo extends MatchInfo {
+public class SpanInfo extends MatchInfo {
 
     int start;
 
     int end;
 
-    public CaptureInfo(int start, int end) {
+    public SpanInfo(int start, int end) {
         this.start = start;
         this.end = end;
     }
@@ -54,8 +54,8 @@ public class CaptureInfo extends MatchInfo {
     }
 
     @Override
-    public boolean isSpan() {
-        return true;
+    public Type getType() {
+        return Type.SPAN;
     }
 
     @Override
@@ -65,12 +65,12 @@ public class CaptureInfo extends MatchInfo {
 
     @Override
     public int compareTo(MatchInfo o) {
-        if (o instanceof CaptureInfo)
-            return compareTo((CaptureInfo) o);
+        if (o instanceof SpanInfo)
+            return compareTo((SpanInfo) o);
         return super.compareTo(o);
     }
 
-    public int compareTo(CaptureInfo o) {
+    public int compareTo(SpanInfo o) {
         int n;
         n = Integer.compare(start, o.start);
         if (n != 0)
@@ -85,8 +85,8 @@ public class CaptureInfo extends MatchInfo {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        CaptureInfo captureInfo = (CaptureInfo) o;
-        return start == captureInfo.start && end == captureInfo.end;
+        SpanInfo spanInfo = (SpanInfo) o;
+        return start == spanInfo.start && end == spanInfo.end;
     }
 
     @Override

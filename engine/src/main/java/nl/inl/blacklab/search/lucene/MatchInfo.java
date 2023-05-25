@@ -8,6 +8,11 @@ import org.apache.lucene.util.BytesRef;
 
 public abstract class MatchInfo implements Comparable<MatchInfo> {
 
+    public enum Type {
+        SPAN,
+        RELATION
+    }
+
     /**
      * Null-safe equality test of two MatchInfos.
      *
@@ -42,7 +47,7 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
 
     public abstract BytesRef serialize(int currentTokenPosition);
 
-    public abstract boolean isSpan();
+    public abstract Type getType();
 
     @Override
     public abstract String toString();
@@ -66,9 +71,5 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
 
     public boolean isSpanEmpty() {
         return getSpanStart() == getSpanEnd();
-    }
-
-    public boolean isTag() {
-        return false;
     }
 }

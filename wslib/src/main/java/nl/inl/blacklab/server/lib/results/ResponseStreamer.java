@@ -364,7 +364,7 @@ public class ResponseStreamer {
 
         Set<Map.Entry<String, MatchInfo>> capturedGroups = matchInfo == null ? Collections.emptySet() :
                 matchInfo.entrySet().stream()
-                        .filter(e -> e.getValue() != null && e.getValue().isSpan())
+                        .filter(e -> e.getValue() != null && e.getValue().getType() == MatchInfo.Type.SPAN)
                         .collect(Collectors.toSet());
         if (!capturedGroups.isEmpty()) {
             ds.startEntry("captureGroups").startList();

@@ -12,7 +12,11 @@ import org.apache.lucene.util.BytesRef;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**
- * Position information about a relation's source and target
+ * Information about a relation's source and target,
+ * and optionally the relation type.
+ *
+ * Note that this is not named MatchInfoRelation, as it is
+ * used while indexing as well as matching.
  */
 public class RelationInfo extends MatchInfo {
 
@@ -312,8 +316,8 @@ public class RelationInfo extends MatchInfo {
     }
 
     @Override
-    public boolean isSpan() {
-        return false;
+    public Type getType() {
+        return Type.RELATION;
     }
 
     /**
@@ -338,8 +342,6 @@ public class RelationInfo extends MatchInfo {
     public String toString() {
         if (isRoot())
             return "rootrel(" + fullRelationType + ", " + targetStart + "-" + targetEnd + ")";
-        if (isSpan())
-            return "span(" + getSpanStart() + "-" + getSpanEnd() + ")";
         if (isTag())
             return "tag(" + fullRelationType + ", " + getSpanStart() + "-" + getSpanEnd() + ")";
         return "rel(" + fullRelationType +
