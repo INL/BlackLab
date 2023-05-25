@@ -162,6 +162,14 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         }
 
         @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            // TODO: check if the NFA is cacheable. The forward index is an immutable segment structure,
+            //    isn't it..? But right now, there's also still a global forward index API which might
+            //    cause trouble...
+            return false; // anchorWeight.isCacheable(ctx);
+        }
+
+        @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
             anchorWeight.extractTermStates(contexts);
         }

@@ -47,6 +47,11 @@ public class SpanQueryNoHits extends BLSpanQuery {
             }
 
             @Override
+            public boolean isCacheable(LeafReaderContext ctx) {
+                return true;
+            }
+
+            @Override
             public void extractTermStates(Map<Term, TermStates> contexts) {
                 // No terms
             }

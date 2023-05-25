@@ -35,6 +35,7 @@ import org.apache.lucene.search.DisjunctionDISIApproximation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.SegmentCacheable;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.SpanOrQuery;
@@ -395,6 +396,15 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             for (final BLSpanWeight w : subWeights) {
                 w.extractTerms(terms);
             }
+        }
+
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            for (final SegmentCacheable w : subWeights) {
+                if (w.isCacheable(ctx) == false)
+                    return false;
+            }
+            return true;
         }
 
         @Override

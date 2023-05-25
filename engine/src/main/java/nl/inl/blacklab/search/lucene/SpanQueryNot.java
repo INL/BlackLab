@@ -89,6 +89,11 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         }
 
         @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return weight == null || weight.isCacheable(ctx);
+        }
+
+        @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
             if (weight != null)
                 weight.extractTermStates(contexts);
