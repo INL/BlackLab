@@ -29,6 +29,8 @@ import nl.inl.util.FileUtil;
  *
  * See <a href="https://universaldependencies.org/format.html">https://universaldependencies.org/format.html</a>
  *
+ * Example data: https://github.com/UniversalDependencies/UD_Dutch-LassySmall/
+ *
  * We don't support all features (yet).
  */
 public class DocIndexerCoNLLU extends DocIndexerTabularBase {

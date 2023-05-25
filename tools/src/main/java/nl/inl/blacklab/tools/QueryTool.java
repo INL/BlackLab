@@ -107,7 +107,7 @@ public class QueryTool {
     static boolean showDocIds = true;
 
     /** Show doc ids in the results? (makes results incomparable between indexes)  */
-    static boolean showCaptures = true;
+    static boolean showMatchInfo = true;
 
     /** How many results to show per page? (default is increased for correctness testing) */
     static int defaultPageSize = 20;
@@ -357,7 +357,7 @@ public class QueryTool {
                         defaultPageSize = 1000;
                         alwaysSortBy = "right:word:s,hitposition"; // for reproducibility
                         showDocIds = false; // doc ids are randomly assigned
-                        showCaptures = false; // (temporary)
+                        showMatchInfo = false; // (temporary)
                     } else if (mode.matches("p(erformance)?")) {
                         // Performance testing: we want timing and no results
                         showOutput = false;
@@ -1528,15 +1528,15 @@ public class QueryTool {
         public final String hitText;
         public final String right;
 
-        public final Map<String, MatchInfo> capturedGroups;
+        public final Map<String, MatchInfo> matchInfos;
 
-        public HitToShow(int doc, String left, String hitText, String right, Map<String, MatchInfo> capturedGroups) {
+        public HitToShow(int doc, String left, String hitText, String right, Map<String, MatchInfo> matchInfos) {
             super();
             this.doc = doc;
             this.left = left;
             this.hitText = hitText;
             this.right = right;
-            this.capturedGroups = capturedGroups;
+            this.matchInfos = matchInfos;
         }
     }
 
@@ -1613,8 +1613,8 @@ public class QueryTool {
             else
                 outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
             hitNr++;
-            if (hit.capturedGroups != null && showCaptures)
-                outprintln("CAP: " + hit.capturedGroups);
+            if (hit.matchInfos != null && showMatchInfo)
+                outprintln("MATCH INFO: " + hit.matchInfos);
         }
 
         // Summarize

@@ -274,6 +274,25 @@ Find words that are the subject of a word that has 'man' as its object (i.e. fin
 Note in the above that when combining two relations matches with `&`, a new relations match is created that stores the information for both relations. The third `rspan` parameter can be used to select the relation, but the default is the first of the two relations combined.
 
 
+### Examples Lassy Small
+
+Find `case` and `nmod` relations with same source (returns that source):
+
+    rel('dep::case', 'source') & rel('dep::nmod', 'source')
+
+Same, but return target for `case`:
+
+    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'target')
+
+Same, but return the full span for `case`:
+
+    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'full')
+
+Same, but return the full span covering both relations:
+
+    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'all')
+
+
 ### Capturing parts
 
 **TODO:** see if we can unify capture groups and relations (WIP)
