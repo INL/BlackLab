@@ -166,8 +166,6 @@ the source and target.
 
 NOTE: there is currently no way to filter out root relations. Should we add this?
 
-NOTE2: there is not yet a way to get a span covering all matched relations in a query.
-
 #### rspan
 
 We can also change the spanMode of the spans returned by `rel(...)` according to what we need:
@@ -181,7 +179,7 @@ covering both the source and target of the relation.
 NOTE: for `rspan`, there is a special extra spanMode `"all"`, that will return a span covering
 the sources and targets of all relations matched.
 
-**TODO:** `relationNumber` can be used to select a specific relation if multiple relations have been matched in a query. Relations are numbered in the order they appear in the query.
+**NOT YET IMPLEMENTED:** `relationNumber` could be used to select a specific relation if multiple relations have been matched in a query. Relations are numbered in the order they appear in the query. (might be a problem though because match info numbers may not always match query order)
 
 ### rtype
 
