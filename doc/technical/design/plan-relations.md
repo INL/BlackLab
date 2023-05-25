@@ -292,6 +292,10 @@ Same, but return the full span covering both relations:
 
     rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'all')
 
+Match target of one relation to source of another:
+
+    rspan(rel('dep::nmod') & rel('dep::acl:relcl', 'source'), 'all')
+
 
 ### Capturing parts
 
