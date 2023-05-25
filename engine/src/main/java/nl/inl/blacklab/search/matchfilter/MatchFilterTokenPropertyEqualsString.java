@@ -82,8 +82,8 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
-        MatchInfo span = capturedGroups[groupIndex];
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
+        MatchInfo span = matchInfo[groupIndex];
         if (span == null)
             return ConstraintValue.undefined();
         int tokenPosition = span.getFullSpanStart();

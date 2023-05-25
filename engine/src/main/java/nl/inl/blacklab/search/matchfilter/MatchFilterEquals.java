@@ -64,9 +64,9 @@ public class MatchFilterEquals extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
-        ConstraintValue ra = a.evaluate(fiDoc, capturedGroups);
-        ConstraintValue rb = b.evaluate(fiDoc, capturedGroups);
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
+        ConstraintValue ra = a.evaluate(fiDoc, matchInfo);
+        ConstraintValue rb = b.evaluate(fiDoc, matchInfo);
         if (ra instanceof ConstraintValueString && rb instanceof ConstraintValueString) {
             return ((ConstraintValueString) ra).stringEquals((ConstraintValueString) rb, sensitivity);
         }

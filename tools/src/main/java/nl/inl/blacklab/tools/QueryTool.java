@@ -1580,10 +1580,10 @@ public class QueryTool {
             hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
             right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
-            Map<String, MatchInfo> capturedGroups = null;
+            Map<String, MatchInfo> matchInfo = null;
             if (window.hasMatchInfo())
-                capturedGroups = window.getMatchInfoMap(hit);
-            toShow.add(new HitToShow(hit.doc(), left, hitText, right, capturedGroups));
+                matchInfo = window.getMatchInfoMap(hit);
+            toShow.add(new HitToShow(hit.doc(), left, hitText, right, matchInfo));
             if (leftContextMaxSize < left.length())
                 leftContextMaxSize = left.length();
         }

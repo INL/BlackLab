@@ -63,8 +63,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     public PropertyValueContextWords get(long hitIndex) {
         // Determine group start/end
         Hit hit = hits.get(hitIndex);
-        MatchInfo[] capturedGroups = hit.matchInfo();
-        MatchInfo group = capturedGroups[groupIndex];
+        MatchInfo[] matchInfo = hit.matchInfo();
+        MatchInfo group = matchInfo[groupIndex];
         int start = group.getFullSpanStart();
         int end = group.getFullSpanEnd();
         int startOfGroupWithinHit = start - hit.start();

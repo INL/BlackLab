@@ -33,7 +33,7 @@ public class HitGroup extends Group<Hit> {
      *
      * @param queryInfo query info
      * @param storedResults the hits we actually stored
-     * @param capturedGroups captured groups for hits in this group
+     * @param matchInfoNames captured groups for hits in this group
      * @param totalSize total group size
      */
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,

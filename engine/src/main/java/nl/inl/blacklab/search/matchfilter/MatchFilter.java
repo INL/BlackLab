@@ -35,10 +35,10 @@ public abstract class MatchFilter {
      * Evaluate the constraint at the current match position.
      * 
      * @param fiDoc document we're matching in right now
-     * @param capturedGroups current captured groups state
+     * @param matchInfo current captured groups state
      * @return value of the constraint at this position
      */
-    public abstract ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups);
+    public abstract ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo);
 
     /**
      * Let token annotation nodes look up the index of their annotation

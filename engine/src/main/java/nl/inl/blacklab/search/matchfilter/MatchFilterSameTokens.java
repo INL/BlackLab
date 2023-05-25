@@ -76,10 +76,10 @@ public class MatchFilterSameTokens extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
         int[] segmentTermIds = new int[2];
         for (int i = 0; i < 2; i++) {
-            MatchInfo span = capturedGroups[groupIndex[i]];
+            MatchInfo span = matchInfo[groupIndex[i]];
             if (span == null)
                 return ConstraintValue.get(false); // if either side is undefined, they are not equal
             int tokenPosition = span.getFullSpanStart();

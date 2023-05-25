@@ -59,11 +59,11 @@ public class MatchFilterOr extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
-        ConstraintValue ra = a.evaluate(fiDoc, capturedGroups);
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
+        ConstraintValue ra = a.evaluate(fiDoc, matchInfo);
         if (ra.isTruthy())
             return ra;
-        return b.evaluate(fiDoc, capturedGroups);
+        return b.evaluate(fiDoc, matchInfo);
     }
 
     @Override
