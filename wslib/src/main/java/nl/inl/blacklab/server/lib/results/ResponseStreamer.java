@@ -372,8 +372,8 @@ public class ResponseStreamer {
                 ds.startItem("group").startMap();
                 {
                     ds.entry("name", capturedGroup.getKey());
-                    ds.entry("start", capturedGroup.getValue().getFullSpanStart());
-                    ds.entry("end", capturedGroup.getValue().getFullSpanEnd());
+                    ds.entry("start", capturedGroup.getValue().getSpanStart());
+                    ds.entry("end", capturedGroup.getValue().getSpanEnd());
                 }
                 ds.endMap().endItem();
             }

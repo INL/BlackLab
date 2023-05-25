@@ -60,12 +60,12 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
     @Override
     public abstract int hashCode();
 
-    public abstract int getFullSpanStart();
+    public abstract int getSpanStart();
 
-    public abstract int getFullSpanEnd();
+    public abstract int getSpanEnd();
 
-    public boolean isFullSpanEmpty() {
-        return getFullSpanStart() == getFullSpanEnd();
+    public boolean isSpanEmpty() {
+        return getSpanStart() == getSpanEnd();
     }
 
     public boolean isTag() {

@@ -65,8 +65,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         Hit hit = hits.get(hitIndex);
         MatchInfo[] matchInfo = hit.matchInfo();
         MatchInfo group = matchInfo[groupIndex];
-        int start = group.getFullSpanStart();
-        int end = group.getFullSpanEnd();
+        int start = group.getSpanStart();
+        int end = group.getSpanEnd();
         int startOfGroupWithinHit = start - hit.start();
         int endOfGroupWithinHit = end - hit.start();
 

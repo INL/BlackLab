@@ -265,11 +265,11 @@ public class RelationInfo extends MatchInfo {
         return targetEnd;
     }
 
-    public int getFullSpanStart() {
+    public int getSpanStart() {
         return Math.min(sourceStart, targetStart);
     }
 
-    public int getFullSpanEnd() {
+    public int getSpanEnd() {
         return Math.max(sourceEnd, targetEnd);
     }
 
@@ -280,7 +280,7 @@ public class RelationInfo extends MatchInfo {
         case TARGET:
             return getTargetStart();
         case FULL_SPAN:
-            return getFullSpanStart();
+            return getSpanStart();
         case ALL_SPANS:
             throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
@@ -295,7 +295,7 @@ public class RelationInfo extends MatchInfo {
         case TARGET:
             return getTargetEnd();
         case FULL_SPAN:
-            return getFullSpanEnd();
+            return getSpanEnd();
         case ALL_SPANS:
             throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
@@ -339,9 +339,9 @@ public class RelationInfo extends MatchInfo {
         if (isRoot())
             return "rootrel(" + fullRelationType + ", " + targetStart + "-" + targetEnd + ")";
         if (isSpan())
-            return "span(" + getFullSpanStart() + "-" + getFullSpanEnd() + ")";
+            return "span(" + getSpanStart() + "-" + getSpanEnd() + ")";
         if (isTag())
-            return "tag(" + fullRelationType + ", " + getFullSpanStart() + "-" + getFullSpanEnd() + ")";
+            return "tag(" + fullRelationType + ", " + getSpanStart() + "-" + getSpanEnd() + ")";
         return "rel(" + fullRelationType +
                 ", sourceStart=" + sourceStart +
                 ", sourceEnd=" + sourceEnd +

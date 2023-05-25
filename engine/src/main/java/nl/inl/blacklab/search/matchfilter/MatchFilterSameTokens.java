@@ -82,7 +82,7 @@ public class MatchFilterSameTokens extends MatchFilter {
             MatchInfo span = matchInfo[groupIndex[i]];
             if (span == null)
                 return ConstraintValue.get(false); // if either side is undefined, they are not equal
-            int tokenPosition = span.getFullSpanStart();
+            int tokenPosition = span.getSpanStart();
             if (annotIndex < 0) {
                 // strange... (if not annotation given, compare positions..!? shouldn't happen, but...)
                 segmentTermIds[i] = tokenPosition;

@@ -15,7 +15,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
  * A list of hits, optionally with captured groups.
@@ -349,7 +348,7 @@ public interface Hits extends Results<Hit, HitProperty> {
         MatchInfo[] matchInfo = hit.matchInfo();
         Map<String, MatchInfo> map = new HashMap<>();
         for (int i = 0; i < matchInfo.length; i++) {
-            if (omitEmptyCaptures && matchInfo[i].isFullSpanEmpty())
+            if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
                 continue;
             map.put(matchInfoNames().get(i), matchInfo[i]);
         }

@@ -443,8 +443,8 @@ public class AnnotationWriter {
                 return indexAt;
             }
             // classic external index; tag name and attributes are indexed separately
-            payload = relationInfo.getFullSpanEnd() >= 0 ?
-                    PayloadUtils.tagEndPositionPayload(relationInfo.getFullSpanStart(), relationInfo.getFullSpanEnd(),
+            payload = relationInfo.getSpanEnd() >= 0 ?
+                    PayloadUtils.tagEndPositionPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
                             BlackLabIndex.IndexType.EXTERNAL_FILES) :
                     null;
             addValueAtPosition(fullRelationType, indexAt, payload);

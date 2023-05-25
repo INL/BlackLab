@@ -509,8 +509,8 @@ public class TestSearches {
         MatchInfo[] group = hits.get(0).matchInfo();
         Assert.assertNotNull(group);
         Assert.assertEquals(1, group.length);
-        Assert.assertEquals(2, group[0].getFullSpanStart());
-        Assert.assertEquals(3, group[0].getFullSpanEnd());
+        Assert.assertEquals(2, group[0].getSpanStart());
+        Assert.assertEquals(3, group[0].getSpanEnd());
     }
 
     @Test
@@ -529,11 +529,11 @@ public class TestSearches {
         Assert.assertEquals(2, hits.size());
         Assert.assertTrue(hits.hasMatchInfo());
         Assert.assertEquals(1, hits.get(0).doc());
-        Assert.assertEquals(2, hits.get(0).matchInfo()[0].getFullSpanStart());
-        Assert.assertEquals(3, hits.get(0).matchInfo()[0].getFullSpanEnd());
+        Assert.assertEquals(2, hits.get(0).matchInfo()[0].getSpanStart());
+        Assert.assertEquals(3, hits.get(0).matchInfo()[0].getSpanEnd());
         Assert.assertEquals(1, hits.get(1).doc());
-        Assert.assertEquals(4, hits.get(1).matchInfo()[0].getFullSpanStart());
-        Assert.assertEquals(5, hits.get(1).matchInfo()[0].getFullSpanEnd());
+        Assert.assertEquals(4, hits.get(1).matchInfo()[0].getSpanStart());
+        Assert.assertEquals(5, hits.get(1).matchInfo()[0].getSpanEnd());
     }
 
     @Test

@@ -45,11 +45,11 @@ public class CaptureInfo extends MatchInfo {
         throw new UnsupportedOperationException("Cannot (de)serialize span");
     }
 
-    public int getFullSpanStart() {
+    public int getSpanStart() {
         return start;
     }
 
-    public int getFullSpanEnd() {
+    public int getSpanEnd() {
         return end;
     }
 
@@ -60,7 +60,7 @@ public class CaptureInfo extends MatchInfo {
 
     @Override
     public String toString() {
-        return "span(" + getFullSpanStart() + "-" + getFullSpanEnd() + ")";
+        return "span(" + getSpanStart() + "-" + getSpanEnd() + ")";
     }
 
     @Override

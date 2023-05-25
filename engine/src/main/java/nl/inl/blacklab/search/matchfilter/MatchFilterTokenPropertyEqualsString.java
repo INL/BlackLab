@@ -86,7 +86,7 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
         MatchInfo span = matchInfo[groupIndex];
         if (span == null)
             return ConstraintValue.undefined();
-        int tokenPosition = span.getFullSpanStart();
+        int tokenPosition = span.getSpanStart();
         if (annotIndex < 0)
             return ConstraintValue.get(tokenPosition);
         int leftTermGlobalId = fiDoc.getTokenGlobalTermId(annotIndex, tokenPosition);
