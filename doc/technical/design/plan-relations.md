@@ -146,7 +146,12 @@ For example, a syntax specific to dependency relations (the likely most common u
 
 Find relations by type and direction.
 
-    rel(reltype = ".*", direction = "both", spanMode = "target")
+    rel(reltype = ".*", spanMode = "target", direction = "both")
+
+`spanMode` can take the values:
+- `"source"` (span becomes the source of the relation)
+- `"target"` (span becomes the target of the relation - this is the default value)
+- `"full"` (span becomes the full span of the relation, including source and target)
 
 `direction` can take the values:
 - `"root"` (only root relations)
@@ -154,10 +159,10 @@ Find relations by type and direction.
 - `"backward"` (only relations pointing backward in the document - this includes root relations)
 - `"both"` (forward, backward and root relations - this is the default value)
 
-`spanMode` can take the values:
-- `"source"` (span becomes the source of the relation)
-- `"target"` (span becomes the target of the relation - this is the default value)
-- `"full"` (span becomes the full span of the relation, including source and target)
+By default `rel(...)` returns spans that match the target of the relation. So e.g.
+`rel('nsubj')` will find subjects, and `rel('nsubj'), 'source')` will find words
+that have a subject, and `rel('nsubj'), 'full')` will find spans that include both
+the source and target.
 
 NOTE: there is currently no way to filter out root relations. Should we add this?
 
@@ -170,12 +175,11 @@ We can also change the spanMode of the spans returned by `rel(...)` according to
     rspan(relation_matches, spanMode = "full", relationNumber = 1)
 
 This will return the same relation matches, but with the span start and end set 
-according to the value of `spanMode`.
+according to the value of `spanMode` (see above). The default is `full`, i.e. a span
+covering both the source and target of the relation.
 
-By default `rel(...)` returns spans that match the target of the relation. So e.g.
-`rel('nsubj')` will find subjects, and `rel('nsubj'), _, 'source')` will find words
-that have a subject, and `rel('nsubj'), _, 'full')` will find spans that include both
-the source and target.
+NOTE: for `rspan`, there is a special extra spanMode `"all"`, that will return a span covering
+the sources and targets of all relations matched.
 
 **TODO:** `relationNumber` can be used to select a specific relation if multiple relations have been matched in a query. Relations are numbered in the order they appear in the query.
 
@@ -263,7 +267,7 @@ Find words that have `man` as their object and `dog` as their subject (i.e. find
 Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
 
     rspan(
-        rel('dep::subject', 'source') & rspan( rel('dep::object') & 'man' , 'source'),
+        rel('dep::subject', 'source') & rspan( rel('dep::object') & 'man' , 'source' ),
         'target'
     )
 
@@ -373,7 +377,7 @@ The payload for a relation consists of the following fields:
 
 Fields may be ommitted from the end if they have the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 0, otherLength: 0 }`.
 
-As another example, the payload `0x81; 0x04` would mean `{ relOtherStart: 1, flags: 4, thisLength: 1, otherLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1`, the lower seven bits giving the number and the high bit set because this is the last byte of the number; the flag 0x04 is set, so the lengths default to `1` instead of `0`. 
+As another example, the payload `0x81; 0x04` would mean `{ relOtherStart: 1, flags: 4, thisLength: 1, otherLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`. 
 
 In the future, we will likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
 

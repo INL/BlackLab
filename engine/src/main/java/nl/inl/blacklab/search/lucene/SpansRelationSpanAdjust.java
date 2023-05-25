@@ -45,21 +45,31 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     }
 
     @Override
+    public int nextDoc() throws IOException {
+        startAdjusted = endAdjusted = -1;
+        return super.nextDoc();
+    }
+
+    @Override
+    public int advance(int target) throws IOException {
+        startAdjusted = endAdjusted = -1;
+        return super.advance(target);
+    }
+
+    @Override
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        startAdjusted = endAdjusted = -1;
+        return super.twoPhaseCurrentDocMatches();
+    }
+
+    @Override
     public int startPosition() {
-        if (atFirstInCurrentDoc || startPos < 0)
-            return -1;
-        if (startPos == NO_MORE_POSITIONS)
-            return NO_MORE_POSITIONS;
-        return in.getRelationInfo().spanStart(mode);
+        return startAdjusted;
     }
 
     @Override
     public int endPosition() {
-        if (atFirstInCurrentDoc || startPos < 0)
-            return -1;
-        if (startPos == NO_MORE_POSITIONS)
-            return NO_MORE_POSITIONS;
-        return in.getRelationInfo().spanEnd(mode);
+        return endAdjusted;
     }
 
     @Override
@@ -107,6 +117,19 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
         } else {
             startAdjusted = in.getRelationInfo().spanStart(mode);
             endAdjusted = in.getRelationInfo().spanEnd(mode);
+        }
+    }
+
+    @Override
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        if (this.matchInfo != null) {
+            // We've already retrieved our clause's match info. Use that.
+            for (int i = 0; i < matchInfo.length; i++) {
+                if (matchInfo[i] == null)
+                    matchInfo[i] = this.matchInfo[i];
+            }
+        } else {
+            super.getMatchInfo(matchInfo);
         }
     }
 
