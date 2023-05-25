@@ -131,6 +131,11 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         }
 
         @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return prodWeight.isCacheable(ctx) && filterWeight.isCacheable(ctx);
+        }
+
+        @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
             prodWeight.extractTermStates(contexts);
             filterWeight.extractTermStates(contexts);

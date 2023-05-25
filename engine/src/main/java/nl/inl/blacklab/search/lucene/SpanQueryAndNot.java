@@ -16,6 +16,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.SegmentCacheable;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -401,6 +402,15 @@ public class SpanQueryAndNot extends BLSpanQuery {
             for (BLSpanWeight weight : weights) {
                 weight.extractTerms(terms);
             }
+        }
+
+        @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            for (final SegmentCacheable w : weights) {
+                if (w.isCacheable(ctx) == false)
+                    return false;
+            }
+            return true;
         }
 
         @Override

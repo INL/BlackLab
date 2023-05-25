@@ -89,6 +89,11 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
         }
 
         @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return weight.isCacheable(ctx);
+        }
+
+        @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
             weight.extractTermStates(contexts);
         }

@@ -135,6 +135,11 @@ public class BLSpanTermQuery extends BLSpanQuery {
             public void extractTerms(Set<Term> terms) {
                 weight.extractTerms(terms);
             }
+
+            @Override
+            public boolean isCacheable(LeafReaderContext ctx) {
+                return weight.isCacheable(ctx);
+            }
         };
     }
 
