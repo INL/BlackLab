@@ -30,7 +30,7 @@ public class TestUniqueHits {
     /** Match info for above hits. Notice that the first three are identical, but the last two are not -
      *  we therefore expect the last two hits to both be returned, and not reduced to 1 using SpansUnique.
      */
-    MatchInfo[] aMatchInfo = {
+    RelationInfo[] aRelationInfo = {
             new RelationInfo("abc", false, 10, 10, 11, 11),
             new RelationInfo("abc", false, 10, 10, 11, 11),
             new RelationInfo("abc", false, 10, 10, 11, 11),
@@ -40,7 +40,7 @@ public class TestUniqueHits {
 
     @Test
     public void testWithMatchInfoSpansUnique() throws IOException {
-        BLSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aMatchInfo);
+        BLSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aRelationInfo);
         BLSpans tags = new SpansRelations("test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN);
@@ -58,7 +58,7 @@ public class TestUniqueHits {
 
     @Test
     public void testWithMatchInfoPerDocSortedSpans() throws IOException {
-        MockSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aMatchInfo);
+        MockSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aRelationInfo);
         a.setGuarantees(SpanGuarantees.NONE); // so PerDocumentSortedSpans doesn't complain we're already sorted
         BLSpans tags = new SpansRelations("test", a,
                 false, SpanQueryRelations.Direction.FORWARD,

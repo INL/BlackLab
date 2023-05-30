@@ -20,6 +20,12 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  */
 public class RelationInfo extends MatchInfo {
 
+    public static void serializeInlineTag(int start, int end, DataOutput dataOutput) throws IOException {
+        int relativePositionOfLastToken = end - start;
+        dataOutput.writeZInt(relativePositionOfLastToken);
+        // (rest of RelationInfo members have the default value so we skip them)
+    }
+
     /**
      * Different spans we can return for a relation
      */
@@ -140,6 +146,13 @@ public class RelationInfo extends MatchInfo {
         this.targetEnd = targetEnd;
     }
 
+    /**
+     * Deserialize relation info from the payload.
+     *
+     * @param currentTokenPosition
+     * @param dataInput
+     * @throws IOException
+     */
     public void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput) throws IOException {
         // Read values from payload (or use defaults for missing values)
         int relOtherStart = DEFAULT_REL_OTHER_START, thisLength = DEFAULT_LENGTH, otherLength = DEFAULT_LENGTH;
@@ -307,6 +320,18 @@ public class RelationInfo extends MatchInfo {
         }
     }
 
+    /**
+     * Does this relation info represent an inline tag?
+     *
+     * Inline tags are indexed as relations with zero-length source and target.
+     * Unlike other relations, source always occurs before target for tag relations.
+     *
+     * The reason this method exists is that the classic external index doesn't support
+     * "regular" relations but does support inline tags. When we eventually drop support
+     * for the classic external index format, this method can be removed.
+     *
+     * @return true if this relation info represents an inline tag
+     */
     public boolean isTag() {
         // A tag is a relation with source and target, both of which are length 0, and source occurs before target.
         // (target can also be -1, which means we don't know yet)
@@ -388,12 +413,12 @@ public class RelationInfo extends MatchInfo {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        RelationInfo matchInfo = (RelationInfo) o;
-        return onlyHasTarget == matchInfo.onlyHasTarget
-                && sourceStart == matchInfo.sourceStart
-                && sourceEnd == matchInfo.sourceEnd && targetStart == matchInfo.targetStart
-                && targetEnd == matchInfo.targetEnd && Objects.equals(fullRelationType,
-                matchInfo.fullRelationType);
+        RelationInfo relationInfo = (RelationInfo) o;
+        return onlyHasTarget == relationInfo.onlyHasTarget
+                && sourceStart == relationInfo.sourceStart
+                && sourceEnd == relationInfo.sourceEnd && targetStart == relationInfo.targetStart
+                && targetEnd == relationInfo.targetEnd && Objects.equals(fullRelationType,
+                relationInfo.fullRelationType);
     }
 
     @Override

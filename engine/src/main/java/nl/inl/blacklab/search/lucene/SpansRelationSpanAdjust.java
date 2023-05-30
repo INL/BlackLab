@@ -101,8 +101,9 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
             endAdjusted = Integer.MIN_VALUE;
             for (int i = 0; i < matchInfo.length; i++) {
                 MatchInfo info = matchInfo[i];
-                if (info != null && info.getType() == MatchInfo.Type.RELATION && !((RelationInfo)info).isTag()) {
+                if (info != null && info.getType() == MatchInfo.Type.RELATION) {
                     // This is a relations match. Take this into account for the full span.
+                    // (capture groups are not taken into account, but should already fall into the span anyway)
                     if (info.getSpanStart() < startAdjusted)
                         startAdjusted = info.getSpanStart();
                     if (info.getSpanEnd() > endAdjusted)

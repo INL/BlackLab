@@ -1,11 +1,6 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
 import java.util.Objects;
-
-import org.apache.lucene.store.ByteArrayDataInput;
-import org.apache.lucene.store.DataOutput;
-import org.apache.lucene.util.BytesRef;
 
 /**
  * Position information about a relation's source and target
@@ -19,30 +14,6 @@ public class SpanInfo extends MatchInfo {
     public SpanInfo(int start, int end) {
         this.start = start;
         this.end = end;
-    }
-
-    public void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput) throws IOException {
-        throw new UnsupportedOperationException("Cannot (de)serialize span");
-    }
-
-    /**
-     * Serialize to a DataOutput.
-     *
-     * @param currentTokenPosition the position of the token we're being indexed at
-     * @param dataOutput the DataOutput to write to
-     */
-    public void serialize(int currentTokenPosition, DataOutput dataOutput) throws IOException {
-        throw new UnsupportedOperationException("Cannot (de)serialize span");
-    }
-
-    /**
-     * Serialize to a BytesRef.
-     *
-     * @param currentTokenPosition the position of the token we're being indexed at
-     * @return the serialized data
-     */
-    public BytesRef serialize(int currentTokenPosition) {
-        throw new UnsupportedOperationException("Cannot (de)serialize span");
     }
 
     public int getSpanStart() {

@@ -1,13 +1,16 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
-
-import org.apache.lucene.store.ByteArrayDataInput;
-import org.apache.lucene.store.DataOutput;
-import org.apache.lucene.util.BytesRef;
-
+/**
+ * Information about a match (captured while matching).
+ *
+ * This can be a captured group, or a relation (e.g. a dependency relation
+ * or an inline tag) used in the query.
+ */
 public abstract class MatchInfo implements Comparable<MatchInfo> {
 
+    /**
+     * The type of match info.
+     */
     public enum Type {
         SPAN,
         RELATION
@@ -34,18 +37,6 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         // Both set
         return a.equals(b);
     }
-
-    public static void serializeInlineTag(int start, int end, DataOutput dataOutput) throws IOException {
-        int relativePositionOfLastToken = end - start;
-        dataOutput.writeZInt(relativePositionOfLastToken);
-        // (rest of MatchInfo members have the default value so we skip them)
-    }
-
-    public abstract void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput) throws IOException;
-
-    public abstract void serialize(int currentTokenPosition, DataOutput dataOutput) throws IOException;
-
-    public abstract BytesRef serialize(int currentTokenPosition);
 
     public abstract Type getType();
 
