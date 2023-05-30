@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * Position information about a relation's source and target
  */
-public class SpanInfo extends MatchInfo {
+public class SpanInfo implements MatchInfo {
 
     int start;
 
@@ -38,7 +38,7 @@ public class SpanInfo extends MatchInfo {
     public int compareTo(MatchInfo o) {
         if (o instanceof SpanInfo)
             return compareTo((SpanInfo) o);
-        return super.compareTo(o);
+        return MatchInfo.super.compareTo(o);
     }
 
     public int compareTo(SpanInfo o) {

@@ -6,12 +6,12 @@ package nl.inl.blacklab.search.lucene;
  * This can be a captured group, or a relation (e.g. a dependency relation
  * or an inline tag) used in the query.
  */
-public abstract class MatchInfo implements Comparable<MatchInfo> {
+public interface MatchInfo extends Comparable<MatchInfo> {
 
     /**
      * The type of match info.
      */
-    public enum Type {
+    enum Type {
         SPAN,
         RELATION
     }
@@ -25,7 +25,7 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
      * @param b the second MatchInfo
      * @return true iff both are null, or if they are equal
      */
-    public static boolean equal(MatchInfo[] a, MatchInfo[] b) {
+    static boolean equal(MatchInfo[] a, MatchInfo[] b) {
         if ((a == null) != (b == null)) {
             // One is null, the other is not.
             return false;
@@ -38,29 +38,29 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         return a.equals(b);
     }
 
-    public abstract Type getType();
+    Type getType();
 
     @Override
-    public abstract String toString();
+    String toString();
 
     @Override
-    public int compareTo(MatchInfo o) {
+    default int compareTo(MatchInfo o) {
         // Subclasses should compare properly if types match;
         // if not, just compare class names
         return getClass().getName().compareTo(o.getClass().getName());
     }
 
     @Override
-    public abstract boolean equals(Object o);
+    boolean equals(Object o);
 
     @Override
-    public abstract int hashCode();
+    int hashCode();
 
-    public abstract int getSpanStart();
+    int getSpanStart();
 
-    public abstract int getSpanEnd();
+    int getSpanEnd();
 
-    public boolean isSpanEmpty() {
+    default boolean isSpanEmpty() {
         return getSpanStart() == getSpanEnd();
     }
 }

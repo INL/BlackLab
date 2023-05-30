@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  * Note that this is not named MatchInfoRelation, as it is
  * used while indexing as well as matching.
  */
-public class RelationInfo extends MatchInfo {
+public class RelationInfo implements MatchInfo {
 
     public static void serializeInlineTag(int start, int end, DataOutput dataOutput) throws IOException {
         int relativePositionOfLastToken = end - start;
@@ -380,7 +380,7 @@ public class RelationInfo extends MatchInfo {
     public int compareTo(MatchInfo o) {
         if (o instanceof RelationInfo)
             return compareTo((RelationInfo) o);
-        return super.compareTo(o);
+        return MatchInfo.super.compareTo(o);
     }
 
     public int compareTo(RelationInfo o) {
