@@ -235,7 +235,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
     }
 
     @Override
-    public MatchInfo getRelationInfo() {
+    public RelationInfo getRelationInfo() {
         return in.getRelationInfo(matchStartIndex);
     }
 }

@@ -266,22 +266,17 @@ public class TestSearches {
             List<String> none = Collections.emptyList();
             String type = RelationUtil.inlineTagFullType("entity");
 
-            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', 'full')"));
-            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', 'full', 'forward')"));
+            Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', _, 'full')"));
             Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "'), 'full')"));
-            Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "', 'source'), 'full')"));
+            Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "', _, 'source'), 'full')"));
 
-            Assert.assertEquals(targets, testIndex.findConc("rel('" + type + "')"));
-            Assert.assertEquals(targets, testIndex.findConc("rel('" + type + "', 'target', 'forward')"));
-            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', 'full'), 'target')"));
-            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', 'source'), 'target')"));
+            Assert.assertEquals(targets, testIndex.findConc("rel('" + type + "', _, 'target')"));
+            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "', _, 'full'), 'target')"));
+            Assert.assertEquals(targets, testIndex.findConc("rspan(rel('" + type + "'), 'target')"));
 
-            Assert.assertEquals(sources, testIndex.findConc("rel('" + type + "', 'source')"));
-            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', 'full'), 'source')"));
-            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', 'target'), 'source')"));
-
-            Assert.assertEquals(none, testIndex.findConc("rel('" + type + "', _, 'backward')"));
-            Assert.assertEquals(none, testIndex.findConc("rel('" + type + "', _, 'root')"));
+            Assert.assertEquals(sources, testIndex.findConc("rel('" + type + "')"));
+            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', _, 'full'), 'source')"));
+            Assert.assertEquals(sources, testIndex.findConc("rspan(rel('" + type + "', _, 'target'), 'source')"));
         }
     }
 
@@ -509,8 +504,8 @@ public class TestSearches {
         MatchInfo[] group = hits.get(0).matchInfo();
         Assert.assertNotNull(group);
         Assert.assertEquals(1, group.length);
-        Assert.assertEquals(2, group[0].getFullSpanStart());
-        Assert.assertEquals(3, group[0].getFullSpanEnd());
+        Assert.assertEquals(2, group[0].getSpanStart());
+        Assert.assertEquals(3, group[0].getSpanEnd());
     }
 
     @Test
@@ -529,11 +524,11 @@ public class TestSearches {
         Assert.assertEquals(2, hits.size());
         Assert.assertTrue(hits.hasMatchInfo());
         Assert.assertEquals(1, hits.get(0).doc());
-        Assert.assertEquals(2, hits.get(0).matchInfo()[0].getFullSpanStart());
-        Assert.assertEquals(3, hits.get(0).matchInfo()[0].getFullSpanEnd());
+        Assert.assertEquals(2, hits.get(0).matchInfo()[0].getSpanStart());
+        Assert.assertEquals(3, hits.get(0).matchInfo()[0].getSpanEnd());
         Assert.assertEquals(1, hits.get(1).doc());
-        Assert.assertEquals(4, hits.get(1).matchInfo()[0].getFullSpanStart());
-        Assert.assertEquals(5, hits.get(1).matchInfo()[0].getFullSpanEnd());
+        Assert.assertEquals(4, hits.get(1).matchInfo()[0].getSpanStart());
+        Assert.assertEquals(5, hits.get(1).matchInfo()[0].getSpanEnd());
     }
 
     @Test

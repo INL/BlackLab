@@ -13,6 +13,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -96,9 +97,31 @@ public class SpanQueryAnyToken extends BLSpanQuery {
         this.guarantees = createGuarantees(min, max);
     }
 
+    /**
+     * A query matching any n-gram ([]*).
+     *
+     * Mostly useful as a "don't care" value that will never be executed.
+     * Actually executing this query will generate a very large number of hits.
+     *
+     * @param queryInfo query info
+     * @param context query execution context
+     * @return the query
+     */
+    public static SpanQueryAnyToken anyNGram(QueryInfo queryInfo, QueryExecutionContext context) {
+        return new SpanQueryAnyToken(queryInfo, 0, MAX_UNLIMITED, context.luceneField());
+    }
+
     @Override
     public boolean matchesEmptySequence() {
         return min == 0;
+    }
+
+    public int getMin() {
+        return min;
+    }
+
+    public int getMax() {
+        return max;
     }
 
     @Override

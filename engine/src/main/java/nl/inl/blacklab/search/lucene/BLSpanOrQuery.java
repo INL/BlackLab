@@ -683,7 +683,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
 
                 @Override
-                public MatchInfo getRelationInfo() {
+                public RelationInfo getRelationInfo() {
                     return ((BLSpans) topPositionSpans).getRelationInfo();
                 }
 

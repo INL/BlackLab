@@ -13,6 +13,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanGuarantees;
 
 /**
@@ -187,7 +188,7 @@ public class MockSpans extends BLSpans {
     private void setPayloadsRelationsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            MatchInfo relInfo = new MatchInfo("test", false, aStart[i], aStart[i], aEnd[i], aEnd[i]);
+            RelationInfo relInfo = new RelationInfo("test", false, aStart[i], aStart[i], aEnd[i], aEnd[i]);
             BytesRef payload = relInfo.serialize(aStart[i]);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
@@ -195,10 +196,10 @@ public class MockSpans extends BLSpans {
         }
     }
 
-    private void setPayloadsMatchInfo(int[] aStart, int[] aEnd, MatchInfo[] matchInfo) {
+    private void setPayloadsMatchInfo(int[] aStart, int[] aEnd, RelationInfo[] relationInfo) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            this.payloads[i] = matchInfo[i].serialize(aStart[i]);
+            this.payloads[i] = relationInfo[i].serialize(aStart[i]);
         }
     }
 
@@ -266,7 +267,7 @@ public class MockSpans extends BLSpans {
     }
 
     @Override
-    public MatchInfo getRelationInfo() {
+    public RelationInfo getRelationInfo() {
         return null;
     }
 
@@ -294,9 +295,9 @@ public class MockSpans extends BLSpans {
         return spans;
     }
 
-    public static MockSpans withMatchInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, MatchInfo[] aMatchInfo) {
+    public static MockSpans withMatchInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, RelationInfo[] aRelationInfo) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
-        spans.setPayloadsMatchInfo(aStart, aEnd, aMatchInfo);
+        spans.setPayloadsMatchInfo(aStart, aEnd, aRelationInfo);
         return spans;
     }
 

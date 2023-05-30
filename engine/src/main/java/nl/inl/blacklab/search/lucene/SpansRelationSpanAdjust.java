@@ -11,7 +11,7 @@ import org.apache.lucene.search.spans.FilterSpans;
 class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     /** how to adjust spans */
-    private final MatchInfo.SpanMode mode;
+    private final RelationInfo.SpanMode mode;
     
     /** Adjusted start position of current hit */
     private int startAdjusted = -1;
@@ -29,14 +29,14 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
      * @param in spans to adjust
      * @param mode how to adjust spans
      */
-    public SpansRelationSpanAdjust(BLSpans in, MatchInfo.SpanMode mode) {
+    public SpansRelationSpanAdjust(BLSpans in, RelationInfo.SpanMode mode) {
         super(in, SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), mode));
         this.mode = mode;
     }
 
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
-        if (mode == MatchInfo.SpanMode.SOURCE & in.getRelationInfo().isRoot()) {
+        if (mode == RelationInfo.SpanMode.SOURCE & in.getRelationInfo().isRoot()) {
             // Need source, but this has no source
             return FilterSpans.AcceptStatus.NO;
         }
@@ -90,7 +90,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
             startAdjusted = endAdjusted = NO_MORE_POSITIONS;
         } else if (atFirstInCurrentDoc || startPos < 0) {
             startAdjusted = endAdjusted = -1;
-        } else if (mode == MatchInfo.SpanMode.ALL_SPANS) {
+        } else if (mode == RelationInfo.SpanMode.ALL_SPANS) {
             // We need all match info because we want the full span including all matched relations
             if (matchInfo == null)
                 matchInfo = new MatchInfo[context.numberOfMatchInfos()];
@@ -101,18 +101,19 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
             endAdjusted = Integer.MIN_VALUE;
             for (int i = 0; i < matchInfo.length; i++) {
                 MatchInfo info = matchInfo[i];
-                if (info != null && !info.isTag() && !info.isSpan()) {
+                if (info != null && info.getType() == MatchInfo.Type.RELATION) {
                     // This is a relations match. Take this into account for the full span.
-                    if (info.getFullSpanStart() < startAdjusted)
-                        startAdjusted = info.getFullSpanStart();
-                    if (info.getFullSpanEnd() > endAdjusted)
-                        endAdjusted = info.getFullSpanEnd();
+                    // (capture groups are not taken into account, but should already fall into the span anyway)
+                    if (info.getSpanStart() < startAdjusted)
+                        startAdjusted = info.getSpanStart();
+                    if (info.getSpanEnd() > endAdjusted)
+                        endAdjusted = info.getSpanEnd();
                 }
             }
             if (startAdjusted == Integer.MAX_VALUE) {
                 // Weird, no relations matched; use the original span (this should never happen though)
-                startAdjusted = in.getRelationInfo().spanStart(MatchInfo.SpanMode.FULL_SPAN);
-                endAdjusted = in.getRelationInfo().spanEnd(MatchInfo.SpanMode.FULL_SPAN);
+                startAdjusted = in.getRelationInfo().spanStart(RelationInfo.SpanMode.FULL_SPAN);
+                endAdjusted = in.getRelationInfo().spanEnd(RelationInfo.SpanMode.FULL_SPAN);
             }
         } else {
             startAdjusted = in.getRelationInfo().spanStart(mode);
@@ -134,12 +135,17 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     }
 
     @Override
+    public RelationInfo getRelationInfo() {
+        return super.getRelationInfo();
+    }
+
+    @Override
     public int advanceStartPosition(int target) throws IOException {
         if (atFirstInCurrentDoc && startPos >= target) {
             // Our cached hit is the one we want.
             return nextStartPosition();
         }
-        if (mode != MatchInfo.SpanMode.FULL_SPAN) {
+        if (mode != RelationInfo.SpanMode.FULL_SPAN) {
             // We can't skip because the spans we produce are not guaranteed to be sorted by start position.
             // Call the naive implementation.
             if (BLSpans.naiveAdvanceStartPosition(this, target) == NO_MORE_POSITIONS) {

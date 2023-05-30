@@ -293,7 +293,7 @@ class SpansNot extends BLSpans {
     }
 
     @Override
-    public MatchInfo getRelationInfo() {
+    public RelationInfo getRelationInfo() {
         return null;
     }
 

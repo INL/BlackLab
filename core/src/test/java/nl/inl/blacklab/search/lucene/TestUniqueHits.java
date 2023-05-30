@@ -30,20 +30,20 @@ public class TestUniqueHits {
     /** Match info for above hits. Notice that the first three are identical, but the last two are not -
      *  we therefore expect the last two hits to both be returned, and not reduced to 1 using SpansUnique.
      */
-    MatchInfo[] aMatchInfo = {
-            new MatchInfo("abc", false, 10, 10, 11, 11),
-            new MatchInfo("abc", false, 10, 10, 11, 11),
-            new MatchInfo("abc", false, 10, 10, 11, 11),
-            new MatchInfo("abc", false, 1, 1, 2, 2),
-            new MatchInfo("abc", false, 1, 1, 1, 2),
+    RelationInfo[] aRelationInfo = {
+            new RelationInfo("abc", false, 10, 10, 11, 11),
+            new RelationInfo("abc", false, 10, 10, 11, 11),
+            new RelationInfo("abc", false, 10, 10, 11, 11),
+            new RelationInfo("abc", false, 1, 1, 2, 2),
+            new RelationInfo("abc", false, 1, 1, 1, 2),
     };
 
     @Test
     public void testWithMatchInfoSpansUnique() throws IOException {
-        BLSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aMatchInfo);
+        BLSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aRelationInfo);
         BLSpans tags = new SpansRelations("test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
-                MatchInfo.SpanMode.FULL_SPAN);
+                RelationInfo.SpanMode.FULL_SPAN, 0);
         BLSpans spans = new SpansUnique(tags);
         HitQueryContext context = new HitQueryContext();
         context.registerMatchInfo("abc");
@@ -58,11 +58,11 @@ public class TestUniqueHits {
 
     @Test
     public void testWithMatchInfoPerDocSortedSpans() throws IOException {
-        MockSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aMatchInfo);
+        MockSpans a = MockSpans.withMatchInfoInPayload(aDoc, aStart, aEnd, aRelationInfo);
         a.setGuarantees(SpanGuarantees.NONE); // so PerDocumentSortedSpans doesn't complain we're already sorted
         BLSpans tags = new SpansRelations("test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
-                MatchInfo.SpanMode.FULL_SPAN);
+                RelationInfo.SpanMode.FULL_SPAN, 0);
         BLSpans spans = new PerDocumentSortedSpans(tags, true, true);
         HitQueryContext context = new HitQueryContext();
         context.registerMatchInfo("abc");

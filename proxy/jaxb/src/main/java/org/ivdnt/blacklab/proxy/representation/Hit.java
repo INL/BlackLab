@@ -29,6 +29,12 @@ public class Hit  {
     @JsonProperty("captureGroups")
     public List<CaptureGroup> captureGroups;
 
+    @XmlElementWrapper(name="relations")
+    @XmlElement(name = "relation")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("relations")
+    public List<Relation> relations;
+
     public ContextWords left;
 
     public ContextWords match;

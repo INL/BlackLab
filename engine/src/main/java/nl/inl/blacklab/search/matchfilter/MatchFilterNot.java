@@ -50,8 +50,8 @@ public class MatchFilterNot extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
-        return ConstraintValue.get(!a.evaluate(fiDoc, capturedGroups).isTruthy());
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
+        return ConstraintValue.get(!a.evaluate(fiDoc, matchInfo).isTruthy());
     }
 
     @Override

@@ -150,23 +150,38 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         if (in instanceof BLSpans)
             ((BLSpans) in).setHitQueryContext(context);
+        else if (in instanceof SpansInBuckets)
+            ((SpansInBuckets) in).setHitQueryContext(context);
     }
 
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
-        if (childClausesCaptureMatchInfo && in instanceof BLSpans)
-            ((BLSpans) in).getMatchInfo(matchInfo);
+        if (childClausesCaptureMatchInfo) {
+            if (in instanceof BLSpans)
+                ((BLSpans) in).getMatchInfo(matchInfo);
+            else if (in instanceof SpansInBuckets)
+                throw new RuntimeException("Subclass must handle this case");
+        }
     }
 
     @Override
     public boolean hasMatchInfo() {
-        return in instanceof BLSpans ? ((BLSpans)in).hasMatchInfo() : false;
+        if (in instanceof SpansInBuckets)
+            return ((SpansInBuckets) in).hasMatchInfo();
+        else if (in instanceof BLSpans)
+            return ((BLSpans) in).hasMatchInfo();
+        else
+            return false;
     }
 
     @Override
-    public MatchInfo getRelationInfo() {
-        if (childClausesCaptureMatchInfo && in instanceof BLSpans)
-            return ((BLSpans) in).getRelationInfo();
+    public RelationInfo getRelationInfo() {
+        if (childClausesCaptureMatchInfo) {
+            if (in instanceof BLSpans)
+                return ((BLSpans) in).getRelationInfo();
+            else if (in instanceof SpansInBuckets)
+                throw new RuntimeException("Subclass must handle this case");
+        }
         return null;
     }
 }

@@ -198,7 +198,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      *
      * @return the relation info, or null if no active relation available
      */
-    public abstract MatchInfo getRelationInfo();
+    public abstract RelationInfo getRelationInfo();
 
     @Override
     public SpanGuarantees guarantees() {

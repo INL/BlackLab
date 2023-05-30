@@ -27,7 +27,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     private int endPos = NOT_YET_NEXTED;
 
     /** Source and target for this relation */
-    private final MatchInfo relationInfo = new MatchInfo();
+    private final RelationInfo relationInfo = new RelationInfo();
 
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
     private final boolean payloadIndicatesPrimaryValues;
@@ -36,13 +36,16 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     private final Direction direction;
 
     /** What span to return for the relations found */
-    private final MatchInfo.SpanMode spanMode;
+    private final RelationInfo.SpanMode spanMode;
 
     /** Group number where we'll capture our relation info */
     private int groupIndex;
 
     /** Relation type we're looking for */
     private final String relationType;
+
+    /** Unique id for this SpansRelations (to avoid match info name collision) */
+    private final int uniqueId;
 
     /**
      * Construct SpansRelations.
@@ -54,21 +57,32 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param relationType type of relation we're looking for
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
+     * @param direction direction of the relation
+     * @param spanMode what span to return for the relations found
+     * @param uniqueId unique id for this SpansRelations (to avoid match info name collision)
      */
     public SpansRelations(String relationType, BLSpans relationsMatches,
-            boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
+            boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
+            int uniqueId) {
         super(relationsMatches, SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
         this.relationType = relationType;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
         this.spanMode = spanMode;
+        this.uniqueId = uniqueId;
     }
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         // Only keep Unicode letters from relationType
-        // FIXME: how do we avoid collisions when matching multiple of the same relation type?
         String groupName = relationType.replaceAll("[^\\p{L}]", "");
+
+        // Add our unique id to the group name to avoid collisions when matching the same
+        // relation type multiple times.
+        // Note that if query rewriting generates multiple SpansRelations for the same relation clause
+        // (e.g. because of optional query parts), those will all have the same id, which is what we want.
+        groupName += "-n" + uniqueId;
+
         // Register our group
         this.groupIndex = context.registerMatchInfo(groupName);
     }
@@ -83,7 +97,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         return true;
     }
 
-    public MatchInfo getRelationInfo() {
+    public RelationInfo getRelationInfo() {
         return relationInfo;
     }
 
@@ -130,7 +144,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             return nextStartPosition();
         }
         if (direction == Direction.FORWARD &&
-                (spanMode == MatchInfo.SpanMode.FULL_SPAN || spanMode == MatchInfo.SpanMode.SOURCE)) {
+                (spanMode == RelationInfo.SpanMode.FULL_SPAN || spanMode == RelationInfo.SpanMode.SOURCE)) {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
             super.advanceStartPosition(target);
             if (startPos == NO_MORE_POSITIONS) {
@@ -162,7 +176,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         fetchRelationInfo(); // decode the payload
-        if (relationInfo.isRoot() && spanMode == MatchInfo.SpanMode.SOURCE) {
+        if (relationInfo.isRoot() && spanMode == RelationInfo.SpanMode.SOURCE) {
             // Root relations have no source
             return FilterSpans.AcceptStatus.NO;
         }

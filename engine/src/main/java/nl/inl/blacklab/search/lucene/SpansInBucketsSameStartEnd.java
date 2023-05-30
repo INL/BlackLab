@@ -36,7 +36,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     /**
      * For each hit we fetched, store the active relation info, if any.
      */
-    protected ObjectArrayList<MatchInfo> activeRelationPerHit = null;
+    protected ObjectArrayList<RelationInfo> activeRelationPerHit = null;
 
     private HitQueryContext hitQueryContext;
 
@@ -123,7 +123,8 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
                 MatchInfo[] matchInfo = new MatchInfo[n];
                 source.getMatchInfo(matchInfo);
                 matchInfos.add(matchInfo);
-                activeRelationPerHit.add(source.getRelationInfo());
+                RelationInfo relationInfo = source.getRelationInfo();
+                activeRelationPerHit.add(relationInfo == null ? null  : relationInfo.clone());
             }
             currentBucketSize++;
             sourceStart = source.nextStartPosition();
@@ -189,7 +190,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     }
 
     @Override
-    public MatchInfo getRelationInfo(int indexInBucket) {
+    public RelationInfo getRelationInfo(int indexInBucket) {
         return doMatchInfo ? activeRelationPerHit.get(indexInBucket) : null;
     }
 

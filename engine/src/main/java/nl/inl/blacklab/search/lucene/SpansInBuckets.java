@@ -124,7 +124,7 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
      *
      * @return the relation info, or null if active relation available
      */
-    public MatchInfo getRelationInfo(int indexInBucket) {
+    public RelationInfo getRelationInfo(int indexInBucket) {
         return null;
     }
 

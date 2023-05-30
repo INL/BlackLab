@@ -61,7 +61,7 @@ public class MatchFilterString extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
         return string;
     }
 

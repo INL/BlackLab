@@ -44,7 +44,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     /**
      * For each hit we fetched, store the active relation info, if any.
      */
-    protected ObjectArrayList<MatchInfo> activeRelationPerHit = null;
+    protected ObjectArrayList<RelationInfo> activeRelationPerHit = null;
 
     private HitQueryContext hitQueryContext;
 
@@ -68,7 +68,8 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
             matchInfoPerHit.add(matchInfo);
             if (activeRelationPerHit == null)
                 activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
-            activeRelationPerHit.add(source.getRelationInfo());
+            RelationInfo relationInfo = source.getRelationInfo();
+            activeRelationPerHit.add(relationInfo == null ? null : relationInfo.clone());
         }
     }
 
@@ -212,7 +213,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
     }
 
     @Override
-    public MatchInfo getRelationInfo(int indexInBucket) {
+    public RelationInfo getRelationInfo(int indexInBucket) {
         if (!doMatchInfo)
             return null;
         return activeRelationPerHit.get(indexInBucket);

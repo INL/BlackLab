@@ -12,7 +12,7 @@ public class TestSpansRelations {
     private SpansRelations tagRelationQuery(BLSpans a, boolean hasPrimaryValueIndicators) {
         return new SpansRelations("test", a,
                 hasPrimaryValueIndicators, SpanQueryRelations.Direction.FORWARD,
-                MatchInfo.SpanMode.FULL_SPAN);
+                RelationInfo.SpanMode.FULL_SPAN, 0);
     }
 
     private void testRelationsAndAdjust(int[] aDoc, int[] aStart, int[] aEnd, Callable<BLSpans> createSpans) throws Exception {
@@ -27,17 +27,17 @@ public class TestSpansRelations {
         // Test getting full spans
         full = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(full, new SpansRelationSpanAdjust(
-                createSpans.call(), MatchInfo.SpanMode.FULL_SPAN), skipFirstNextDoc);
+                createSpans.call(), RelationInfo.SpanMode.FULL_SPAN), skipFirstNextDoc);
 
         // Test getting source spans
         BLSpans sources = new MockSpans(aDoc, aStart, aStart);
         TestUtil.assertEquals(sources, new SpansRelationSpanAdjust(
-                createSpans.call(), MatchInfo.SpanMode.SOURCE), skipFirstNextDoc);
+                createSpans.call(), RelationInfo.SpanMode.SOURCE), skipFirstNextDoc);
 
         // Test getting target spans
         BLSpans targets = new MockSpans(aDoc, aEnd, aEnd);
         TestUtil.assertEquals(targets, new SpansRelationSpanAdjust(
-                createSpans.call(), MatchInfo.SpanMode.TARGET), skipFirstNextDoc);
+                createSpans.call(), RelationInfo.SpanMode.TARGET), skipFirstNextDoc);
     }
 
     @Test

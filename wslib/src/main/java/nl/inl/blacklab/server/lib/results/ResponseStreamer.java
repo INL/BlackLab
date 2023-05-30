@@ -39,6 +39,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -364,18 +365,36 @@ public class ResponseStreamer {
             ds.entry("end", hit.end());
         }
 
-        Set<Map.Entry<String, MatchInfo>> capturedGroups = matchInfo == null ? Collections.emptySet() :
-                matchInfo.entrySet().stream()
-                        .filter(e -> e.getValue() != null && e.getValue().isSpan())
-                        .collect(Collectors.toSet());
+        // If any groups were captured, include them in the response
+        Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfo, MatchInfo.Type.SPAN);
         if (!capturedGroups.isEmpty()) {
             ds.startEntry("captureGroups").startList();
             for (Map.Entry<String, MatchInfo> capturedGroup: capturedGroups) {
                 ds.startItem("group").startMap();
                 {
                     ds.entry("name", capturedGroup.getKey());
-                    ds.entry("start", capturedGroup.getValue().getFullSpanStart());
-                    ds.entry("end", capturedGroup.getValue().getFullSpanEnd());
+                    ds.entry("start", capturedGroup.getValue().getSpanStart());
+                    ds.entry("end", capturedGroup.getValue().getSpanEnd());
+                }
+                ds.endMap().endItem();
+            }
+            ds.endList().endEntry();
+        }
+        // If any relations were matched, include that info as well
+        Set<Map.Entry<String, MatchInfo>> relationInfos = filterMatchInfo(matchInfo, MatchInfo.Type.RELATION);
+        if (!relationInfos.isEmpty()) {
+            ds.startEntry("relations").startList();
+            for (Map.Entry<String, MatchInfo> e: relationInfos) {
+                RelationInfo relationInfo = (RelationInfo)e.getValue();
+                ds.startItem("relation").startMap();
+                {
+                    ds.entry("type", relationInfo.getFullRelationType());
+                    if (!relationInfo.isRoot()) {
+                        ds.entry("sourceStart", relationInfo.getSourceStart());
+                        ds.entry("sourceEnd", relationInfo.getSourceEnd());
+                    }
+                    ds.entry("targetStart", relationInfo.getTargetStart());
+                    ds.entry("targetEnd", relationInfo.getTargetEnd());
                 }
                 ds.endMap().endItem();
             }
@@ -406,6 +425,14 @@ public class ResponseStreamer {
             }
         }
         ds.endMap();
+    }
+
+    private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, MatchInfo.Type type) {
+        Set<Map.Entry<String, MatchInfo>> capturedGroups = matchInfo == null ? Collections.emptySet() :
+                matchInfo.entrySet().stream()
+                        .filter(e -> e.getValue() != null && e.getValue().getType() == type)
+                        .collect(Collectors.toSet());
+        return capturedGroups;
     }
 
     public void indexProgress(ResultIndexStatus progress)

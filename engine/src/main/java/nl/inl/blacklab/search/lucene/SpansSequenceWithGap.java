@@ -370,8 +370,8 @@ class SpansSequenceWithGap extends BLSpans {
     }
 
     @Override
-    public MatchInfo getRelationInfo() {
-        MatchInfo info = first.getRelationInfo();
+    public RelationInfo getRelationInfo() {
+        RelationInfo info = first.getRelationInfo();
         return info == null ? second.getRelationInfo(indexCurrentSecondClauseMatch) : info;
     }
 

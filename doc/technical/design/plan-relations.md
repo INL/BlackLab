@@ -60,7 +60,7 @@ Better yet, we should generalize the notion of an "inline tag" such as `<s/>` we
       X ---starts_sentence_ending_at--> Y
     Small     man    bites    large    dog.
 
-> **NOTE:** Unification also means changes to how we store the payload and how we index tag attributes (combining them all into one term string? probably provide a way to exclude unique id attributes then?). See below.
+> **NOTE:** should there be a mechanism to exclude certain inline tag attributes (e.g. id) from being indexed in the term string? See below.
 
 ### Where to index relations
 
@@ -127,183 +127,230 @@ In addition to finding specific relations and combining them, maybe we want to f
 
 ## CQL syntax
 
-We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in [#396](https://github.com/INL/BlackLab/issues/396), we'll use a simple function call style for now.
+### Dependency relations syntax
 
-We can always add more user-friendly CQL extensions or additional query languages later if we want.
+We'll provide a syntax specifically designed to easily query dependency relations (the likely most common use case for now).
 
-For example, a syntax specific to dependency relations (the likely most common use case) could be added as an extension to CQL that can be enabled if desired. This extension could also include automatic capturing of relevant parts of the query.
+For the more generic "building block" functions that these queries will rewrite to internally, see the next 
+section below.
 
+The dependency relations syntax could perhaps be toggleable, so it can be disabled if desired. However, if it does not 
+interfere with other CQL queries, we can probably just enable it by default.
+
+#### Dependency relation operator
+
+The dependency relation operator is a n-ary operator to match one or more dependency relations between a parent and several children. It also allows you to exclude certain relations, i.e. ensure that these don't exist.
+
+```agsl
+parent 
+   --deprel1--> child1,
+   --deprel2--> child2,
+  !--deprel3--> child3, ...
+```
+
+This will be equivalent to the following functional query style (where the `deprel#` parameters will automatically be prefixed with the default relation class (`dep::`) if no prefix was given):
+
+```
+rmatch(parent, 
+   rel(deprel1, child1),
+   rel(deprel2, child2),
+  !rel(deprel3, child3), ...)
+```
+
+If parent is omitted in the operator form, we just will find child relations with the same source. If there is only one child clause, we can use this to find root relations (multiple child clauses don't make sense in this case). Note that root relations don't have a source, so in that case, this expression will return the target.
+
+In addition to `--relationtype-->` to match an exact string, you can also use `--(regex)-->` to match any relation type that matches the given regex.
+
+If you want to match all relations (of the default relation class, usually `dep`), use `---->` (equivalent to `--(.*)-->`).
+
+### Generic syntax for relations
+
+We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in [#396](https://github.com/INL/BlackLab/issues/396), we'll use a simple function call style for now. This will correspond closely to how relations are indexed an will be useful
+for any type of relations. We will provide specific syntax for relations types such as dependency relations.
 
 **TODO:**
 
 - exclude relations
 - requirement that certain groups may not contain the same match (e.g. targets of two relations attached to the same source must be different, so you can e.g. find two different adjectives attached to a noun)
 
+Below is a quick reference for these basic "building block" relations functions.
 
-### Quick reference
+#### rel: find relations with certain properties
 
-#### rel
+We can find a relation by type and target using:
 
-Find relations by type and direction.
+    rel(reltype = ".*", target = []*, spanMode = 'source')
 
-    rel(reltype = ".*", spanMode = "target", direction = "both")
+If `reltype` does not contain the substring `::`, it will be prefixed with the default relation class `dep::` (for dependency relations). So `.*` would match all dependency relations and `.*::.*` would match relations of all types. The default relation class could be made configurable, of course.
 
-`spanMode` can take the values:
+The default value for `target` matches all n-grams, although that query will obviously never actually be executed, we will just not filter on the child at all in that case.
+
+Note that this returns the _source_ of the relation by default, as we've already matched on the target.
+
+`spanMode` adjusts the resulting span and can take the values:
 - `"source"` (span becomes the source of the relation)
 - `"target"` (span becomes the target of the relation - this is the default value)
 - `"full"` (span becomes the full span of the relation, including source and target)
 
-`direction` can take the values:
-- `"root"` (only root relations)
-- `"forward"` (only relations pointing forward in the document - this includes root relations)
-- `"backward"` (only relations pointing backward in the document - this includes root relations)
-- `"both"` (forward, backward and root relations - this is the default value)
+By default `rel()` returns spans that match the _source_ of the relation. So e.g. `rel('nsubj')` will find words that have a subject, and `rel('nsubj', 'target')` will find the subjects themselves, and `rel('nsubj', 'full')` will find spans that include both the source and target.
 
-By default `rel(...)` returns spans that match the target of the relation. So e.g.
-`rel('nsubj')` will find subjects, and `rel('nsubj'), 'source')` will find words
-that have a subject, and `rel('nsubj'), 'full')` will find spans that include both
-the source and target.
+Note that if you request the source of a root relation, it will return the target instead, as root relations don't have a source. (**NOTE:** should this throw an error instead?)
 
-NOTE: there is currently no way to filter out root relations. Should we add this?
+**NOTE:** there is currently no way to filter _out_ root relations. Do we need this?
 
-#### rspan
+#### rspan: adjusting the span of a relation match
 
-We can also change the spanMode of the spans returned by `rel(...)` according to what we need:
+We can also change the spanMode of the spans returned by `rel()` according to what we need:
 
-    rspan(relation_matches, spanMode = "full", relationNumber = 1)
+    rspan(relation_matches, spanMode = "full")
 
-This will return the same relation matches, but with the span start and end set 
-according to the value of `spanMode` (see above). The default is `full`, i.e. a span
-covering both the source and target of the relation.
+This will return the same relation matches, but with the span start and end set according to the value of `spanMode` (see above). The default is `full`, i.e. a span covering both the source and target of the relation.
 
-NOTE: for `rspan`, there is a special extra spanMode `"all"`, that will return a span covering
-the sources and targets of all relations matched.
+**NOTE:** for `rspan`, there is a special extra spanMode `"all"`, that will return a span covering the sources and targets of _all_ relations matched.
 
-**NOT YET IMPLEMENTED:** `relationNumber` could be used to select a specific relation if multiple relations have been matched in a query. Relations are numbered in the order they appear in the query. (might be a problem though because match info numbers may not always match query order)
+### rmatch: match clauses (AND) and ensure unique relations
 
-### rtype
+We can match a tree fragment of a tree (a parent and some of its children) using `rmatch`:
+
+    rmatch(clause1, clause2, ! clause3, ...)
+
+Often this will be used with the target of the parent relation as `clause1` and the source of child relations as `clause2`, `clause3`, etc. (some of them negated to indicate such children must not be present).
+
+This operation is the same as a regular AND (NOT) operation with these clauses, but with the added requirement that a given relation may not be matched by more than one clause. (without the `rmatch` operation, you might need many global constraints to enforce this).
+
+#### rtype
 
 Construct a relation type string that may include attributes
 
     rtype(class, type, attributes = {})
 
-### Finding relations
+(not yet implemented)
+
+#### Finding relations
 
 Below are examples of how to use the `rel` function to find relations between words. Note `_` indicates the default value for a parameter. Parameters at the end may be omitted; their default values will also be used.
 
-Find all `object` relations (spans will contain the objects):
+Find all `object` relations (spans will contain the source of the relation, i.e. the word that has an object):
 
-    rel('dep::object', 'target')
     rel('dep::object')
+    rel('object')       # "dep::" is automatically prepended
+    rel('object', _, 'source')
 
-Find `object` relations where the source word equals `bites`:
+All `object` relations (spans will contain the targets, i.e. the objects):
 
-    'bites' & rel('dep::object', 'source')
+    rel('object', _, 'target')
 
-Find all relations where the source word equals `bites`:
+All `object` relations where the target is a noun:
 
-    'bites' & rel('dep::.*', 'source')
+    rel('object', [pos = 'NOUN'], 'target')
 
-Find `object` relations where the target word equals `man`:
+Relations of type `object` where the source word is `bites`:
 
-    'man' & rel('dep::object')
+    'bites' & rel('object')
 
-Find all `object` relations that point forward:
+All relations where the source word equals `bites`:
 
-    rel('dep::object', _, 'forward')
+    'bites' & rel()
 
-Find all root relations:
+Relations of type `object` where the target word equals `man`:
 
-    rel(_, _, 'root')
+    'man' & rel('dep::object', _, 'target')
+
+Find root relations:
+
+    rel('root')
 
 Find all dependency relations:
 
-    rel('dep::.*'))
+    rel('dep::.*')
+    rel('.*')
 
-Find all relations (a very taxing query in a huge corpus, obviously):
+Find all relations, not just dependency relations:
 
-    rel()
+    rel('.*::.*')
 
 Find sentences:
 
     <s/>
-    rel(rtype('__tag', 's'))
-    rel('__tag::s'))
+    rel(rtype('__tag', 's'), _, 'full')
+    rel('__tag::s'), _, 'full')
 
 Find sentences with happy sentiment:
 
     <s sentiment='happy' confidence='10' />
-    rel(rtype('__tag', 's', list('sentiment', 'happy', 'confidence', '10')))
-    rel('__tag::s\u0001confidence\u000210\u0001sentiment\u0002happy\u0001'))
+    rel(rtype('__tag', 's', list('sentiment', 'happy', 'confidence', '10')), _, 'full')
+    rel('__tag::s\u0001confidence\u000210\u0001sentiment\u0002happy\u0001'), _, 'full')
 
-### Extract source or target
+#### Extract source or target
 
 Find words that have 'man' as their object ("find relation source where target is 'man' and type is 'object'"):
 
-    rspan('man' & rel('dep::object'), 'source')
+    rel('object', 'man')
 
 Find words that are the object for 'bites' ("find relation target where source is `bites` and type is `object`"):
 
-    rspan('bites' & rel('dep::object', 'source'), 'target')
+    rspan('bites' & rel('object'), 'target')
 
 
-### Combining relation matches
+#### Combining relation matches
 
 We can combine relation matches using the standard CQL operators.
 
 Some examples follow.
 
-Find words that are both a subject and an object (doesn't make sense, but ok):
+Find words that have both a subject and an object (i.e. relations have same source):
 
-    rel('dep::object') & rel('dep::subject')
+    rel('object') & rel('subject')
+    rmatch(_, rel('object'), rel('subject'))
 
 Find words that have `man` as their object and `dog` as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
 
-    rspan( rel('dep::object') & 'man' , 'source') &
-    rspan( rel('dep::subject') & 'dog' , 'source')
+    rel('object', 'man') & rel('subject', 'dog')
+    rmatch(_, rel('object', 'man') & rel('subject', 'dog'))
 
 Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
 
-    rspan(
-        rel('dep::subject', 'source') & rspan( rel('dep::object') & 'man' , 'source' ),
-        'target'
-    )
+    rspan(rel('subject') & rel('object', 'man'), 'target')
 
 Note in the above that when combining two relations matches with `&`, a new relations match is created that stores the information for both relations. The third `rspan` parameter can be used to select the relation, but the default is the first of the two relations combined.
 
 
-### Examples Lassy Small
+#### Examples Lassy Small
 
 Find `case` and `nmod` relations with same source (returns that source):
 
-    rel('dep::case', 'source') & rel('dep::nmod', 'source')
+    rel('case') & rel('nmod')
+    rmatch(_, rel('case'), rel('nmod'))
 
 Same, but return target for `case`:
 
-    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'target')
+    rspan(rel('case') & rel('nmod'), 'target')
 
 Same, but return the full span for `case`:
 
-    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'full')
+    rspan(rel('case') & rel('nmod'), 'full')
 
 Same, but return the full span covering both relations:
 
-    rspan(rel('dep::case', 'source') & rel('dep::nmod', 'source'), 'all')
+    rspan(rel('case') & rel('nmod'), 'all')
 
-Match target of one relation to source of another:
+Match target of one relation to source of another (return span covering all matched relations):
 
-    rspan(rel('dep::nmod') & rel('dep::acl:relcl', 'source'), 'all')
+    rel('nmod', rel('acl:relcl'), 'all')
 
 
-### Capturing parts
+**TODO:** rel() doesn't support spanMode 'all' yet, but should (matchTarget can have matched other relations)
+
+
+#### Capturing parts
 
 **TODO:** see if we can unify capture groups and relations (WIP)
 
 Just like in other CQL queries, we can tag parts with a group name to capture them.
 
     V:(
-        rspan(S:rel('dep::subject'), 'source') & 
-        rspan(O:rel('dep::object'), 'source') & 
+        rspan(S:relt('subject') & 
+        rspan(O:relt('object'), 'source') & 
         [pos='VERB']
     )
 
@@ -351,7 +398,7 @@ would return the regex:
 
 ### Better keep track of spans hierarchy?
 
-> **NOTE:** this is beyong the scope of this task, but it's good to keep it in the back of our mind
+> **NOTE:** this is beyond the scope of this task, but it's good to keep it in the back of our mind
 
 Span nesting has never been completely accurately recorded in the index, because only the start and end tokens are stored, not the nesting level. If two spans have the same start and end, we can't tell which one is the parent of the other.
 

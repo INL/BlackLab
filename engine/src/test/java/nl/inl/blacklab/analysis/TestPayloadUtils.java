@@ -11,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 public class TestPayloadUtils {
 
@@ -70,12 +70,12 @@ public class TestPayloadUtils {
 
             // Integrated index type: writes start and end position
             b = PayloadUtils.tagEndPositionPayload(starts[i], ends[i], BlackLabIndex.IndexType.INTEGRATED);
-            MatchInfo r = new MatchInfo();
+            RelationInfo r = new RelationInfo();
             r.deserialize(starts[i], new ByteArrayDataInput(b.bytes));
-            Assert.assertEquals(starts[i], r.getFullSpanStart());
+            Assert.assertEquals(starts[i], r.getSpanStart());
             Assert.assertEquals(starts[i], r.getSourceStart());
             Assert.assertEquals(starts[i], r.getSourceEnd());
-            Assert.assertEquals(ends[i], r.getFullSpanEnd());
+            Assert.assertEquals(ends[i], r.getSpanEnd());
             Assert.assertEquals(ends[i], r.getTargetEnd());
             Assert.assertEquals(ends[i], r.getTargetStart());
         }

@@ -41,7 +41,7 @@ public class TestMatchInfo {
                 sourceStart = targetStart;
                 sourceEnd = targetEnd;
             }
-            MatchInfo matchInfo = new MatchInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+            RelationInfo matchInfo = new RelationInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
 
             // Randomly index at either source or target
             int currentPos = random.nextBoolean() ? sourceStart : targetStart;
@@ -52,7 +52,7 @@ public class TestMatchInfo {
             byte[] payload = new BytesRef(os.toByteArray()).bytes;
 
             // Decode it again
-            MatchInfo decoded = new MatchInfo();
+            RelationInfo decoded = new RelationInfo();
             decoded.deserialize(currentPos, new ByteArrayDataInput(payload));
 
             Assert.assertEquals(matchInfo, decoded);

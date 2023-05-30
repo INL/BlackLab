@@ -348,7 +348,7 @@ public interface Hits extends Results<Hit, HitProperty> {
         MatchInfo[] matchInfo = hit.matchInfo();
         Map<String, MatchInfo> map = new HashMap<>();
         for (int i = 0; i < matchInfo.length; i++) {
-            if (omitEmptyCaptures && matchInfo[i].isFullSpanEmpty())
+            if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
                 continue;
             map.put(matchInfoNames().get(i), matchInfo[i]);
         }

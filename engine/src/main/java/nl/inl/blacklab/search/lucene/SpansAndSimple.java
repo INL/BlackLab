@@ -145,6 +145,11 @@ class SpansAndSimple extends BLConjunctionSpans {
     }
 
     @Override
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        super.getMatchInfo(matchInfo);
+    }
+
+    @Override
     public String toString() {
         return "AND(" + subSpans[0] + ", " + subSpans[1] + ")";
     }

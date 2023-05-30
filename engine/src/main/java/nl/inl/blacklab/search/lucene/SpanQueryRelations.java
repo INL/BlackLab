@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.FieldInfo;
@@ -33,8 +34,12 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
+    /** We assign unique ids to SpanQueryRelations clauses, so the match info names for
+     *  multiple relation clauses will be unique. */
+    private static AtomicInteger uniqueIdCounter = new AtomicInteger();
+
     public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction,
-            MatchInfo.SpanMode spanMode) {
+            RelationInfo.SpanMode spanMode) {
         if (!clause.hitsStartPointSorted())
             return clause;
         boolean sorted;
@@ -55,12 +60,12 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             sorted = false;
             break;
         }
-        return sorted ? new SpanGuaranteesAdapter(clause) {
+        return new SpanGuaranteesAdapter(clause) {
             @Override
             public boolean hitsStartPointSorted() {
-                return true;
+                return sorted;
             }
-        } : clause;
+        };
     }
 
     public enum Direction {
@@ -111,15 +116,18 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private Direction direction;
 
-    private MatchInfo.SpanMode spanMode;
+    private RelationInfo.SpanMode spanMode;
+
+    /** Ensure unique match info name to avoid collision when matching the same relation type twice */
+    private int uniqueId = uniqueIdCounter.getAndIncrement();
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
-            Map<String, String> attributes, Direction direction, MatchInfo.SpanMode spanMode) {
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
         super(queryInfo);
 
         if (StringUtils.isEmpty(relationFieldName))
             throw new IllegalArgumentException("relationFieldName must be non-empty");
-        if (spanMode == MatchInfo.SpanMode.ALL_SPANS)
+        if (spanMode == RelationInfo.SpanMode.ALL_SPANS)
             throw new IllegalArgumentException("ALL_SPANS makes no sense for SpanQueryRelations");
 
         // Construct the clause from the field, relation type and attributes
@@ -130,13 +138,13 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     }
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause,
-            Direction direction, MatchInfo.SpanMode spanMode) {
+            Direction direction, RelationInfo.SpanMode spanMode) {
         super(queryInfo);
         init(relationFieldName, relationType, clause, direction, spanMode);
     }
 
     private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction,
-            MatchInfo.SpanMode spanMode) {
+            RelationInfo.SpanMode spanMode) {
         this.relationType = relationType;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
         this.relationFieldName = relationFieldName;
@@ -200,7 +208,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode);
+            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode, uniqueId);
         }
 
     }
@@ -218,13 +226,15 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         if (o == null || getClass() != o.getClass())
             return false;
         SpanQueryRelations that = (SpanQueryRelations) o;
-        return clause.equals(that.clause) && relationType.equals(that.relationType) && baseFieldName.equals(that.baseFieldName)
-                && relationFieldName.equals(that.relationFieldName);
+        return uniqueId == that.uniqueId && Objects.equals(clause, that.clause) && Objects.equals(
+                relationType, that.relationType) && Objects.equals(baseFieldName, that.baseFieldName)
+                && Objects.equals(relationFieldName, that.relationFieldName) && direction == that.direction
+                && spanMode == that.spanMode;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clause, relationType, baseFieldName, relationFieldName);
+        return Objects.hash(clause, relationType, baseFieldName, relationFieldName, direction, spanMode, uniqueId);
     }
 
     /**
