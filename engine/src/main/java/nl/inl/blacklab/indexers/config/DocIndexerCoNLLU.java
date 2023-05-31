@@ -160,17 +160,6 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                 continue;
             }
 
-            // Index each annotation
-            beginWord();
-
-            if (!inSentence) {
-                // We're not in a sentence yet and encountered a value line; start the sentence now.
-                inlineTag("s", true, sentenceAttr);
-                sentenceAttr.clear();
-                inSentence = true;
-                sentenceStartPosition = getCurrentTokenPosition();
-            }
-
             // Split the line into columns
             List<String> record = List.of(line.split("\t", -1));
 
@@ -181,47 +170,61 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                 // the bracketed word 'likes' would get a decimal id.
                 continue;
             }
-            Span span = idSpan(id, sentenceStartPosition);
 
-            // Store this line now, so the start/end offsets are correct
-            if (isStoreDocuments())
-                csvData.append(origLine).append(" ");
-
-            // Index dependency relation
-            String strHead = record.size() > COL_HEAD ? record.get(COL_HEAD) : "_";
-            if (!strHead.isEmpty() && !strHead.equals("_")) {
-                boolean isRoot = strHead.equals("0");
-                String relationType = record.size() > COL_DEP ? record.get(COL_DEP) : "_";
-                String fullRelationType = RelationUtil.fullType(
-                        RelationUtil.RELATION_CLASS_DEPENDENCY, relationType);
-                if (!isRoot) {
-                    // Regular relation with source and target.
-                    Span headSpan = idSpan(strHead, sentenceStartPosition);
-                    tagsAnnotation().indexRelation(fullRelationType, false, headSpan.start, headSpan.end,
-                            span.start, span.end, null, getIndexType());
-                } else {
-                    // Root relation has no source. We just use the target positions for the source, so
-                    // the relation is stored in a sane position.
-                    tagsAnnotation().indexRelation(fullRelationType, true, span.start, span.end,
-                            span.start, span.end, null, getIndexType());
+            // Index each annotation
+            beginWord();
+            try {
+                if (!inSentence) {
+                    // We're not in a sentence yet and encountered a value line; start the sentence now.
+                    inlineTag("s", true, sentenceAttr);
+                    sentenceAttr.clear();
+                    inSentence = true;
+                    sentenceStartPosition = getCurrentTokenPosition();
                 }
-            }
 
-            // Index all annotations defined in the config file
-            for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
-                String value;
-                if (annotation.isValuePathInteger()) {
-                    int i = annotation.getValuePathInt() - 1;
-                    if (i < record.size())
-                        value = record.get(i);
-                    else
-                        value = "";
-                } else {
-                    throw new RuntimeException("valuePath must be a column number");
+                Span span = idSpan(id, sentenceStartPosition);
+
+                // Store this line now, so the start/end offsets are correct
+                if (isStoreDocuments())
+                    csvData.append(origLine).append(" ");
+
+                // Index dependency relation
+                String strHead = record.size() > COL_HEAD ? record.get(COL_HEAD) : "_";
+                if (!strHead.isEmpty() && !strHead.equals("_")) {
+                    boolean isRoot = strHead.equals("0");
+                    String relationType = record.size() > COL_DEP ? record.get(COL_DEP) : "_";
+                    String fullRelationType = RelationUtil.fullType(
+                            RelationUtil.RELATION_CLASS_DEPENDENCY, relationType);
+                    if (!isRoot) {
+                        // Regular relation with source and target.
+                        Span headSpan = idSpan(strHead, sentenceStartPosition);
+                        tagsAnnotation().indexRelation(fullRelationType, false, headSpan.start, headSpan.end,
+                                span.start, span.end, null, getIndexType());
+                    } else {
+                        // Root relation has no source. We just use the target positions for the source, so
+                        // the relation is stored in a sane position.
+                        tagsAnnotation().indexRelation(fullRelationType, true, span.start, span.end,
+                                span.start, span.end, null, getIndexType());
+                    }
                 }
-                indexValue(annotation, value);
+
+                // Index all annotations defined in the config file
+                for (ConfigAnnotation annotation: annotatedField.getAnnotationsFlattened().values()) {
+                    String value;
+                    if (annotation.isValuePathInteger()) {
+                        int i = annotation.getValuePathInt() - 1;
+                        if (i < record.size())
+                            value = record.get(i);
+                        else
+                            value = "";
+                    } else {
+                        throw new RuntimeException("valuePath must be a column number");
+                    }
+                    indexValue(annotation, value);
+                }
+            } finally {
+                endWord();
             }
-            endWord();
         }
 
         endDocument();

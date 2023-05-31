@@ -25,7 +25,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     protected int currentEndPosition = -1;
 
     /** How many hits with this start and end? */
-    protected int currentBucketSize = 0;
+    protected int currentBucketSize = -1;
 
     /**
      * For each hit we fetched, store the match info (e.g. captured groups, relations),

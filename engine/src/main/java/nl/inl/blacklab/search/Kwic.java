@@ -69,8 +69,9 @@ public class Kwic {
     }
 
     public List<String> match() {
-        return Collections.unmodifiableList(
-                fragment.tokens.subList(hitStart * fragment.annotations.size(), hitEnd * fragment.annotations.size()));
+        int from = hitStart * fragment.annotations.size();
+        int to = hitEnd * fragment.annotations.size();
+        return Collections.unmodifiableList(fragment.tokens.subList(from, to));
     }
 
     /**

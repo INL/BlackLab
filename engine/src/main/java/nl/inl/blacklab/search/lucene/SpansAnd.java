@@ -13,7 +13,7 @@ import org.apache.lucene.search.spans.SpanCollector;
  * Combines two Spans using AND. Note that this means that only matches with the
  * same document id, the same start and the same end positions will be kept.
  *
- * This version can deal with clauses where spans may have the  same start/end
+ * This version can deal with clauses where spans may have the same start/end
  * but different match info). If your spans don't, prefer the faster SpansAndSimple.
  */
 class SpansAnd extends BLSpans {

@@ -103,7 +103,9 @@ public class XFRelations implements ExtensionFunctionClass {
             // Nothing to match, just return the clause
             return clauses.get(0);
         }
-        return new SpanQueryAnd(clauses); // TODO: ensure clauses don't match the same relation twice!
+        SpanQueryAnd spanQueryAnd = new SpanQueryAnd(clauses);
+        spanQueryAnd.setRequireUniqueRelations(true); // discard match if relation matched twice
+        return spanQueryAnd;
     }
 
     public void register() {

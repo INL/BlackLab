@@ -182,6 +182,8 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     private final List<BLSpanQuery> exclude;
 
+    private boolean requireUniqueRelations = false;
+
     public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
         super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);
         this.include = include == null ? new ArrayList<>() : include;
@@ -192,6 +194,18 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
         List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(this.include);
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
+    }
+
+    /**
+     * Do we require that the active relation matched by the include clauses are unique?
+     *
+     * I.e. if two clauses match the same relation, the match is discarded. This can
+     * happen in queries that match the same relation type twice.
+     *
+     * @param b true if we require unique relations, false if not
+     */
+    public void setRequireUniqueRelations(boolean b) {
+        this.requireUniqueRelations = b;
     }
 
     private void checkBaseFieldName() {
@@ -325,7 +339,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
         }
 
         // Combination of positive and possibly negative clauses
-        BLSpanQuery includeResult = rewrCl.size() == 1 ? rewrCl.get(0) : new SpanQueryAndNot(rewrCl, null);
+        BLSpanQuery includeResult;
+        if (rewrCl.size() == 1)
+            includeResult = rewrCl.get(0);
+        else {
+            includeResult = new SpanQueryAndNot(rewrCl, null);
+            ((SpanQueryAndNot)includeResult).setRequireUniqueRelations(requireUniqueRelations);
+        }
         if (rewrNotCl.isEmpty())
             return includeResult.rewrite(reader);
         BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0)
@@ -422,25 +442,32 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
         @Override
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-            BLSpans combi = weights.get(0).getSpans(context, requiredPostings);
-            if (combi == null)
-                return null; // if no hits in one of the clauses, no hits in AND query
-            combi = BLSpans.ensureSortedUnique(combi);
-            for (int i = 1; i < weights.size(); i++) {
-                BLSpans si = weights.get(i).getSpans(context, requiredPostings);
-                if (si == null)
+            List<BLSpans> spans = new ArrayList<>();
+            for (BLSpanWeight w : weights) {
+                BLSpans s = w.getSpans(context, requiredPostings);
+                if (s == null)
                     return null; // if no hits in one of the clauses, no hits in AND query
-                si = BLSpans.ensureSortedUnique(si);
-                if (combi.guarantees().hitsHaveUniqueStartEnd() && si.guarantees().hitsHaveUniqueStartEnd()) {
-                    // No duplicate start/end (with different match info); use the faster version.
-                    combi = new SpansAndSimple(combi, si);
-                } else {
-                    // We need to use the slower version that takes duplicate spans into account and produces all
-                    // combinations.
-                    combi = new SpansAnd(combi, si);
-                }
+                spans.add(s);
             }
-            return combi;
+
+            if (requireUniqueRelations) {
+                return new SpansAndMultiUniqueRelations(spans);
+            } else {
+                BLSpans combined = BLSpans.ensureSortedUnique(spans.get(0));
+                for (int i = 1; i < weights.size(); i++) {
+                    BLSpans clause = BLSpans.ensureSortedUnique(spans.get(i));
+                    if (combined.guarantees().hitsHaveUniqueStartEnd() && clause.guarantees()
+                            .hitsHaveUniqueStartEnd()) {
+                        // No duplicate start/end (with different match info); use the faster version.
+                        combined = new SpansAndSimple(combined, clause);
+                    } else {
+                        // We need to use the slower version that takes duplicate spans into account and produces all
+                        // combinations.
+                        combined = new SpansAnd(combined, clause);
+                    }
+                }
+                return combined;
+            }
         }
     }
 
