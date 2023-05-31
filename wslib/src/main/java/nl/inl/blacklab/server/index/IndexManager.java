@@ -92,14 +92,10 @@ public class IndexManager {
         collectionsDirs = new ArrayList<>();
         for (String indexPath: indexes) {
             File indexDir = new File(indexPath);
-            if (!indexDir.exists()) {
-                logger.warn("indexes section contains entry that doesn't exist: " + indexDir);
-                continue;
-            }
-            if (!indexDir.canRead()) {
-                logger.warn("indexes section contains unreadable entry: " + indexDir);
-                continue;
-            }
+            if (!indexDir.exists())
+                throw new ConfigurationException("Directory in indexLocations doesn't exist (or parent dir not accessible): " + indexDir);
+            if (!indexDir.canRead())
+                throw new ConfigurationException("Directory in indexLocations cannot be read (check permissions): " + indexDir);
 
             // Is this a single index, or a collection of indexes?
             if (BlackLabIndex.isIndex(indexDir)) {

@@ -28,7 +28,7 @@ public class InternalServerError extends BlsException {
         super(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
                 msg + (cause == null ? "" : " (" + cause + ")"), cause);
         this.internalErrorCode = internalErrorCode;
-        logger.debug("INTERNAL ERROR " + internalErrorCode + (cause == null ? "" : ":"));
+        logger.debug("INTERNAL ERROR " + internalErrorCode + (cause == null ? " (no cause given): " : ": ") + msg);
         if (cause != null)
             cause.printStackTrace();
     }
