@@ -756,7 +756,7 @@ public class QueryTool {
                 } else {
                     String filterExpr = cmd.substring(7);
                     try {
-                        filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, index.analyzer(), "title");
+                        filterQuery = LuceneUtil.parseLuceneQuery(index, filterExpr, index.analyzer(), "title");
                         outprintln("Filter created: " + filterQuery);
                         if (verbose)
                             outprintln(filterQuery.getClass().getName());
@@ -895,7 +895,7 @@ public class QueryTool {
 
     private void showContents(int docId) {
         if (!index.docExists(docId)) {
-            outprintln("Document " + docId + " was deleted.");
+            outprintln("Document " + docId + " does not exist.");
             return;
         }
         Document doc = index.luceneDoc(docId);
@@ -906,7 +906,7 @@ public class QueryTool {
 
     private void showMetadata(int docId) {
         if (!index.docExists(docId)) {
-            outprintln("Document " + docId + " was deleted.");
+            outprintln("Document " + docId + " does not exist.");
             return;
         }
         Document doc = index.luceneDoc(docId);
