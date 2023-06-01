@@ -55,7 +55,7 @@ public class ResultDocSnippet {
         } else {
             start = params.getWordStart();
             end = params.getWordEnd();
-            wordsAroundHit = ContextSize.hitOnly();
+            wordsAroundHit = ContextSize.get(0);
         }
 
         if (start < 0 || end < 0 || wordsAroundHit.left() < 0 || wordsAroundHit.right() < 0 || start > end) {

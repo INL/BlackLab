@@ -7,53 +7,55 @@ package nl.inl.blacklab.search.results;
  * The other functionality will be added in the future.
  */
 public class ContextSize {
-    
+
+    /**
+     * Get ContexSize.
+     *
+     * WARNING: right now, only left() is used (for both left and right context size)!
+     * The other functionality will be added in the future.
+     *
+     * @param left left context size
+     * @param right right context size
+     * @param includeHit should the hit itself be included in the context or not?
+     * @return context size object
+     */
     public static ContextSize get(int left, int right, boolean includeHit) {
         return new ContextSize(left, right, includeHit);
     }
-	
+
+    /**
+     * Get ContexSize.
+     *
+     * WARNING: right now, only left() is used (for both left and right context size)!
+     * The other functionality will be added in the future.
+     *
+     * Hit is always included in the context with this method.
+     *
+     * @param left left context size
+     * @param right right context size
+     * @return context size object
+     */
     public static ContextSize get(int left, int right) {
-        return new ContextSize(left, right);
-    }
-    
-    public static ContextSize get(int size) {
-        return new ContextSize(size);
-    }
-    
-    public static ContextSize hitOnly() {
-        return get(0);
-    }
-    
-	private final int left;
-	
-    ContextSize(int size) {
-        this.left = size;
-        this.right = size;
-        this.includeHit = true;
-    }
-
-    public int left() {
-        return left;
-    }
-
-    private final int right;
-    
-    private final boolean includeHit;
-    
-    ContextSize(int left, int right, boolean includeHit) {
-        super();
-        this.left = left;
-        this.right = right;
-        this.includeHit = includeHit;
-    }
-
-    ContextSize(int left, int right) {
-        this(left, right, true);
+        return new ContextSize(left, right, true);
     }
 
     /**
-     * Return the minimal context size that encompasses both parameters. 
-     * 
+     * Get ContexSize.
+     *
+     * The number is used for the context size both to the left and the right.
+     *
+     * Hit is always included in the context with this method.
+     *
+     * @param size left and right context size
+     * @return context size object
+     */
+    public static ContextSize get(int size) {
+        return new ContextSize(size, size, true);
+    }
+
+    /**
+     * Return the minimal context size that encompasses both parameters.
+     *
      * @param a first context size
      * @param b second context size
      * @return union of both context sizes
@@ -63,6 +65,23 @@ public class ContextSize {
         int right = Math.max(a.right, b.right);
         boolean includeHit = a.includeHit || b.includeHit;
         return ContextSize.get(left, right, includeHit);
+    }
+
+    private final int left;
+
+    private final int right;
+
+    private final boolean includeHit;
+
+    private ContextSize(int left, int right, boolean includeHit) {
+        super();
+        this.left = left;
+        this.right = right;
+        this.includeHit = includeHit;
+    }
+
+    public int left() {
+        return left;
     }
 
 	public int right() {
