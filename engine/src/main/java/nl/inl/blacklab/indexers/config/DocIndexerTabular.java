@@ -247,7 +247,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                 if (!attributes.isEmpty())
                                     warn("Glue tag has attributes: " + attributes);
                                 setPreventNextDefaultPunctuation();
-                            } else {
+                            } else if (inDocument) {
                                 inlineTag(tagName, isOpenTag, attributes);
                                 if (selfClosing)
                                     inlineTag(tagName, false, null);
