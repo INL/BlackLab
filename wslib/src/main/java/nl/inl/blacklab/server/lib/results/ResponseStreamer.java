@@ -379,7 +379,7 @@ public class ResponseStreamer {
         }
 
         ContextSize contextSize = params.contextSettings().size();
-        boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
+        boolean includeContext = contextSize.before() > 0 || contextSize.after() > 0;
         if (concordanceContext.isConcordances()) {
             // Add concordance from original XML
             Concordance c = concordanceContext.getConcordance(hit);

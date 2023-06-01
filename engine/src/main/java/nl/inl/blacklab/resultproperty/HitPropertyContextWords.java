@@ -217,7 +217,8 @@ public class HitPropertyContextWords extends HitProperty {
         if (words == null) {
             // "entire hit text"
             this.words = new ArrayList<>();
-            this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1, blIndex.defaultContextSize().left()));
+            this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1,
+                    blIndex.defaultContextSize().before()));
         } else {
             // Determine the maximum length of each part, by limiting it to the
             // maximum possible given the anchor point, direction and first word.
@@ -236,7 +237,7 @@ public class HitPropertyContextWords extends HitProperty {
                         break;
                     default:
                         // Limit to length of left or right context.
-                        part.maxLength = Math.min(part.maxLength, blIndex.defaultContextSize().left() - part.firstWord);
+                        part.maxLength = Math.min(part.maxLength, blIndex.defaultContextSize().before() - part.firstWord);
                         break;
                     }
                     if (part.maxLength < 0)
@@ -416,7 +417,7 @@ public class HitPropertyContextWords extends HitProperty {
     
     @Override
     public ContextSize needsContextSize(BlackLabIndex index) {
-        int maxContextSize = index.defaultContextSize().left();
+        int maxContextSize = index.defaultContextSize().before();
         return this.words.stream().map(w -> ContextSize.get(Math.min(w.maxLength, maxContextSize))).reduce(ContextSize::union).orElse(null);
     }
 }

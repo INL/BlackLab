@@ -48,7 +48,7 @@ public class ResultDocInfo {
             if (docPid.length() == 0)
                 throw new BadRequest("NO_DOC_ID", "Specify document pid.");
             int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
-            if (luceneDocId < 0)
+            if (luceneDocId < 0 || luceneDocId >= index.reader().maxDoc())
                 throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
             this.document = index.luceneDoc(luceneDocId);
             if (this.document == null)
@@ -72,8 +72,9 @@ public class ResultDocInfo {
         String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
         lengthInTokens = null;
         if (tokenLengthField != null) {
-            lengthInTokens =
-                    Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            String strDocLength = document.get(tokenLengthField);
+            lengthInTokens = strDocLength == null ? 0 :
+                    Integer.parseInt(strDocLength) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
         mayView = index.mayView(document);
 
