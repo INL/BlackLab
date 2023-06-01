@@ -86,10 +86,6 @@ public interface DocIndexerFactory {
             return visible;
         }
 
-        public Format(String formatIdentifier, String displayName, String description) {
-            this(formatIdentifier, displayName, description, "");
-        }
-
         public Format(String formatIdentifier, String displayName, String description, String helpUrl) {
             super();
             this.formatIdentifier = formatIdentifier;
