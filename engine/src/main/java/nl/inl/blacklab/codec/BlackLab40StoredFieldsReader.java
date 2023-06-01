@@ -285,7 +285,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      *
      * @return content store segment reader
      */
-    public ContentStoreSegmentReader contentStore() {
+    public synchronized ContentStoreSegmentReader contentStore() {
+        // NOTE: this method is synchronized because IndexInput.clone() is not thread-safe!
+        //       so if multiple threads could call this method simultaneously, disaster could strike.
         return new ContentStoreSegmentReader() {
 
             // Buffer for decoding blocks. Automatically reallocated if needed.

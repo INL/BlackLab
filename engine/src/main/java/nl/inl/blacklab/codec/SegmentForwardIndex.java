@@ -62,6 +62,16 @@ class SegmentForwardIndex implements AutoCloseable {
         _tokensFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_EXT);
     }
 
+    private synchronized IndexInput getCloneOfTokensIndexFile() {
+        // synchronized because clone() is not thread-safe
+        return _tokensIndexFile.clone();
+    }
+
+    private synchronized IndexInput getCloneOfTokensFile() {
+        // synchronized because clone() is not thread-safe
+        return _tokensFile.clone();
+    }
+
     @Override
     public void close() {
         try {
@@ -109,13 +119,13 @@ class SegmentForwardIndex implements AutoCloseable {
 
         private IndexInput tokensIndex() {
             if (_tokensIndex == null)
-                _tokensIndex = _tokensIndexFile.clone();
+                _tokensIndex = getCloneOfTokensIndexFile();
             return _tokensIndex;
         }
 
         private IndexInput tokens() {
             if (_tokens == null)
-                _tokens = _tokensFile.clone();
+                _tokens = getCloneOfTokensFile();
             return _tokens;
         }
 
