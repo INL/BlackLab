@@ -59,7 +59,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
         List<Format> ret = new ArrayList<>();
         for (Entry<String, Class<? extends DocIndexerLegacy>> e : supported.entrySet()) {
             Format desc = new Format(e.getKey(), DocIndexerLegacy.getDisplayName(e.getValue()),
-                    DocIndexerLegacy.getDescription(e.getValue()));
+                    DocIndexerLegacy.getDescription(e.getValue()), "");
             desc.setVisible(DocIndexerLegacy.isVisible(e.getValue()));
             ret.add(desc);
         }
@@ -73,7 +73,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
 
         Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
         Format desc = new Format(formatIdentifier, DocIndexerLegacy.getDisplayName(docIndexerClass),
-                DocIndexerLegacy.getDescription(docIndexerClass));
+                DocIndexerLegacy.getDescription(docIndexerClass), "");
         desc.setVisible(DocIndexerLegacy.isVisible(docIndexerClass));
         return desc;
     }

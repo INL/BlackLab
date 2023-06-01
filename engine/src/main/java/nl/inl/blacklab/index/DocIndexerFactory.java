@@ -6,7 +6,11 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
 /**
  * Factory responsible for creating {@link DocIndexer} instances. Through this
@@ -40,6 +44,7 @@ public interface DocIndexerFactory {
      * Description of a supported input format
      */
     class Format {
+        private static final Logger logger = LogManager.getLogger(Format.class);
 
         private final String formatIdentifier;
 
@@ -81,10 +86,6 @@ public interface DocIndexerFactory {
             return visible;
         }
 
-        public Format(String formatIdentifier, String displayName, String description) {
-            this(formatIdentifier, displayName, description, "");
-        }
-
         public Format(String formatIdentifier, String displayName, String description, String helpUrl) {
             super();
             this.formatIdentifier = formatIdentifier;
@@ -99,6 +100,21 @@ public interface DocIndexerFactory {
 
         public void setConfig(ConfigInputFormat config) {
             this.config = config;
+        }
+
+        /**
+         * Before actually using a format, check if there's any glaring problems and if so, either warn the user
+         * or throw an exception.
+         */
+        public void checkAndWarn() {
+            if (config != null && config.getCorpusConfig().getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID) == null) {
+                logger.warn("YOUR DOCUMENT IDs ARE NOT PERSISTENT! The input format " + config.getName() + " " +
+                        "does not specify a persistent identifier (pid) field. This will work, but random ids will " +
+                        "be assigned to your documents every time you index. So reindexing may assign totally different " +
+                        "document ids, and any saved links to documents will break. " +
+                        "To fix this, specify a pidField using the corpusConfig.specialFields.pidField setting of your " +
+                        "input format configuration (.blf.yaml file).");
+            }
         }
     }
 

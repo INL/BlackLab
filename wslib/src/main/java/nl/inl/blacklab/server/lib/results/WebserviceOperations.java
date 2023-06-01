@@ -170,7 +170,7 @@ public class WebserviceOperations {
         Map<String, String> docFields = new LinkedHashMap<>();
         MetadataField pidField = indexMetadata.metadataFields().pidField();
         if (pidField != null)
-            docFields.put("pidField", pidField.name());
+            docFields.put(MetadataFields.SPECIAL_FIELD_SETTING_PID, pidField.name());
         for (String propName: List.of("titleField", "authorField", "dateField")) {
             String fieldName = indexMetadata.custom().get(propName, "");
             if (!fieldName.isEmpty())
