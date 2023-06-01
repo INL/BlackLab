@@ -359,7 +359,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     public ContextSettings contextSettings() {
         ContextSize contextSize = ContextSize.get(getWordsAroundHit());
         int maxContextSize = configParam().getContextSize().getMaxInt();
-        if (contextSize.left() > maxContextSize) { // no check on right needed - same as left
+        if (contextSize.before() > maxContextSize) { // no check on right needed - same as left
             //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
             contextSize = ContextSize.get(maxContextSize);
         }

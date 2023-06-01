@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.results;
 /**
  * Represents the size of the context around a hit.
  * 
- * WARNING: right now, only left() is used (for both left and right context size)!
+ * WARNING: right now, only before() is used (for both before and after context size)!
  * The other functionality will be added in the future.
  */
 public class ContextSize {
@@ -11,42 +11,42 @@ public class ContextSize {
     /**
      * Get ContexSize.
      *
-     * WARNING: right now, only left() is used (for both left and right context size)!
+     * WARNING: right now, only before() is used (for both before and after context size)!
      * The other functionality will be added in the future.
      *
-     * @param left left context size
-     * @param right right context size
+     * @param before context size before hit
+     * @param after context size after hit
      * @param includeHit should the hit itself be included in the context or not?
      * @return context size object
      */
-    public static ContextSize get(int left, int right, boolean includeHit) {
-        return new ContextSize(left, right, includeHit);
+    public static ContextSize get(int before, int after, boolean includeHit) {
+        return new ContextSize(before, after, includeHit);
     }
 
     /**
      * Get ContexSize.
      *
-     * WARNING: right now, only left() is used (for both left and right context size)!
+     * WARNING: right now, only before() is used (for both before and after context size)!
      * The other functionality will be added in the future.
      *
      * Hit is always included in the context with this method.
      *
-     * @param left left context size
-     * @param right right context size
+     * @param before context size before hit
+     * @param after context size after hit
      * @return context size object
      */
-    public static ContextSize get(int left, int right) {
-        return new ContextSize(left, right, true);
+    public static ContextSize get(int before, int after) {
+        return new ContextSize(before, after, true);
     }
 
     /**
      * Get ContexSize.
      *
-     * The number is used for the context size both to the left and the right.
+     * The number is used for the context size both before and after the hit.
      *
      * Hit is always included in the context with this method.
      *
-     * @param size left and right context size
+     * @param size context size before and after hit
      * @return context size object
      */
     public static ContextSize get(int size) {
@@ -61,39 +61,49 @@ public class ContextSize {
      * @return union of both context sizes
      */
     public static ContextSize union(ContextSize a, ContextSize b) {
-        int left = Math.max(a.left, b.left);
-        int right = Math.max(a.right, b.right);
+        int before = Math.max(a.before, b.before);
+        int after = Math.max(a.after, b.after);
         boolean includeHit = a.includeHit || b.includeHit;
-        return ContextSize.get(left, right, includeHit);
+        return ContextSize.get(before, after, includeHit);
     }
 
-    private final int left;
+    private final int before;
 
-    private final int right;
+    private final int after;
 
     private final boolean includeHit;
 
-    private ContextSize(int left, int right, boolean includeHit) {
+    private ContextSize(int before, int after, boolean includeHit) {
         super();
-        this.left = left;
-        this.right = right;
+        this.before = before;
+        this.after = after;
         this.includeHit = includeHit;
     }
 
-    public int left() {
-        return left;
+    public int before() {
+        return before;
     }
 
+    public int after() {
+        return after;
+    }
+
+    @Deprecated
+    public int left() {
+        return before();
+    }
+
+    @Deprecated
 	public int right() {
-	    return right;
+	    return after();
 	}
 	
 	/**
 	 * Should the hit itself be included in the context or not?
 	 * 
 	 * By default it always is, but for some operations you only need
-	 * the left context. And to determine collocations you might only want
-	 * left and right context and not the hit context itself (because you're
+	 * the before context. And to determine collocations you might only want
+	 * before and after context and not the hit context itself (because you're
 	 * counting words that occur around the hit)
 	 * 
 	 * @return whether or not the hit context should be included
@@ -107,8 +117,8 @@ public class ContextSize {
         final int prime = 31;
         int result = 1;
         result = prime * result + (includeHit ? 1231 : 1237);
-        result = prime * result + left;
-        result = prime * result + right;
+        result = prime * result + before;
+        result = prime * result + after;
         return result;
     }
 
@@ -123,12 +133,16 @@ public class ContextSize {
         ContextSize other = (ContextSize) obj;
         if (includeHit != other.includeHit)
             return false;
-        if (left != other.left)            return false;
-        return right == other.right;
+        if (before != other.before)            return false;
+        return after == other.after;
     }
     
     @Override
     public String toString() {
-        return "ContextSize(" + left + ", " + right + ", " + includeHit + ")";
+        return "ContextSize(" + before + ", " + after + ", " + includeHit + ")";
+    }
+
+    public boolean isNone() {
+        return before == 0 && after == 0;
     }
 }
