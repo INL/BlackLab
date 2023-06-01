@@ -58,16 +58,22 @@ public class ResultDocSnippet {
             wordsAroundHit = ContextSize.get(0);
         }
 
-        if (start < 0 || end < 0 || wordsAroundHit.left() < 0 || wordsAroundHit.right() < 0 || start > end) {
+        if (start < 0 || end < 0 || wordsAroundHit.before() < 0 || wordsAroundHit.after() < 0 || start > end) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 
         // Make sure snippet plus surrounding context don't exceed configured allowable snippet size
         int maxContextSize = params.getSearchManager().config().getParameters().getContextSize().getMaxInt();
-        if (end - start > maxContextSize)
-            end = start + maxContextSize;
-        if (end - start + wordsAroundHit.left() + wordsAroundHit.right() > maxContextSize)
-            wordsAroundHit = ContextSize.get(maxContextSize - (end - start) / 2);
+        int maxSnippetSize = maxContextSize * 2 + 10; // 10 seems a reasonable maximum hit length
+        int hitSize = end - start;
+        if (wordsAroundHit.isNone() && hitSize > maxContextSize * 2)
+            end = start + maxContextSize * 2;
+        if (hitSize + wordsAroundHit.before() + wordsAroundHit.after() > maxSnippetSize) {
+            int size = (maxSnippetSize - hitSize) / 2;
+            if (size > maxContextSize)
+                size = maxContextSize;
+            wordsAroundHit = ContextSize.get(size);
+        }
         
         origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
         hits = Hits.singleton(QueryInfo.create(index), luceneDocId, start, end);
