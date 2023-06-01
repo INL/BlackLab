@@ -67,6 +67,7 @@ public class IndexTool {
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
         List<File> linkedFileDirs = new ArrayList<>();
         IndexType indexType = null; // null means "use default"
+        boolean createEmptyIndex = false;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
             if (arg.startsWith("---")) {
@@ -76,21 +77,33 @@ public class IndexTool {
                     usage();
                     return;
                 }
-                // create --nothreads --integrate-external-files true E:/code/ivdnt/data/corpora/gysseling E:/code/ivdnt/data/to-import/gysseling E:/code/ivdnt/data/interface/gysseling/gysseling.blf.yaml
                 i++;
                 String value = args[i];
                 indexerParam.put(name, value);
             } else if (arg.startsWith("--")) {
                 String name = arg.substring(2);
                 switch (name) {
+                case "index-type":
+                    if (i + 1 == args.length || !List.of("integrated", "external").contains(args[i + 1].toLowerCase())) {
+                        System.err.println("--index-type needs a parameter: integrated or external.");
+                        usage();
+                        return;
+                    }
+                    indexType = args[i + 1].equalsIgnoreCase("integrated") ? IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
+                    i++;
+                    break;
                 case "integrate-external-files":
+                    // NOTE: deprecated, use  --index-type integrated  instead
                     if (i + 1 == args.length || !List.of("true", "false").contains(args[i + 1].toLowerCase())) {
-                        System.err.println("--integrate-external-files needs a parameter, true or false.");
+                        System.err.println("--integrate-external-files needs a parameter: true or false.");
                         usage();
                         return;
                     }
                     indexType = Boolean.parseBoolean(args[i + 1]) ? IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
                     i++;
+                    break;
+                case "create-empty":
+                    createEmptyIndex = true;
                     break;
                 case "threads":
                     if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
@@ -316,13 +329,15 @@ public class IndexTool {
             indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
         indexer.setLinkedFileDirs(linkedFileDirs);
         try {
-            if (glob.contains("*") || glob.contains("?")) {
-                // Real wildcard glob
-                indexer.index(inputDir, glob);
-            } else {
-                // Single file.
-                indexer.index(new File(inputDir, glob));
-                MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
+            if (!createEmptyIndex) {
+                if (glob.contains("*") || glob.contains("?")) {
+                    // Real wildcard glob
+                    indexer.index(inputDir, glob);
+                } else {
+                    // Single file.
+                    indexer.index(new File(inputDir, glob));
+                    MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
+                }
             }
         } catch (Exception e) {
             System.err.println(
@@ -409,7 +424,8 @@ public class IndexTool {
                         + "  --linked-file-dir <d>          Look in directory <d> for linked (e.g. metadata) files\n"
                         + "  --nothreads                    Disable multithreaded indexing (enabled by default)\n"
                         + "  --threads <n>                  Number of threads to use\n"
-                        + "  --integrate-external-files <b> Enable integrating external files into lucene index (disabled by default)\n"
+                        + "  --index-type <t>               Set the index type, external (old) or integrated (new)\n"
+                        + "  --create-empty                 Create an empty index (ignore inputdir param)\n"
                         + "\n"
                         + "Available input format configurations:");
         for (Format format : DocumentFormats.getFormats()) {

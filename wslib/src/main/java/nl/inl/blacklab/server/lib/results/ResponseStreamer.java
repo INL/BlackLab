@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
@@ -489,12 +490,14 @@ public class ResponseStreamer {
             AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
             String offsetsAlternative = offsetsSensitivity == null ? "" :
                     offsetsSensitivity.sensitivity().luceneFieldSuffix();
+            AnnotationSensitivities annotationSensitivities = annotation.sensitivitySetting();
+            String sensitivity = annotationSensitivities == null ? "" : annotationSensitivities.stringValueForResponse();
             ds
                     .entry("displayName", annotation.displayName())
                     .entry("description", annotation.description())
                     .entry("uiType", annotation.uiType())
                     .entry("hasForwardIndex", annotation.hasForwardIndex())
-                    .entry("sensitivity", annotation.sensitivitySetting().stringValueForResponse())
+                    .entry("sensitivity", sensitivity)
                     .entry("offsetsAlternative", offsetsAlternative)
                     .entry("isInternal", annotation.isInternal());
             if (ai.isShowValues()) {
