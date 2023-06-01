@@ -47,6 +47,7 @@ import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.util.FileUtil;
 
 public class IndexManager {
+    private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
     /**
      * A file by this name is placed in user directories that could not be fully
@@ -62,8 +63,6 @@ public class IndexManager {
      * The frequency at which we check for removed indices in the file system.
      */
     private static final int REMOVED_INDICES_MONITOR_CHECK_IN_MS = 1000;
-
-    private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
     private final SearchManager searchMan;
 

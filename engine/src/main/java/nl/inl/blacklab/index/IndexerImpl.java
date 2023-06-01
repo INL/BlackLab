@@ -592,7 +592,8 @@ class IndexerImpl implements DocWriter, Indexer {
 
         // Some of the class-based docIndexers don't support theaded indexing
         if (!DocumentFormats.getFormat(formatIdentifier).isConfigurationBased()) {
-            logger.info("Threaded indexing is disabled for format " + formatIdentifier);
+            logger.info("Threaded indexing is disabled for " + formatIdentifier + " because it is not " +
+                    "configuration-based (older DocIndexers may not be threadsafe, so this is a precaution)" );
             this.numberOfThreadsToUse = 1;
         }
     }

@@ -327,7 +327,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         custom.put("description", corpusConfig.getDescription());
         custom.put("textDirection", corpusConfig.getTextDirection().getCode());
         for (Map.Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
-            if (!e.getKey().equals("pidField"))
+            if (!e.getKey().equals(MetadataFields.SPECIAL_FIELD_SETTING_PID))
                 custom.put(e.getKey(), e.getValue());
         }
         custom.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
@@ -339,8 +339,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         documentFormat = config.getName();
         versionInfo.populateWithDefaults();
         metadataFields.setDefaultAnalyzer(config.getMetadataDefaultAnalyzer());
-        if (corpusConfig.getSpecialFields().containsKey("pidField"))
-            metadataFields.setPidField(corpusConfig.getSpecialFields().get("pidField"));
+        if (corpusConfig.getSpecialFields().containsKey(MetadataFields.SPECIAL_FIELD_SETTING_PID))
+            metadataFields.setPidField(corpusConfig.getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID));
 
         addFieldInfoFromConfig(config);
     }

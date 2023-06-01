@@ -70,7 +70,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     private static final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
             "namingScheme", "unknownCondition", "unknownValue",
             "metadataFields", "complexFields", "metadataFieldGroups", "annotationGroups",
-            "defaultAnalyzer", "titleField", "authorField", "dateField", "pidField"));
+            "defaultAnalyzer", "titleField", "authorField", "dateField", MetadataFields.SPECIAL_FIELD_SETTING_PID));
 
     /** What keys may occur under metadataFieldGroups group? */
     private static final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
@@ -228,7 +228,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         if (custom.containsKey("dateField"))
             fieldInfo.put("dateField", custom.get("dateField", ""));
         if (metadataFields.pidField() != null)
-            fieldInfo.put("pidField", metadataFields.pidField().name());
+            fieldInfo.put(MetadataFields.SPECIAL_FIELD_SETTING_PID, metadataFields.pidField().name());
         ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
         ObjectNode annotationGroups = fieldInfo.putObject("annotationGroups");
         ObjectNode metadataFields = fieldInfo.putObject("metadataFields");
@@ -768,8 +768,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
         metadataFields.setTopLevelCustom(custom());
         metadataFields.clearSpecialFields();
-        if (fieldInfo.has("pidField"))
-            metadataFields.setPidField(fieldInfo.get("pidField").textValue());
+        if (fieldInfo.has(MetadataFields.SPECIAL_FIELD_SETTING_PID))
+            metadataFields.setPidField(fieldInfo.get(MetadataFields.SPECIAL_FIELD_SETTING_PID).textValue());
         if (fieldInfo.has("authorField"))
             custom.put("authorField", fieldInfo.get("authorField").textValue());
         if (fieldInfo.has("dateField"))

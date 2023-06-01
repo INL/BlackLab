@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import static nl.inl.blacklab.search.indexmetadata.MetadataFields.SPECIAL_FIELD_SETTING_PID;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -26,7 +28,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
  * The metadata fields in an index.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({ "defaultAnalyzer", "pidField", "throwOnMissingField", "fields" })
+@JsonPropertyOrder({ "defaultAnalyzer", SPECIAL_FIELD_SETTING_PID, "throwOnMissingField", "fields" })
 class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);

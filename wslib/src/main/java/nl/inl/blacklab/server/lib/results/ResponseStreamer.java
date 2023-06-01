@@ -36,6 +36,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
@@ -877,7 +878,7 @@ public class ResponseStreamer {
                     .endMap().endEntry();
 
             ds.startEntry("fieldInfo").startMap()
-                    .entry("pidField", metadata.metadataFields().pidField() == null ? "" : metadata.metadataFields().pidField())
+                    .entry(MetadataFields.SPECIAL_FIELD_SETTING_PID, metadata.metadataFields().pidField() == null ? "" : metadata.metadataFields().pidField())
                     .entry("titleField", metadata.custom().get("titleField", ""))
                     .entry("authorField", metadata.custom().get("authorField", ""))
                     .entry("dateField", metadata.custom().get("dateField", ""))

@@ -7,6 +7,8 @@ import java.util.stream.Stream;
 /** Metadata fields in an index. */
 public interface MetadataFields extends Iterable<MetadataField> {
 
+    public static final String SPECIAL_FIELD_SETTING_PID = "pidField";
+
 	/**
 	 * Name of the default analyzer to use for metadata fields.
 	 * @return the analyzer name (or DEFAULT for the BlackLab default)
