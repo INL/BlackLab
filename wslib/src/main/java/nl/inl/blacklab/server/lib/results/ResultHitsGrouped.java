@@ -76,7 +76,7 @@ public class ResultHitsGrouped {
         final long first = Math.max(windowSettings.first(), 0);
         DefaultMax pageSize = params.getSearchManager().config().getParameters().getPageSize();
         final long requestedWindowSize = windowSettings.size() < 0
-                || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
+                || windowSettings.size() > pageSize.getMax() ? pageSize.getDefault()
                 : windowSettings.size();
         long totalResults = groups.size();
         final long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first

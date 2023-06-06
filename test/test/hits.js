@@ -79,3 +79,9 @@ expectUrlUnchanged('hits', 'document facets',
 // Hits CSV
 expectUrlUnchanged('hits', 'CSV results',
         '/test/hits/?patt=%22the%22', 'text/csv');
+
+// /termfreq operation
+expectUrlUnchanged('hits', 'Termfreq word sensitive',
+        '/test/termfreq/?annotation=word&sensitive=true');
+expectUrlUnchanged('hits', 'Termfreq lemma insensitive',
+        '/test/termfreq/?annotation=lemma');

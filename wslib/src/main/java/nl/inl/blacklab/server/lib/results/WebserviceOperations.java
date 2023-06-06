@@ -544,7 +544,7 @@ public class WebserviceOperations {
             long number = params.getNumberOfResultsToShow();
             DefaultMax pageSize = params.getSearchManager().config().getParameters().getPageSize();
             if (number < 0 || number > pageSize.getMax())
-                number = pageSize.getDefaultValue();
+                number = pageSize.getMax();
             long last = first + number;
             if (last > tfl.size())
                 last = tfl.size();

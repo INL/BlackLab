@@ -111,7 +111,7 @@ public class ResultDocsResponse {
             first = 0;
         long number = params.getNumberOfResultsToShow();
         if (number < 0 || number > params.getSearchManager().config().getParameters().getPageSize().getMax())
-            number = params.getSearchManager().config().getParameters().getPageSize().getDefaultValue();
+            number = params.getSearchManager().config().getParameters().getPageSize().getDefault();
         DocResults totalDocResults = docsSorted;
         DocResults window = docsSorted.window(first, number);
 
