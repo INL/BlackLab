@@ -5,6 +5,6 @@
   },
   "devDependencies": {
     "@vuepress/plugin-html-redirect": "^0.1.4",
-    "vuepress": "^1.9.7"
+    "vuepress": "^1.9.8"
   }
 }
