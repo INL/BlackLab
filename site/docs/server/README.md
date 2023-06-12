@@ -9,13 +9,47 @@ This page explains how to set up and use BlackLab Server.
 
 ## Basic installation, configuration
 
-::: tip Prefer Docker?
-We have an [experimental Docker image](https://github.com/INL/BlackLab#using-blacklab-with-docker) available. A more user-friendly guide for usiing Blacklab with Docker will be available when we release our official image.
-:::
+### Using Docker
+
+Images are available on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). We are preparing for an official Docker release. The current image is usable, but should be considered experimental: details may change in the final version. Also, there's currently no stable release tags, only a `latest` version (updated from the `dev` branch with no particular schedule) and 
+several versions of specific commits on the `dev` branch.
+
+Suggestions for improving the image (and this guide) are welcome.
+
+A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher.
+
+We assume here that you are familiar with the BlackLab indexing process; see [Indexing with BlackLab](/guide/indexing-with-blacklab.md) to learn more.
+
+Create a file named `test.env` with your indexing configuration:
+
+```ini
+BLACKLAB_FORMATS_DIR=/path/to/my/formats
+INDEX_NAME=my-index
+INDEX_FORMAT=my-file-format
+INDEX_INPUT_DIR=/path/to/my/input-files
+JAVA_OPTS=-Xmx10G
+```
+
+To index your data:
+
+```bash
+docker-compose --env-file test.env run --rm indexer
+```
+
+Now start the server:
+
+```bash
+docker-compose up -d
+```
+
+Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
+
+
+See the [Docker README](https://github.com/INL/BlackLab/tree/dev/docker#readme) for more details.
 
 ### Java JRE
 
-Install a JRE (Java runtime environment). BlackLab requires at least version 11, but version 17 or another newer version should work as well.
+Install a JRE (Java runtime environment). BlackLab requires at least version 11, but version 17 or newer versions should work as well.
 
 ### Tomcat
 
