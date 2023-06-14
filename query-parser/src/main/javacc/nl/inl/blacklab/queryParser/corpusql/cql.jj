@@ -28,7 +28,9 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import nl.inl.blacklab.search.matchfilter.MatchFilterAnd;
+import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
 import nl.inl.blacklab.search.matchfilter.MatchFilterEquals;
+import nl.inl.blacklab.search.matchfilter.MatchFilterFunctionCall;
 import nl.inl.blacklab.search.matchfilter.MatchFilterImplication;
 import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
@@ -140,23 +142,35 @@ MatchFilter simpleConstraint():
     Token b = null;
 }
 {
-    v=constraintValue() [ b=equalityOperator() w=constraintValue() ]
+    v=constraintValue() [ b=comparisonOperator() w=constraintValue() ]
     {
         if (b == null)
             return v;
-        if (b.toString().equals("="))
+        switch (b.toString()) {
+        case "=":
             return new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE);
-        if (b.toString().equals("!="))
+            break;
+        case "!=":
             return new MatchFilterNot(new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE));
+            break;
+        case ">=":
+        case "<=":
+        case ">":
+        case "<":
+            // (we could handle = and != here as well, but we already did that above - maybe in the future)
+            return new MatchFilterCompare(v, w, MatchFilterCompare.Operator.fromSymbol(b.toString()), MatchSensitivity.INSENSITIVE);
+        default:
+            throw new UnsupportedOperationException("Unknown comparison operator: " + b.toString());
+        }
     }
 }
 
-Token equalityOperator():
+Token comparisonOperator():
 {
     Token t = null;
 }
 {
-    (t="=" | t="!=")  { return t; }
+    (t="=" | t="!=" | t=">=" | t="<=" | t=">" | t="<")  { return t; }
 }
 
 MatchFilter constraintValue():
@@ -170,7 +184,10 @@ MatchFilter constraintValue():
     q=quotedString()                    { return new MatchFilterString(q); }
 |   "(" v=constraint() ")"              { return v; }
 |   "!" v=constraintValue()             { return new MatchFilterNot(v); }
-|   l=captureLabel() ["." s=<NAME>]
+|   LOOKAHEAD(2)
+    s=<NAME> "(" l=captureLabel() ")"   { return new MatchFilterFunctionCall(s.toString(), l); }
+|   LOOKAHEAD(2)
+    l=captureLabel() [ "." s=<NAME> ]
     {
         return new MatchFilterTokenAnnotation(l, s == null ? null : s.toString());
     }
