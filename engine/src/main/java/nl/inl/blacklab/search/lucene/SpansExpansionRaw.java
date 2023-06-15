@@ -111,18 +111,21 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         alreadyAtFirstHit = false;
         return super.nextDoc();
     }
 
     @Override
-    public int advance(int doc) throws IOException {
+    public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         alreadyAtFirstHit = false;
-        return super.advance(doc);
+        return super.advance(target);
     }
 
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // Are there search results in this document?
         clauseStart = in.nextStartPosition();
         resetExpand();
@@ -132,6 +135,7 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (alreadyAtFirstHit) {
             alreadyAtFirstHit = false;
             return start;
@@ -165,6 +169,7 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        assert target > startPosition();
         if (alreadyAtFirstHit) {
             alreadyAtFirstHit = false;
             if (start >= target)

@@ -469,6 +469,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
                 @Override
                 public int nextDoc() throws IOException {
+                    assert docID() != NO_MORE_DOCS;
                     topPositionSpans = null;
                     DisiWrapper topDocSpans = byDocQueue.top();
                     int currentDoc = topDocSpans.doc;
@@ -481,6 +482,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
                 @Override
                 public int advance(int target) throws IOException {
+                    assert target >= 0 && target > docID();
                     topPositionSpans = null;
                     DisiWrapper topDocSpans = byDocQueue.top();
                     do {
@@ -553,6 +555,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 int lastDocTwoPhaseMatched = -1;
 
                 boolean twoPhaseCurrentDocMatches() throws IOException {
+                    assert docID() >= 0 && docID() != NO_MORE_DOCS;
                     DisiWrapper listAtCurrentDoc = byDocQueue.topList();
                     // remove the head of the list as long as it does not match
                     final int currentDoc = listAtCurrentDoc.doc;
@@ -611,6 +614,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
                 @Override
                 public int nextStartPosition() throws IOException {
+                    assert startPosition() != NO_MORE_POSITIONS;
                     if (topPositionSpans == null) {
                         byPositionQueue.clear();
                         fillPositionQueue(); // fills byPositionQueue at first position

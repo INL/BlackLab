@@ -18,6 +18,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
 
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -45,19 +46,33 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         boolean sorted;
         switch (spanMode) {
         case SOURCE:
-            // Forward relations are indexed at the source, we know these will be sorted.
-            // Root relations don't have a source and are indexed at the target, therefore also sorted.
-            sorted = direction == Direction.FORWARD || direction == Direction.ROOT;
+            if (AnnotationWriter.INDEX_AT_FIRST_POS_IN_DOC) {
+                // Forward relations are indexed at the source, we know these will be sorted.
+                // Root relations don't have a source and are indexed at the target, therefore also sorted.
+                sorted = direction == Direction.FORWARD || direction == Direction.ROOT;
+            } else {
+                // All relations are indexed at the source.
+                // Root relations don't have a source and are indexed at the target, therefore also sorted.
+                sorted = true;
+            }
             break;
         case FULL_SPAN:
-            // Relations are indexed at source or target, whichever comes first in the document.
-            // Because full span covers both source and target, it will always be sorted.
-            sorted = true;
+            if (AnnotationWriter.INDEX_AT_FIRST_POS_IN_DOC) {
+                // Relations are indexed at source or target, whichever comes first in the document.
+                // Because full span covers both source and target, it will always be sorted.
+                sorted = true;
+            } else {
+                // All relations are indexed at the source.
+                // Only forward relations will be sorted.
+                // Root relations only have target and are indexed there, therefore also sorted.
+                sorted = direction == Direction.FORWARD || direction == Direction.ROOT;
+            }
             break;
         case TARGET:
         default:
             // Target may be anywhere before or after source, so we don't know if these will be sorted.
-            sorted = false;
+            // Exception: root relations only have target and are indexed there, so they will be sorted.
+            sorted = direction == Direction.ROOT;
             break;
         }
         return new SpanGuaranteesAdapter(clause) {

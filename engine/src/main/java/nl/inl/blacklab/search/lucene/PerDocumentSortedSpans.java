@@ -76,6 +76,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         indexInBucket = -2;
         curStart = -1;
         curEnd = -1;
@@ -84,6 +85,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         indexInBucket = -2;
         curStart = -1;
         curEnd = -1;
@@ -92,6 +94,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // If our clause matches, we match as well; we just reorder the matches.
         indexInBucket = -2; // no bucket yet
         curStart = -1;
@@ -101,6 +104,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (!removeDuplicates) {
             // No need to eliminate duplicates
             if (indexInBucket == -2 || indexInBucket >= in.bucketSize() - 1) {

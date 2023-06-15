@@ -93,6 +93,7 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public int nextDoc() {
+        assert docID() != NO_MORE_DOCS;
         alreadyAtFirstMatch = false;
         do {
             if (currentDoc >= maxDoc) {
@@ -129,6 +130,7 @@ class SpansNGrams extends BLSpans {
      */
     @Override
     public int nextStartPosition() {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (alreadyAtFirstMatch) {
             alreadyAtFirstMatch = false;
             return currentStart;
@@ -157,6 +159,7 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public int advanceStartPosition(int target) {
+        assert target > startPosition();
         if (alreadyAtFirstMatch) {
             alreadyAtFirstMatch = false;
             if (currentStart >= target)
@@ -181,6 +184,7 @@ class SpansNGrams extends BLSpans {
      */
     @Override
     public int advance(int doc) throws IOException {
+        assert doc >= 0 && doc > docID();
         alreadyAtFirstMatch = false;
         if (currentDoc == NO_MORE_DOCS)
             return NO_MORE_DOCS;

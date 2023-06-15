@@ -155,6 +155,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
 
     @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // at doc with all subSpans
         relationsReturnedAtThisPosition.clear(); // don't return the same combination of relations twice
         spanWindow.startDocument();
@@ -178,6 +179,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
             int r = spanWindow.top().startPosition(0);

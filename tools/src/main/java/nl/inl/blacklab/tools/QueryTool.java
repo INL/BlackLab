@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
@@ -1156,12 +1157,12 @@ public class QueryTool {
         } catch (InvalidQuery e) {
             // Parse error
             errprintln(e.getMessage());
-            errprintln("(Type 'help' for examples or see accompanying documents)");
+            errprintln("(Type 'help' for examples or see https://inl.github.io/BlackLab/development/query-tool.html)");
         } catch (UnsupportedOperationException e) {
             // Unimplemented part of query language used
             e.printStackTrace(); // DEBUG createWeight bug
             errprintln("Cannot execute query; " + e.getMessage());
-            errprintln("(Type 'help' for examples or see accompanying documents)");
+            errprintln("(Type 'help' for examples or see https://inl.github.io/BlackLab/development/query-tool.html)");
         }
     }
 
@@ -1613,8 +1614,9 @@ public class QueryTool {
             else
                 outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
             hitNr++;
-            if (hit.matchInfos != null && showMatchInfo)
-                outprintln("MATCH INFO: " + hit.matchInfos);
+            if (hit.matchInfos != null && showMatchInfo) {
+                outprintln("MATCH INFO: " + matchInfoToString(hit.matchInfos));
+            }
         }
 
         // Summarize
@@ -1639,6 +1641,34 @@ public class QueryTool {
             }
         }
         outprintln(msg);
+    }
+
+    private static String matchInfoToString(Map<String, MatchInfo> matchInfos) {
+        String matchInfo = matchInfos.entrySet().stream()
+                .sorted( (a, b) -> {
+                    MatchInfo ma = a.getValue();
+                    MatchInfo mb = b.getValue();
+                    MatchInfo.Type at = ma.getType();
+                    MatchInfo.Type bt = mb.getType();
+                    // Sort by type
+                    if (at != bt)
+                        return at.compareTo(bt);
+                    if (at == MatchInfo.Type.RELATION || at == MatchInfo.Type.INLINE_TAG) {
+                        // Sort relations by value
+                        return a.getValue().compareTo(b.getValue());
+                    } else {
+                        // Sort capture groups by name
+                        return a.getKey().compareTo(b.getKey());
+                    }
+                })
+                .map(e -> {
+                    MatchInfo mi = e.getValue();
+                    return mi.getType() == MatchInfo.Type.SPAN ?
+                            e.getKey() + "=" + e.getValue() :
+                            e.getValue().toString();
+                })
+                .collect(Collectors.joining(", "));
+        return matchInfo;
     }
 
     /**

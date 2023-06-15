@@ -107,12 +107,14 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         alreadyAtFirstHit = false;
         return super.nextDoc();
     }
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (alreadyAtFirstHit) {
             alreadyAtFirstHit = false;
             return start;
@@ -196,12 +198,14 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         alreadyAtFirstHit = false;
         return super.advance(target);
     }
 
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         alreadyAtFirstHit = false;
         srcStart = srcEnd = start = end = -1;
         goToNextClauseSpan();

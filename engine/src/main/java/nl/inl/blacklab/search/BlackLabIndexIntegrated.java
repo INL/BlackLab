@@ -185,8 +185,9 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     @Override
     public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
             Map<String, String> attributes) {
+        // Note: tags are always indexed as a forward relation (source always occurs before target)
         return relationQuery(queryInfo, luceneField, RelationUtil.inlineTagFullType(tagName),
-                attributes, SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN);
+                attributes, SpanQueryRelations.Direction.FORWARD, RelationInfo.SpanMode.FULL_SPAN);
     }
 
     @Override

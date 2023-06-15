@@ -46,18 +46,21 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         startAdjusted = endAdjusted = -1;
         return super.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         startAdjusted = endAdjusted = -1;
         return super.advance(target);
     }
 
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         startAdjusted = endAdjusted = -1;
         return super.twoPhaseCurrentDocMatches();
     }
@@ -74,6 +77,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         super.nextStartPosition();
         setAdjustedStartEnd();
         return startAdjusted;
@@ -141,6 +145,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        assert target > startPosition();
         if (atFirstInCurrentDoc && startPos >= target) {
             // Our cached hit is the one we want.
             return nextStartPosition();

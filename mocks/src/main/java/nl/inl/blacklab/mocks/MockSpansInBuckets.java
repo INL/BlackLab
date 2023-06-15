@@ -105,6 +105,7 @@ public class MockSpansInBuckets extends SpansInBuckets {
 
     @Override
     public int advance(int target) {
+        assert target >= 0 && target > docID();
         alreadyAtFirstBucket = false;
         int doc;
         do {

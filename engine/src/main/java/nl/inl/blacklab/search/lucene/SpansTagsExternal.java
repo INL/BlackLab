@@ -41,18 +41,21 @@ class SpansTagsExternal extends BLFilterSpans<BLSpans> {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         end = -1; // not nexted yet
         return super.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         end = -1; // not nexted yet
         return super.advance(target);
     }
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         end = -2; // payload not read yet
         return super.nextStartPosition();
     }

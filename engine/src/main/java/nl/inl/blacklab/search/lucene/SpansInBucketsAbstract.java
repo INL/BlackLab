@@ -148,6 +148,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
             if (source.docID() >= target) {
                 // Already at or beyond; go to the next doc

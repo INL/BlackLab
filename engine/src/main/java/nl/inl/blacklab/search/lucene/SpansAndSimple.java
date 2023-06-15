@@ -46,6 +46,7 @@ class SpansAndSimple extends BLConjunctionSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
@@ -65,6 +66,7 @@ class SpansAndSimple extends BLConjunctionSpans {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        assert target > startPosition();
         if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
         int startPos = startPosition();
@@ -131,6 +133,7 @@ class SpansAndSimple extends BLConjunctionSpans {
 
     @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // Note that we DON't use our nextStartPosition() here because atFirstInCurrentDoc
         // is not properly set yet at this point in time (we do that below).
         atFirstInCurrentDoc = false;

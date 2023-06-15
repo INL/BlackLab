@@ -103,18 +103,21 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         startPos = endPos = NOT_YET_NEXTED;
         return super.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         startPos = endPos = NOT_YET_NEXTED;
         return super.advance(target);
     }
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
             return startPos;
@@ -139,6 +142,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        assert target > startPosition();
         if (atFirstInCurrentDoc && startPos >= target) {
             // Our cached hit is the one we want.
             return nextStartPosition();

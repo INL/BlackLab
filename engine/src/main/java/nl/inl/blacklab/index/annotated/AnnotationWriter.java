@@ -36,6 +36,12 @@ import nl.inl.util.CollUtil;
  */
 public class AnnotationWriter {
 
+    /** Where do we index relations? If true, index at source or target (start),
+     * whichever comes first in the document. If false, index at the source start position.
+     * This affects whether we have to sort relations matches (if true, we don't need
+     * to sort spanMode == full; if false, we don't need to sort spanMode == source) */
+    public static final boolean INDEX_AT_FIRST_POS_IN_DOC = false;
+
     /** Maximum length a value is allowed to be. */
     private static final int MAXIMUM_VALUE_LENGTH = 1000;
 
@@ -430,7 +436,22 @@ public class AnnotationWriter {
     public int indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo matchInfo = new RelationInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
-        int indexAt = Math.min(sourceStart, targetStart);
+
+        int indexAt;
+        // Where should we index relations?
+        // (where we index affects whether we have to sort)
+        if (INDEX_AT_FIRST_POS_IN_DOC) {
+            // Index at the start of the source or target, whichever comes first
+            // this way, we don't have to sort if we need the full span, but we will
+            // have to sort for source or target
+            indexAt = Math.min(sourceStart, targetStart);
+        } else {
+            // Index at the source start position. This way, we don't have to sort
+            // if we need the source, but we will have to sort for the target or full span
+            // (because target position can be before source).
+            indexAt = sourceStart;
+        }
+
         return indexRelation(fullRelationType, indexAt, attributes, indexType, matchInfo);
     }
 

@@ -63,6 +63,7 @@ abstract class BLConjunctionSpansInBuckets extends BLSpans {
 
     @Override
     public int  nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         atFirstInCurrentDoc = false;
         return (conjunction.nextDoc() == NO_MORE_DOCS)
                 ? NO_MORE_DOCS
@@ -71,6 +72,7 @@ abstract class BLConjunctionSpansInBuckets extends BLSpans {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         atFirstInCurrentDoc = false;
         return (conjunction.advance(target) == NO_MORE_DOCS)
                 ? NO_MORE_DOCS

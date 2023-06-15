@@ -91,7 +91,7 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int docID() {
-        return conjunction.docID();
+        return producer.docID();
     }
 
     @Override
@@ -103,6 +103,7 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         alreadyAtFirstMatch = false;
 
         // Advance container
@@ -116,6 +117,7 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         alreadyAtFirstMatch = false;
 
         // Skip both to doc
@@ -178,6 +180,7 @@ class SpansPositionFilter extends BLSpans {
     }
 
     private boolean twoPhaseCurrentDocMatches(int docID) throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         alreadyAtFirstMatch = false;
         assert producer.startPosition() < 0;
 
@@ -234,6 +237,7 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (alreadyAtFirstMatch) {
             // We're already at the first match in the doc. Return it.
             alreadyAtFirstMatch = false;
@@ -251,6 +255,7 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        assert target > startPosition();
         if (alreadyAtFirstMatch) {
             alreadyAtFirstMatch = false;
             if (producerStart >= target)

@@ -219,6 +219,7 @@ class SpansReader implements Runnable {
 
         // No more matches in this document. Find first match in next matching document.
         while (true) {
+            assert twoPhaseApproximation.docID() != DocIdSetIterator.NO_MORE_DOCS;
             int doc1 = twoPhaseApproximation.nextDoc();
             if (doc1 == DocIdSetIterator.NO_MORE_DOCS) {
                 // We're done.

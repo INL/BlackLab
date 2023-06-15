@@ -365,15 +365,20 @@ public class RelationInfo implements MatchInfo, Cloneable {
 
     @Override
     public String toString() {
+        // Inline tag
+        if (isTag()) {
+            String tagName = RelationUtil.classAndType(fullRelationType)[1];
+            return "tag(<" + tagName + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )";
+        }
+
+        // Relation
+        int targetLen = targetEnd - targetStart;
+        String target = targetStart + (targetLen != 1 ? " (len=" + targetEnd + ")" : "");
         if (isRoot())
-            return "rootrel(" + fullRelationType + ", " + targetStart + "-" + targetEnd + ")";
-        if (isTag())
-            return "tag(" + fullRelationType + ", " + getSpanStart() + "-" + getSpanEnd() + ")";
-        return "rel(" + fullRelationType +
-                ", sourceStart=" + sourceStart +
-                ", sourceEnd=" + sourceEnd +
-                ", targetStart=" + targetStart +
-                ", targetEnd=" + targetEnd + ")";
+            return "rel(<root> --" + fullRelationType + "--> " + target + ")";
+        int sourceLen = sourceEnd - sourceStart;
+        String source = sourceStart + (sourceLen != 1 ? " (len=" + sourceEnd + ")" : "");
+        return "rel(" + source + " --" + fullRelationType + "--> " + target + ")";
     }
 
     @Override

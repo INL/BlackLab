@@ -189,6 +189,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         alreadyAtFirstMatch = false;
         int doc = conjunction.nextDoc();
         while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
@@ -199,6 +200,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         alreadyAtFirstMatch = false;
         int doc = conjunction.advance(target);
         while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
@@ -208,6 +210,7 @@ class SpansSequenceWithGap extends BLSpans {
     }
 
     private boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // Does this doc have any matches?
         assert first.startPosition() == -1;
         firstStart = first.nextStartPosition();
@@ -226,6 +229,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         
         // Preconditions:
         // - first and second are in the same document

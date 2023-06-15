@@ -69,6 +69,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         alreadyAtFirstMatch = false;
         return super.nextDoc();
     }
@@ -82,11 +83,13 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
      */
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         alreadyAtFirstMatch = false;
         return super.advance(target);
     }
 
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // Does this document have any clause matches?
         matchStartIndex = -1;
         alreadyAtFirstMatch = false;
@@ -156,6 +159,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
      */
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         // Are we done with this document?
         if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;

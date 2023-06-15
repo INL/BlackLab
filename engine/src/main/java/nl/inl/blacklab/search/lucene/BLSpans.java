@@ -89,6 +89,15 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
     }
 
+    @Override
+    public abstract int nextDoc() throws IOException;
+
+    @Override
+    public abstract int advance(int target) throws IOException;
+
+    @Override
+    public abstract int nextStartPosition() throws IOException;
+
     /**
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
@@ -159,6 +168,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * @throws IOException on error
      */
     public int advanceStartPosition(int target) throws IOException {
+        assert target > startPosition();
         // Naive implementations; subclasses may provide a faster version.
         return naiveAdvanceStartPosition(this, target);
     }

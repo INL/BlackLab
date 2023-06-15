@@ -42,12 +42,14 @@ class SpansEdge extends BLFilterSpans<BLSpans> {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         super.nextStartPosition();
         return trailingEdge ? in.endPosition() : startPos;
     }
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
+        assert target > startPosition();
         if (atFirstInCurrentDoc && startPos >= target) {
             // Our cached hit is the one we want.
             return nextStartPosition();

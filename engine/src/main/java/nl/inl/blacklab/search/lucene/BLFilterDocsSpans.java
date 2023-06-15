@@ -48,6 +48,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         while (true) {
             int doc = in.nextDoc();
             if (doc == NO_MORE_DOCS) {
@@ -60,6 +61,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > in.docID();
         int doc = in.advance(target);
         while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
             doc = in.nextDoc();

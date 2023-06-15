@@ -47,6 +47,7 @@ class SpansSequenceSimple extends BLConjunctionSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
             assert subSpans[0].startPosition() >= 0 && subSpans[0].startPosition() != NO_MORE_POSITIONS;
@@ -113,6 +114,7 @@ class SpansSequenceSimple extends BLConjunctionSpans {
 
     @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         atFirstInCurrentDoc = false;
         oneExhaustedInCurrentDoc = false;
 

@@ -33,7 +33,7 @@ public class TestSpansNGrams {
         SpansNGrams spans = getSpans();
         Assert.assertEquals(0, spans.nextDoc());
         // advance should always go to next doc
-        Assert.assertEquals(DocIdSetIterator.NO_MORE_DOCS, spans.advance(0));
+        Assert.assertEquals(DocIdSetIterator.NO_MORE_DOCS, spans.advance(1));
     }
 
 }

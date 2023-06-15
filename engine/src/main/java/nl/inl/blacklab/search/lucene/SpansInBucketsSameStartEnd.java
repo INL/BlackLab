@@ -134,9 +134,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
 
     @Override
     public int advance(int target) throws IOException {
-        if (source.docID() >= target) {
-            return nextDoc();
-        }
+        assert target >= 0 && target > docID();
         int docId = source.advance(target);
         if (docId != NO_MORE_DOCS)
             source.nextStartPosition();

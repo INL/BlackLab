@@ -64,19 +64,4 @@ public class SpansConstrained extends BLFilterSpans<BLSpans> {
     public String toString() {
         return "SpansConstrained(" + in + ", " + constraint + ")";
     }
-
-    @Override
-    public int nextDoc() throws IOException {
-        return super.nextDoc();
-    }
-
-    @Override
-    public int advance(int target) throws IOException {
-        return super.advance(target);
-    }
-
-    @Override
-    protected boolean twoPhaseCurrentDocMatches() throws IOException {
-        return super.twoPhaseCurrentDocMatches();
-    }
 }

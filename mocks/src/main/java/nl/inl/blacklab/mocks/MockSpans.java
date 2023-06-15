@@ -205,6 +205,7 @@ public class MockSpans extends BLSpans {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         if (noMoreDocs)
             throw new BlackLabRuntimeException("Called nextDoc() on exhausted spans!");
         endPos = -1;
@@ -219,6 +220,7 @@ public class MockSpans extends BLSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (noMoreHitsInDoc)
             throw new BlackLabRuntimeException("Called nextStartPosition() on hit-exhausted spans!");
         int startPos = spans.nextStartPosition();
@@ -232,6 +234,7 @@ public class MockSpans extends BLSpans {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         if (noMoreDocs)
             throw new BlackLabRuntimeException("Called advance() on exhausted spans!");
         endPos = -1;

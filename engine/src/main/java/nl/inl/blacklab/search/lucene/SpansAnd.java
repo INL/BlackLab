@@ -52,6 +52,7 @@ class SpansAnd extends BLSpans {
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         atFirstInCurrentDoc = false;
         return (conjunction.nextDoc() == NO_MORE_DOCS)
                 ? NO_MORE_DOCS
@@ -60,6 +61,7 @@ class SpansAnd extends BLSpans {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         atFirstInCurrentDoc = false;
         return (conjunction.advance(target) == NO_MORE_DOCS)
                 ? NO_MORE_DOCS
@@ -98,6 +100,7 @@ class SpansAnd extends BLSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
@@ -130,6 +133,7 @@ class SpansAnd extends BLSpans {
 
     @Override
     public int advanceStartPosition(int targetPos) throws IOException {
+        assert targetPos > startPosition();
         if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
         int startPos = startPosition();
@@ -194,6 +198,7 @@ class SpansAnd extends BLSpans {
     }
 
     boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // Note that we DON't use our nextStartPosition() here because atFirstInCurrentDoc
         // is not properly set yet at this point in time (we do that below).
         atFirstInCurrentDoc = false;
