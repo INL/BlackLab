@@ -341,6 +341,7 @@ public class QueryTool {
         File inputFile = null;
         String encoding = Charset.defaultCharset().name();
         Boolean showStats = null; // default not overridden (default depends on batch mode or not)
+        boolean verbose = false;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
             if (arg.startsWith("--")) {
@@ -395,6 +396,9 @@ public class QueryTool {
                     i++;
                     System.err.println("Batch mode; reading commands from " + inputFile);
                     break;
+                case "-v":
+                    verbose = true;
+                    break;
                 default:
                     System.err.println("Unknown option: " + arg);
                     usage();
@@ -419,7 +423,7 @@ public class QueryTool {
         //  use --mode performance to get stats but no results in batch mode)
         boolean showStatsDefaultValue = inputFile == null;
         QueryTool.showStats = showStats == null ? showStatsDefaultValue : showStats;
-        run(indexDir, inputFile, encoding);
+        run(indexDir, inputFile, encoding, verbose);
     }
 
     /**
@@ -430,7 +434,7 @@ public class QueryTool {
      *            mode
      * @param encoding the output encoding to use
      */
-    private static void run(File indexDir, File inputFile, String encoding) throws ErrorOpeningIndex {
+    private static void run(File indexDir, File inputFile, String encoding, boolean verbose) throws ErrorOpeningIndex {
         if (!indexDir.exists() || !indexDir.isDirectory()) {
             System.err.println("Index dir " + indexDir.getPath() + " doesn't exist.");
             return;
@@ -455,6 +459,7 @@ public class QueryTool {
         try (BufferedReader in = inputFile == null ? new BufferedReader(new InputStreamReader(System.in, encoding))
                 : FileUtil.openForReading(inputFile, INPUT_FILE_ENCODING)) {
             QueryTool c = new QueryTool(indexDir, in, out, err);
+            c.verbose = verbose;
             c.commandProcessor();
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -467,6 +472,7 @@ public class QueryTool {
                         "\n" +
                         "Options (mostly useful for batch testing):\n" +
                         "-f <file>            Execute batch commands from file and exit\n" +
+                        "-v                   Start in verbose mode (show query & rewrite)\n" +
                         "--mode all           Show results and timings (default without -f)\n" +
                         "--mode correctness,  Show results but no timings (default for -f)\n" +
                         "--mode c\n" +
@@ -973,7 +979,7 @@ public class QueryTool {
                 special = "AUTHORFIELD";
             else if (field.name().equals(s.custom().get("dateField", "")))
                 special = "DATEFIELD";
-            else if (field.name().equals(mf.pidField().name()))
+            else if (mf.pidField() != null && field.name().equals(mf.pidField().name()))
                 special = "PIDFIELD";
             if (special.length() > 0)
                 special = " (" + special + ")";
@@ -1131,8 +1137,14 @@ public class QueryTool {
 
             // Execute search
             BLSpanQuery spanQuery = pattern.toQuery(QueryInfo.create(index, contentsField), filter);
-            if (verbose)
+            if (verbose) {
                 outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
+                try {
+                    outprintln("Rewritten: " + spanQuery.rewrite(index.reader()).toString(contentsField.name()));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             SearchHits search = index.search().find(spanQuery);
 
             if (alwaysSortBy != null) {
@@ -1648,6 +1660,12 @@ public class QueryTool {
                 .sorted( (a, b) -> {
                     MatchInfo ma = a.getValue();
                     MatchInfo mb = b.getValue();
+                    if (ma == null && mb == null)
+                        return 0;
+                    else if (ma == null)
+                        return -1;
+                    else if (mb == null)
+                        return 1;
                     MatchInfo.Type at = ma.getType();
                     MatchInfo.Type bt = mb.getType();
                     // Sort by type
@@ -1663,6 +1681,8 @@ public class QueryTool {
                 })
                 .map(e -> {
                     MatchInfo mi = e.getValue();
+                    if (mi == null)
+                        return "(null)";
                     return mi.getType() == MatchInfo.Type.SPAN ?
                             e.getKey() + "=" + e.getValue() :
                             e.getValue().toString();

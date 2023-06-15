@@ -36,7 +36,7 @@ class SpansNGrams extends BLSpans {
     /** Documents that haven't been deleted */
     private final Bits liveDocs;
 
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
     private final int min;
 
@@ -86,7 +86,7 @@ class SpansNGrams extends BLSpans {
      */
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet by client
         return currentEnd;
     }
@@ -94,7 +94,7 @@ class SpansNGrams extends BLSpans {
     @Override
     public int nextDoc() {
         assert docID() != NO_MORE_DOCS;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         do {
             if (currentDoc >= maxDoc) {
                 currentDoc = NO_MORE_DOCS;
@@ -118,7 +118,7 @@ class SpansNGrams extends BLSpans {
             currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (currentDocLength < min || nextStartPosition() == NO_MORE_POSITIONS);
-        alreadyAtFirstMatch = true;
+        atFirstInCurrentDoc = true;
 
         return currentDoc;
     }
@@ -131,8 +131,8 @@ class SpansNGrams extends BLSpans {
     @Override
     public int nextStartPosition() {
         assert startPosition() != NO_MORE_POSITIONS;
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             return currentStart;
         }
 
@@ -160,8 +160,8 @@ class SpansNGrams extends BLSpans {
     @Override
     public int advanceStartPosition(int target) {
         assert target > startPosition();
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             if (currentStart >= target)
                 return currentStart;
         }
@@ -185,7 +185,7 @@ class SpansNGrams extends BLSpans {
     @Override
     public int advance(int doc) throws IOException {
         assert doc >= 0 && doc > docID();
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         if (currentDoc == NO_MORE_DOCS)
             return NO_MORE_DOCS;
         if (doc >= maxDoc) {
@@ -211,7 +211,7 @@ class SpansNGrams extends BLSpans {
      */
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet by client
         return currentStart;
     }

@@ -27,9 +27,13 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
   /** RegularExpression Id. */
   int NUMBER = 12;
   /** RegularExpression Id. */
-  int QUOTED_STRING = 13;
+  int ROOT_DEP_OP = 13;
   /** RegularExpression Id. */
-  int SINGLE_QUOTED_STRING = 14;
+  int DEP_OP = 14;
+  /** RegularExpression Id. */
+  int QUOTED_STRING = 15;
+  /** RegularExpression Id. */
+  int SINGLE_QUOTED_STRING = 16;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -49,6 +53,8 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "<NAME>",
     "<FLAGS>",
     "<NUMBER>",
+    "<ROOT_DEP_OP>",
+    "<DEP_OP>",
     "<QUOTED_STRING>",
     "<SINGLE_QUOTED_STRING>",
     "\"::\"",
@@ -62,6 +68,7 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "\")\"",
     "\"!\"",
     "\".\"",
+    "\";\"",
     "\"/\"",
     "\"*\"",
     "\"+\"",

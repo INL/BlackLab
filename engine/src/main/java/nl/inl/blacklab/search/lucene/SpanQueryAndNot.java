@@ -56,7 +56,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                     return true;
                 for (SpanGuarantees clause : include) {
                     if (clause.hitsAllSameLength())
-                        return true;
+                        return true; // if any clause has fixed-length hits, so does the whole query
                 }
                 return true;
             }
@@ -189,7 +189,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
         if (this.include.size() == 0 && this.exclude.size() == 0)
-            throw new IllegalArgumentException("ANDNOT query without clauses");
+            throw new IllegalArgumentException("AND(NOT)/RSPAN query without clauses");
         checkBaseFieldName();
 
         List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(this.include);
@@ -198,7 +198,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     /**
      * Do we require that the active relation matched by the include clauses are unique?
-     *
+     * <p>
      * I.e. if two clauses match the same relation, the match is discarded. This can
      * happen in queries that match the same relation type twice.
      *
@@ -243,18 +243,151 @@ public class SpanQueryAndNot extends BLSpanQuery {
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
 
+        // If any of our clauses capture a group, lift them out of the AND.
+        List<SpanQueryCaptureGroup> savedCaptures = new ArrayList<>();
+        List<BLSpanQuery> includeWithoutCaptures = new ArrayList<>(include.size());
+        for (BLSpanQuery cl: include) {
+            if (cl instanceof SpanQueryCaptureGroup) {
+                // Remember capture and replace it with its clause
+                savedCaptures.add((SpanQueryCaptureGroup) cl);
+                includeWithoutCaptures.add(((SpanQueryCaptureGroup) cl).getClause());
+            } else {
+                includeWithoutCaptures.add(cl);
+            }
+        }
+
         // Flatten nested AND queries, and invert negative-only clauses.
         // This doesn't change the query because the AND operator is associative.
-        boolean anyRewritten = false;
         List<BLSpanQuery> flatCl = new ArrayList<>();
         List<BLSpanQuery> flatNotCl = new ArrayList<>();
-        boolean isNot = false;
+        boolean anyRewritten = flattenInvert(reader, includeWithoutCaptures, exclude, flatCl, flatNotCl);
+
+        // Rewrite clauses, and again flatten/invert if necessary.
+        List<BLSpanQuery> rewrCl = new ArrayList<>();
+        List<BLSpanQuery> rewrNotCl = new ArrayList<>();
+        anyRewritten = anyRewritten | rewriteFlattenInvert(reader, flatCl, flatNotCl, rewrCl, rewrNotCl);
+
+        if (rewrCl.isEmpty()) {
+            // All-negative; node should be rewritten to OR.
+            if (rewrNotCl.size() == 1)
+                return rewrNotCl.get(0).inverted().rewrite(reader);
+            return (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
+        }
+
+        // Deal with any "match n-grams" clauses (any token repetitions).
+        int[] minMax = new int[] { 0, MAX_UNLIMITED };
+        boolean mustFilterOnHitLength = false;
+        if (rewrCl.size() > 1) {
+            // If there's more than one positive clause, remove the super general "match all n-grams" clause.
+            // Also replace any "match n-grams" clauses with a more efficient filter on hit length.
+            List<BLSpanQuery> rewrClNew = rewrCl.stream().filter(cl -> {
+                if (cl instanceof SpanQueryAnyToken) {
+                    // Any token repetition clause. Filter it out and keep track
+                    // of min/max, so we can filter hits on those lengths later if needed.
+                    SpanQueryAnyToken any = (SpanQueryAnyToken) cl;
+                    if (any.getMin() > minMax[0])
+                        minMax[0] = any.getMin();
+                    if (any.getMax() < minMax[1])
+                        minMax[1] = any.getMax();
+                    return false;
+                }
+                return true;
+            }).collect(Collectors.toList());
+            if (!rewrClNew.equals(rewrCl))
+                anyRewritten = true;
+            rewrCl = rewrClNew;
+            if (minMax[0] > 0 || minMax[1] < MAX_UNLIMITED) {
+                // We filtered out any token repetition clause(s),
+                // so we must filter hits on min/max length at the end.
+                mustFilterOnHitLength = true;
+            }
+            if (rewrCl.isEmpty()) {
+                // All clauses were any token repetitions.
+                return reapplyCaptures(savedCaptures,
+                        new SpanQueryAnyToken(queryInfo, minMax[0], minMax[1], includeWithoutCaptures.get(0).getRealField()));
+            }
+        }
+
+        // Combine the rewritten clauses into a single query, and filter on length if necessary.
+        BLSpanQuery result;
+        if (!anyRewritten && exclude.isEmpty()) {
+            // Nothing needs to be rewritten.
+            result = this;
+        } else if (rewrCl.size() == 1 && rewrNotCl.isEmpty()) {
+            // Single positive clause
+            result = rewrCl.get(0);
+        } else {
+            // Combination of positive and possibly negative clauses
+            if (rewrCl.size() == 1)
+                result = rewrCl.get(0);
+            else {
+                result = new SpanQueryAndNot(rewrCl, null);
+                ((SpanQueryAndNot)result).setRequireUniqueRelations(requireUniqueRelations);
+            }
+            if (!rewrNotCl.isEmpty()) {
+                // Add the negative clauses, using an inverted position filter
+                BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0)
+                        : new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]));
+                result = new SpanQueryPositionFilter(result, excludeResult,
+                        SpanQueryPositionFilter.Operation.MATCHES, true).rewrite(reader);
+            }
+        }
+        if (mustFilterOnHitLength) {
+            if (minMax[0] == minMax[1] && result.guarantees().hitsAllSameLength() &&
+                    result.guarantees().hitsLengthMin() == minMax[0]) {
+                // We can just return the result, it already guarantees the right length.
+            } else {
+                // We must filter by hit length
+                result = new SpanQueryFilterByHitLength(result, minMax[0], minMax[1]).rewrite(reader);
+            }
+        }
+        // Re-apply any captures we "lifted" out of our clauses.
+        return reapplyCaptures(savedCaptures, result);
+    }
+
+    /**
+     * We've lifted out some captures. Re-apply them to the resulting query.
+     *
+     * @param captures list of captures
+     * @param query   query to apply captures to
+     * @return query with captures applied
+     */
+    private BLSpanQuery reapplyCaptures(List<SpanQueryCaptureGroup> captures, BLSpanQuery query) {
+        for (SpanQueryCaptureGroup capture : captures) {
+            query = capture.copyWith(query);
+        }
+        return query;
+    }
+
+    private boolean flattenInvert(IndexReader reader, List<BLSpanQuery> include,
+            List<BLSpanQuery> exclude, List<BLSpanQuery> rinclude, List<BLSpanQuery> rexclude) throws IOException {
+        return _rewriteFlattenInvert(reader, include, exclude, false, rinclude, rexclude);
+    }
+
+    private boolean rewriteFlattenInvert(IndexReader reader, List<BLSpanQuery> include,
+            List<BLSpanQuery> exclude, List<BLSpanQuery> rinclude, List<BLSpanQuery> rexclude)
+            throws IOException {
+        return _rewriteFlattenInvert(reader, include, exclude, true, rinclude, rexclude);
+    }
+
+    private boolean _rewriteFlattenInvert(IndexReader reader, List<BLSpanQuery> include,
+            List<BLSpanQuery> exclude, boolean rewrite, List<BLSpanQuery> rinclude, List<BLSpanQuery> rexclude)
+            throws IOException {
+        boolean anyRewritten = false;
+        boolean isNot = false; // first we do the included clauses, then the excluded ones
         for (List<BLSpanQuery> cl : Arrays.asList(include, exclude)) {
-            for (BLSpanQuery child : cl) {
-                List<BLSpanQuery> clPos = isNot ? flatNotCl : flatCl;
-                List<BLSpanQuery> clNeg = isNot ? flatCl : flatNotCl;
-                boolean isTPAndNot = child instanceof SpanQueryAndNot;
-                if (!isTPAndNot && child.guarantees().isSingleTokenNot()) {
+            for (BLSpanQuery orig : cl) {
+                List<BLSpanQuery> clPos = isNot ? rexclude : rinclude;
+                List<BLSpanQuery> clNeg = isNot ? rinclude : rexclude;
+                BLSpanQuery child = orig;
+                if (rewrite) {
+                    child = orig.rewrite(reader);
+                    if (child != orig)
+                        anyRewritten = true;
+                }
+                // can we flatten? (same query type and same options)
+                boolean flatten = canFlatten(child);
+                if (!flatten && child.guarantees().isSingleTokenNot()) {
                     // "Switch sides": invert the clause, and
                     // swap the lists we add clauses to.
                     child = child.inverted();
@@ -262,9 +395,9 @@ public class SpanQueryAndNot extends BLSpanQuery {
                     clPos = clNeg;
                     clNeg = temp;
                     anyRewritten = true;
-                    isTPAndNot = child instanceof SpanQueryAndNot;
+                    flatten = canFlatten(child);
                 }
-                if (isTPAndNot) {
+                if (flatten) {
                     // Flatten.
                     // Child AND operation we want to flatten into this AND operation.
                     // Replace the child, incorporating its children into this AND operation.
@@ -276,82 +409,14 @@ public class SpanQueryAndNot extends BLSpanQuery {
                     clPos.add(child);
                 }
             }
-            isNot = true;
+            isNot = true; // continue with the excluded clauses
         }
+        return anyRewritten;
+    }
 
-        // Rewrite clauses, and again flatten/invert if necessary.
-        List<BLSpanQuery> rewrCl = new ArrayList<>();
-        List<BLSpanQuery> rewrNotCl = new ArrayList<>();
-        isNot = false;
-        for (List<BLSpanQuery> cl : Arrays.asList(flatCl, flatNotCl)) {
-            for (BLSpanQuery child : cl) {
-                List<BLSpanQuery> clPos = isNot ? rewrNotCl : rewrCl;
-                List<BLSpanQuery> clNeg = isNot ? rewrCl : rewrNotCl;
-                BLSpanQuery rewritten = child.rewrite(reader);
-                boolean isTPAndNot = rewritten instanceof SpanQueryAndNot;
-                if (!isTPAndNot && rewritten.guarantees().isSingleTokenNot()) {
-                    // "Switch sides": invert the clause, and
-                    // swap the lists we add clauses to.
-                    rewritten = rewritten.inverted();
-                    List<BLSpanQuery> temp = clPos;
-                    clPos = clNeg;
-                    clNeg = temp;
-                    anyRewritten = true;
-                    isTPAndNot = rewritten instanceof SpanQueryAndNot;
-                }
-                if (isTPAndNot) {
-                    // Flatten.
-                    // Child AND operation we want to flatten into this AND operation.
-                    // Replace the child, incorporating its children into this AND operation.
-                    clPos.addAll(((SpanQueryAndNot) rewritten).include);
-                    clNeg.addAll(((SpanQueryAndNot) rewritten).exclude);
-                    anyRewritten = true;
-                } else {
-                    // Just add it.
-                    clPos.add(rewritten);
-                    if (rewritten != child)
-                        anyRewritten = true;
-                }
-            }
-            isNot = true;
-        }
-
-        if (rewrCl.isEmpty()) {
-            // All-negative; node should be rewritten to OR.
-            if (rewrNotCl.size() == 1)
-                return rewrNotCl.get(0).inverted().rewrite(reader);
-            return (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
-        }
-
-        if (rewrCl.size() > 1) {
-            // If there's more than one positive clause, remove the super general "match all" clause.
-            rewrCl = rewrCl.stream().filter(cl -> !(cl instanceof SpanQueryAnyToken)).collect(Collectors.toList());
-        }
-
-        if (rewrCl.size() == 1 && rewrNotCl.isEmpty()) {
-            // Single positive clause
-            return rewrCl.get(0);
-        }
-
-        if (!anyRewritten && exclude.isEmpty()) {
-            // Nothing needs to be rewritten.
-            return this;
-        }
-
-        // Combination of positive and possibly negative clauses
-        BLSpanQuery includeResult;
-        if (rewrCl.size() == 1)
-            includeResult = rewrCl.get(0);
-        else {
-            includeResult = new SpanQueryAndNot(rewrCl, null);
-            ((SpanQueryAndNot)includeResult).setRequireUniqueRelations(requireUniqueRelations);
-        }
-        if (rewrNotCl.isEmpty())
-            return includeResult.rewrite(reader);
-        BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0)
-                : new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]));
-        return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES,
-                true).rewrite(reader);
+    private boolean canFlatten(BLSpanQuery child) {
+        return child instanceof SpanQueryAndNot &&
+                ((SpanQueryAndNot) child).requireUniqueRelations == requireUniqueRelations;
     }
 
     @Override
@@ -427,7 +492,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             for (final SegmentCacheable w : weights) {
-                if (w.isCacheable(ctx) == false)
+                if (!w.isCacheable(ctx))
                     return false;
             }
             return true;
@@ -473,9 +538,10 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     @Override
     public String toString(String field) {
+        String type = requireUniqueRelations ? "RMATCH" : "AND";
         if (exclude.isEmpty())
-            return "AND(" + clausesToString(field, include) + ")";
-        return "ANDNOT([" + clausesToString(field, include) + "], [" + clausesToString(field, exclude) + "])";
+            return type + "(" + clausesToString(field, include) + ")";
+        return type + "(" + clausesToString(field, include) + ", " + clausesToString(field, exclude, "!") + ")";
     }
 
     @Override

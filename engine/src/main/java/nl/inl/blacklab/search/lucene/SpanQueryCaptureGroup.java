@@ -73,6 +73,14 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
         return new SpanWeightCaptureGroup(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
 
+    public BLSpanQuery getClause() {
+        return clauses.get(0);
+    }
+
+    public BLSpanQuery copyWith(BLSpanQuery query) {
+        return new SpanQueryCaptureGroup(query, name, leftAdjust, rightAdjust);
+    }
+
     class SpanWeightCaptureGroup extends BLSpanWeight {
 
         final BLSpanWeight weight;

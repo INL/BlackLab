@@ -24,7 +24,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
      * nextStartPosition() has been called? Necessary because we have to make sure
      * nextDoc()/advance() actually puts us in a document with at least one match.
      */
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
     /**
      * If true, match from the start of the anchor hit. Otherwise, match from the
@@ -58,7 +58,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // nextStartPosition() hasn't been called yet
         if (anchorStart == NO_MORE_POSITIONS || anchorStart < 0)
             return anchorStart;
@@ -67,7 +67,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // nextStartPosition() hasn't been called yet
         int endPos = in.endPosition();
         if (endPos == NO_MORE_POSITIONS || endPos < 0)
@@ -78,7 +78,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
     @Override
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         return super.nextDoc();
     }
 
@@ -88,9 +88,9 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
         if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;
 
-        if (alreadyAtFirstMatch) {
+        if (atFirstInCurrentDoc) {
             // We're already at the first match in the doc. Return it.
-            alreadyAtFirstMatch = false;
+            atFirstInCurrentDoc = false;
             return anchorStart;
         }
 
@@ -114,8 +114,8 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
         if (in.docID() == NO_MORE_DOCS)
             return NO_MORE_POSITIONS;
 
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             if (anchorStart >= target)
                 return anchorStart;
         }
@@ -134,7 +134,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // Are there search results in this document?
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         matchEndPointIt = null;
         if (in.startPosition() != NO_MORE_POSITIONS) {
             anchorStart = in.nextStartPosition();
@@ -142,7 +142,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
         anchorStart = synchronizePos();
         if (anchorStart == NO_MORE_POSITIONS)
             return false;
-        alreadyAtFirstMatch = true;
+        atFirstInCurrentDoc = true;
         return true;
     }
 
@@ -188,7 +188,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         return super.advance(target);
     }
 

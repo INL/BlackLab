@@ -147,8 +147,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             // Our cached hit is the one we want.
             return nextStartPosition();
         }
-        if (direction == Direction.FORWARD &&
-                (spanMode == RelationInfo.SpanMode.FULL_SPAN || spanMode == RelationInfo.SpanMode.SOURCE)) {
+        if (direction == Direction.FORWARD && spanMode == RelationInfo.SpanMode.FULL_SPAN || spanMode == RelationInfo.SpanMode.SOURCE) {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
             super.advanceStartPosition(target);
             if (startPos == NO_MORE_POSITIONS) {
@@ -181,7 +180,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         fetchRelationInfo(); // decode the payload
         if (relationInfo.isRoot() && spanMode == RelationInfo.SpanMode.SOURCE) {
-            // Root relations have no source
+            // Need source, but this has no source
             return FilterSpans.AcceptStatus.NO;
         }
 
@@ -221,7 +220,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
             relationInfo.deserialize(in.startPosition(), dataInput);
             if (collector.term != null) // can happen during testing...
-                relationInfo.setRelationTerm(collector.term.text());
+                relationInfo.setIndexedTerm(collector.term.text());
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Error getting payload");
         }
@@ -242,6 +241,6 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     public String toString() {
-        return "REL(" + relationType + ", " + direction + ", " + spanMode + ")";
+        return "REL(" + relationType + ", " + spanMode + (direction != Direction.BOTH_DIRECTIONS ? ", " + direction : "") + ")";
     }
 }

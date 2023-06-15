@@ -46,7 +46,9 @@ public class SpansConstrained extends BLFilterSpans<BLSpans> {
         } else {
             Arrays.fill(matchInfo, null);
         }
-        context.getMatchInfo(matchInfo);
+        // We can only get match info for our candidate spans, but that should be enough
+        // (our constraint may only reference captured groups within own clause)
+        candidate.getMatchInfo(matchInfo);
 
         // Make sure we have the right forward index doc
         if (currentFiDoc == null || currentFiDoc.getSegmentDocId() != candidate.docID())

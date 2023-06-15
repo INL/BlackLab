@@ -1,8 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.lang.reflect.Constructor;
-import java.util.Collections;
-import java.util.List;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -10,6 +8,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
@@ -18,9 +17,9 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  * Base class for HitPropertyHitText, LeftContext, RightContext, WordLeft and
  * WordRight.
  */
-public abstract class HitPropertyContextBase extends HitProperty {
+public abstract class HitPropertyContextBase2 extends HitProperty {
 
-    protected static <T extends HitPropertyContextBase> T deserializeProp(Class<T> cls, BlackLabIndex index,
+    protected static <T extends HitPropertyContextBase2> T deserializeProp(Class<T> cls, BlackLabIndex index,
             AnnotatedField field, String info) {
         String[] parts = PropertySerializeUtil.splitParts(info);
         String propName = parts[0];
@@ -43,15 +42,13 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     protected MatchSensitivity sensitivity;
 
-//    protected ContextSize contextSize;
-
     protected String name;
 
     protected String serializeName;
 
     protected BlackLabIndex index;
 
-    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, Contexts contexts, boolean invert) {
+    public HitPropertyContextBase2(HitPropertyContextBase2 prop, Hits hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
         this.terms = prop.terms;
         this.annotation = prop.annotation;
@@ -61,13 +58,12 @@ public abstract class HitPropertyContextBase extends HitProperty {
                             + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
         }
         this.sensitivity = prop.sensitivity;
-//        this.contextSize = prop.contextSize;
         this.name = prop.name;
         this.serializeName = prop.serializeName;
         this.index = hits == null ? prop.index : hits.index();
     }
 
-    public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
+    public HitPropertyContextBase2(String name, String serializeName, BlackLabIndex index, Annotation annotation,
             MatchSensitivity sensitivity/*, ContextSize contextSize*/) {
         super();
         this.name = name;
@@ -76,17 +72,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation() : annotation;
         this.terms = index.annotationForwardIndex(this.annotation).terms();
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
-//        this.contextSize = contextSize == null ? index.defaultContextSize() : contextSize;
     }
 
     @Override
-    public List<Annotation> needsContext() {
-        return annotation == null ? Collections.emptyList() : List.of(annotation);
-    }
-    
-    @Override
-    public List<MatchSensitivity> getSensitivities() {
-        return List.of(sensitivity);
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        return null;
     }
 
     @Override
@@ -119,7 +109,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        HitPropertyContextBase other = (HitPropertyContextBase) obj;
+        HitPropertyContextBase2 other = (HitPropertyContextBase2) obj;
         if (annotation == null) {
             if (other.annotation != null)
                 return false;

@@ -44,7 +44,7 @@ class SpansPositionFilter extends BLSpans {
      * nextStartPosition() has been called? Necessary because we have to make sure
      * nextDoc()/advance() actually puts us in a document with at least one match.
      */
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
     /**
      * If true, produce hits that DON'T match the filter instead.
@@ -96,7 +96,7 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // nextStartPosition() hasn't been called yet
         return producer.endPosition();
     }
@@ -104,7 +104,7 @@ class SpansPositionFilter extends BLSpans {
     @Override
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
 
         // Advance container
         producerStart = -1;
@@ -118,7 +118,7 @@ class SpansPositionFilter extends BLSpans {
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
 
         // Skip both to doc
         producerStart = -1;
@@ -181,7 +181,7 @@ class SpansPositionFilter extends BLSpans {
 
     private boolean twoPhaseCurrentDocMatches(int docID) throws IOException {
         assert docID() >= 0 && docID() != NO_MORE_DOCS;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         assert producer.startPosition() < 0;
 
         // Our producer may not have been advanced by our approximation
@@ -203,7 +203,7 @@ class SpansPositionFilter extends BLSpans {
 
         // Now that both clauses are positioned, find an actual match
         if (synchronizePos() != NO_MORE_POSITIONS) {
-            alreadyAtFirstMatch = true;
+            atFirstInCurrentDoc = true;
             return true;
         }
         return false;
@@ -238,9 +238,9 @@ class SpansPositionFilter extends BLSpans {
     @Override
     public int nextStartPosition() throws IOException {
         assert startPosition() != NO_MORE_POSITIONS;
-        if (alreadyAtFirstMatch) {
+        if (atFirstInCurrentDoc) {
             // We're already at the first match in the doc. Return it.
-            alreadyAtFirstMatch = false;
+            atFirstInCurrentDoc = false;
             return producerStart;
         }
 
@@ -256,8 +256,8 @@ class SpansPositionFilter extends BLSpans {
     @Override
     public int advanceStartPosition(int target) throws IOException {
         assert target > startPosition();
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             if (producerStart >= target)
                 return producerStart;
         }
@@ -488,7 +488,7 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // nextStartPosition() hasn't been called yet
         return producerStart;
     }

@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 public class QueryExtensions {
 
     /** Default value for a query parameter that means "any n-gram" ( []* ) */
-    public static final String VALUE_QUERY_ANY_NGRAM_ = "_ANY_NGRAM_";
+    public static final String VALUE_QUERY_ANY_NGRAM = "_ANY_NGRAM_";
 
     /** Variable number of query params */
     public static final List<ArgType> ARGS_VAR_Q = List.of(ArgType.QUERY, ArgType.ELLIPSIS);
@@ -69,6 +69,9 @@ public class QueryExtensions {
 
     /** Three queries as an argument */
     public static final List<ArgType> ARGS_QQQ = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.QUERY);
+
+    /** A string, a query, and two strings */
+    public static final List<ArgType> ARGS_SQSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING);
 
     enum ArgType {
         QUERY,
@@ -218,7 +221,7 @@ public class QueryExtensions {
             // Fill in default value for argument if missing
             if (i < funcInfo.defaultValues.size()) {
                 Object defVal = funcInfo.getDefaultParameterValue(i);
-                if (defVal == QueryExtensions.VALUE_QUERY_ANY_NGRAM_) {
+                if (defVal == QueryExtensions.VALUE_QUERY_ANY_NGRAM) {
                     // Special case: any n-gram (usually meaning "don't car")
                     defVal = SpanQueryAnyToken.anyNGram(queryInfo, context);
                 }

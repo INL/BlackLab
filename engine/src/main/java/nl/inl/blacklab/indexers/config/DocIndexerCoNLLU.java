@@ -43,6 +43,8 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
 
     private BufferedReader inputReader;
 
+    private int lineNumber;
+
     public DocIndexerCoNLLU() {
         super("\\|");
     }
@@ -126,12 +128,14 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         // For each token position
         Map<String, String> sentenceAttr = new LinkedHashMap<>();
         int sentenceStartPosition = -1;
+        lineNumber = 0;
         while (true) {
 
             // Read and trim next line
             String origLine = inputReader.readLine();
             if (origLine == null)
                 break; // end of file
+            lineNumber++;
             String line = origLine.trim();
 
             // Is it empty?
@@ -240,7 +244,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         } else if (id.matches("\\d+"))
             return new Span(currentSentenceStart + Integer.parseInt(id) - 1);
         else
-            throw new IllegalArgumentException("Invalid ID: " + id);
+            throw new IllegalArgumentException("Invalid ID (must be a number or two numbers separated by dash): '" + id + "' on line " + lineNumber);
     }
 
     @Override

@@ -140,7 +140,9 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
                 public boolean matches() throws IOException {
                     if (!inner.matches())
                         return false;
-                    source.nextStartPosition(); // start gathering at the first hit
+                    assert source.docID() >= 0 && source.docID() != NO_MORE_DOCS;
+                    int startPos = source.nextStartPosition(); // start gathering at the first hit
+                    assert startPos >= 0 && startPos != Spans.NO_MORE_POSITIONS;
                     return true;
                 }
 
@@ -158,7 +160,9 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
             return new TwoPhaseIterator(source) {
                 @Override
                 public boolean matches() throws IOException {
-                    source.nextStartPosition(); // start gathering at the first hit
+                    assert source.docID() >= 0 && source.docID() != NO_MORE_DOCS;
+                    int startPos = source.nextStartPosition(); // start gathering at the first hit
+                    assert startPos >= 0 && startPos != Spans.NO_MORE_POSITIONS;
                     return true;
                 }
 

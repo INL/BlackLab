@@ -36,7 +36,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
-        if (mode == RelationInfo.SpanMode.SOURCE & in.getRelationInfo().isRoot()) {
+        if (mode == RelationInfo.SpanMode.SOURCE && in.getRelationInfo().isRoot()) {
             // Need source, but this has no source
             return FilterSpans.AcceptStatus.NO;
         }
@@ -67,12 +67,12 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     public int startPosition() {
-        return startAdjusted;
+        return atFirstInCurrentDoc ? -1 : startAdjusted;
     }
 
     @Override
     public int endPosition() {
-        return endAdjusted;
+        return atFirstInCurrentDoc ? -1 : endAdjusted;
     }
 
     @Override
@@ -94,34 +94,43 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
             startAdjusted = endAdjusted = NO_MORE_POSITIONS;
         } else if (atFirstInCurrentDoc || startPos < 0) {
             startAdjusted = endAdjusted = -1;
-        } else if (mode == RelationInfo.SpanMode.ALL_SPANS) {
-            // We need all match info because we want the full span including all matched relations
-            if (matchInfo == null)
-                matchInfo = new MatchInfo[context.numberOfMatchInfos()];
-            else
-                Arrays.fill(matchInfo, null);
-            in.getMatchInfo(matchInfo);
-            startAdjusted = Integer.MAX_VALUE;
-            endAdjusted = Integer.MIN_VALUE;
-            for (int i = 0; i < matchInfo.length; i++) {
-                MatchInfo info = matchInfo[i];
-                if (info != null && info.getType() == MatchInfo.Type.RELATION) {
-                    // This is a relations match. Take this into account for the full span.
-                    // (capture groups are not taken into account, but should already fall into the span anyway)
-                    if (info.getSpanStart() < startAdjusted)
-                        startAdjusted = info.getSpanStart();
-                    if (info.getSpanEnd() > endAdjusted)
-                        endAdjusted = info.getSpanEnd();
+        } else {
+            if (mode == RelationInfo.SpanMode.ALL_SPANS) {
+                // We need all match info because we want the full span including all matched relations
+                if (matchInfo == null)
+                    matchInfo = new MatchInfo[context.numberOfMatchInfos()];
+                else
+                    Arrays.fill(matchInfo, null);
+                in.getMatchInfo(matchInfo);
+                startAdjusted = Integer.MAX_VALUE;
+                endAdjusted = Integer.MIN_VALUE;
+                for (int i = 0; i < matchInfo.length; i++) {
+                    MatchInfo info = matchInfo[i];
+                    if (info != null && info.getType() == MatchInfo.Type.RELATION) {
+                        // This is a relations match. Take this into account for the full span.
+                        // (capture groups are not taken into account, but should already fall into the span anyway)
+                        if (info.getSpanStart() < startAdjusted)
+                            startAdjusted = info.getSpanStart();
+                        if (info.getSpanEnd() > endAdjusted)
+                            endAdjusted = info.getSpanEnd();
+                    }
+                }
+                if (startAdjusted == Integer.MAX_VALUE) {
+                    // No relations matched; use the original span
+                    startAdjusted = in.startPosition();
+                    endAdjusted = in.endPosition();
+                }
+            } else {
+                RelationInfo relationInfo = in.getRelationInfo();
+                if (relationInfo == null) {
+                    // No relation info available; use the original span
+                    startAdjusted = in.startPosition();
+                    endAdjusted = in.endPosition();
+                } else {
+                    startAdjusted = relationInfo.spanStart(mode);
+                    endAdjusted = relationInfo.spanEnd(mode);
                 }
             }
-            if (startAdjusted == Integer.MAX_VALUE) {
-                // Weird, no relations matched; use the original span (this should never happen though)
-                startAdjusted = in.getRelationInfo().spanStart(RelationInfo.SpanMode.FULL_SPAN);
-                endAdjusted = in.getRelationInfo().spanEnd(RelationInfo.SpanMode.FULL_SPAN);
-            }
-        } else {
-            startAdjusted = in.getRelationInfo().spanStart(mode);
-            endAdjusted = in.getRelationInfo().spanEnd(mode);
         }
     }
 

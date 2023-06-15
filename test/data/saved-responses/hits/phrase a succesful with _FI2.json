@@ -3,6 +3,7 @@
     "searchParam": {
       "api": "4.0",
       "indexname": "test",
+      "matchinfo": "captures",
       "op": "hits",
       "patt": "_FI2(\"a\", [lemma=\"successful\"])",
       "sort": "field:pid,hitposition",

@@ -25,7 +25,7 @@ public class MockSpans extends BLSpans {
     private final class MockPostingsEnum extends PostingsEnum {
         private int currentDoc = -1;
         private int currentHit = -1;
-        private boolean alreadyAtFirstMatch = false;
+        private boolean atFirstInCurrentDoc = false;
 
         public MockPostingsEnum() {
             // NOP
@@ -34,7 +34,7 @@ public class MockSpans extends BLSpans {
         @Override
         public int nextDoc() {
             if (currentDoc != NO_MORE_DOCS) {
-                alreadyAtFirstMatch = false;
+                atFirstInCurrentDoc = false;
                 while (currentHit < doc.length && (currentHit == -1 || doc[currentHit] == currentDoc)) {
                     currentHit++;
                 }
@@ -42,7 +42,7 @@ public class MockSpans extends BLSpans {
                     currentDoc = NO_MORE_DOCS;
                     return NO_MORE_DOCS;
                 }
-                alreadyAtFirstMatch = true;
+                atFirstInCurrentDoc = true;
                 currentDoc = doc[currentHit];
             }
             return currentDoc;
@@ -61,7 +61,7 @@ public class MockSpans extends BLSpans {
         @Override
         public int advance(int target) {
             if (currentDoc != NO_MORE_DOCS) {
-                alreadyAtFirstMatch = false;
+                atFirstInCurrentDoc = false;
                 do {
                     currentDoc = nextDoc();
                 } while (currentDoc != NO_MORE_DOCS && currentDoc < target);
@@ -71,7 +71,7 @@ public class MockSpans extends BLSpans {
 
         @Override
         public int startOffset() {
-            if (currentHit < 0 || alreadyAtFirstMatch)
+            if (currentHit < 0 || atFirstInCurrentDoc)
                 return -1;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
                 return NO_MORE_POSITIONS;
@@ -82,8 +82,8 @@ public class MockSpans extends BLSpans {
         public int nextPosition() {
             if (currentDoc == NO_MORE_DOCS)
                 return NO_MORE_POSITIONS;
-            if (alreadyAtFirstMatch) {
-                alreadyAtFirstMatch = false;
+            if (atFirstInCurrentDoc) {
+                atFirstInCurrentDoc = false;
                 return startOffset();
             }
             if (currentHit < 0)
@@ -99,7 +99,7 @@ public class MockSpans extends BLSpans {
         public BytesRef getPayload() {
             if (payloads == null)
                 return null;
-            if (currentHit < 0 || alreadyAtFirstMatch)
+            if (currentHit < 0 || atFirstInCurrentDoc)
                 return null;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
                 return null;
@@ -119,7 +119,7 @@ public class MockSpans extends BLSpans {
 
         @Override
         public int endOffset() {
-            if (currentHit < 0 || alreadyAtFirstMatch)
+            if (currentHit < 0 || atFirstInCurrentDoc)
                 return -1;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
                 return NO_MORE_POSITIONS;
@@ -188,7 +188,8 @@ public class MockSpans extends BLSpans {
     private void setPayloadsRelationsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            RelationInfo relInfo = new RelationInfo("test", false, aStart[i], aStart[i], aEnd[i], aEnd[i]);
+            RelationInfo relInfo = new RelationInfo(false, aStart[i], aStart[i], aEnd[i], aEnd[i],
+                    "test", null);
             BytesRef payload = relInfo.serialize(aStart[i]);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);

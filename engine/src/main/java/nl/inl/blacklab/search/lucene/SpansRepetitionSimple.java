@@ -18,7 +18,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
 
     private int numRepetitions;
 
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
     /**
      * Construct SpansRepetition.
@@ -46,7 +46,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet
         if (!moreBuckets)
             return NO_MORE_POSITIONS;
@@ -56,16 +56,17 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
     @Override
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         return super.nextDoc();
     }
 
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        atFirstInCurrentDoc = false;
         assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // See if there's a bucket of matches in this doc
         moreBuckets = nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
         if (moreBuckets) {
-            alreadyAtFirstMatch = true;
+            atFirstInCurrentDoc = true;
             return true;
         }
 
@@ -106,10 +107,10 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
         if (in.docID() == NO_MORE_DOCS || !moreBuckets)
             return NO_MORE_POSITIONS;
 
-        if (alreadyAtFirstMatch) {
+        if (atFirstInCurrentDoc) {
             // We're already at the first match in the document, because
             // we needed to check if there were matches at all. Return it now.
-            alreadyAtFirstMatch = false;
+            atFirstInCurrentDoc = false;
             return in.startPosition(firstToken);
         }
 
@@ -149,7 +150,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         return super.advance(target);
     }
 
@@ -158,7 +159,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
      */
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet
         if (!moreBuckets)
             return NO_MORE_POSITIONS;

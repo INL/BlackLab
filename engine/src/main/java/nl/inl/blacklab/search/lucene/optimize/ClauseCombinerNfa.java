@@ -24,7 +24,7 @@ import nl.inl.util.LuceneUtil;
  * The first clause would be matched traditionally using Lucene's reverse index, while
  * the second, much more frequent clause would be matched using the forward index.
  *
- * If such as situation is found, we converts the clause to be matched using the forward
+ * If such a situation is found, we convert the clause to be matched using the forward
  * index to an NFA (nondeterministic finite automaton) and use the other as the "anchor"
  * (because a forward index matching operations always needs a starting position).
  * Together they are combined in a FISEQ (forward index sequence) operation whic, like

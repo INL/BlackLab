@@ -46,7 +46,7 @@ class SpansNot extends BLSpans {
     /** Documents that haven't been deleted */
     private final Bits liveDocs;
 
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
     /**
      * For testing, we don't have an IndexReader available, so we use test values.
@@ -94,7 +94,7 @@ class SpansNot extends BLSpans {
      */
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet by client
         return currentEnd;
     }
@@ -102,7 +102,7 @@ class SpansNot extends BLSpans {
     @Override
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         do {
             if (currentDoc >= maxDoc) {
                 currentDoc = NO_MORE_DOCS;
@@ -130,7 +130,7 @@ class SpansNot extends BLSpans {
             currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
-        alreadyAtFirstMatch = true;
+        atFirstInCurrentDoc = true;
 
         return currentDoc;
     }
@@ -143,8 +143,8 @@ class SpansNot extends BLSpans {
     @Override
     public int nextStartPosition() throws IOException {
         assert startPosition() != NO_MORE_POSITIONS;
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             return currentStart;
         }
 
@@ -212,8 +212,8 @@ class SpansNot extends BLSpans {
     @Override
     public int advanceStartPosition(int targetPosition) throws IOException {
         assert targetPosition > startPosition();
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             if (currentStart >= targetPosition)
                 return currentStart;
         }
@@ -238,7 +238,7 @@ class SpansNot extends BLSpans {
     @Override
     public int advance(int doc) throws IOException {
         assert doc >= 0 && doc > docID();
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         if (currentDoc == NO_MORE_DOCS)
             return NO_MORE_DOCS;
         if (doc >= maxDoc) {
@@ -271,7 +271,7 @@ class SpansNot extends BLSpans {
      */
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet by client
         return currentStart;
     }

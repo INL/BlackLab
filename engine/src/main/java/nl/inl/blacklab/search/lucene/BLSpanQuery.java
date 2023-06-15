@@ -88,11 +88,16 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     }
 
     static <T extends SpanQuery> String clausesToString(String field, List<T> clauses) {
+        return clausesToString(field, clauses, "");
+    }
+
+    static <T extends SpanQuery> String clausesToString(String field, List<T> clauses, String prefix) {
         StringBuilder b = new StringBuilder();
         int n = 0;
         for (T clause : clauses) {
             if (b.length() > 0)
                 b.append(", ");
+            b.append(prefix);
             b.append(clause.toString(field));
             n++;
             if (n > 100) {
@@ -192,7 +197,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      * themselves be further optimized. An example is SpanQueryPosFilter, which can
      * be combined with fixed-length neighbouring clauses (updating the
      * SpanQueryPosFilters' left or right adjustment setting to match) to reduce the
-     * number of hits that have to be filter.
+     * number of hits that have to be filtered.
      *
      * @param clause clause we want to internalize
      * @param onTheRight if true, clause is a following clause of this query; if

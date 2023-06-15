@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -14,15 +16,15 @@ public class RelationUtil {
     /** Relation class to use for dependency relations. */
     public static final String RELATION_CLASS_DEPENDENCY = "dep";
 
-    /** Separator before attribute name+value in _relation annotation. */
-    private  static final String ATTR_SEPARATOR = "\u0001";
-
-    /** Separator between attr and value in _relation annotation. */
-    private  static final String KEY_VALUE_SEPARATOR = "\u0002";
-
     /** Separator between relation class (e.g. "__tag", "dep" for dependency relation, etc.) and relation type
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
-    private static final String RELATION_CLASS_TYPE_SEPARATOR = "::";
+    public static final String RELATION_CLASS_TYPE_SEPARATOR = "::";
+
+    /** Separator before attribute name+value in _relation annotation. */
+    private static final String ATTR_SEPARATOR = "\u0001";
+
+    /** Separator between attr and value in _relation annotation. */
+    private static final String KEY_VALUE_SEPARATOR = "\u0002";
 
     /**
      * Determine the term to index in Lucene for a relation.
@@ -71,6 +73,19 @@ public class RelationUtil {
 
         // The term to index consists of the type followed by the (sorted) attributes.
         return fullRelationType + ATTR_SEPARATOR + attrPart;
+    }
+
+    public static Map<String, String> attributesFromIndexedTerm(String indexedTerm) {
+        int i = indexedTerm.indexOf(ATTR_SEPARATOR);
+        if (i < 0 || i == indexedTerm.length() - 1)
+            return Collections.emptyMap();
+        Map<String, String> attributes = new HashMap<>();
+        for (String attrPart: indexedTerm.substring(i + 1).split(ATTR_SEPARATOR)) {
+            String[] keyVal = attrPart.split(KEY_VALUE_SEPARATOR, 2);
+            if (!attributes.containsKey(keyVal[0])) // only the first value if there's multiple!
+                attributes.put(keyVal[0], keyVal[1]);
+        }
+        return attributes;
     }
 
     /**

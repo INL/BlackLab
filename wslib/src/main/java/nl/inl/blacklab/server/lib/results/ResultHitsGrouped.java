@@ -114,7 +114,7 @@ public class ResultHitsGrouped {
         }
 
         docInfos = null;
-        if (params.includeGroupContents()) {
+        if (params.getIncludeGroupContents()) {
             BlackLabIndex index = params.blIndex();
             Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
             docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataToWrite);

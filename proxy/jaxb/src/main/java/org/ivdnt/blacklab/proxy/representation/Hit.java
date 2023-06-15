@@ -35,6 +35,12 @@ public class Hit  {
     @JsonProperty("relations")
     public List<Relation> relations;
 
+    @XmlElementWrapper(name="inlineTags")
+    @XmlElement(name = "inlineTag")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("inlineTags")
+    public List<InlineTag> inlineTags;
+
     public ContextWords left;
 
     public ContextWords match;

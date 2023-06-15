@@ -153,7 +153,7 @@ class SpansSequenceWithGap extends BLSpans {
      * .nextStartPosition() hasn't been called? Required because we need to test for
      * matches in the document in .nextDoc()/.advance().
      */
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
     /** Highest acceptable value for start of second clause match given the current
      *  first clause end and allowable gap. */
@@ -172,7 +172,7 @@ class SpansSequenceWithGap extends BLSpans {
         this.first = BLSpans.ensureSorted(first);
         this.gap = gap;
         this.second = SpansInBucketsPerDocument.sorted(second);
-        this.conjunction = ConjunctionDISI.intersectIterators(List.of(first, this.second));
+        this.conjunction = ConjunctionDISI.intersectIterators(List.of(this.first, this.second));
     }
 
     @Override
@@ -182,7 +182,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet
         return secondEnd;
     }
@@ -190,7 +190,7 @@ class SpansSequenceWithGap extends BLSpans {
     @Override
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         int doc = conjunction.nextDoc();
         while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
             doc = conjunction.nextDoc();
@@ -201,7 +201,7 @@ class SpansSequenceWithGap extends BLSpans {
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         int doc = conjunction.advance(target);
         while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
             doc = conjunction.nextDoc();
@@ -210,10 +210,12 @@ class SpansSequenceWithGap extends BLSpans {
     }
 
     private boolean twoPhaseCurrentDocMatches() throws IOException {
+        atFirstInCurrentDoc = false;
         assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // Does this doc have any matches?
         assert first.startPosition() == -1;
         firstStart = first.nextStartPosition();
+        assert firstStart >= 0;
         second.nextBucket();
         indexFirstPossibleSecondClauseMatch = -1;
         indexCurrentSecondClauseMatch = -1;
@@ -221,7 +223,8 @@ class SpansSequenceWithGap extends BLSpans {
         realignPos();
         if (firstStart != NO_MORE_POSITIONS) {
             // Yes. Remember that we're already on the first match
-            alreadyAtFirstMatch = true;
+            atFirstInCurrentDoc = true;
+            assert firstStart >= 0;
             return true;
         }
         return false;
@@ -238,8 +241,9 @@ class SpansSequenceWithGap extends BLSpans {
         //   indexCurrentSecondClauseMatch have been set
         
         // Did we already find the first match?
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
+            assert firstStart >= 0;
             return firstStart;
         }
 
@@ -344,7 +348,7 @@ class SpansSequenceWithGap extends BLSpans {
      */
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet
         return firstStart;
     }

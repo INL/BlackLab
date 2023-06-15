@@ -56,7 +56,25 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
      */
     protected boolean clauseCapturesMatchInfo = true;
 
+    /**
+     * Assert that, if our clause is positioned at a doc, nextStartPosition() has also been called.
+     *
+     * Sanity check to be called from assertions at the start and end of methods that change the internal state.
+     *
+     * We require this because nextBucket() expects the clause to be positioned at a hit. This is because
+     * for certain bucketing operations we can only decide we're done with a bucket if we're at the first hit
+     * that doesn't belong in the bucket.
+     *
+     * @return true if positioned at a hit (or at a doc and nextStartPosition() has been called), false if not
+     */
+    private boolean positionedAtHitIfPositionedInDoc() {
+        return source.docID() < 0 || source.docID() == NO_MORE_DOCS || source.startPosition() >= 0;
+    }
+
     protected void addHitFromSource() {
+        assert positionedAtHitIfPositionedInDoc();
+        assert source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS;
+        assert source.endPosition() >= 0 && source.endPosition() != Spans.NO_MORE_POSITIONS;
         long span = ((long)source.startPosition() << 32) | source.endPosition();
         startsEnds.add(span);
         if (doMatchInfo) {
@@ -69,8 +87,9 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
             if (activeRelationPerHit == null)
                 activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
             RelationInfo relationInfo = source.getRelationInfo();
-            activeRelationPerHit.add(relationInfo == null ? null : relationInfo.clone());
+            activeRelationPerHit.add(relationInfo == null ? null : relationInfo.copy());
         }
+        assert positionedAtHitIfPositionedInDoc();
     }
 
     @Override
@@ -96,22 +115,53 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public int nextDoc() throws IOException {
+        assert positionedAtHitIfPositionedInDoc();
         if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
             if (source.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
                 source.nextStartPosition(); // start gathering at the first hit
             }
         }
+        assert positionedAtHitIfPositionedInDoc();
+        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);;
         return source.docID();
     }
 
     @Override
+    public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
+        assert positionedAtHitIfPositionedInDoc();
+        int doc = source.docID();
+        if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+            if (doc >= target) {
+                // Already at or beyond; go to the next doc
+                // (though we shouldn't rely on this behavior)
+                doc = nextDoc();
+            } else {
+                doc = source.advance(target);
+                if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                    int startPos = source.nextStartPosition(); // start gathering at the first hit
+                    assert startPos >= 0 && source.startPosition() >= 0;
+                }
+            }
+        }
+        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);;
+        assert doc >= 0 && doc >= target;
+        assert positionedAtHitIfPositionedInDoc();
+        return doc;
+    }
+
+    @Override
     public int nextBucket() throws IOException {
+        assert positionedAtHitIfPositionedInDoc();
+        assert source.docID() >= 0;
         if (source.docID() < 0) {
             // Not nexted yet, no bucket
             return -1;
         }
         if (source.docID() == DocIdSetIterator.NO_MORE_DOCS || source.startPosition() == Spans.NO_MORE_POSITIONS)
             return NO_MORE_BUCKETS;
+        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
+        assert positionedAtHitIfPositionedInDoc();
         return gatherHitsInternal();
     }
 
@@ -127,11 +177,21 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
      * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
      */
     public int advanceBucket(int targetPos) throws IOException {
-        if (source.startPosition() >= targetPos)
-            return nextBucket();
-        if (source.advanceStartPosition(targetPos) == Spans.NO_MORE_POSITIONS)
+        assert positionedAtHitIfPositionedInDoc();
+        if (source.startPosition() >= targetPos) {
+            int i = nextBucket();
+            assert positionedAtHitIfPositionedInDoc();
+            return i;
+        }
+        if (source.advanceStartPosition(targetPos) == Spans.NO_MORE_POSITIONS) {
+            assert positionedAtHitIfPositionedInDoc();
             return NO_MORE_BUCKETS;
-        return gatherHitsInternal();
+        }
+        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
+        assert positionedAtHitIfPositionedInDoc();
+        int i = gatherHitsInternal();
+        assert positionedAtHitIfPositionedInDoc();
+        return i;
     }
 
     /**
@@ -146,24 +206,8 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
      */
     protected abstract void gatherHits() throws IOException;
 
-    @Override
-    public int advance(int target) throws IOException {
-        assert target >= 0 && target > docID();
-        if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
-            if (source.docID() >= target) {
-                // Already at or beyond; go to the next doc
-                // (though we shouldn't rely on this behavior)
-                nextDoc();
-            } else {
-                if (source.advance(target) != DocIdSetIterator.NO_MORE_DOCS) {
-                    source.nextStartPosition(); // start gathering at the first hit
-                }
-            }
-        }
-        return source.docID();
-    }
-
     private int gatherHitsInternal() throws IOException {
+        assert positionedAtHitIfPositionedInDoc();
         startsEnds.clear();
         if (doMatchInfo) {
             matchInfoPerHit.clear();
@@ -174,7 +218,10 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
             matchInfoPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
             activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
         }
+        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
         gatherHits();
+        assert(source.startPosition() >= 0);
+        assert positionedAtHitIfPositionedInDoc();
         return source.docID();
     }
 
@@ -227,7 +274,10 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
-        return getTwoPhaseIterator(source);
+        assert positionedAtHitIfPositionedInDoc();
+        TwoPhaseIterator twoPhaseIterator = getTwoPhaseIterator(source);
+        assert positionedAtHitIfPositionedInDoc();
+        return twoPhaseIterator;
     }
 
     public long cost() {

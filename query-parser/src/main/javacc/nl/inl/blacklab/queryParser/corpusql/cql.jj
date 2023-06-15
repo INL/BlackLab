@@ -23,6 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
@@ -86,6 +89,9 @@ TOKEN [IGNORE_CASE]:
 |   <NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |   <NUMBER: (["0"-"9"])+ >
+    /* valid are e.g. --> ----> --root--> --.*--> --a-b--> (and same preceded by ^) */
+|   <ROOT_DEP_OP: "^--" ( ( ~[">"] (~["-"] | "-" ~["-"] )* )? "--" )? ">" >
+|   <DEP_OP: ("!")? "--" ( ( ~[">"] (~["-"] | "-" ~["-"] )* )? "--" )? ">" >
 |   <QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 |   <SINGLE_QUOTED_STRING: "'" (~["'","\\"] | "\\" ~[] )* "'" >
 }
@@ -252,7 +258,7 @@ TextPattern sequence():
     Token t2 = null;
 }
 {
-    first=sequencePart() [ LOOKAHEAD(2) result=sequenceRest(first) ]
+    first=relationQuery() [ LOOKAHEAD(2) result=sequenceRest(first) ]
     {
         if (result == null)
             result = first;
@@ -260,6 +266,89 @@ TextPattern sequence():
         return result;
     }
 }
+
+
+
+TextPattern relationQuery():
+{
+    TextPattern parent = null;
+    TextPattern child = null;
+    List<TextPattern> clauses = new ArrayList<TextPattern>();
+    String relType = null;
+}
+{
+    parent=captureQuery()                           { clauses.add(parent); }
+    [
+        child=childRelation()                        { clauses.add(child); }
+        ( LOOKAHEAD( ";" ) ";" child=childRelation() { clauses.add(child); } )*   /* dangling-else problem suppressed */
+    ]
+    {
+        if (clauses.size() == 1)
+            return clauses.get(0);
+        return new TextPatternQueryFunction("rmatch", clauses);
+    }
+|   parent=rootRelationType()  { clauses.add(parent); }
+    {
+        return parent;
+    }
+}
+
+TextPattern childRelation():
+{
+    Pair<Boolean, String> relType = null;
+    TextPattern target = null;
+}
+{
+    relType=relationType() target=relationQuery()
+    {
+        boolean negate = relType.getLeft();
+        String type = relType.getRight();
+        target = new TextPatternQueryFunction("rel", List.of(type, target));
+        if (negate)
+            target = new TextPatternNot(target);
+        return target;
+    }
+}
+
+Pair<Boolean, String> relationType():
+{
+    Token t = null;
+}
+{
+    t=<DEP_OP>
+    {
+        String text = t.toString();
+        boolean negate = false;
+        if (text.charAt(0) == '!') {
+            negate = true;
+            text = text.substring(1);
+        }
+        text = text.replaceAll("-->$", "");
+        text = text.replaceAll("^--", "");
+        if (text.isEmpty())
+            text = ".*"; // any relation
+        return Pair.of(negate, text);
+    }
+}
+
+TextPattern rootRelationType():
+{
+    Token t = null;
+    TextPattern target = null;
+}
+{
+    t=<ROOT_DEP_OP> target=relationQuery()
+    {
+        String text = t.toString();
+        text = text.substring(1); // strip ^ at start
+        text = text.replaceAll("-->$", "");
+        text = text.replaceAll("^--", "");
+        if (text.isEmpty())
+            text = ".*"; // any relation
+        return new TextPatternQueryFunction("rel", List.of(text, target, "target", "root"));
+    }
+}
+
 
 /* a start or self-closing tag tag such as <s> or <s/> (for finding XML elements).
  * Note that it returns one TextPattern, but if it's in [0] that means it's a start
@@ -359,7 +448,7 @@ Token booleanOperator():
 }
 
 /* sequence part: one part in a sequence, possibly with a repetition operator */
-TextPattern sequencePart():
+TextPattern captureQuery():
 {
     TextPattern m = null;
     String label = null;

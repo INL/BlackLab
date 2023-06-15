@@ -54,10 +54,6 @@ public interface WebserviceParams extends QueryParams {
 
     WindowSettings windowSettings();
 
-    boolean includeGroupContents();
-
-    boolean omitEmptyCapture();
-
     HitSortSettings hitsSortSettings();
 
     SampleParameters sampleSettings();

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import java.util.Objects;
+
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -66,37 +68,20 @@ public class MatchFilterCompare extends MatchFilter {
     public String toString() {
         return a + " " + op + " " + b;
     }
-    
+
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((a == null) ? 0 : a.hashCode());
-        result = prime * result + ((b == null) ? 0 : b.hashCode());
-        result = prime * result + ((sensitivity == null) ? 0 : sensitivity.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof MatchFilterCompare))
+            return false;
+        MatchFilterCompare that = (MatchFilterCompare) o;
+        return a.equals(that.a) && b.equals(that.b) && op == that.op && sensitivity == that.sensitivity;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        MatchFilterCompare other = (MatchFilterCompare) obj;
-        if (a == null) {
-            if (other.a != null)
-                return false;
-        } else if (!a.equals(other.a))
-            return false;
-        if (b == null) {
-            if (other.b != null)
-                return false;
-        } else if (!b.equals(other.b))
-            return false;
-        return sensitivity == other.sensitivity;
+    public int hashCode() {
+        return Objects.hash(a, b, op, sensitivity);
     }
 
     @Override

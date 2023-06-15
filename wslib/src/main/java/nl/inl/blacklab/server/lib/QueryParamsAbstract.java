@@ -280,6 +280,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public boolean getOmitEmptyCaptures() { return getBool(WebserviceParameter.OMIT_EMPTY_CAPTURES); }
 
     @Override
+    public String getReturnMatchInfo() { return get(WebserviceParameter.RETURN_MATCH_INFO); }
+
+    @Override
     public Optional<String> getFacetProps() { return opt(WebserviceParameter.INCLUDE_FACETS); }
 
     public Optional<String> getGroupProps() { return opt(WebserviceParameter.GROUP_BY); }

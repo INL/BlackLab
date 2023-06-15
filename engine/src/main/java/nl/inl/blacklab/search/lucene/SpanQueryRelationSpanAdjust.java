@@ -43,9 +43,25 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         BLSpanQuery rewritten = clause.rewrite(reader);
+        if (rewritten instanceof SpanQueryRelations) {
+            // We're just changing the span mode of a SpanQueryRelations;
+            // more efficient to get the right span mode in the first place.
+            RelationInfo.SpanMode m = mode == RelationInfo.SpanMode.ALL_SPANS ? RelationInfo.SpanMode.FULL_SPAN : mode;
+            return ((SpanQueryRelations) rewritten).withSpanMode(m);
+        } else if (rewritten instanceof SpanQueryRelationSpanAdjust) {
+            // We're just changing the span mode of a SpanQueryRelationSpanAdjust;
+            // more efficient to get the right span mode in the first place.
+            return ((SpanQueryRelationSpanAdjust) rewritten).withSpanMode(mode);
+        }
         if (rewritten == clause)
             return this;
         return new SpanQueryRelationSpanAdjust(rewritten, mode);
+    }
+
+    private BLSpanQuery withSpanMode(RelationInfo.SpanMode mode) {
+        if (this.mode == mode)
+            return this;
+        return new SpanQueryRelationSpanAdjust(clause, mode);
     }
 
     @Override

@@ -1,13 +1,14 @@
 {
   "summary": {
     "searchParam": {
-      "api": "4.0",
-      "indexname": "test",
-      "op": "hits",
       "patt": "<u/> containing \"good\"",
       "sort": "field:pid,hitposition",
+      "wordsaroundhit": "1",
       "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "op": "hits",
+      "indexname": "test",
+      "matchinfo": "captures",
+      "api": "4.0"
     },
     "searchTime": "VALUE_REMOVED",
     "countTime": "VALUE_REMOVED",

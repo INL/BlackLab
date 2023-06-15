@@ -207,7 +207,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
     @Override
     public BLSpanQuery inverted() {
-        return new SpanQueryNoHits(queryInfo, luceneField); // Just return our clause, dropping the NOT operation
+        return new SpanQueryNoHits(queryInfo, luceneField);
     }
 
     @Override

@@ -36,6 +36,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -341,7 +342,7 @@ public class ResponseStreamer {
                 String docPid = result.getDocIdToPid().get(hit.doc());
                 Map<String, MatchInfo> capturedGroups = null;
                 if (hits.hasMatchInfo()) {
-                    capturedGroups = hits.getMatchInfoMap(hit, params.omitEmptyCapture());
+                    capturedGroups = hits.getMatchInfoMap(hit, params.getOmitEmptyCaptures());
                     if (capturedGroups == null && logger != null)
                         logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
@@ -380,25 +381,51 @@ public class ResponseStreamer {
             }
             ds.endList().endEntry();
         }
-        // If any relations were matched, include that info as well
-        Set<Map.Entry<String, MatchInfo>> relationInfos = filterMatchInfo(matchInfo, MatchInfo.Type.RELATION);
-        if (!relationInfos.isEmpty()) {
-            ds.startEntry("relations").startList();
-            for (Map.Entry<String, MatchInfo> e: relationInfos) {
-                RelationInfo relationInfo = (RelationInfo)e.getValue();
-                ds.startItem("relation").startMap();
-                {
-                    ds.entry("type", relationInfo.getFullRelationType());
-                    if (!relationInfo.isRoot()) {
-                        ds.entry("sourceStart", relationInfo.getSourceStart());
-                        ds.entry("sourceEnd", relationInfo.getSourceEnd());
+        String returnMatchInfo = params.getReturnMatchInfo();
+        if (returnMatchInfo.isEmpty() || returnMatchInfo.equalsIgnoreCase("all")) {
+            // If any relations were matched, include that info as well
+            Set<Map.Entry<String, MatchInfo>> relationInfos = filterMatchInfo(matchInfo, MatchInfo.Type.RELATION);
+            if (!relationInfos.isEmpty()) {
+                ds.startEntry("relations").startList();
+                for (Map.Entry<String, MatchInfo> e: relationInfos) {
+                    RelationInfo relationInfo = (RelationInfo) e.getValue();
+                    ds.startItem("relation").startMap();
+                    {
+                        ds.entry("type", relationInfo.getFullRelationType());
+                        if (!relationInfo.isRoot()) {
+                            ds.entry("sourceStart", relationInfo.getSourceStart());
+                            ds.entry("sourceEnd", relationInfo.getSourceEnd());
+                        }
+                        ds.entry("targetStart", relationInfo.getTargetStart());
+                        ds.entry("targetEnd", relationInfo.getTargetEnd());
                     }
-                    ds.entry("targetStart", relationInfo.getTargetStart());
-                    ds.entry("targetEnd", relationInfo.getTargetEnd());
+                    ds.endMap().endItem();
                 }
-                ds.endMap().endItem();
+                ds.endList().endEntry();
             }
-            ds.endList().endEntry();
+            // Again for inline tags
+            Set<Map.Entry<String, MatchInfo>> inlineTagInfo = filterMatchInfo(matchInfo, MatchInfo.Type.INLINE_TAG);
+            if (!inlineTagInfo.isEmpty()) {
+                ds.startEntry("inlineTags").startList();
+                for (Map.Entry<String, MatchInfo> e: inlineTagInfo) {
+                    RelationInfo relationInfo = (RelationInfo) e.getValue();
+                    ds.startItem("inlineTag").startMap();
+                    {
+                        String fullRelationType = relationInfo.getFullRelationType();
+                        String tagName = RelationUtil.classAndType(fullRelationType)[1];
+                        ds.entry("name", tagName);
+                        ds.startEntry("attributes").startMap();
+                        for (Map.Entry<String, String> attr: relationInfo.getAttributes().entrySet()) {
+                            ds.entry(attr.getKey(), attr.getValue());
+                        }
+                        ds.endMap().endEntry();
+                        ds.entry("start", relationInfo.getSourceStart());
+                        ds.entry("end", relationInfo.getTargetStart());
+                    }
+                    ds.endMap().endItem();
+                }
+                ds.endList().endEntry();
+            }
         }
 
         ContextSize contextSize = params.contextSettings().size();
@@ -683,7 +710,7 @@ public class ResponseStreamer {
         }
         ds.endList().endEntry();
 
-        if (params.includeGroupContents()) {
+        if (params.getIncludeGroupContents()) {
             documentInfos(hitsGrouped.getDocInfos());
         }
         ds.endMap();

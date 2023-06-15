@@ -131,24 +131,27 @@ In addition to finding specific relations and combining them, maybe we want to f
 
 We'll provide a syntax specifically designed to easily query dependency relations (the likely most common use case for now).
 
-For the more generic "building block" functions that these queries will rewrite to internally, see the next 
-section below.
+For the more generic "building block" functions that these queries will rewrite to internally, see the next section below.
 
-The dependency relations syntax could perhaps be toggleable, so it can be disabled if desired. However, if it does not 
-interfere with other CQL queries, we can probably just enable it by default.
+The dependency relations syntax could perhaps be toggleable, so it can be disabled if desired. However, if it does not interfere with other CQL queries, we can probably just enable it by default.
 
 #### Dependency relation operator
 
-The dependency relation operator is a n-ary operator to match one or more dependency relations between a parent and several children. It also allows you to exclude certain relations, i.e. ensure that these don't exist.
+The dependency relation operator is an n-ary operator to match one or more dependency relations between a parent and several children. It also allows you to exclude certain relations, i.e. ensure that these don't exist.
 
-```agsl
+```
 parent 
-   --deprel1--> child1,
-   --deprel2--> child2,
-  !--deprel3--> child3, ...
+   --deprel1--> child1;
+   --deprel2--> child2;
+  !--deprel3--> child3; ...
 ```
 
-This will be equivalent to the following functional query style (where the `deprel#` parameters will automatically be prefixed with the default relation class (`dep::`) if no prefix was given):
+`deprel` is interpreted as a regular expression. If you omit `deprel` from the operator (i.e. `---->`), it will match any relation type. A different way to write this is `--.*-->`. Also allowed for simplicity is `-->`.
+
+Note that the NOT version of the operator is `!--deprel-->`; the `!` here is part of the
+operator symbol just like with `!=`, not a separate operator. Adding a NOT clause means "there exists no relation of this type to this target".
+
+The above operator expression is equivalent to the following functional query style:
 
 ```
 rmatch(parent, 
@@ -157,11 +160,40 @@ rmatch(parent,
   !rel(deprel3, child3), ...)
 ```
 
-If parent is omitted in the operator form, we just will find child relations with the same source. If there is only one child clause, we can use this to find root relations (multiple child clauses don't make sense in this case). Note that root relations don't have a source, so in that case, this expression will return the target.
+Similarly
 
-In addition to `--relationtype-->` to match an exact string, you can also use `--(regex)-->` to match any relation type that matches the given regex.
+```
+parent --deprel1--> child --deprel2--> grandchild
+```
 
-If you want to match all relations (of the default relation class, usually `dep`), use `---->` (equivalent to `--(.*)-->`).
+will be equivalent to
+
+```
+rmatch(parent, 
+    rel(deprel1, child, 
+        rel(deprel2, grandchild)))
+```
+    
+You can find root relations using this unary form of the operator:
+
+```
+^--> child
+```
+
+(you may specify a `deprel` in the operator here as well, although that will generally always be `root` for root relations)
+
+The root relation operator will return the targets of these relations, as root relations have no source.
+
+Examples:
+
+    # Match node with children of certain types)
+    rspan([]* --nmod--> []*;
+              --det--> []*;
+              --advmod--> []*, 'all')
+
+    # Match a series of descendants of certain types
+    # (i.e. a vertical path in the tree)
+    rspan([]* --root--> []* --nmod--> []* --case--> []*, 'all')
 
 ### Generic syntax for relations
 
@@ -179,7 +211,7 @@ Below is a quick reference for these basic "building block" relations functions.
 
 We can find a relation by type and target using:
 
-    rel(reltype = ".*", target = []*, spanMode = 'source')
+    rel(reltype = ".*", target = []*, spanMode = 'source', direction = 'both')
 
 If `reltype` does not contain the substring `::`, it will be prefixed with the default relation class `dep::` (for dependency relations). So `.*` would match all dependency relations and `.*::.*` would match relations of all types. The default relation class could be made configurable, of course.
 
@@ -194,7 +226,11 @@ Note that this returns the _source_ of the relation by default, as we've already
 
 By default `rel()` returns spans that match the _source_ of the relation. So e.g. `rel('nsubj')` will find words that have a subject, and `rel('nsubj', 'target')` will find the subjects themselves, and `rel('nsubj', 'full')` will find spans that include both the source and target.
 
-Note that if you request the source of a root relation, it will return the target instead, as root relations don't have a source. (**NOTE:** should this throw an error instead?)
+`direction` can be set to `both` (default), `root` (only root relations), `forward` or `backward`.
+
+Note that if try to find sources of root relations, no matches will be returned, as root relations don't have 
+a source. OTOH, if you find targets of root relations first, then change the span mode to source, root relations will
+not be thrown out but will return their targets. (**NOTE:** should this throw an error instead?)
 
 **NOTE:** there is currently no way to filter _out_ root relations. Do we need this?
 

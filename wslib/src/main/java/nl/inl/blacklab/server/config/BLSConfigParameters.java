@@ -35,6 +35,9 @@ public class BLSConfigParameters {
     /** If a group of length 0 is captured (same start and end position), should we omit it instead? */
     private boolean omitEmptyCaptures = false;
 
+    /** What type of match info should we return? All (default), or only captures ("captures", legacy behaviour) */
+    private String returnMatchInfo = "all";
+
     /** API compatibility (defaults to the "current" one) */
     private ApiVersion api = ApiVersion.CURRENT;
 
@@ -141,6 +144,15 @@ public class BLSConfigParameters {
     @SuppressWarnings("unused")
     public void setOmitEmptyCaptures(boolean omitEmptyCaptures) {
         this.omitEmptyCaptures = omitEmptyCaptures;
+    }
+
+    public String getReturnMatchInfo() {
+        return returnMatchInfo;
+    }
+
+    @SuppressWarnings("unused")
+    public void setReturnMatchInfo(String returnMatchInfo) {
+        this.returnMatchInfo = returnMatchInfo;
     }
 
     public void setApi(String api) {

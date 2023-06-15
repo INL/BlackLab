@@ -80,7 +80,47 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             public boolean hitsStartPointSorted() {
                 return sorted;
             }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return false;
+            }
+
+            @Override
+            public boolean hitsAllSameLength() {
+                return false;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return 0;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return MAX_UNLIMITED;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return false;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return false;
+            }
         };
+    }
+
+    public RelationInfo.SpanMode getSpanMode() {
+        return spanMode;
+    }
+
+    public BLSpanQuery withSpanMode(RelationInfo.SpanMode mode) {
+        if (this.spanMode == mode)
+            return this;
+        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, clause, direction, mode);
     }
 
     public enum Direction {
@@ -230,8 +270,13 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     @Override
     public String toString(String field) {
-        // TODO: we should really change this to REL but it breaks tests for the integrated index...
-        return "TAGS(" + relationType + ")";
+        String inlineTagsPrefix = RelationUtil.RELATION_CLASS_INLINE_TAG + RelationUtil.RELATION_CLASS_TYPE_SEPARATOR;
+        if (relationType.startsWith(inlineTagsPrefix))
+            return "TAGS(" + relationType + ")";
+        else {
+            // relations query
+            return "REL(" + relationType + ", " + spanMode + (direction != Direction.BOTH_DIRECTIONS ? ", " + direction : "") + ")";
+        }
     }
 
     @Override
@@ -241,7 +286,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         if (o == null || getClass() != o.getClass())
             return false;
         SpanQueryRelations that = (SpanQueryRelations) o;
-        return uniqueId == that.uniqueId && Objects.equals(clause, that.clause) && Objects.equals(
+        return Objects.equals(clause, that.clause) && Objects.equals(
                 relationType, that.relationType) && Objects.equals(baseFieldName, that.baseFieldName)
                 && Objects.equals(relationFieldName, that.relationFieldName) && direction == that.direction
                 && spanMode == that.spanMode;
@@ -249,7 +294,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     @Override
     public int hashCode() {
-        return Objects.hash(clause, relationType, baseFieldName, relationFieldName, direction, spanMode, uniqueId);
+        return Objects.hash(clause, relationType, baseFieldName, relationFieldName, direction, spanMode);
     }
 
     /**

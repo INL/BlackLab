@@ -66,7 +66,7 @@ public class ResultHitGroup {
             properties.add(Pair.of(hp.serialize(), pv.toString()));
         }
 
-        if (params.includeGroupContents()) {
+        if (params.getIncludeGroupContents()) {
             Hits hitsInGroup = group.storedResults();
             ContextSettings contextSettings = params.contextSettings();
             concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(),
@@ -74,7 +74,7 @@ public class ResultHitGroup {
             docIdToPid = WebserviceOperations.collectDocsAndPids(params.blIndex(), hitsInGroup, luceneDocs);
         }
 
-        if (params.includeGroupContents()) {
+        if (params.getIncludeGroupContents()) {
             Hits hitsInGroup = getGroup().storedResults();
             listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup, getConcordanceContext(),
                     getDocIdToPid());

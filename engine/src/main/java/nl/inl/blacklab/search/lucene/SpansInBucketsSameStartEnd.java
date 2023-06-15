@@ -124,7 +124,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
                 source.getMatchInfo(matchInfo);
                 matchInfos.add(matchInfo);
                 RelationInfo relationInfo = source.getRelationInfo();
-                activeRelationPerHit.add(relationInfo == null ? null  : relationInfo.clone());
+                activeRelationPerHit.add(relationInfo == null ? null  : relationInfo.copy());
             }
             currentBucketSize++;
             sourceStart = source.nextStartPosition();

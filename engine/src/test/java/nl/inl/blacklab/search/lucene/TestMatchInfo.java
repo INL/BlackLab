@@ -41,7 +41,7 @@ public class TestMatchInfo {
                 sourceStart = targetStart;
                 sourceEnd = targetEnd;
             }
-            RelationInfo matchInfo = new RelationInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+            RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
 
             // Randomly index at either source or target
             int currentPos = random.nextBoolean() ? sourceStart : targetStart;

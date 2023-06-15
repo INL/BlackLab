@@ -85,6 +85,8 @@ public interface QueryParams {
 
     boolean getOmitEmptyCaptures();
 
+    String getReturnMatchInfo();
+
     Optional<String> getFacetProps();
 
     Optional<String> getGroupProps();

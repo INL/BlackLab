@@ -8,6 +8,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.util.StringUtil;
 
 public class CorpusQueryLanguageParser {
     
@@ -60,6 +61,10 @@ public class CorpusQueryLanguageParser {
         if (!allowSingleQuotes && input.charAt(0) == '\'')
             throw new SingleQuotesException();
         return chopEnds(input);
+    }
+
+    String escapeRegexCharacters(String name) {
+        return StringUtil.escapeRegexCharacters(name);
     }
 
     TextPattern simplePattern(String str) {

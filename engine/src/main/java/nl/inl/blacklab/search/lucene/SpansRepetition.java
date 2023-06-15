@@ -44,7 +44,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
      * If true, startPosition() will still return -1 and the next call to nextStartPosition() will return
      * the hit we've already found.
      */
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
     /**
      * Construct SpansRepetition.
@@ -70,7 +70,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
     @Override
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         return super.nextDoc();
     }
 
@@ -84,7 +84,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         return super.advance(target);
     }
 
@@ -92,7 +92,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
         assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // Does this document have any clause matches?
         matchStartIndex = -1;
-        alreadyAtFirstMatch = false;
+        atFirstInCurrentDoc = false;
         if (in.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
             // Should never happen, because we should be in a document that has matches
             return false;
@@ -102,7 +102,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
         for (int i = 0; i < in.bucketSize(); i++) {
             if (findMatchesFromIndex(i)) {
                 matchStartIndex = i;
-                alreadyAtFirstMatch = true;
+                atFirstInCurrentDoc = true;
                 return true;
             }
         }
@@ -165,10 +165,10 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
             return NO_MORE_POSITIONS;
 
         // Did we already find the first match?
-        if (alreadyAtFirstMatch) {
+        if (atFirstInCurrentDoc) {
             // We're already at the first match in the document, because
             // we needed to check if there were matches at all. Return it now.
-            alreadyAtFirstMatch = false;
+            atFirstInCurrentDoc = false;
             return in.startPosition(matchStartIndex);
         }
 
@@ -206,7 +206,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
      */
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch || matchStartIndex == -1)
+        if (atFirstInCurrentDoc || matchStartIndex == -1)
             return -1; // .nextStartPosition() not called yet
         if (endPositions.isEmpty())
             return NO_MORE_POSITIONS;
@@ -215,7 +215,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
 
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch || matchStartIndex == -1)
+        if (atFirstInCurrentDoc || matchStartIndex == -1)
             return -1; // .nextStartPosition() not called yet
         if (endPositions.isEmpty())
             return NO_MORE_POSITIONS;

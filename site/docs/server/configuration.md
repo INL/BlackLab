@@ -120,25 +120,30 @@ parameters:
         max: 20
 
     #  Default pattern language to use.
-    #  The pattlang GET parameter override this value.
+    #  The pattlang URL parameter override this value.
     patternLanguage: corpusql
 
     #  Default filter language to use.
-    #  The filterlang GET parameter override this value.
+    #  The filterlang URL parameter override this value.
     filterLanguage: luceneql
 
     # By default, should we include the grouped hits in
     # grouped responses? If false, just include group 
     # identity and size. Defaults to false. Can be overridden 
-    # using the "includegroupcontents" parameter.
+    # using the "includegroupcontents" URL parameter.
     writeHitsAndDocsInGroupedHits: false
 
     # If we're capturing part of our matches, should
     # we include empty captures? This can happen when the
     # clause to capture is optional, e.g. A:[]?
     # Defaults to false. Can be overridden using the 
-    # "omitemptycaptures" parameter.
+    # "omitemptycaptures" URL parameter.
     omitEmptyCaptures: false
+
+    # Return match info for captured groups, relations and 
+    # inline tags in the response, or just captures (old behaviour)?
+    # Override using the "matchinfo" URL parameter.
+    returnMatchInfo: all
 
     # What REST API version to attempt compatibility with.
     # Valid values are currently: 3.0, 4.0, current, experimental.

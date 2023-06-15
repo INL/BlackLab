@@ -428,14 +428,14 @@ public class AnnotationWriter {
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(null, false, startPos, startPos, endPos, endPos);
+        RelationInfo matchInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
         String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : RelationUtil.inlineTagFullType(tagName);
         return indexRelation(fullRelationType, startPos, attributes, indexType, matchInfo);
     }
 
     public int indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+        RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
 
         int indexAt;
         // Where should we index relations?

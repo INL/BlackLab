@@ -74,7 +74,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
     private static List<SpansInBuckets> bucketizeSameStartEnd(List<BLSpans> subSpans) {
         List<SpansInBuckets> bucketized = new ArrayList<>();
         for (int i = 0; i < subSpans.size(); i++) {
-            bucketized.add(new SpansInBucketsSameStartEnd(subSpans.get(i)));
+            bucketized.add(new SpansInBucketsSameStartEnd(ensureSorted(subSpans.get(i))));
         }
         return bucketized;
     }
@@ -155,6 +155,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
 
     @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
+        atFirstInCurrentDoc = false;
         assert docID() >= 0 && docID() != NO_MORE_DOCS;
         // at doc with all subSpans
         relationsReturnedAtThisPosition.clear(); // don't return the same combination of relations twice
@@ -270,7 +271,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
         getMatchInfo(matchInfo);
         List<RelationInfo> ri = new ArrayList<>();
         for (MatchInfo mi : matchInfo) {
-            if (mi.getType() == MatchInfo.Type.RELATION) {
+            if (mi != null && mi.getType() == MatchInfo.Type.RELATION) {
                 ri.add((RelationInfo)mi);
             }
         }

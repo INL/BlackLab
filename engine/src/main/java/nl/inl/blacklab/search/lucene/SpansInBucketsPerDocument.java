@@ -29,9 +29,11 @@ class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
 
     @Override
     protected void gatherHits() throws IOException {
+        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
         do {
             addHitFromSource();
         } while (source.nextStartPosition() != Spans.NO_MORE_POSITIONS);
+        assert source.startPosition() == Spans.NO_MORE_POSITIONS;
     }
 
 }

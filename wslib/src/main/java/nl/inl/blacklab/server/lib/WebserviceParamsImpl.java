@@ -180,13 +180,18 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public boolean includeGroupContents() {
-        return getIncludeGroupContents() || configParam().isWriteHitsAndDocsInGroupedHits();
+    public boolean getIncludeGroupContents() {
+        return params.getIncludeGroupContents() || configParam().isWriteHitsAndDocsInGroupedHits();
     }
 
     @Override
-    public boolean omitEmptyCapture() {
-        return getOmitEmptyCaptures() || configParam().isOmitEmptyCaptures();
+    public boolean getOmitEmptyCaptures() {
+        return params.getOmitEmptyCaptures() || configParam().isOmitEmptyCaptures();
+    }
+
+    @Override
+    public String getReturnMatchInfo() {
+        return params.getReturnMatchInfo().isEmpty() ? configParam().getReturnMatchInfo() : params.getReturnMatchInfo();
     }
 
     private DocGroupSettings docGroupSettings() throws BlsException {
@@ -610,16 +615,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public ConcordanceType getConcordanceType() {
         return params.getConcordanceType();
-    }
-
-    @Override
-    public boolean getIncludeGroupContents() {
-        return params.getIncludeGroupContents();
-    }
-
-    @Override
-    public boolean getOmitEmptyCaptures() {
-        return params.getOmitEmptyCaptures();
     }
 
     @Override

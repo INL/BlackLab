@@ -57,6 +57,6 @@ public class TextPatternAnyToken extends TextPattern {
 
     @Override
     public String toString() {
-        return "ANYTOKEN(" + min + ", " + max + ")";
+        return "ANYTOKEN(" + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 }

@@ -14,6 +14,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class XFDebugForwardIndexMatching implements ExtensionFunctionClass {
 
+    /** Resolve second clause using forward index and the first clause using regular reverse index */
     private static BLSpanQuery _FI1(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         BLSpanQuery a = (BLSpanQuery) args.get(0);
         BLSpanQuery b = (BLSpanQuery) args.get(1);
@@ -23,6 +24,7 @@ public class XFDebugForwardIndexMatching implements ExtensionFunctionClass {
                 fiAccessor);
     }
 
+    /** Resolve first clause using forward index and the second clause using regular reverse index */
     private static BLSpanQuery _FI2(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         BLSpanQuery a = (BLSpanQuery) args.get(0);
         BLSpanQuery b = (BLSpanQuery) args.get(1);
@@ -33,10 +35,7 @@ public class XFDebugForwardIndexMatching implements ExtensionFunctionClass {
     }
 
     public void register() {
-        /** Resolve second clause using forward index and the first clause using regular reverse index */
         QueryExtensions.register("_FI1", XFDebugForwardIndexMatching::_FI1, QueryExtensions.ARGS_QQ);
-
-        /** Resolve first clause using forward index and the second clause using regular reverse index */
         QueryExtensions.register("_FI2", XFDebugForwardIndexMatching::_FI2, QueryExtensions.ARGS_QQ);
     }
 

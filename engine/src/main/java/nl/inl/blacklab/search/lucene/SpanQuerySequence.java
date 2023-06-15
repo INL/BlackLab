@@ -345,6 +345,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         boolean anyRewritten = performQueryOptimizations(index, cl, canDoNfaMatching);
 
         // Optimize each clause, and flatten again if necessary
+        // NOTE: this seems redundant because we've already flattened, and optimize() is only implemented by
+        // SpanQuerySequence - could we get rid of optimize() and just do all this in rewrite(), before rewriting each
+        // clause?
         anyRewritten |= optimizeClauses(cl, reader);
 
         if (!anyRewritten) {

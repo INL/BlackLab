@@ -33,6 +33,7 @@ function expectHitsUnchanged(testName, params) {
                 sort: "field:pid,hitposition", // fully defined sort
                 wordsaroundhit: 1,
                 waitfortotal: "true",
+                matchinfo: "captures", // only capture groups, not inline tags/relations (not supported by classic index)
                 //usecache: "no", // causes the search to be executed multiple times (hits, count, etc.)
                 ...params
             })

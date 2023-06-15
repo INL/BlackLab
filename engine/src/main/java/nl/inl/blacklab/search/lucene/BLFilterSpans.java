@@ -74,7 +74,9 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         assert docID() != NO_MORE_DOCS;
         atFirstInCurrentDoc = false;
         startPos = -1;
-        return super.nextDoc();
+        int doc = super.nextDoc();
+        assert doc >= 0;
+        return doc;
     }
 
     @Override
@@ -82,7 +84,9 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         assert target >= 0 && target > docID();
         atFirstInCurrentDoc = false;
         startPos = -1;
-        return super.advance(target);
+        int doc = super.advance(target);
+        assert doc >= 0;
+        return doc;
     }
 
     @Override
@@ -90,7 +94,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         assert startPosition() != NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
-            assert startPos != -1 && startPos != NO_MORE_POSITIONS;
+            assert startPos >= 0 && startPos != NO_MORE_POSITIONS;
             return startPos;
         }
         return goToNextMatch(true);
@@ -160,7 +164,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         assert startPosition() == -1;
         assert in.startPosition() == -1;
         startPos = in.nextStartPosition();
-        assert startPos != NO_MORE_POSITIONS && startPos != -1;
+        assert startPos != NO_MORE_POSITIONS && startPos >= 0;
         for (;;) {
             switch(accept(in)) {
             case YES:

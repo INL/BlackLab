@@ -23,15 +23,6 @@ public class XFRelations implements ExtensionFunctionClass {
     /** Relation type to prepend if argument does not contain substring "::" */
     private static final String DEFAULT_RELATION_TYPE = "dep"; // could be made configurable if needed
 
-    /** Previous version of rel that takes a relation type ans spanMode, default "target" */
-    private static BLSpanQuery relt(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
-        String relationType = optPrependDefaultType((String) args.get(0));
-        RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.fromCode((String)args.get(1));
-        String field = context.withRelationAnnotation().luceneField();
-        return new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String> )null,
-                SpanQueryRelations.Direction.BOTH_DIRECTIONS, spanMode);
-    }
-
     /**
      * Find relations matching type and target.
      *
@@ -48,16 +39,20 @@ public class XFRelations implements ExtensionFunctionClass {
         if (isAnyNGram(matchTarget))
             matchTarget = null;
         RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.fromCode((String)args.get(2));
+        SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.fromCode((String)args.get(3));
         String field = context.withRelationAnnotation().luceneField();
         if (matchTarget != null) {
             // Ensure relation matches given target
             BLSpanQuery rel = new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String>) null,
-                    SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.TARGET);
-            rel = new SpanQueryRelationSpanAdjust(new SpanQueryAnd(List.of(rel, matchTarget)), spanMode);
+                    direction, RelationInfo.SpanMode.TARGET);
+            rel = new SpanQueryAnd(List.of(rel, matchTarget));
+            ((SpanQueryAnd)rel).setRequireUniqueRelations(true);
+            if (spanMode != RelationInfo.SpanMode.TARGET)
+                rel = new SpanQueryRelationSpanAdjust(rel, spanMode);
             return rel;
         } else {
             return new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String>) null,
-                    SpanQueryRelations.Direction.BOTH_DIRECTIONS, spanMode);
+                    direction, spanMode);
         }
     }
 
@@ -75,16 +70,36 @@ public class XFRelations implements ExtensionFunctionClass {
 
     private static String optPrependDefaultType(String relationType) {
         if (!relationType.contains("::"))
-            relationType = DEFAULT_RELATION_TYPE + "::" + relationType;
+            relationType = DEFAULT_RELATION_TYPE + "::(" + relationType + ")";
         return relationType;
     }
 
+    /**
+     * Change span mode of a query with an active relation.
+     *
+     * That is, change the spans the query produces to the source or target
+     * spans of the active relation, or the full relation span, or to a span
+     * covering all matched relations.
+     *
+     * @param queryInfo query info
+     * @param context query execution context
+     * @param args function arguments: query, spanMode
+     * @return span-adjusted query
+     */
     private static BLSpanQuery rspan(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         BLSpanQuery relations = (BLSpanQuery) args.get(0);
         RelationInfo.SpanMode mode = RelationInfo.SpanMode.fromCode((String)args.get(1));
         return new SpanQueryRelationSpanAdjust(relations, mode);
     }
 
+    /**
+     * Perform an AND operation with the additional requirement that clauses match unique relations.
+     *
+     * @param queryInfo query info
+     * @param context query execution context
+     * @param args function arguments: clauses
+     * @return AND query with unique relations requirement
+     */
     private static BLSpanQuery rmatch(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         if (args.isEmpty())
             throw new IllegalArgumentException("rmatch() requires at least one argument");
@@ -109,10 +124,8 @@ public class XFRelations implements ExtensionFunctionClass {
     }
 
     public void register() {
-        /** Resolve second clause using forward index and the first clause using regular reverse index */
-        QueryExtensions.register("relt", XFRelations::relt, QueryExtensions.ARGS_SS, List.of(".*", "target"));
-        QueryExtensions.register("rel", XFRelations::rel, QueryExtensions.ARGS_SQS, Arrays.asList(".*",
-                QueryExtensions.VALUE_QUERY_ANY_NGRAM_, "source"));
+        QueryExtensions.register("rel", XFRelations::rel, QueryExtensions.ARGS_SQSS, Arrays.asList(".*",
+                QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "both"));
         QueryExtensions.register("rmatch", XFRelations::rmatch, QueryExtensions.ARGS_VAR_Q,
                 Collections.emptyList());
         QueryExtensions.register("rspan", XFRelations::rspan, QueryExtensions.ARGS_QS, Arrays.asList(null, "full"));

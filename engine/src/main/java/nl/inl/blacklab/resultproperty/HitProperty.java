@@ -94,8 +94,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
             result = HitPropertyContextWords.deserializeProp(index, field, info);
             break;
         case "capture":
-            String groupName = parts.length > 2 ? parts[2] : ""; // if empty, uses first capture
-            result = HitPropertyCaptureGroup.deserializeProp(index, field, info, groupName);
+            result = HitPropertyCaptureGroup.deserializeProp(index, field, info);
             break;
         case "hitposition":
             result = HitPropertyHitPosition.deserializeProp();

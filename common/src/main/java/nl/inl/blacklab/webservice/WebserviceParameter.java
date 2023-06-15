@@ -45,6 +45,7 @@ public enum WebserviceParameter {
     WORDS_AROUND_HIT("wordsaroundhit"), // KWIC / concordances
     CREATE_CONCORDANCES_FROM("usecontent"), // create concs from forward index or original content (content store)?
     OMIT_EMPTY_CAPTURES("omitemptycaptures"),  // omit capture groups of length 0? (false)
+    RETURN_MATCH_INFO("matchinfo"), // what match info to include (captures/all, all is default)
 
     // Doc snippets
     HIT_START("hitstart"),

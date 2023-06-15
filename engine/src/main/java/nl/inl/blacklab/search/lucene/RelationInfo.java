@@ -2,7 +2,10 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.store.DataOutput;
@@ -18,7 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  * Note that this is not named MatchInfoRelation, as it is
  * used while indexing as well as matching.
  */
-public class RelationInfo implements MatchInfo, Cloneable {
+public class RelationInfo implements MatchInfo {
 
     public static void serializeInlineTag(int start, int end, DataOutput dataOutput) throws IOException {
         int relativePositionOfLastToken = end - start;
@@ -126,15 +129,23 @@ public class RelationInfo implements MatchInfo, Cloneable {
     /** Where does the target of the relation end? */
     private int targetEnd;
 
-    /** Our relation type, or null if not applicable or not set. */
+    /** Our relation type, or null if not set (set during search by SpansRelations) */
     private String fullRelationType;
 
+    /** Tag attributes (if any), or empty if not set (set during search by SpansRelations) */
+    private Map<String, String> attributes;
+
     public RelationInfo() {
-        this(null, false, -1, -1, -1, -1);
+        this(false, -1, -1, -1, -1, null, null);
     }
 
-    public RelationInfo(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
+    public RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
+        this(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, null, null);
+    }
+
+    public RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, String fullRelationType, Map<String, String> attributes) {
         this.fullRelationType = fullRelationType;
+        this.attributes = attributes == null ? Collections.emptyMap() : attributes;
         this.onlyHasTarget = onlyHasTarget;
         if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd)) {
             throw new IllegalArgumentException("By convention, root relations should have a 'fake source' that coincides with their target " +
@@ -259,7 +270,7 @@ public class RelationInfo implements MatchInfo, Cloneable {
     }
 
     public RelationInfo copy() {
-        return new RelationInfo(fullRelationType, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, attributes);
     }
 
     public boolean isRoot() {
@@ -348,10 +359,15 @@ public class RelationInfo implements MatchInfo, Cloneable {
     /**
      * Pass the indexed term for this relation, so we can decode it.
      *
+     * We decode the relation class and type and any attributes from the indexed term.
+     * Note that if multiple values were indexed for a single attribute, only the first
+     * value is extracted.
+     *
      * @param term indexed term
      */
-    public void setRelationTerm(String term) {
+    public void setIndexedTerm(String term) {
         this.fullRelationType = RelationUtil.fullTypeFromIndexedTerm(term);
+        this.attributes = RelationUtil.attributesFromIndexedTerm(term);
     }
 
     /**
@@ -363,19 +379,27 @@ public class RelationInfo implements MatchInfo, Cloneable {
         return fullRelationType;
     }
 
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
     @Override
     public String toString() {
         // Inline tag
         if (isTag()) {
             String tagName = RelationUtil.classAndType(fullRelationType)[1];
-            return "tag(<" + tagName + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )";
+            String attr = attributes == null || attributes.isEmpty() ? "" :
+                    " " + attributes.entrySet().stream()
+                            .map(e -> e.getKey() + "=\"" + e.getValue() + "\"")
+                            .collect(Collectors.joining(" "));
+            return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )";
         }
 
         // Relation
         int targetLen = targetEnd - targetStart;
         String target = targetStart + (targetLen != 1 ? " (len=" + targetEnd + ")" : "");
         if (isRoot())
-            return "rel(<root> --" + fullRelationType + "--> " + target + ")";
+            return "rel( ^--" + fullRelationType + "--> " + target + ")";
         int sourceLen = sourceEnd - sourceStart;
         String source = sourceStart + (sourceLen != 1 ? " (len=" + sourceEnd + ")" : "");
         return "rel(" + source + " --" + fullRelationType + "--> " + target + ")";
@@ -423,20 +447,11 @@ public class RelationInfo implements MatchInfo, Cloneable {
                 && sourceStart == relationInfo.sourceStart
                 && sourceEnd == relationInfo.sourceEnd && targetStart == relationInfo.targetStart
                 && targetEnd == relationInfo.targetEnd && Objects.equals(fullRelationType,
-                relationInfo.fullRelationType);
+                relationInfo.fullRelationType) && attributes.equals(relationInfo.attributes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType);
-    }
-
-    @Override
-    public RelationInfo clone() {
-        try {
-            return (RelationInfo)super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
+        return Objects.hash(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, attributes);
     }
 }

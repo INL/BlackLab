@@ -17,7 +17,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
@@ -27,12 +29,14 @@ import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.testutil.TestIndex;
 
 @RunWith(Parameterized.class)
@@ -231,6 +235,22 @@ public class TestSearches {
         List<String> expected = List.of(
                 "fox [jumps] over");
         Assert.assertEquals(expected, testIndex.findConc("[word = 'jumps' & lemma = 'jump']"));
+    }
+
+    @Test
+    public void testAndAnyToken() {
+        List<String> expected = List.of("fox [jumps] over");
+
+        // AND with any token repetition is optimized; check that this works properly
+        Assert.assertEquals(expected, testIndex.findConc("[] & 'jumps'"));
+        Assert.assertEquals(expected, testIndex.findConc("[]* & 'jumps'"));
+        Assert.assertEquals(expected, testIndex.findConc("[]+ & 'jumps'"));
+        Assert.assertEquals(expected, testIndex.findConc("[]+ & [] & 'jumps'"));
+        Assert.assertEquals(expected, testIndex.findConc("[]{1,2} & 'jumps'"));
+
+        // Contradictary clauses should not return any results
+        Assert.assertEquals(Collections.emptyList(), testIndex.findConc("[]{2,2} & 'jumps'"));
+        Assert.assertEquals(Collections.emptyList(), testIndex.findConc("[] & ('jumps' 'over')"));
     }
 
     @Test
@@ -567,6 +587,43 @@ public class TestSearches {
         }
         Assert.assertEquals(Set.of("0", "1", "2", "3"), pids);
         Assert.assertEquals(Set.of("Pangram", "Learning words", "Star Wars", "Bastardized Shakespeare"), titles);
+    }
+
+    /** Test that equals and hashCode works for TextPattern and BLSpanQuery (essential for caching!) */
+    @Test
+    public void testTextPatternAndQueryEqualsHashcode() throws InvalidQuery {
+        List<String> queries = Arrays.asList(
+            // Simple sequence query
+            "\"The\" [lemma=\"quick\"]",
+
+            // Any token, repetitions
+            "\"brown\"+ ([]* \"fox\")",
+
+            // Within/containing
+            "\"dog\" within <s/>",
+            "<s/> containing [lemma=\"cat\"]",
+
+            // Global contraints
+            "A:[] B:[] :: A.lemma = B.lemma",
+            "A:[] B:[] :: start(A) < start(B)",
+
+            // Relations
+            "[]* --nmod--> []*",
+            "A:[]* --nmod--> B:[]*",
+            "A:[]* --nmod--> B:[]* :: A.word > B.word"
+        );
+        for (String query: queries) {
+            TextPattern p1 = CorpusQueryLanguageParser.parse(query);
+            TextPattern p2 = CorpusQueryLanguageParser.parse(query);
+            Assert.assertEquals(p1, p2);
+            Assert.assertEquals(p1.hashCode(), p2.hashCode());
+            QueryExecutionContext context = QueryExecutionContext.simple(testIndex.index(),
+                    testIndex.index().mainAnnotatedField());
+            BLSpanQuery q1 = p1.translate(context);
+            BLSpanQuery q2 = p2.translate(context);
+            Assert.assertEquals(q1, q2);
+            Assert.assertEquals(q1.hashCode(), q2.hashCode());
+        }
     }
 
 }
