@@ -41,11 +41,9 @@ public interface WebserviceParams extends QueryParams {
     Query filterQuery() throws BlsException;
 
     /**
-     * Set the list of accepted doc ids.
-     * <p>
-     * Instead of using a filter query, this list will be used
+     * Set the document filter query.
      *
-     * @param acceptedDocs global ids of documents to keep (unsorted)
+     * @param query document filter query
      */
     void setFilterQuery(Query query);
 

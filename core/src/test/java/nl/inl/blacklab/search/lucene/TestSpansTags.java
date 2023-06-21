@@ -50,7 +50,7 @@ public class TestSpansTags {
 
     /**
      * Test the case where there's an empty tag between two tokens.
-     *
+     * <p>
      * E.g.: <code>quick &lt;b&gt;&lt;/b&gt; brown</code>
      *
      */

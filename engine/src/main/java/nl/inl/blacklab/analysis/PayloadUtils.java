@@ -175,9 +175,6 @@ public class PayloadUtils {
      * The payload gives the token position of the end tag.
      *
      * @param endPosition end position (exclusive), or the first token after the span
-     * @param isPrimaryValue if true, resulting payload will indicate if that this is a primary value. Pass false if
-     *                       this is not a primary value, or if primary value status should not be recorded in the
-     *                       payload (i.e. because there is no forward index)
      * @return payload to store
      */
     public static BytesRef tagEndPositionPayload(int endPosition) {

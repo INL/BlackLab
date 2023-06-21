@@ -76,7 +76,6 @@ public interface UserRequest {
     /**
      * Create parameters object from the request.
      *
-     * @param indexName index name
      * @param index index we're querying
      * @param operation operation to perform (if not passed as a parameter)
      * @return parameters object

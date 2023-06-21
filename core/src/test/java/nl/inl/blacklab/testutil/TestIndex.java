@@ -48,10 +48,6 @@ public class TestIndex {
     /** External, pre-indexed (to test that we don't accidentally break file compatibility). */
     private static TestIndex testIndexExternalPre;
 
-    public static TestIndex get() {
-        return get(null);
-    }
-
     public static TestIndex get(IndexType indexType) {
         return new TestIndex(false, indexType);
     }
@@ -253,14 +249,14 @@ public class TestIndex {
 
     /**
      * For a given document number (input docs), return the Lucene doc id.
-     *
+     * <p>
      * May not be the same because of the document containing index metadata.
      *
      * @param docNumber document number.
      * @return Lucene doc id.
      */
     public int getDocIdForDocNumber(int docNumber) {
-        DocResults r = index.queryDocuments(new TermQuery(new Term("pid", "" + docNumber)));
+        DocResults r = index.queryDocuments(new TermQuery(new Term("pid", String.valueOf(docNumber))));
         return r.get(0).docId();
     }
 

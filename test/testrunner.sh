@@ -14,7 +14,7 @@ set -o errexit  # Exit on error (set -e)
 SERVICE_NAME="${1:-test}"
 
 # Go to the test dir
-cd $( dirname -- "$0"; )/
+cd "$( dirname -- "$0"; )"/
 
 # Check how to call Compose
 COMPOSE=docker-compose

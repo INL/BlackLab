@@ -302,8 +302,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * Store part of a piece of large content. This may be called several times to
      * store chunks of content, but MUST be *finished* by calling the "normal"
      * store() method. You may call store() with the empty string if you wish.
-     * If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
-     * as it will prevent having to make a temporary string copy of your data just for the store procedure.
      *
      * @param content the content to store
      */
@@ -321,9 +319,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      *
      * Parts of the document may already have been stored before. This is the final part and will
      * assign and return the document's content id.
-     *
-     * NOTE: If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
-     * as it will prevent having to make a temporary string copy of your data just for the store procedure.
      *
      * @param content the content to store
      * @return the id assigned to the content

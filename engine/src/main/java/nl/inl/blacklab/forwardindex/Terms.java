@@ -137,7 +137,7 @@ public interface Terms {
      * Convert a single seggment-specific term id to the corresponding global term id.
      *
      * @param ord segment these snippets came from
-     * @param segmentId segment-specific term id
+     * @param segmentTermId segment-specific term id
      * @return segments global term id
      */
     int segmentIdToGlobalId(int ord, int segmentTermId);

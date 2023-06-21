@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.results;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
@@ -16,7 +15,7 @@ import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestSearchBehavior {
-    public TestIndex testIndex = TestIndex.get(IndexType.INTEGRATED);
+    public final TestIndex testIndex = TestIndex.get(IndexType.INTEGRATED);
 
     @Test
     public void testParallelSearchInterrupt() {
@@ -39,9 +38,9 @@ public class TestSearchBehavior {
                 } catch (InterruptedException e) {
                     waitForSpansReaderToBeInterrupted.countDown(); // we got it! signal main thread again.
                 }
-            };
+            }
 
-            void initialize() {};
+            void initialize() {}
         });
 
         // Set up the interrupt.
@@ -82,8 +81,8 @@ public class TestSearchBehavior {
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
         h.spansReaders.clear();
         h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null, null) {
-            public synchronized void run() { throw exceptionToThrow; };
-            void initialize() {};
+            public synchronized void run() { throw exceptionToThrow; }
+            void initialize() {}
         });
 
         Throwable thrownException = null;

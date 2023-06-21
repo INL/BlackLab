@@ -107,9 +107,8 @@ public class XslGenerator {
      * Generate an xslt document that can transform documents into a basic html view
      * with some minor formatting for highlights.
      *
-     * @param ds     output stream
      * @param config format config
-     * @return http code
+     * @return XSLT document
      * @throws NotFound if the config does not pertain to an XML-based format (tsv,
      *                  plaintext, etc)
      */

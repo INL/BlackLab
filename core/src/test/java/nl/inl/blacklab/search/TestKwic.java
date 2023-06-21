@@ -7,9 +7,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.mocks.MockAnnotatedField;
 import nl.inl.blacklab.mocks.MockAnnotation;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -18,9 +16,7 @@ public class TestKwic {
     static final List<String> PROPS = Arrays.asList(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME, "lemma", "pos", "word");
     
     static final List<Annotation> ANNOTS = PROPS.stream().map(MockAnnotation::new).collect(Collectors.toList());
-    
-    static final AnnotatedField FIELD = new MockAnnotatedField("contents", ANNOTS);
-    
+
     static final List<String> TOKENS = Arrays.asList(
             " ", "de", "lw", "De",
             " ", "snel", "bn", "snelle",
