@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -64,6 +65,8 @@ public class ResultDocSnippet {
 
         // Make sure snippet plus surrounding context don't exceed configured allowable snippet size
         int maxContextSize = params.getSearchManager().config().getParameters().getContextSize().getMaxInt();
+        if (maxContextSize >= Constants.JAVA_MAX_ARRAY_SIZE)
+            maxContextSize = (Constants.JAVA_MAX_ARRAY_SIZE - 100) / 2; // safe maximum
         int maxSnippetSize = maxContextSize * 2 + 10; // 10 seems a reasonable maximum hit length
         int hitSize = end - start;
         if (wordsAroundHit.isNone() && hitSize > maxContextSize * 2)

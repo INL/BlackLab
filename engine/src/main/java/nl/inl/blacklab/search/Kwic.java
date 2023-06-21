@@ -37,6 +37,8 @@ public class Kwic {
         fragment = new DocContentsFromForwardIndex(annotations, tokens);
         this.hitStart = matchStart;
         this.hitEnd = matchEnd;
+        assert hitStart * fragment.annotations.size() <= tokens.size();
+        assert hitEnd * fragment.annotations.size() <= tokens.size();
     }
 
     /**

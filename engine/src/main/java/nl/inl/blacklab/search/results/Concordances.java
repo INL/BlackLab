@@ -35,7 +35,7 @@ public class Concordances {
 
     public Concordances(Hits hits, ConcordanceType type, ContextSize contextSize) {
         if (contextSize.before() < 0 || contextSize.after() < 0)
-            throw new IllegalArgumentException("contextSize cannot be negative");
+            throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
         if (type == ConcordanceType.FORWARD_INDEX) {
             kwics = new Kwics(hits, contextSize);
         } else {

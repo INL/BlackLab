@@ -164,8 +164,7 @@ class SegmentForwardIndex implements AutoCloseable {
         private int[] retrievePart(int start, int end) {
             if (start == -1)
                 start = 0;
-            if (end == -1 || end
-                    > docLength) // Can happen while making KWICs because we don't know the doc length until here
+            if (end == -1 || end > docLength) // Can happen while making KWICs because we don't know the doc length until here
                 end = docLength;
             ForwardIndexAbstract.validateSnippetParameters(docLength, start, end);
 
