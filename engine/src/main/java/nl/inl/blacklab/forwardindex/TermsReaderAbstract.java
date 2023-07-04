@@ -16,6 +16,12 @@ import nl.inl.util.BlockTimer;
 
 public abstract class TermsReaderAbstract implements Terms {
 
+    /** Will automatically be set to true if assertions are enabled (-ea). */
+    protected static boolean DEBUGGING = false;
+
+    /** If assertions are enabled, should we validate term sorts initially? Slows down index opening. */
+    protected static final boolean DEBUG_VALIDATE_SORT = false;
+
     /** Log the timing of different initialization tasks? */
     protected static final boolean LOG_TIMINGS = false;
 
@@ -23,7 +29,7 @@ public abstract class TermsReaderAbstract implements Terms {
     private int numberOfTerms;
 
     /**
-     * Collator to use for string comparisons
+     * Collator to use for sensitive string comparisons
      */
     protected final Collator collator;
 
@@ -62,6 +68,7 @@ public abstract class TermsReaderAbstract implements Terms {
     private long[] termId2CharDataOffset;
 
     public TermsReaderAbstract(Collators collators) {
+        assert DEBUGGING = true;
         this.collator = collators.get(MatchSensitivity.SENSITIVE);
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
     }
@@ -94,6 +101,37 @@ public abstract class TermsReaderAbstract implements Terms {
             fillTermDataGroups(terms.length, termId2SensitivePosition, termId2InsensitivePosition,
                     insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
         }
+
+        if (DEBUGGING && DEBUG_VALIDATE_SORT) {
+            // Verify sorts
+            String prev = null;
+            for (int i = 0; i < sensitivePosition2GroupId.length; i++) {
+                int groupId = sensitivePosition2GroupId[i];
+                assert groupId >= 0;
+                assert groupId2TermIds[groupId] == 1;
+                int termId = groupId2TermIds[groupId + 1];
+                assert termId >= 0 && termId < terms.length;
+                String term = terms[termId];
+                if (prev != null)
+                    assert collator.compare(prev, term) == -1;
+                prev = term;
+            }
+            prev = null;
+            int prevTermId = -1;
+            for (int i = 0; i < insensitivePosition2GroupId.length; i++) {
+                int groupId = insensitivePosition2GroupId[i];
+                assert groupId >= 0;
+                int termId = groupId2TermIds[groupId + 1];
+                if (prevTermId != -1 && termId != prevTermId) {
+                    String firstTerm = terms[termId];
+                    if (prev != null)
+                        assert collatorInsensitive.compare(prev, firstTerm) <= 0;
+                    prev = firstTerm;
+                }
+                prevTermId = termId;
+            }
+        }
+
         try (BlockTimer ignored = BlockTimer.create(LOG_TIMINGS, name + ": finish > fillTermCharData")) {
             fillTermCharData(terms);
         }
@@ -131,11 +169,12 @@ public abstract class TermsReaderAbstract implements Terms {
         this.sensitivePosition2GroupId = new int[numberOfTerms];
 
         Arrays.fill(this.insensitivePosition2GroupId, -1);
+        Arrays.fill(this.sensitivePosition2GroupId, -1);
 
         // First create all sensitive entries
         int offset = 0;
-        for (int termId = 0; termId < termId2SortPositionSensitive.length; ++termId) {
-            final int positionSensitive = termId2SortPositionSensitive[termId];
+        for (int termId = 0; termId < termId2SensitivePosition.length; ++termId) {
+            final int positionSensitive = termId2SensitivePosition[termId];
 
             this.sensitivePosition2GroupId[positionSensitive] = offset;
             this.groupId2TermIds[offset++] = 1; // sensitive positions are unique (1 per term) - so group is size always 1
@@ -171,7 +210,8 @@ public abstract class TermsReaderAbstract implements Terms {
         }
 
         // fill empty spots using the last good entry
-        // if we don't do this binary searching over this array won't work (as it contains random uninitialized values and if we land on one of them we'd compare wrong)
+        // if we don't do this binary searching over this array won't work (as it contains random uninitialized values
+        // and if we land on one of them we'd compare wrong)
         int last = 0;
         for (int i = 0; i < this.insensitivePosition2GroupId.length; ++i) {
             if (this.insensitivePosition2GroupId[i] != -1)
@@ -308,12 +348,14 @@ public abstract class TermsReaderAbstract implements Terms {
 
         int matchingGroupId = -1;
         while (l <= r) {
+
             final int sortPositionToCheck = l + (r - l) / 2;
             final int groupId = sortPosition2GroupId[sortPositionToCheck];
             final int termIdToCompareTo = this.groupId2TermIds[groupId + 1]; // OPT: < numterms optimization
             final String termToCompareTo = get(termIdToCompareTo);
 
             final int result = coll.compare(term, termToCompareTo);
+
             if (result == 0) {
                 matchingGroupId = groupId;
                 break;

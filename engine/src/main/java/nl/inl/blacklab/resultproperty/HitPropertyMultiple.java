@@ -263,10 +263,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public String serialize() {
-        return getString();
-    }
-
-    private String getString() {
         return PropertySerializeUtil.serializeMultiple(reverse, properties);
     }
 

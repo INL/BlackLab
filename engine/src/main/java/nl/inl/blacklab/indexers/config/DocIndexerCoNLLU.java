@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.text.Normalizer;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -217,9 +218,12 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                     String value;
                     if (annotation.isValuePathInteger()) {
                         int i = annotation.getValuePathInt() - 1;
-                        if (i < record.size())
+                        if (i < record.size()) {
                             value = record.get(i);
-                        else
+                            value = value.replaceAll("\u200b", ""); // remove zero-width space
+                            // normalize unicode (canonical composition, i.e. no separate combining characters
+                            value = Normalizer.normalize(value, Normalizer.Form.NFC);
+                        } else
                             value = "";
                     } else {
                         throw new RuntimeException("valuePath must be a column number");

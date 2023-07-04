@@ -26,9 +26,9 @@ import nl.inl.util.BlockTimer;
  */
 public class TermsIntegrated extends TermsReaderAbstract {
 
-    private static final Comparator<TermInIndex> CMP_TERM_SENSITIVE = (a, b) -> a.ckSensitive.compareTo(b.ckSensitive);
+    private static final Comparator<TermInIndex> CMP_TERM_SENSITIVE = Comparator.comparing(a -> a.ckSensitive);
 
-    private static final Comparator<TermInIndex> CMP_TERM_INSENSITIVE = (a, b) -> a.ckInsensitive.compareTo(b.ckInsensitive);
+    private static final Comparator<TermInIndex> CMP_TERM_INSENSITIVE = Comparator.comparing(a -> a.ckInsensitive);
 
     /** Information about a term in the index, and the sort positions in each segment
      *  it occurs in. We'll use this to speed up comparisons where possible (comparing
@@ -117,6 +117,21 @@ public class TermsIntegrated extends TermsReaderAbstract {
             }
             int[] termId2SensitivePosition = sortedInverted.get(0);
             int[] termId2InsensitivePosition = sortedInverted.get(1);
+            if (DEBUGGING && DEBUG_VALIDATE_SORT) {
+                // Make sure all sort positions are in the arrays
+                boolean[] found = new boolean[termId2SensitivePosition.length];
+                for (int i = 0; i < termId2SensitivePosition.length; i++) {
+                    assert termId2SensitivePosition[i] >= 0;
+                    found[termId2SensitivePosition[i]] = true;
+                }
+                for (int i = 0; i < found.length; i++)
+                    assert found[i];
+                // Insensitive doesn't have all sort positions because some terms are lumped together,
+                // creating gaps, but they still have to be non-negative.
+                for (int i = 0; i < termId2InsensitivePosition.length; i++) {
+                    assert termId2InsensitivePosition[i] >= 0;
+                }
+            }
 
             // Process the values we've determined so far the same way as with the external forward index.
             try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": finishInitialization")) {
@@ -199,6 +214,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
      * @return inverted array
      */
     private int[] invertSortedTermsArray(TermInIndex[] terms, int[] array, Comparator<TermInIndex> cmp) {
+        assert terms.length == array.length;
         int[] result = new int[array.length];
         int prevSortPosition = -1;
         int prevTermId = -1;
@@ -208,11 +224,15 @@ public class TermsIntegrated extends TermsReaderAbstract {
             if (prevTermId >= 0 && cmp.compare(terms[prevTermId], terms[termId]) == 0) {
                 // Keep the same sort position because the terms are the same
                 sortPosition = prevSortPosition;
+                // This should never happen with sensitive sort (all values should be unique)
+                assert cmp == CMP_TERM_INSENSITIVE;
             } else {
                 // Remember the sort position in case the next term is identical
                 prevSortPosition = sortPosition;
             }
+            assert sortPosition >= 0 && sortPosition < terms.length;
             result[termId] = sortPosition;
+            assert termId >= 0 && termId < terms.length;
             prevTermId = termId;
         }
         return result;

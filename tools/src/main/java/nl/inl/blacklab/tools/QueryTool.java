@@ -1043,11 +1043,12 @@ public class QueryTool {
         String langAvail = "CorpusQL, Lucene, ContextQL (EXPERIMENTAL)";
 
         outprintln("Control commands:");
-        outprintln("  sw(itch)                           # Switch languages");
-        outprintln("                                     # (" + langAvail + ")");
+        //outprintln("  sw(itch)                           # Switch languages");
+        //outprintln("                                     # (" + langAvail + ")");
         outprintln("  p(rev) / n(ext) / page <n>         # Page through results");
         outprintln("  sort {match|left|right} [annot]    # Sort query results  (left = left context, etc.)");
         outprintln("  group {match|left|right} [annot]   # Group query results (annot = e.g. 'word', 'lemma', 'pos')");
+        outprintln("  group <groupspec>                  # Group by BLS group spec, e.g. hit:lemma:i or capture:pos:i:A");
         outprintln("  hits / groups / group <n> / colloc # Switch between results modes");
         outprintln("  context <n>                        # Set number of words to show around hits");
         outprintln("  pagesize <n>                       # Set number of hits to show per page");
@@ -1340,8 +1341,7 @@ public class QueryTool {
 
         Timer t = new Timer();
 
-        if (!groupBy.equals("hit") && !groupBy.equals("word") && !groupBy.equals("match") && !groupBy.equals("left")
-                && !groupBy.equals("right")) {
+        if (StringUtils.isEmpty(annotationName) && contentsField.annotation(groupBy) != null) {
             // Assume we want to group by matched text if we don't specify it explicitly.
             annotationName = groupBy;
             groupBy = "match";
@@ -1351,12 +1351,23 @@ public class QueryTool {
         HitProperty crit;
         try {
             Annotation annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
-            if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
+            switch (groupBy) {
+            case "word":
+            case "match":
+            case "hit":
                 crit = new HitPropertyHitText(index, annotation);
-            else if (groupBy.startsWith("left"))
+                break;
+            case "left":
                 crit = new HitPropertyWordLeft(index, annotation);
-            else
+                break;
+            case "right":
                 crit = new HitPropertyWordRight(index, annotation);
+                break;
+            default:
+                // Regular BLS serialized hit property
+                crit = HitProperty.deserialize(hits, groupBy);
+                break;
+            }
         } catch (Exception e) {
             errprintln("Unknown annotation: " + annotationName);
             return;

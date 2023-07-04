@@ -47,14 +47,14 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase2 {
         initForwardIndex();
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() (see above)
+    // Used by HitPropertyContextBase2.deserializeProp() (see above)
     @SuppressWarnings("unused")
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         this(index, annotation, sensitivity, "");
     }
 
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName) {
-        super("hit text", "hit", index, annotation, sensitivity);
+        super("captured group", "capture", index, annotation, sensitivity);
         this.groupName = groupName;
         initForwardIndex();
     }

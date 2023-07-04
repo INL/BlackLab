@@ -162,6 +162,13 @@ If you don't configure these, BlackLab will pick default values:
 * all other annotations get `insensitive`
 
 
+## A note about Unicode normalization
+
+Unicode normalization refers to the process of converting different ways of encoding the same character to a single, canonical form. For example, the character `é` can be encoded as a single character `é` (U+00E9), or as a combination of `e` (U+0065) and `´` (U+00B4).
+
+As a rule, BlackLab does not do any normalization for you; it is up to you to make sure your input data is normalized in the same way, otherwise issues may arise, especially with sorting or grouping.
+
+
 ## Multiple values at one position
 
 Standoff annotations (see below) provide a way to index additional values at the same token position. But it is also possible to just index several values for any regular annotation, such as multiple lemmatizations or multiple possible part of speech tags.

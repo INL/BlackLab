@@ -29,7 +29,8 @@ public class Collators {
         super();
         this.version = version;
         sensitive = (Collator) base.clone();
-        sensitive.setStrength(Collator.TERTIARY);
+        sensitive.setStrength(Collator.TERTIARY); // NOTE: TERTIARY considers differently-normalized characters to be,
+             // identical which can cause problems if the input data is not consistently normalized the same way.
         insensitive = desensitize((RuleBasedCollator) base.clone(), version);
     }
 
