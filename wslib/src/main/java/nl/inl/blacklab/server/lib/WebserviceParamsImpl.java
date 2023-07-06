@@ -21,11 +21,14 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
 import nl.inl.blacklab.searches.SearchDocs;
@@ -134,7 +137,20 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (pattern == null) {
             pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData());
         }
+        String tagName = getContext().inlineTagName();
+        if (tagName != null) {
+            if (!isWithinTag(tagName)) {
+                // add "within <TAGNAME/>" to the pattern, so we can produce the requested context later
+                pattern = new TextPatternPositionFilter(pattern,
+                        new TextPatternTags(tagName), SpanQueryPositionFilter.Operation.WITHIN);
+            }
+        }
         return pattern == null ? Optional.empty() : Optional.of(pattern);
+    }
+
+    private boolean isWithinTag(String tagName) {
+        return pattern instanceof TextPatternPositionFilter && ((TextPatternPositionFilter) pattern).isWithinTag(
+                tagName);
     }
 
     public void setDocPid(String pid) {
@@ -362,13 +378,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     @Override
     public ContextSettings contextSettings() {
-        ContextSize contextSize = ContextSize.get(getWordsAroundHit());
-        int maxContextSize = configParam().getContextSize().getMaxInt();
-        if (contextSize.before() > maxContextSize) { // no check on right needed - same as left
-            //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
-            contextSize = ContextSize.get(maxContextSize);
-        }
-        return new ContextSettings(contextSize, getConcordanceType());
+        ContextSize context = getContext().clampedTo(configParam().getContextSize().getMaxInt());
+        return new ContextSettings(context, getConcordanceType());
     }
 
     @Override
@@ -608,8 +619,13 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
+    @Deprecated
     public int getWordsAroundHit() {
         return params.getWordsAroundHit();
+    }
+
+    public ContextSize getContext() {
+        return params.getContext();
     }
 
     @Override

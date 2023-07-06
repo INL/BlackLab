@@ -84,4 +84,20 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
         String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
         return "POSFILTER(" + producer + ", " + filter + ", " + (invert ? "NOT" : "") + op + adj + ")";
     }
+
+    /**
+     * Is this a "within tag" operation?
+     *
+     * Used if context is set to the tag to determine if we need to add "within <TAGNAME/>" to the query or not.
+     *
+     * @param tagName the tag name to check
+     * @return true if this is a "within tag" operation and the tag name matches
+     */
+    public boolean isWithinTag(String tagName) {
+        if (op != SpanQueryPositionFilter.Operation.WITHIN)
+            return false;
+        boolean isCorrectTag = clauses.get(1) instanceof TextPatternTags && ((TextPatternTags) clauses.get(1)).elementName.equals(
+                tagName);
+        return isCorrectTag && leftAdjust == 0 && rightAdjust == 0;
+    }
 }

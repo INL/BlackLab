@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
@@ -77,7 +78,10 @@ public interface QueryParams {
 
     long getNumberOfResultsToShow();
 
+    @Deprecated
     int getWordsAroundHit();
+
+    ContextSize getContext();
 
     ConcordanceType getConcordanceType();
 

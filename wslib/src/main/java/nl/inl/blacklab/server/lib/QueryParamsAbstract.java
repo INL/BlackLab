@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -265,7 +266,36 @@ public abstract class QueryParamsAbstract implements QueryParams {
     }
 
     @Override
-    public int getWordsAroundHit() { return getInt(WebserviceParameter.WORDS_AROUND_HIT); }
+    @Deprecated
+    public int getWordsAroundHit() {
+        // ("wordsaroundhit" is deprecated, now called "context")
+        WebserviceParameter par = has(WebserviceParameter.CONTEXT) ?
+                WebserviceParameter.CONTEXT :
+                WebserviceParameter.WORDS_AROUND_HIT;
+        return getInt(par);
+    }
+
+    public ContextSize getContext() {
+        // ("wordsaroundhit" is deprecated, now called "context")
+        WebserviceParameter par = has(WebserviceParameter.WORDS_AROUND_HIT) ?
+                WebserviceParameter.WORDS_AROUND_HIT :
+                WebserviceParameter.CONTEXT;
+        String str = get(par);
+        int before = 0, after = 0;
+        String inlineTagName = null;
+        if (str.matches("\\d+")) {
+            before = after = Integer.parseInt(str);
+        } else if (str.matches("\\d+:\\d+")) {
+            String[] parts = str.split(":");
+            before = Integer.parseInt(parts[0]);
+            after = Integer.parseInt(parts[1]);
+        } else if (str.matches("\\w+")) {
+            inlineTagName = str; // TODO: determine actual match info index for inline tag
+        } else {
+            throw new IllegalArgumentException("Invalid context value: " + str);
+        }
+        return ContextSize.get(before, after, true, inlineTagName);
+    }
 
     @Override
     public ConcordanceType getConcordanceType() {

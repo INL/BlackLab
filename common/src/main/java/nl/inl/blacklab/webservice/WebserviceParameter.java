@@ -42,7 +42,8 @@ public enum WebserviceParameter {
     SORT_BY("sort"),  // sorting (grouped) hits/docs
     FIRST_RESULT("first"), // results window
     NUMBER_OF_RESULTS("number"), // results window
-    WORDS_AROUND_HIT("wordsaroundhit"), // KWIC / concordances
+    WORDS_AROUND_HIT("wordsaroundhit"), // (DEPRECATED, renamed to "context")
+    CONTEXT("context"), // KWIC / concordances: words around hit or
     CREATE_CONCORDANCES_FROM("usecontent"), // create concs from forward index or original content (content store)?
     OMIT_EMPTY_CAPTURES("omitemptycaptures"),  // omit capture groups of length 0? (false)
     RETURN_MATCH_INFO("matchinfo"), // what match info to include (captures/all, all is default)
@@ -142,7 +143,7 @@ public enum WebserviceParameter {
         defaultValues.put(SENSITIVE, "no");
         defaultValues.put(USE_CACHE, "yes");
         defaultValues.put(WAIT_FOR_TOTAL_COUNT, "no");
-        defaultValues.put(WORDS_AROUND_HIT, "5");
+        defaultValues.put(CONTEXT, "5"); // previously "wordsaroundhit"
         defaultValues.put(WORD_END, "-1");
         defaultValues.put(WORD_START, "-1");
     }

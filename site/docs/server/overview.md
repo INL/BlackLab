@@ -60,7 +60,7 @@ Documents containing “test”, grouped by author
 
 Larger snippet around a hit:
 
-        http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/snippet?hitstart=120&hitend=121&wordsaroundhit=50
+        http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/snippet?hitstart=120&hitend=121&context=50
 
 #### Information about a document
 

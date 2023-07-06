@@ -92,12 +92,12 @@ public class Concordances {
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
             int hitStart = hit.start();
-            int hitEnd = hit.end() - 1;
+            int hitEnd = hit.end() - 1; // last word (inclusive)
 
-            int start = hitStart - wordsAroundHit.before();
+            int start = wordsAroundHit.snippetStart(hit);
             if (start < 0)
                 start = 0;
-            int end = hitEnd + wordsAroundHit.after();
+            int end = wordsAroundHit.snippetEnd(hit) - 1; // last word (inclusive)
 
             startsOfWords[startEndArrayIndex] = start;
             startsOfWords[startEndArrayIndex + 1] = hitStart;

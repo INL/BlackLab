@@ -50,7 +50,7 @@ public class BLSConfigParameters {
         WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_COUNT, "" + getCountHits().getDefault());
         WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefault());
         WebserviceParameter.setDefaultValue(WebserviceParameter.SENSITIVE, getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
-        WebserviceParameter.setDefaultValue(WebserviceParameter.WORDS_AROUND_HIT, "" + getContextSize().getDefault());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.CONTEXT, "" + getContextSize().getDefault());
         WebserviceParameter.setDefaultValue(WebserviceParameter.API_COMPATIBILITY, "" + getApi().versionString());
     }
 

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.textpattern;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public class TextPatternTags extends TextPattern {
     }
 
     public TextPatternTags(String elementName) {
-        this(elementName, null);
+        this(elementName, Collections.emptyMap());
     }
 
     public Term getTerm(String fieldName) {

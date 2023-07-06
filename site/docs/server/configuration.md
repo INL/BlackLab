@@ -112,7 +112,7 @@ parameters:
         default: 50
         max: 3000
 
-    # Context around match ("wordsaroundhit" parameter)
+    # Context around match ("context" parameter)
     # (higher values might cause copyright issues and may stress the server)
     # Set to 0 to omit the left and right context altogether.
     contextSize:
