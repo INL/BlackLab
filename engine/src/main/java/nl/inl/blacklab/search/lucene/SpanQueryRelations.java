@@ -17,6 +17,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.util.automaton.RegExp;
 
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -187,7 +188,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
         // Construct the clause from the field, relation type and attributes
         String regexp = RelationUtil.searchRegex(relationType, attributes);
-        RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp));
+        RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp), RegExp.COMPLEMENT);
         BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
         init(relationFieldName, relationType, clause, direction, spanMode);
     }
