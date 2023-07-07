@@ -21,6 +21,7 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.util.StringUtil;
 
 /**
  * An educational DocIndexer to learn how to implement your own.
@@ -217,12 +218,12 @@ public class DocIndexerExample extends DocIndexerBase {
 
     private void processLine(String line) {
         // Remove comments and leading/trailing whitespace
-        line = line.replaceAll("#.*$", "").trim();
+        line = StringUtil.trimWhitespace(line.replaceAll("#.*$", ""));
         if (line.isEmpty())
             return;
 
         // Split on whitespace and separate command from parameters
-        String[] parts = line.split("\\s+", -1);
+        String[] parts = line.split(StringUtil.REGEX_WHITESPACE, -1);
         String command = parts[0];
         String[] parameters = Arrays.copyOfRange(parts, 1, parts.length);
 

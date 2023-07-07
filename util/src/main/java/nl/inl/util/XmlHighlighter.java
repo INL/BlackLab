@@ -239,7 +239,7 @@ public class XmlHighlighter {
         }
         b.append(xmlContent.substring(positionInContent));
         final String optionalEllipsis = wasCut ? "..." : "";
-        return b.toString().trim() + optionalEllipsis;
+        return StringUtil.trimWhitespace(b.toString()) + optionalEllipsis;
     }
 
     /**

@@ -84,9 +84,9 @@ public enum MatchSensitivity {
         case CASE_INSENSITIVE:
             return input.toLowerCase();
         case DIACRITICS_INSENSITIVE:
-            return StringUtil.stripAccents(input);
+            return StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input));
         case INSENSITIVE:
-            return StringUtil.stripAccents(input).toLowerCase();
+            return StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input).toLowerCase());
         case SENSITIVE:
             return input;
         default:

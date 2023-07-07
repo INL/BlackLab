@@ -25,6 +25,7 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.FileUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * An indexer for tabular file formats, such as tab-separated or comma-separated
@@ -192,7 +193,7 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
                             // It's a document tag, an inline tag or a glue tag
                             boolean isOpenTag = m.group(1) == null;
                             String tagName = m.group(2);
-                            String rest = m.group(3).trim();
+                            String rest = StringUtil.trimWhitespace(m.group(3));
                             boolean selfClosing = rest.endsWith("/");
                             if (!isOpenTag && selfClosing)
                                 throw new MalformedInputFile("Close tag must not also end with /: " + tagName);
@@ -277,7 +278,7 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
     private static Map<String, String> getAttr(String group) {
         if (group == null)
             return Collections.emptyMap();
-        String strAttrDef = group.trim();
+        String strAttrDef = StringUtil.trimWhitespace(group);
         Matcher m = REGEX_ATTR.matcher(strAttrDef);
         Map<String, String> attributes = new LinkedHashMap<>();
         while (m.find()) {

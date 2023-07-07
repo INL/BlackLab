@@ -175,7 +175,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             // Header element ended; index the element with the character
             // content captured
             // (this is stuff like title, yearFrom, yearTo, etc.)
-            addMetadataField(localName, getElementContent().trim());
+            addMetadataField(localName, StringUtil.trimWhitespace(getElementContent()));
         }
     }
 

@@ -8,6 +8,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalAbstract;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
+import nl.inl.util.StringUtil;
 import nl.inl.util.Timer;
 
 /**
@@ -71,7 +72,7 @@ public class BatchForwardIndex {
             query = query.trim();
             if (query.length() == 0 || query.charAt(0) == '#')
                 continue; // skip empty lines and #-comments
-            String[] numberStr = query.split("\\s+");
+            String[] numberStr = query.split(StringUtil.REGEX_WHITESPACE);
             int[] numbers = new int[numberStr.length];
             try {
                 for (int i = 0; i < numberStr.length; i++) {

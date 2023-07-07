@@ -20,6 +20,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 import nl.inl.blacklab.search.textpattern.TextPatternWildcard;
+import nl.inl.util.StringUtil;
 
 public class ContextualQueryLanguageParser {
     
@@ -105,7 +106,7 @@ public class ContextualQueryLanguageParser {
             prop = field.substring(9);
         }
 
-        String[] parts = value.trim().split("\\s+");
+        String[] parts = value.trim().split(StringUtil.REGEX_WHITESPACE);
         TextPattern tp = null;
         Query q = null;
         if (parts.length == 1) {

@@ -78,6 +78,7 @@ import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 import nl.inl.util.TimeUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
@@ -813,14 +814,14 @@ public class QueryTool {
             } else if (lcased.startsWith("sort ")) {
                 sortBy(cmd.substring(5));
             } else if (lcased.startsWith("group by ")) {
-                String[] parts = lcased.substring(9).split("\\s+", 2);
+                String[] parts = lcased.substring(9).split(StringUtil.REGEX_WHITESPACE, 2);
                 groupBy(parts[0], parts.length > 1 ? parts[1] : null);
             } else if (lcased.startsWith("group ")) {
                 if (lcased.substring(6).matches("\\d+")) {
                     firstResult = 0; // reset for paging through group
                     changeShowSettings(lcased);
                 } else {
-                    String[] parts = lcased.substring(6).split("\\s+", 2);
+                    String[] parts = lcased.substring(6).split(StringUtil.REGEX_WHITESPACE, 2);
                     groupBy(parts[0], parts.length > 1 ? parts[1] : null);
                 }
             } else if (lcased.equals("groups") || lcased.equals("hits") || lcased.equals("docs")
@@ -851,7 +852,7 @@ public class QueryTool {
                     }
                 } else {
                     // Load new wordlist or display existing wordlist
-                    String[] parts = cmd.substring(9).trim().split("\\s+", 2);
+                    String[] parts = cmd.substring(9).trim().split(StringUtil.REGEX_WHITESPACE, 2);
                     String name = "word", fn = parts[0];
                     if (parts.length == 2) {
                         name = parts[1];
@@ -1246,7 +1247,7 @@ public class QueryTool {
             sortGroups(sortBy.toLowerCase());
             break;
         default:
-            String[] parts = sortBy.split("\\s+", 2);
+            String[] parts = sortBy.split(StringUtil.REGEX_WHITESPACE, 2);
             String sortByPart = parts[0];
             String propPart = parts.length > 1 ? parts[1] : null;
             sortHits(sortByPart, propPart);

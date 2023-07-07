@@ -26,6 +26,7 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.
@@ -251,6 +252,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             }
             List<String> resultAfterProcessing = new ArrayList<>();
             for (String inputValue : results) {
+                inputValue = StringUtil.sanitizeAndNormalizeUnicode(inputValue);
                 resultAfterProcessing.addAll(processStringMultipleValues(inputValue, linkValue.getProcess(), null));
             }
             results = resultAfterProcessing;
@@ -378,7 +380,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     static String opParsePartOfSpeech(String result, String field) {
         // Trim character/string from beginning and end
-        result = result.trim();
+        result = StringUtil.trimWhitespace(result);
         if (field.equals("_")) {
             //  Get main pos: A(b=c,d=e) -> A
             return MAIN_POS_PATTERN.matcher(result).replaceAll("$1");
@@ -387,8 +389,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             String featuresString = FEATURE_PATTERN.matcher(result).replaceAll("$2");
             return Arrays.stream(featuresString.split(","))
                 .map(feat -> feat.split("="))
-                .filter(featParts -> featParts[0].trim().equals(field))
-                .map(featParts -> featParts[1].trim())
+                .filter(featParts -> StringUtil.trimWhitespace(featParts[0]).equals(field))
+                .map(featParts -> StringUtil.trimWhitespace(featParts[1]))
                 .findFirst()
                 .orElse("");
         }

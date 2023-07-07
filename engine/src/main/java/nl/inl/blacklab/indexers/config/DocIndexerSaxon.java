@@ -23,6 +23,7 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * An indexer capable of XPath version supported by the provided saxon library.
@@ -283,6 +284,7 @@ public class DocIndexerSaxon extends DocIndexerConfig {
         for (Object val : saxonHelper.find(f.getValuePath(),header)) {
             if (val instanceof NodeInfo) {
                 String unprocessedValue = saxonHelper.getValue(".", val);
+                unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
                 for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
                     addMetadataField(f.getName(), value);
                 }

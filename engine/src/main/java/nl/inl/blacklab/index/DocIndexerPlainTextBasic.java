@@ -13,6 +13,7 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.util.StringUtil;
 
 /**
  * Simple example indexer for plain text files. Reads a line, chops it into
@@ -125,7 +126,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
             String line = r.readLine();
             if (line == null)
                 break;
-            String[] words = line.trim().split("\\s+");
+            String[] words = line.trim().split(StringUtil.REGEX_WHITESPACE);
             for (String word : words) {
                 // Handle space and punctuation between words. Instead of always using a hardcoded
                 // space,

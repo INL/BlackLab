@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
+import nl.inl.util.StringUtil;
 
 /**
  * Indexes a file.
@@ -133,7 +134,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
             return;
         }
 
-        value = value.trim();
+        value = StringUtil.trimWhitespace(value);
         if (!value.isEmpty()) {
             metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
             IndexMetadataWriter indexMetadata = getDocWriter().metadata();

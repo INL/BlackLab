@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import nl.inl.util.StringUtil;
+
 public abstract class DocIndexerTabularBase extends DocIndexerConfig {
 
     protected String multipleValuesSeparatorRegex;
@@ -15,6 +17,9 @@ public abstract class DocIndexerTabularBase extends DocIndexerConfig {
     }
 
     protected void indexValue(ConfigAnnotation annotation, String value) {
+        // Remove unwanted unprintable characters and normalize to canonical unicode composition
+        value = StringUtil.sanitizeAndNormalizeUnicode(value);
+
         if (annotation.isMultipleValues()) {
             // Multiple values possible. Split on multipleValuesSeparator.
             List<String> values = processStringMultipleValues(value, annotation.getProcess(), null);

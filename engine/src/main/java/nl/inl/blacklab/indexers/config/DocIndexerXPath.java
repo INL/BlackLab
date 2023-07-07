@@ -607,6 +607,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                 while (apMetadata.evalXPath() != -1) {
                                     apEvalToString.resetXPath();
                                     String unprocessedValue = apEvalToString.evalXPathToString();
+                                    unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
                                     for (String value: processStringMultipleValues(unprocessedValue, f.getProcess(),
                                             f.getMapValues())) {
                                         // Also execute process defined for named metadata field, if any
@@ -629,6 +630,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                             "string(//tei:availability[1]/@status='free')"));
                                 }
                                 String unprocessedValue = apMetadata.evalXPathToString();
+                                unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
                                 for (String value: processStringMultipleValues(unprocessedValue, f.getProcess(),
                                         f.getMapValues())) {
                                     for (String processedValue: processStringMultipleValues(value,
@@ -654,6 +656,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             while (apMetadata.evalXPath() != -1) {
                                 apEvalToString.resetXPath();
                                 String unprocessedValue = apEvalToString.evalXPathToString();
+                                unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
                                 for (String value: processStringMultipleValues(unprocessedValue, f.getProcess(),
                                         f.getMapValues())) {
                                     addMetadataField(f.getName(), value);
@@ -672,6 +675,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                         "string(//tei:availability[1]/@status='free')"));
                             }
                             String unprocessedValue = apMetadata.evalXPathToString();
+                            unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
                             for (String value: processStringMultipleValues(unprocessedValue, f.getProcess(),
                                     f.getMapValues())) {
                                 addMetadataField(f.getName(), value);
@@ -873,6 +877,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // If duplicates are not allowed, keep track of values we've already added
             Set<String> valuesSeen = annotation.isAllowDuplicateValues() ? null : new HashSet<>();
             for (String rawValue: values) {
+                rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
                 for (String processedValue: processStringMultipleValues(rawValue, processingSteps, null)) {
                     if (annotation.isAllowDuplicateValues() || !valuesSeen.contains(processedValue)) {
                         // Not a duplicate, or we don't care about duplicates. Add it.
@@ -885,6 +890,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         } else {
             // Single value (the collection should only contain one entry)
             for (String rawValue: values) {
+                rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
                 results.add(processString(rawValue, processingSteps, null));
                 break; // if multiple were matched, only index the first one
             }

@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.text.Normalizer;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +23,7 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.util.FileUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * Indexer for the CoNLL-U format.
@@ -137,7 +137,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
             if (origLine == null)
                 break; // end of file
             lineNumber++;
-            String line = origLine.trim();
+            String line = StringUtil.trimWhitespace(origLine);
 
             // Is it empty?
             if (line.length() == 0) {
@@ -220,9 +220,6 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                         int i = annotation.getValuePathInt() - 1;
                         if (i < record.size()) {
                             value = record.get(i);
-                            value = value.replaceAll("\u200b", ""); // remove zero-width space
-                            // normalize unicode (canonical composition, i.e. no separate combining characters
-                            value = Normalizer.normalize(value, Normalizer.Form.NFC);
                         } else
                             value = "";
                     } else {

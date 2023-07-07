@@ -45,6 +45,7 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.Json;
+import nl.inl.util.StringUtil;
 import nl.inl.util.TimeUtil;
 
 /**
@@ -690,7 +691,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 } else {
                     String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
                     if (noForwardIndex.length() > 0) {
-                        String[] noForwardIndexAnnotations = noForwardIndex.split("\\s+");
+                        String[] noForwardIndexAnnotations = noForwardIndex.split(StringUtil.REGEX_WHITESPACE);
                         fieldDesc.setNoForwardIndexAnnotations(new HashSet<>(Arrays.asList(noForwardIndexAnnotations)));
                     }
                 }
