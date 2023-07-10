@@ -10,6 +10,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
+import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
@@ -72,6 +73,9 @@ public class QueryExtensions {
 
     /** A string, a query, and two strings */
     public static final List<ArgType> ARGS_SQSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING);
+
+    /** A query, a string and another query */
+    public static final List<ArgType> ARGS_QSSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
 
     enum ArgType {
         QUERY,
@@ -228,7 +232,7 @@ public class QueryExtensions {
                 if (i >= newArgs.size()) {
                     // Missing argument; use default value
                     newArgs.add(defVal);
-                } else if (newArgs.get(i) == null) {
+                } else if (newArgs.get(i) instanceof SpanQueryDefaultValue) {
                     // Explicitly set to undefined (_); use default value
                     newArgs.set(i, defVal);
                 }

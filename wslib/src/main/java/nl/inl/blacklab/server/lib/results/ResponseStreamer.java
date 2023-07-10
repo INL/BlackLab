@@ -41,6 +41,7 @@ import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -391,15 +392,30 @@ public class ResponseStreamer {
                     RelationInfo relationInfo = (RelationInfo) e.getValue();
                     ds.startItem("relation").startMap();
                     {
-                        ds.entry("type", relationInfo.getFullRelationType());
-                        if (!relationInfo.isRoot()) {
-                            ds.entry("sourceStart", relationInfo.getSourceStart());
-                            ds.entry("sourceEnd", relationInfo.getSourceEnd());
-                        }
-                        ds.entry("targetStart", relationInfo.getTargetStart());
-                        ds.entry("targetEnd", relationInfo.getTargetEnd());
+                        relationInfo(ds, relationInfo);
                     }
                     ds.endMap().endItem();
+                }
+                ds.endList().endEntry();
+            }
+            // Again for lists of relations
+            Set<Map.Entry<String, MatchInfo>> listRelations = filterMatchInfo(matchInfo, MatchInfo.Type.LIST_OF_RELATIONS);
+            if (!listRelations.isEmpty()) {
+                ds.startEntry("relationsInsideSpan").startMap();
+                for (Map.Entry<String, MatchInfo> e: listRelations) {
+                    String name = e.getKey();
+                    ds.startEntry(name).startList();
+                    {
+                        RelationListInfo relations = (RelationListInfo) e.getValue();
+                        for (RelationInfo relationInfo: relations.getRelations()) {
+                            ds.startItem("relation").startMap();
+                            {
+                                relationInfo(ds, relationInfo);
+                            }
+                            ds.endMap().endItem();
+                        }
+                    }
+                    ds.endList().endEntry();
                 }
                 ds.endList().endEntry();
             }
@@ -452,6 +468,16 @@ public class ResponseStreamer {
             }
         }
         ds.endMap();
+    }
+
+    private static void relationInfo(DataStream ds, RelationInfo relationInfo) {
+        ds.entry("type", relationInfo.getFullRelationType());
+        if (!relationInfo.isRoot()) {
+            ds.entry("sourceStart", relationInfo.getSourceStart());
+            ds.entry("sourceEnd", relationInfo.getSourceEnd());
+        }
+        ds.entry("targetStart", relationInfo.getTargetStart());
+        ds.entry("targetEnd", relationInfo.getTargetEnd());
     }
 
     private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, MatchInfo.Type type) {

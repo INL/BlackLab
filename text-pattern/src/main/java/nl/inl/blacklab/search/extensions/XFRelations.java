@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.extensions;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,6 +10,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
+import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsWithinSpan;
 import nl.inl.blacklab.search.lucene.SpanQueryRelationSpanAdjust;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -25,7 +25,7 @@ public class XFRelations implements ExtensionFunctionClass {
 
     /**
      * Find relations matching type and target.
-     *
+     * <p>
      * You can also set spanMode (defaults to "source").
      *
      * @param queryInfo query info
@@ -76,7 +76,7 @@ public class XFRelations implements ExtensionFunctionClass {
 
     /**
      * Change span mode of a query with an active relation.
-     *
+     * <p>
      * That is, change the spans the query produces to the source or target
      * spans of the active relation, or the full relation span, or to a span
      * covering all matched relations.
@@ -87,6 +87,8 @@ public class XFRelations implements ExtensionFunctionClass {
      * @return span-adjusted query
      */
     private static BLSpanQuery rspan(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
+        if (args.size() < 2)
+            throw new IllegalArgumentException("rmatch() requires a query and a span mode as arguments");
         BLSpanQuery relations = (BLSpanQuery) args.get(0);
         RelationInfo.SpanMode mode = RelationInfo.SpanMode.fromCode((String)args.get(1));
         return new SpanQueryRelationSpanAdjust(relations, mode);
@@ -102,7 +104,7 @@ public class XFRelations implements ExtensionFunctionClass {
      */
     private static BLSpanQuery rmatch(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         if (args.isEmpty())
-            throw new IllegalArgumentException("rmatch() requires at least one argument");
+            throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
 
         // Filter out "any n-gram" arguments ([]*) because they don't do anything
         List<BLSpanQuery> clauses = args.stream()
@@ -123,12 +125,24 @@ public class XFRelations implements ExtensionFunctionClass {
         return spanQueryAnd;
     }
 
+    private static BLSpanQuery rcapture(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
+        if (args.size() < 3)
+            throw new IllegalArgumentException("rcapture() requires at least three arguments: query, toCapture, and captureAs");
+        BLSpanQuery query = (BLSpanQuery)args.get(0);
+        String toCapture = (String)args.get(1);
+        String captureAs = (String)args.get(2);
+        String relationType = optPrependDefaultType((String) args.get(3));
+        String field = context.withRelationAnnotation().luceneField();
+        return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, toCapture, captureAs, relationType);
+    }
+
     public void register() {
         QueryExtensions.register("rel", XFRelations::rel, QueryExtensions.ARGS_SQSS, Arrays.asList(".*",
                 QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "both"));
         QueryExtensions.register("rmatch", XFRelations::rmatch, QueryExtensions.ARGS_VAR_Q,
-                Collections.emptyList());
+                List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM));
         QueryExtensions.register("rspan", XFRelations::rspan, QueryExtensions.ARGS_QS, Arrays.asList(null, "full"));
+        QueryExtensions.register("rcapture", XFRelations::rcapture, QueryExtensions.ARGS_QSSS, Arrays.asList(null, null, null, ".*"));
     }
 
 }

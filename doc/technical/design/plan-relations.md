@@ -184,16 +184,28 @@ You can find root relations using this unary form of the operator:
 
 The root relation operator will return the targets of these relations, as root relations have no source.
 
+The source and target operands for the relation operators can be replaced by `_`, meaning "the default value" or "don't care". These will be replaced with `[]*` (any n-gram), which puts no restrictions on source or target.
+
 Examples:
 
-    # Match node with children of certain types)
-    rspan([]* --nmod--> []*;
-              --det--> []*;
-              --advmod--> []*, 'all')
+    # Find subjects that are nouns
+    _ --nsubj--> [pos="NOUN"]
 
-    # Match a series of descendants of certain types
-    # (i.e. a vertical path in the tree)
-    rspan([]* --root--> []* --nmod--> []* --case--> []*, 'all')
+    # Find verbs with an object but no subject
+    [pos="VERB"]    --obj--> _ ;
+                 !--nsubj--> _
+
+    # Match node with children of certain types)
+    _  --nmod--> _ ;
+        --det--> _ ;
+     --advmod--> _
+
+    # Find two different adjectives
+    _ --amod--> _; --amod--> _
+
+    # Match a series of descendants of certain types, starting with a root
+    # (i.e. vertical paths in dependency trees)
+    ^--> _ --nmod--> _ --case--> _
 
 ### Generic syntax for relations
 
@@ -253,6 +265,24 @@ We can match a tree fragment of a tree (a parent and some of its children) using
 Often this will be used with the target of the parent relation as `clause1` and the source of child relations as `clause2`, `clause3`, etc. (some of them negated to indicate such children must not be present).
 
 This operation is the same as a regular AND (NOT) operation with these clauses, but with the added requirement that a given relation may not be matched by more than one clause. (without the `rmatch` operation, you might need many global constraints to enforce this).
+
+#### rcapture: capture all relations occurring inside a span
+
+(not yet implemented)
+
+We can capture all relations occurring inside a span using `rcapture`:
+
+    rcapture(query, toCapture, captureAs, relationType = '.*')
+
+This is useful for e.g. finding all dependency relations in a sentence.
+
+Parameters:
+- `query` is the query we're operating on. `rcapture` does not affect the matches, other than adding a match info with the relations captured.
+- `toCapture` is the name of the match info to capture relations in, e.g. `s`. The referenced `query` must have captured this match info.
+- `captureAs` is the name of the match info to store the captured relations in.
+- `relationType` is a regular expression matching the relation types to capture. The default is `.*`, i.e. all relations of the default relation class (`dep` by default). See `rel()` for more details about matching relation types.
+
+The relations are captured as a list-of-relations match info type. This will be returned in the BLS response as `relationsInsideSpan`.
 
 #### rtype
 

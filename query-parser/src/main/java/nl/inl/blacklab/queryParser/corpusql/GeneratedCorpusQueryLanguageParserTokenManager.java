@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
+import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
 import nl.inl.blacklab.search.textpattern.TextPatternEdge;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;

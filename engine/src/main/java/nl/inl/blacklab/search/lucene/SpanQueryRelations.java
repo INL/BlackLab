@@ -187,10 +187,16 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             throw new IllegalArgumentException("ALL_SPANS makes no sense for SpanQueryRelations");
 
         // Construct the clause from the field, relation type and attributes
+        BLSpanQuery clause = relationsClause(queryInfo, relationFieldName, relationType,
+                attributes);
+        init(relationFieldName, relationType, clause, direction, spanMode);
+    }
+
+    public static BLSpanQuery relationsClause(QueryInfo queryInfo, String relationFieldName, String relationType,
+            Map<String, String> attributes) {
         String regexp = RelationUtil.searchRegex(relationType, attributes);
         RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp), RegExp.COMPLEMENT);
-        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
-        init(relationFieldName, relationType, clause, direction, spanMode);
+        return new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
     }
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause,
@@ -226,7 +232,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         BLSpanWeight weight = clause.createWeight(searcher, scoreMode, boost);
         return new Weight(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
@@ -258,7 +264,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         }
 
         @Override
-        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+        public SpansRelations getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;

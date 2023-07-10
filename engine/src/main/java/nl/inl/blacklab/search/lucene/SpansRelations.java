@@ -75,13 +75,22 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         // Only keep Unicode letters from relationType
-        String groupName = relationType.replaceAll("[^\\p{L}]", "");
+        String groupName = relationType.replaceAll("::", "-").replaceAll("[^\\p{L}-]", "");
+
+        /*
+
+        @@@@@
+        DISABLED FOR NOW BECAUSE IT MAKES THE GROUP NAMES UNPREDICTABLE. EXPLICITLY ASSIGNING NAMES IS PROBABLY BETTER
+        IF YOU PLAN ON REFERRING BACK TO IT LATER.
 
         // Add our unique id to the group name to avoid collisions when matching the same
         // relation type multiple times.
         // Note that if query rewriting generates multiple SpansRelations for the same relation clause
         // (e.g. because of optional query parts), those will all have the same id, which is what we want.
         groupName += "-n" + uniqueId;
+
+
+        */
 
         // Register our group
         this.groupIndex = context.registerMatchInfo(groupName);
@@ -97,6 +106,10 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         return true;
     }
 
+    /** Return current relation info.
+     *
+     * @return current relation info object; don't store or modify this, use .copy() first!
+     */
     public RelationInfo getRelationInfo() {
         return relationInfo;
     }

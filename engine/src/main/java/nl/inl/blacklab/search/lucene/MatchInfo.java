@@ -14,6 +14,7 @@ public interface MatchInfo extends Comparable<MatchInfo> {
     enum Type {
         SPAN,
         RELATION,
+        LIST_OF_RELATIONS,
         INLINE_TAG
     }
 

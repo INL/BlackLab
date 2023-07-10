@@ -414,22 +414,21 @@ public class RelationInfo implements MatchInfo {
 
     public int compareTo(RelationInfo o) {
         int n;
-        n = Integer.compare(sourceStart, o.sourceStart);
+        n = -Boolean.compare(onlyHasTarget, o.onlyHasTarget);
         if (n != 0)
             return n;
-        n = Integer.compare(sourceEnd, o.sourceEnd);
+        if (!onlyHasTarget && !o.onlyHasTarget) {
+            n = Integer.compare(sourceStart, o.sourceStart);
+            if (n != 0)
+                return n;
+            n = Integer.compare(sourceEnd, o.sourceEnd);
+            if (n != 0)
+                return n;
+        }
+        n = Integer.compare(targetStart, o.targetStart);
         if (n != 0)
             return n;
-        n = Integer.compare(targetStart, o.targetEnd);
-        if (n != 0)
-            return n;
-        n = Integer.compare(targetStart, o.targetEnd);
-        if (n != 0)
-            return n;
-        n = Boolean.compare(onlyHasTarget, o.onlyHasTarget);
-        if (n != 0)
-            return n;
-        n = Boolean.compare(onlyHasTarget, o.onlyHasTarget);
+        n = Integer.compare(targetEnd, o.targetEnd);
         if (n != 0)
             return n;
         n = fullRelationType.compareTo(o.fullRelationType);

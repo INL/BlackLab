@@ -1683,21 +1683,20 @@ public class QueryTool {
                     // Sort by type
                     if (at != bt)
                         return at.compareTo(bt);
-                    if (at == MatchInfo.Type.RELATION || at == MatchInfo.Type.INLINE_TAG) {
-                        // Sort relations by value
-                        return a.getValue().compareTo(b.getValue());
-                    } else {
+                    if (at == MatchInfo.Type.SPAN) {
                         // Sort capture groups by name
                         return a.getKey().compareTo(b.getKey());
+                    } else {
+                        // Sort other match info by value
+                        // ((list of) relations and inline tags)
+                        return a.getValue().compareTo(b.getValue());
                     }
                 })
                 .map(e -> {
                     MatchInfo mi = e.getValue();
                     if (mi == null)
                         return "(null)";
-                    return mi.getType() == MatchInfo.Type.SPAN ?
-                            e.getKey() + "=" + e.getValue() :
-                            e.getValue().toString();
+                    return e.getKey() + "=" + e.getValue();
                 })
                 .collect(Collectors.joining(", "));
         return matchInfo;

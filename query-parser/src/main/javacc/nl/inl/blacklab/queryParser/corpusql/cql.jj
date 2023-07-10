@@ -44,6 +44,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
+import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
 import nl.inl.blacklab.search.textpattern.TextPatternEdge;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
@@ -252,21 +253,15 @@ TextPattern simpleQuery():
 /* a sequence of token constraints */
 TextPattern sequence():
 {
-    TextPattern first = null;
-    TextPattern result = null;
-    TextPattern[] tag = null;
-    Token t2 = null;
+    TextPattern query = null;
+    TextPattern following = null;
 }
 {
-    first=relationQuery() [ LOOKAHEAD(2) result=sequenceRest(first) ]
+    query=relationQuery() [ LOOKAHEAD(2) following=sequence() { query = new TextPatternSequence(query, following); } ]
     {
-        if (result == null)
-            result = first;
-
-        return result;
+        return query;
     }
 }
-
 
 
 TextPattern relationQuery():
@@ -277,17 +272,17 @@ TextPattern relationQuery():
     String relType = null;
 }
 {
-    parent=captureQuery()                           { clauses.add(parent); }
+    parent=captureQuery()                            { clauses.add(parent); }
     [
         child=childRelation()                        { clauses.add(child); }
-        ( LOOKAHEAD( ";" ) ";" child=childRelation() { clauses.add(child); } )*   /* dangling-else problem suppressed */
+        ( LOOKAHEAD( ";" ) ";" child=childRelation() { clauses.add(child); } )*   /* LOOKAHEAD( ";" ) suppresses dangling-else problem */
     ]
     {
         if (clauses.size() == 1)
             return clauses.get(0);
         return new TextPatternQueryFunction("rmatch", clauses);
     }
-|   parent=rootRelationType()  { clauses.add(parent); }
+|   parent=rootRelationType()
     {
         return parent;
     }
@@ -401,21 +396,6 @@ void attributes(Map<String, String> attr):
     }
 }
 
-/* continuation of a sequence (after the first part) */
-TextPattern sequenceRest(TextPattern first):
-{
-    Token op = null;
-    TextPattern rest = null;
-}
-{
-    rest=sequence()
-    {
-        if (rest == null)
-            return first;
-        return new TextPatternSequence(first, rest);
-    }
-}
-
 /* a repetition specifier */
 Integer[] repetitionAmount():
 {
@@ -521,7 +501,7 @@ Object functionParam():
 }
 {
     q=constrainedQuery()  { return q; /* this covers both actual queries and plain old strings */ }
-|   <DEFAULT_VALUE>       { return null; /* use default value for parameter */ }
+//|   <DEFAULT_VALUE>       { return null; /* use default value for parameter */ }
 }
 
 String captureLabel():
@@ -543,6 +523,7 @@ TextPattern position():
 }
 {
     m=positionWord() [f=flags()]        { return m; }
+|   <DEFAULT_VALUE>                     { return TextPatternDefaultValue.get(); }
 |   "[" [ m=positionLong() ] "]"
     {
         if (m == null)
@@ -646,14 +627,13 @@ TextPattern value():
 |   a=valuePart()                   { return a; }
 }
 
-/* value: a quoted string, a value expression between parens, or a negated value */
+/* value: a quoted string or a value expression between parentheses */
 TextPattern valuePart():
 {
     TextPattern m = null;
     String t = null;
 }
 {
-    t=quotedString()              { return wrapper.simplePattern(t); }
+    t=quotedString()               { return wrapper.simplePattern(t); }
 |   "(" m=value() ")"              { return m; }
-
 }
