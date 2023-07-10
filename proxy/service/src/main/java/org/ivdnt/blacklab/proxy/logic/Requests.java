@@ -9,12 +9,16 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import org.ivdnt.blacklab.proxy.ProxyConfig;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
+import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.SolrGeneralErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.SolrResponse;
+import org.ivdnt.blacklab.proxy.resources.ParamsUtil;
+import org.ivdnt.blacklab.proxy.resources.ProxyResponse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -69,6 +73,11 @@ public class Requests {
 
     public static Object get(Client client, Map<WebserviceParameter, String> queryParams, List<Class<?>> entityTypes) {
         return request(client, queryParams, "GET", entityTypes);
+    }
+
+    public static <T> T request(Client client, Map<WebserviceParameter, String> queryParams, String method,
+            Class<T> entityType) {
+        return (T)request(client, queryParams, method, List.of(entityType));
     }
 
     public static Object request(Client client, Map<WebserviceParameter, String> queryParams, String method, List<Class<?>> entityTypes) {
@@ -187,6 +196,27 @@ public class Requests {
             }
         }
         throw new IllegalStateException("Code should never get here");
+    }
+
+    /**
+     * Process a request that could return a CSV response.
+     *
+     * @param corpusName corpus we're querying
+     * @param parameters parameters to the request
+     * @param op operation to perform
+     * @param resultTypes what types the result entity could be
+     * @return response
+     */
+    public static Response requestWithPossibleCsvResponse(Client client, String method, String corpusName,
+            MultivaluedMap<String, String> parameters, WebserviceOperation op, List<Class<?>> resultTypes) {
+        Object entity = request(client, ParamsUtil.get(parameters, corpusName, op), method, resultTypes);
+        if (entity instanceof JsonCsvResponse) {
+            // Return actual CSV contents instead of JSON
+            String csv = ((JsonCsvResponse) entity).csv;
+            return Response.ok().type(ParamsUtil.MIME_TYPE_CSV).entity(csv).build();
+        } else {
+            return ProxyResponse.success(entity);
+        }
     }
 
     /** How to create the BLS request to a node */

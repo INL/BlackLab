@@ -91,6 +91,7 @@ In addition to the basic criteria, it is also possible to sort/group on context 
 | <code>wordright:_annot_:_c_</code>           | Single word to the right of the matched text. Best used for grouping. Examples: `wordright`, `wordright:pos`, `wordright:pos:s`                                                                                                                                                                                         |
 | <code>context:_annot_:_c_:_spec_</code>      | More generic context words expression, giving the user more control at the cost of a bit of speed. Example: `context:word:s:H1-2` (first two matched words). See below for a complete specification.                                                                                                                    |
 | <code>capture:_annot_:_c_:_groupname_</code> | Contents of a named capture group in your text pattern. Example: `capture:word:s:PERSON` for the contents of the capture group named `PERSON` (your pattern might be `"talk" "to" PERSON:[]`).                                                                                                                          |
+
 ::: details <b>The <code>context</code> criterium explained</b>
 Criteria like `context:word:s:H1-2` ("the first two matched words") allow fine control over what to group or sort on.
 

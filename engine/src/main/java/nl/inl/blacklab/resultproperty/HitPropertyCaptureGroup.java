@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
+import java.util.Objects;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -98,7 +99,19 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase2 {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
+        HitPropertyCaptureGroup that = (HitPropertyCaptureGroup) o;
+        return Objects.equals(groupName, that.groupName);
+    }
+
+    @Override
     public int hashCode() {
-        return 31 * super.hashCode();
+        return Objects.hash(super.hashCode(), groupName);
     }
 }
