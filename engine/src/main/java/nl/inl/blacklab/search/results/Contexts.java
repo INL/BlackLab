@@ -3,11 +3,15 @@ package nl.inl.blacklab.search.results;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
+import org.eclipse.collections.api.tuple.primitive.IntIntPair;
+import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
@@ -16,10 +20,13 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Some annotation context(s) belonging to a list of hits.
@@ -29,21 +36,21 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class Contexts implements Iterable<int[]> {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
-    public final static int NUMBER_OF_BOOKKEEPING_INTS = 3;
+    private final static int NUMBER_OF_BOOKKEEPING_INTS = 3;
 
     /**
      * In context arrays, what index after the bookkeeping units indicates the hit
      * start?
      */
-    public final static int HIT_START_INDEX = 0;
+    private final static int HIT_START_INDEX = 0;
 
     /**
      * In context arrays, what index indicates the hit end (start of right part)?
      */
-    public final static int RIGHT_START_INDEX = 1;
+    private final static int RIGHT_START_INDEX = 1;
 
     /** In context arrays, what index indicates the length of the context? */
-    public final static int LENGTH_INDEX = 2;
+    private final static int LENGTH_INDEX = 2;
 
     /**
      * Retrieves the KWIC information (KeyWord In Context: left, hit and right
@@ -247,7 +254,7 @@ public class Contexts implements Iterable<int[]> {
      * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
      */
-    public Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize) {
+    private Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize) {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
@@ -290,26 +297,75 @@ public class Contexts implements Iterable<int[]> {
     }
 
     /**
+     * Count occurrences of context words around hit.
+     *
+     * @param hits hits to get collocations for
+     * @param annotation annotation to use for the collocations, or null if default
+     * @param contextSize how many words around hits to use
+     * @param sensitivity what sensitivity to use
+     * @param sort whether or not to sort the list by descending frequency
+     *
+     * @return the frequency of each occurring token
+     */
+    public synchronized static TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
+        BlackLabIndex index = hits.index();
+        if (annotation == null)
+            annotation = index.mainAnnotatedField().mainAnnotation();
+        if (contextSize == null)
+            contextSize = index.defaultContextSize();
+        if (sensitivity == null)
+            sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
+
+        List<Annotation> annotations = List.of(annotation);
+        Contexts contexts = new Contexts(hits, annotations, contextSize);
+        MutableIntIntMap countPerWord = IntIntMaps.mutable.empty();
+        for (int[] context: contexts) {
+            // Count words
+            int contextHitStart = context[HIT_START_INDEX];
+            int contextRightStart = context[RIGHT_START_INDEX];
+            int contextLength = context[LENGTH_INDEX];
+            int indexInContent = NUMBER_OF_BOOKKEEPING_INTS;
+            for (int i = 0; i < contextLength; i++, indexInContent++) {
+                if (i >= contextHitStart && i < contextRightStart)
+                    continue; // don't count words in hit itself, just around [option..?]
+                int wordId = context[indexInContent];
+                int count;
+                if (!countPerWord.containsKey(wordId))
+                    count = 1;
+                else
+                    count = countPerWord.get(wordId) + 1;
+                countPerWord.put(wordId, count);
+            }
+        }
+
+        // Get the actual words from the sort positions
+        Terms terms = index.annotationForwardIndex(contexts.annotations().get(0)).terms();
+        Map<String, Integer> wordFreq = new HashMap<>();
+        for (IntIntPair e : countPerWord.keyValuesView()) {
+            int wordId = e.getOne();
+            int count = e.getTwo();
+            String word = sensitivity.desensitize(terms.get(wordId));
+            // Note that multiple ids may map to the same word (because of sensitivity settings)
+            // Here, those groups are merged.
+            Integer mergedCount = wordFreq.get(word);
+            if (mergedCount == null) {
+                mergedCount = 0;
+            }
+            mergedCount += count;
+            wordFreq.put(word, mergedCount);
+        }
+
+        // Transfer from map to list
+        return new TermFrequencyList(hits.queryInfo(), wordFreq, sort);
+    }
+
+    /**
      * Get the field our current concordances were retrieved from
      *
      * @return the field name
      */
-    public List<Annotation> annotations() {
+    List<Annotation> annotations() {
         return annotations;
-    }
-
-    /**
-     * Return the context(s) for the specified hit number
-     *
-     * @param index which hit we want the context(s) for
-     * @return the context(s)
-     */
-    public int[] get(long index) {
-        return contexts.get(index);
-    }
-
-    public long size() {
-        return contexts.size64();
     }
 
     /**

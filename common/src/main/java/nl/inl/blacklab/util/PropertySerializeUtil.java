@@ -37,6 +37,10 @@ public final class PropertySerializeUtil {
         return b.toString();
     }
 
+    public static String combineParts(List<String> parts) {
+        return combineParts(parts.toArray(new String[0]));
+    }
+
     /**
      * Split string on first part and the rest.
      *

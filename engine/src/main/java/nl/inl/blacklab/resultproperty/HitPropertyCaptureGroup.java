@@ -1,16 +1,12 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.util.List;
 import java.util.Objects;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
@@ -18,9 +14,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 /**
  * A hit property for grouping on a matched group.
  */
-public class HitPropertyCaptureGroup extends HitPropertyContextBase2 {
-
-    private AnnotationForwardIndex afi;
+public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
     static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         HitPropertyCaptureGroup hp = deserializeProp(HitPropertyCaptureGroup.class, index, field, info);
@@ -36,8 +30,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase2 {
 
     int groupIndex = -1;
 
-    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, Contexts contexts, boolean invert) {
-        super(prop, hits, contexts, invert);
+    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, boolean invert) {
+        super(prop, hits, invert);
         groupName = prop.groupName;
 
         // Determine group index. We don't use the one from prop (if any), because
@@ -45,57 +39,37 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase2 {
         groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoNames().indexOf(groupName);
         if (groupIndex < 0)
             throw new IllegalArgumentException("Unknown group name '" + groupName + "'");
-        initForwardIndex();
     }
 
-    // Used by HitPropertyContextBase2.deserializeProp() (see above)
+    // Used by HitPropertyContextBase.deserializeProp() via reflection
     @SuppressWarnings("unused")
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         this(index, annotation, sensitivity, "");
     }
 
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName) {
-        super("captured group", "capture", index, annotation, sensitivity);
+        super("captured group", "capture", index, annotation, sensitivity, false);
         this.groupName = groupName;
-        initForwardIndex();
-    }
-
-    void initForwardIndex() {
-        if (hits != null) {
-            ForwardIndex fi = index.forwardIndex(hits.queryInfo().field());
-            afi = fi.get(annotation);
-        }
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
-        return new HitPropertyCaptureGroup(this, newHits, contexts, invert);
+    public HitProperty copyWith(Hits newHits, boolean invert) {
+        return new HitPropertyCaptureGroup(this, newHits, invert);
     }
 
     @Override
-    public PropertyValueContextWords get(long hitIndex) {
-        // Determine group start/end
-        Hit hit = hits.get(hitIndex);
-        MatchInfo[] matchInfo = hit.matchInfo();
-        MatchInfo group = matchInfo[groupIndex];
-        int start = group.getSpanStart();
-        int end = group.getSpanEnd();
-        int n = end - start;
-        if (n <= 0)
-            return new PropertyValueContextWords(index, annotation, sensitivity, new int[0], false);
-        List<int[]> result = afi.retrievePartsInt(hit.doc(), new int[] { start },
-                new int[] { end }); // OPT: avoid creating arrays?
-        return new PropertyValueContextWords(index, annotation, sensitivity, result.get(0), false);
-    }
-
-    @Override
-    public int compare(long indexA, long indexB) {
-        return get(indexA).compareTo(get(indexB));
+    public void fetchContext() {
+        fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
+            MatchInfo group = hit.matchInfo()[groupIndex];
+            starts[indexInArrays] = group.getSpanStart();
+            ends[indexInArrays] = group.getSpanEnd();
+        });
     }
 
     @Override
     public boolean isDocPropOrHitText() {
-        return true;
+        // we cannot guarantee that we don't use any surrounding context!
+        return false;
     }
 
     @Override

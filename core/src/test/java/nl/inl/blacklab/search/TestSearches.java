@@ -22,7 +22,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
+import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
@@ -456,6 +456,19 @@ public class TestSearches {
     }
 
     @Test
+    public void testSortSimple() {
+        List<String> expected = Arrays.asList(
+                "[The] quick",
+                "is [the] question",
+                "May [the] Force",
+                "over [the] lazy"
+        );
+        HitProperty sortBy = new HitPropertyBeforeHit(testIndex.index(), null,
+                MatchSensitivity.INSENSITIVE, 5);
+        Assert.assertEquals(expected, testIndex.findConc("'the'", sortBy));
+    }
+
+    @Test
     public void testSort() {
         List<String> expected = Arrays.asList(
                 "aap [aap aap aap]",
@@ -465,7 +478,7 @@ public class TestSearches {
                 );
         // If left side of implication is always false, right side is ignored
         HitProperty hit = new HitPropertyHitText(testIndex.index(), MatchSensitivity.INSENSITIVE);
-        HitProperty left = new HitPropertyLeftContext(testIndex.index(), MatchSensitivity.INSENSITIVE);
+        HitProperty left = new HitPropertyBeforeHit(testIndex.index(), null, MatchSensitivity.INSENSITIVE, -1);
         HitProperty sortBy = new HitPropertyMultiple(hit, left);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", sortBy));
     }
@@ -480,7 +493,7 @@ public class TestSearches {
                 );
         // If left side of implication is always false, right side is ignored
         HitProperty hit = new HitPropertyHitText(testIndex.index(), MatchSensitivity.INSENSITIVE);
-        HitProperty left = new HitPropertyLeftContext(testIndex.index(), MatchSensitivity.INSENSITIVE);
+        HitProperty left = new HitPropertyBeforeHit(testIndex.index(), null, MatchSensitivity.INSENSITIVE);
         HitProperty sortBy = new HitPropertyMultiple(hit, left).reverse();
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", sortBy));
     }

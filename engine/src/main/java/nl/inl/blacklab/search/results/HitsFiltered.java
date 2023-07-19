@@ -107,6 +107,7 @@ public class HitsFiltered extends HitsMutable {
                         }
                     } else {
                         doneFiltering = true;
+                        filterProperty.disposeContext(); // we don't need the context information anymore, free memory
                         source = null; // allow this to be GC'ed
                     }
                 }

@@ -10,7 +10,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public class PropertyValueMultiple extends PropertyValue {
     final PropertyValue[] value;
 
-    public PropertyValueMultiple(PropertyValue[] value) {
+    public PropertyValueMultiple(PropertyValue... value) {
         this.value = value;
     }
 

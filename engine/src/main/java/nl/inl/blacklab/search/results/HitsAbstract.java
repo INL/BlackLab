@@ -270,13 +270,12 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     public Hits sort(HitProperty sortProp) {
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
-        List<Annotation> requiredContext = sortProp.needsContext();
-        sortProp = sortProp.copyWith(this,
-            requiredContext == null ? null : new Contexts(this, requiredContext, sortProp.needsContextSize(index())));
+        sortProp = sortProp.copyWith(this);
 
         // Perform the actual sort.
         this.ensureAllResultsRead();
         HitsInternal sorted = this.hitsInternal.sort(sortProp); // TODO use wrapper objects
+        sortProp.disposeContext(); // we don't need the context information anymore, free memory
 
         long hitsCounted = hitsCountedSoFar();
         long docsRetrieved = docsProcessedSoFar();
@@ -395,7 +394,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      */
     @Override
     public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
-        return TermFrequencyList.collocations(this, annotation, contextSize, sensitivity, sort);
+        // TODO: implement these using HitProperty objects that return HitPropertyValueContextWord(s);
+        //       more versatile and we can eliminate Contexts?
+        return Contexts.collocations(this, annotation, contextSize, sensitivity, sort);
     }
 
     /**

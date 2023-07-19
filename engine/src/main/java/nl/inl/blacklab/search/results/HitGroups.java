@@ -16,8 +16,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -108,11 +106,8 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             throw new IllegalArgumentException("Must have criteria to group on");
         this.criteria = criteria;
 
-        List<Annotation> requiredContext = criteria.needsContext();
-        BlackLabIndex index = hits.queryInfo().index();
-        criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index())));
-        
-        //Thread currentThread = Thread.currentThread();
+        criteria = criteria.copyWith(hits);
+
         Map<PropertyValue, HitsInternalMutable> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
@@ -156,6 +151,8 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         // Make a copy so we don't keep any references to the source hits
         this.hitsStats = hits.hitsStats().save();
         this.docsStats = hits.docsStats().save();
+
+        criteria.disposeContext(); // we don't need the context information anymore, free memory
     }
 
     protected HitGroups(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {

@@ -24,72 +24,72 @@
   },
   "hitGroups": [
     {
-      "identity": "cwo:word:i:much",
+      "identity": "cws:word:i:much",
       "identityDisplay": "much",
       "size": 2,
       "properties": [
         {
-          "name": "wordright:word:i",
+          "name": "right:word:i:1",
           "value": "much"
         }
       ],
       "numberOfDocs": 2
     },
     {
-      "identity": "cwo:word:i:a",
+      "identity": "cws:word:i:a",
       "identityDisplay": "a",
       "size": 1,
       "properties": [
         {
-          "name": "wordright:word:i",
+          "name": "right:word:i:1",
           "value": "a"
         }
       ],
       "numberOfDocs": 1
     },
     {
-      "identity": "cwo:word:i:briefly",
+      "identity": "cws:word:i:briefly",
       "identityDisplay": "briefly",
       "size": 1,
       "properties": [
         {
-          "name": "wordright:word:i",
+          "name": "right:word:i:1",
           "value": "briefly"
         }
       ],
       "numberOfDocs": 1
     },
     {
-      "identity": "cwo:word:i:famous",
+      "identity": "cws:word:i:famous",
       "identityDisplay": "famous",
       "size": 1,
       "properties": [
         {
-          "name": "wordright:word:i",
+          "name": "right:word:i:1",
           "value": "famous"
         }
       ],
       "numberOfDocs": 1
     },
     {
-      "identity": "cwo:word:i:fresh",
+      "identity": "cws:word:i:fresh",
       "identityDisplay": "fresh",
       "size": 1,
       "properties": [
         {
-          "name": "wordright:word:i",
+          "name": "right:word:i:1",
           "value": "fresh"
         }
       ],
       "numberOfDocs": 1
     },
     {
-      "identity": "cwo:word:i:good",
+      "identity": "cws:word:i:good",
       "identityDisplay": "good",
       "size": 1,
       "properties": [
         {
-          "name": "wordright:word:i",
+          "name": "right:word:i:1",
           "value": "good"
         }
       ],

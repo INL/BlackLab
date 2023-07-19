@@ -87,7 +87,7 @@ The above in code:
 	    Hits hits = index.find(pattern);
 	
 	    // Sort the hits by the words to the left of the matched text
-	    HitProperty sortProperty = new HitPropertyLeftContext(index, index.annotation("word"));
+	    HitProperty sortProperty = new HitPropertyBeforeHit(index, index.annotation("word"));
 	    hits = hits.sort(sortProperty);
 	
 	    // Limit the results to the ones we want to show now (i.e. the first page)

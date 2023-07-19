@@ -38,11 +38,9 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
+import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
-import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
-import nl.inl.blacklab.resultproperty.HitPropertyWordLeft;
-import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
+import nl.inl.blacklab.resultproperty.HitPropertyAfterHit;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -1283,9 +1281,9 @@ public class QueryTool {
             if (sortBy.equalsIgnoreCase("match") || sortBy.equalsIgnoreCase("word"))
                 crit = new HitPropertyHitText(index, annotation);
             else if (sortBy.equalsIgnoreCase("left"))
-                crit = new HitPropertyLeftContext(index, annotation);
+                crit = new HitPropertyBeforeHit(index, annotation, null, -1);
             else if (sortBy.equalsIgnoreCase("right"))
-                crit = new HitPropertyRightContext(index, annotation);
+                crit = new HitPropertyAfterHit(index, annotation, null, -1);
             else if (sortBy.equalsIgnoreCase("lempos")) {
                 HitProperty p1 = new HitPropertyHitText(index, contentsField.annotation("lemma"));
                 HitProperty p2 = new HitPropertyHitText(index, contentsField.annotation("pos"));
@@ -1359,10 +1357,10 @@ public class QueryTool {
                 crit = new HitPropertyHitText(index, annotation);
                 break;
             case "left":
-                crit = new HitPropertyWordLeft(index, annotation);
+                crit = new HitPropertyBeforeHit(index, annotation, null, 1);
                 break;
             case "right":
-                crit = new HitPropertyWordRight(index, annotation);
+                crit = new HitPropertyAfterHit(index, annotation, null, 1);
                 break;
             default:
                 // Regular BLS serialized hit property

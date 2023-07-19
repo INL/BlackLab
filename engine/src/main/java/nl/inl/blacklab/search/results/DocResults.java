@@ -198,7 +198,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
-        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
+        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, false);
         this.matchInfoNames = hits.matchInfoNames();
         this.sourceHitsIterator = hits.iterator();
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;

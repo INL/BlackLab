@@ -4,7 +4,6 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -133,8 +132,10 @@ public class TestIndexFormats {
     }
 
     int getToken(AnnotationForwardIndex afi, int docId, int pos) {
-        List<int[]> parts = afi.retrievePartsInt(docId, new int[] { pos }, new int[] { pos + 1 });
-        return parts.get(0)[0];
+        int[] context = afi.retrievePart(docId, pos, pos + 1);
+        if (context.length == 0)
+            throw new IllegalArgumentException("Token offset out of range");
+        return context[0];
     }
 
     @Test

@@ -42,7 +42,7 @@ function expectHitsGroupedUnchanged(testName, params) {
 
 // Single word
 expectHitsGroupedUnchanged('very grouped by word right',
-        { patt: '"very"', group: 'wordright:word:i' });
+        { patt: '"very"', group: 'right:word:i:1' });
 expectHitsGroupedUnchanged('a grouped by title',
         { patt: '"a"', group: 'field:title' });
 

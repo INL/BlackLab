@@ -66,14 +66,9 @@ public class ForwardIndexAccessorExternal extends ForwardIndexAccessorAbstract {
             return fis.get(0).docLength(segmentDocId + readerContext.docBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
 
-        final int[] starts = { 0 };
-        final int[] ends = { 0 };
-
         @Override
         public int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end) {
-            starts[0] = start;
-            ends[0] = end;
-            return fis.get(annotIndex).retrievePartsInt(segmentDocId + readerContext.docBase, starts, ends).get(0);
+            return fis.get(annotIndex).retrievePart(segmentDocId + readerContext.docBase, start, end);
         }
 
         @Override

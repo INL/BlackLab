@@ -12,10 +12,6 @@ import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Results;
@@ -78,20 +74,28 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         case "hit":
             result = HitPropertyHitText.deserializeProp(index, field, info);
             break;
+        case "before":
         case "left":
-            result = HitPropertyLeftContext.deserializeProp(index, field, info);
+            result = HitPropertyBeforeHit.deserializeProp(index, field, info);
             break;
+        case "after":
         case "right":
-            result = HitPropertyRightContext.deserializeProp(index, field, info);
+            result = HitPropertyAfterHit.deserializeProp(index, field, info);
             break;
         case "wordleft":
-            result = HitPropertyWordLeft.deserializeProp(index, field, info);
+            // deprecated, use e.g. before:lemma:s:1
+            result = HitPropertyBeforeHit.deserializePropSingleWord(index, field, info);
             break;
         case "wordright":
-            result = HitPropertyWordRight.deserializeProp(index, field, info);
+            // deprecated, use e.g. after:lemma:s:1
+            result = HitPropertyAfterHit.deserializePropSingleWord(index, field, info);
+            break;
+        case "ctx":
+            result = HitPropertyContextPart.deserializeProp(index, field, info);
             break;
         case "context":
-            result = HitPropertyContextWords.deserializeProp(index, field, info);
+            // deprecated, will be serialized to (multiple) ctx
+            result = HitPropertyContextPart.deserializePropContextWords(index, field, info);
             break;
         case "capture":
             result = HitPropertyCaptureGroup.deserializeProp(index, field, info);
@@ -126,9 +130,6 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     /** Reverse comparison result or not? */
     protected boolean reverse;
 
-    /** Hit contexts, if any */
-    protected Contexts contexts = null;
-
     /**
      * For HitProperties that need context, the context indices that correspond to
      * the context(s) they need in the result set. (in the same order as reported by
@@ -149,14 +150,11 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      * @param contexts new contexts to use, or null to inherit
      * @param invert true to invert the previous sort order; false to keep it the same
      */
-    HitProperty(HitProperty prop, Hits hits, Contexts contexts, boolean invert) {
+    HitProperty(HitProperty prop, Hits hits, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
         this.reverse = prop.reverse;
         if (invert)
             this.reverse = !this.reverse;
-        this.setContexts(contexts); // this will initialize contextIndices to default value...
-        if (prop.contextIndices != null)
-            this.contextIndices = new IntArrayList(prop.contextIndices); // ...but if we already had different values, use those
     }
 
     /**
@@ -171,34 +169,13 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     }
 
     /**
-     * Set contexts to use.
-     * 
-     * Only ever used by constructor, so doesn't break immutability.
-     * 
-     * @param contexts contexts to use, or null for none
-     */
-    protected void setContexts(Contexts contexts) {
-        if (needsContext() != null) {
-            this.contexts = contexts;
-    
-            // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
-            if (contexts != null) {
-                int numberOfAnnotations = contexts.annotations().size();
-                this.contextIndices = new IntArrayList(numberOfAnnotations);
-                for (int i = 0; i < numberOfAnnotations; ++i)
-                    this.contextIndices.add(i, i);
-            }
-        }
-    }
-
-    /**
      * For HitProperties that need context, sets the context indices that correspond
      * to the context(s) they need in the result set.
      * 
      * Only needed if the context indices differ from the assumed default of 0, 1,
      * 2, ...
      * 
-     * Only called from the {@link HitPropertyMultiple#copyWith(Hits, Contexts, boolean)}, so doesn't break immutability.
+     * Only called from the {@link HitProperty#copyWith(Hits, boolean)}, so doesn't break immutability.
      * 
      * @param contextIndices the indices, in the same order as reported by
      *            needsContext().
@@ -216,34 +193,6 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         PropertyValue hitPropValueB = get(indexB);
         return hitPropValueA.compareTo(hitPropValueB);
     }
-
-    /**
-     * Retrieve context from which field(s) prior to sorting/grouping on this
-     * property?
-     * 
-     * @return null if no context is required, the fieldnames otherwise
-     */
-    public List<Annotation> needsContext() {
-        return null;
-    }
-
-    /**
-     * Return the required sensitivies for all Annotations that require context.
-     * Sensitivies are returned in the same order as the annotations are returned from {@link #needsContext()}
-     * 
-     * @return null if no context is required.
-     */
-    public List<MatchSensitivity> getSensitivities() {
-        return null;
-    }
-
-    /**
-     * If this property need context(s), how large should they be?
-     * 
-     * @param index index, so we can find the default context size if we need to 
-     * @return required context size
-     */
-    public abstract ContextSize needsContextSize(BlackLabIndex index);
 
     @Override
     public abstract String name();
@@ -263,7 +212,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     
     @Override
     public HitProperty reverse() {
-        return copyWith(hits, contexts, true);
+        return copyWith(hits, true);
     }
 
     /**
@@ -276,14 +225,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      */
     public HitProperty copyWith(Hits hits) {
         // If the filter property requires contexts, fetch them now.
-        List<Annotation> contextsNeeded = needsContext();
-        HitProperty result;
-        if (contextsNeeded != null) {
-            Contexts contexts = new Contexts(hits, contextsNeeded, needsContextSize(hits.index()));
-            result = copyWith(hits, contexts, false);
-        } else {
-            result = copyWith(hits, null, false);
-        }
+        HitProperty result = copyWith(hits, false);
         return result;
     }
 
@@ -291,24 +233,11 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      * Produce a copy of this HitProperty object with a different Hits and Contexts
      * object.
      *
-     * @param newHits new Hits to use
-     * @param contexts new Contexts to use, or null for none
-     * @return the new HitProperty object
-     */
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return copyWith(newHits, contexts, false);
-    }
-
-    /**
-     * Produce a copy of this HitProperty object with a different Hits and Contexts
-     * object.
-     *
      * @param newHits new Hits to use, or null to inherit
-     * @param contexts new Contexts to use, or null to inherit
-     * @param invert true if we should invert the previous sort order; false to keep it the same
+     * @param invert  true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert);
+    public abstract HitProperty copyWith(Hits newHits, boolean invert);
 
     @Override
     public boolean isReverse() {

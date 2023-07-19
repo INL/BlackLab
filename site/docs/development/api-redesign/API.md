@@ -19,7 +19,8 @@ Generic parameters:
 - when grouping, at least `identityDisplay` should be a list of values, so grouping
   by multiple context parts can be displayed properly. Maybe rethink how these values
   are encoded altogether while we're at it. Standard encodings such as JSON are almost
-  always better than a custom encoding.
+  always better than a custom encoding. Using `~` to mean "no value" is also not great;
+  maybe use `null` instead, or include a flag to indicate the value is missing.
 
 ## Server info
 

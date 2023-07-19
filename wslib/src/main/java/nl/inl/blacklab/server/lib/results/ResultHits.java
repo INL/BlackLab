@@ -203,8 +203,8 @@ public class ResultHits {
             if (p instanceof HitPropertyHitText) {
                 String valueForAnnotation = vals.get(i).toString();
                 HitPropertyHitText prop = ((HitPropertyHitText) p);
-                Annotation annot = prop.needsContext().get(0);
-                MatchSensitivity sensitivity = prop.getSensitivities().get(0);
+                Annotation annot = prop.getAnnotation();
+                MatchSensitivity sensitivity = prop.getSensitivity();
 
                 tp = new TextPatternAnd(tp, new TextPatternAnnotation(annot.name(),
                         new TextPatternSensitive(sensitivity, new TextPatternTerm(valueForAnnotation))));
