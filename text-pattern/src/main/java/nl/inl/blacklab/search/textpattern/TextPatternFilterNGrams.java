@@ -62,7 +62,7 @@ public class TextPatternFilterNGrams extends TextPattern {
 
     @Override
     public String toString() {
-        return "FILTERNGRAMS(" + clause + ", " + op + ", " + min + ", " + inf(max) + ")";
+        return "FILTERNGRAMS(" + clause + ", " + op + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
 }

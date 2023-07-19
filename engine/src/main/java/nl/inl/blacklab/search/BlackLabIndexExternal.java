@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -39,6 +40,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 import nl.inl.blacklab.search.lucene.SpanQueryTagsExternal;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -153,13 +155,17 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
 
     @Override
     public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
-            Map<String, String> attributes) {
-        return new SpanQueryTagsExternal(queryInfo, luceneField, tagName, attributes);
+            Map<String, String> attributes, String captureAs) {
+        BLSpanQuery q = new SpanQueryTagsExternal(queryInfo, luceneField, tagName, attributes);
+        if (!StringUtils.isEmpty(captureAs))
+            q = new SpanQueryCaptureGroup(q, captureAs, 0, 0);
+        return q;
     }
 
     @Override
     public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
-            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode,
+            String captureAs) {
         throw new UnsupportedOperationException("Relations queries are not supported with the external index format.");
     }
 

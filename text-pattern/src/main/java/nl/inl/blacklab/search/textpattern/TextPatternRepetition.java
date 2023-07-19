@@ -63,7 +63,7 @@ public class TextPatternRepetition extends TextPattern {
 
     @Override
     public String toString() {
-        return "REP(" + base.toString() + ", " + min + ", " + inf(max) + ")";
+        return "REP(" + base.toString() + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
 }

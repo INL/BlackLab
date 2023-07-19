@@ -8,7 +8,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
-import nl.inl.util.StringUtil;
 
 public class CorpusQueryLanguageParser {
     
@@ -63,10 +62,6 @@ public class CorpusQueryLanguageParser {
         return chopEnds(input);
     }
 
-    String escapeRegexCharacters(String name) {
-        return StringUtil.escapeRegexCharacters(name);
-    }
-
     TextPattern simplePattern(String str) {
         if (str.length() > 0) {
             if (str.charAt(0) != '^')
@@ -107,6 +102,25 @@ public class CorpusQueryLanguageParser {
         if (annot == null || annot.length() == 0)
             annot = defaultAnnotation;
         return new TextPatternAnnotation(annot, value);
+    }
+
+    /**
+     * Get the relation type from the operator.
+     *
+     * NOTE: if the operator started with ! or ^, this character
+     * must have been removed already!
+     *
+     * @param relationOperator relation operator with optional type regex, e.g. "-det->"
+     * @return relation type, e.g. "det", or ".*" if the operator contains no type regex
+     */
+    String getTypeRegexFromRelationOperator(String relationOperator) {
+        if (!relationOperator.matches("^--?.*--?>$"))
+            throw new RuntimeException("Invalid relation operator: " + relationOperator);
+        String type = relationOperator.replaceAll("--?>$", "");
+        type = type.replaceAll("^--?", "");
+        if (type.isEmpty())
+            type = ".*"; // any relation
+        return type;
     }
 
 }

@@ -1,5 +1,8 @@
 package nl.inl.blacklab.search;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -13,30 +16,16 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * object is passed to the translation methods and keeps track of this context.
  */
 public class QueryExecutionContext {
-    /**
-     * Get a simple execution context for a field. Used for testing/debugging
-     * purposes.
-     *
-     * @param index the index
-     * @param field field to get an execution context for
-     * @return the context
-     */
-    public static QueryExecutionContext simple(BlackLabIndex index, AnnotatedField field) {
-        return new QueryExecutionContext(index, field.mainAnnotation(), MatchSensitivity.INSENSITIVE);
-    }
 
     /** The index object, representing the BlackLab index */
     private final BlackLabIndex index;
 
-    /** What to prefix values with (for "subproperties", like PoS features, etc.) */
-    private final String subpropPrefix = "";
-
     /** The sensitivity variant of our annotation we'll search. */
     private final AnnotationSensitivity sensitivity;
-    
+
     /** The originally requested match sensitivity.
-     * 
-     *  This might be different from the AnnotationSensitivity we search, because not all 
+     *
+     *  This might be different from the AnnotationSensitivity we search, because not all
      *  fields support all sensitivities. */
     private final MatchSensitivity requestedSensitivity;
 
@@ -59,7 +48,7 @@ public class QueryExecutionContext {
         return new QueryExecutionContext(index, annotation, requestedSensitivity);
     }
 
-    public QueryExecutionContext withSensitive(MatchSensitivity matchSensitivity) {
+    public QueryExecutionContext withSensitivity(MatchSensitivity matchSensitivity) {
         return new QueryExecutionContext(index, sensitivity.annotation(), matchSensitivity);
     }
 
@@ -82,12 +71,17 @@ public class QueryExecutionContext {
     }
     
     /**
-     * Return sensitivity to use
+     * Return sensitivity to use.
      *
+     * Because not all annotations have all sensitivities, we may have to fall back to a different one.
+     *
+     * @param annotation annotation to search
+     * @param requestedSensitivity what sensitivity we'd ideally like
      * @return sensitivity to use
      */
-    private static AnnotationSensitivity getAppropriateSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
-        switch (matchSensitivity) {
+    private static AnnotationSensitivity getAppropriateSensitivity(Annotation annotation,
+            MatchSensitivity requestedSensitivity) {
+        switch (requestedSensitivity) {
         case INSENSITIVE:
             // search insensitive if available
             if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE))

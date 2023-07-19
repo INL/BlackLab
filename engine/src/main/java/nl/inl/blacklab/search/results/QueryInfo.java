@@ -35,20 +35,6 @@ public final class QueryInfo {
         this.useCache = useCache;
     }
 
-    /**
-     * Return a copy with a different index.
-     *
-     * If this is the same index, simply returns this object.
-     *
-     * @param newIndex index to use
-     * @return QueryInfo with the specified index
-     */
-    public QueryInfo withIndex(BlackLabIndex newIndex) {
-        if (this.index == newIndex)
-            return this;
-        return new QueryInfo(newIndex, field, useCache);
-    }
-
     /** @return the index that was searched. */
     public BlackLabIndex index() {
         return index;

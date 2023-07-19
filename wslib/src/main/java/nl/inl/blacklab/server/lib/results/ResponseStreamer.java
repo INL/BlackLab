@@ -368,79 +368,30 @@ public class ResponseStreamer {
         }
 
         // If any groups were captured, include them in the response
+        // (legacy, replaced by matchInfos)
         Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfo, MatchInfo.Type.SPAN);
         if (!capturedGroups.isEmpty()) {
             ds.startEntry("captureGroups").startList();
             for (Map.Entry<String, MatchInfo> capturedGroup: capturedGroups) {
-                ds.startItem("group").startMap();
-                {
-                    ds.entry("name", capturedGroup.getKey());
-                    ds.entry("start", capturedGroup.getValue().getSpanStart());
-                    ds.entry("end", capturedGroup.getValue().getSpanEnd());
-                }
-                ds.endMap().endItem();
+                ds.startItem("group");
+                legacyCapturedGroup(ds, capturedGroup);
+                ds.endItem();
             }
             ds.endList().endEntry();
         }
+
+        // Captured groups, (list of) relations, inline tags as a map
         String returnMatchInfo = params.getReturnMatchInfo();
         if (returnMatchInfo.isEmpty() || returnMatchInfo.equalsIgnoreCase("all")) {
-            // If any relations were matched, include that info as well
-            Set<Map.Entry<String, MatchInfo>> relationInfos = filterMatchInfo(matchInfo, MatchInfo.Type.RELATION);
-            if (!relationInfos.isEmpty()) {
-                ds.startEntry("relations").startList();
-                for (Map.Entry<String, MatchInfo> e: relationInfos) {
-                    RelationInfo relationInfo = (RelationInfo) e.getValue();
-                    ds.startItem("relation").startMap();
-                    {
-                        relationInfo(ds, relationInfo);
-                    }
-                    ds.endMap().endItem();
+            // If there's any match info, include it here
+            if (matchInfo != null && !matchInfo.isEmpty()) {
+                ds.startEntry("matchInfos").startMap();
+                for (Map.Entry<String, MatchInfo> e: matchInfo.entrySet()) {
+                    ds.startElEntry(e.getKey());
+                    matchInfo(ds, e.getValue());
+                    ds.endElEntry();
                 }
-                ds.endList().endEntry();
-            }
-            // Again for lists of relations
-            Set<Map.Entry<String, MatchInfo>> listRelations = filterMatchInfo(matchInfo, MatchInfo.Type.LIST_OF_RELATIONS);
-            if (!listRelations.isEmpty()) {
-                ds.startEntry("relationsInsideSpan").startMap();
-                for (Map.Entry<String, MatchInfo> e: listRelations) {
-                    String name = e.getKey();
-                    ds.startEntry(name).startList();
-                    {
-                        RelationListInfo relations = (RelationListInfo) e.getValue();
-                        for (RelationInfo relationInfo: relations.getRelations()) {
-                            ds.startItem("relation").startMap();
-                            {
-                                relationInfo(ds, relationInfo);
-                            }
-                            ds.endMap().endItem();
-                        }
-                    }
-                    ds.endList().endEntry();
-                }
-                ds.endList().endEntry();
-            }
-            // Again for inline tags
-            Set<Map.Entry<String, MatchInfo>> inlineTagInfo = filterMatchInfo(matchInfo, MatchInfo.Type.INLINE_TAG);
-            if (!inlineTagInfo.isEmpty()) {
-                ds.startEntry("inlineTags").startList();
-                for (Map.Entry<String, MatchInfo> e: inlineTagInfo) {
-                    RelationInfo relationInfo = (RelationInfo) e.getValue();
-                    ds.startItem("inlineTag").startMap();
-                    {
-                        String fullRelationType = relationInfo.getFullRelationType();
-                        String tagName = RelationUtil.classAndType(fullRelationType)[1];
-                        ds.entry("name", tagName);
-                        ds.startEntry("attributes").startMap();
-                        for (Map.Entry<String, String> attr: relationInfo.getAttributes().entrySet()) {
-                            ds.entry(attr.getKey(), attr.getValue());
-                        }
-                        ds.endMap().endEntry();
-                        ds.entry("start", relationInfo.getSourceStart());
-                        ds.entry("end", relationInfo.getTargetStart());
-                    }
-                    ds.endMap().endItem();
-                }
-                ds.endList().endEntry();
+                ds.endMap().endEntry();
             }
         }
 
@@ -470,14 +421,103 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    private static void relationInfo(DataStream ds, RelationInfo relationInfo) {
-        ds.entry("type", relationInfo.getFullRelationType());
-        if (!relationInfo.isRoot()) {
-            ds.entry("sourceStart", relationInfo.getSourceStart());
-            ds.entry("sourceEnd", relationInfo.getSourceEnd());
+    private static void legacyCapturedGroup(DataStream ds, Map.Entry<String, MatchInfo> capturedGroup) {
+        ds.startMap();
+        {
+            ds.entry("name", capturedGroup.getKey());
+            ds.entry("start", capturedGroup.getValue().getSpanStart());
+            ds.entry("end", capturedGroup.getValue().getSpanEnd());
         }
-        ds.entry("targetStart", relationInfo.getTargetStart());
-        ds.entry("targetEnd", relationInfo.getTargetEnd());
+        ds.endMap();
+    }
+
+    private static void matchInfo(DataStream ds, MatchInfo matchInfo) {
+        switch (matchInfo.getType()) {
+        case INLINE_TAG:
+            matchInfoInlineTag(ds, (RelationInfo) matchInfo);
+            break;
+        case RELATION:
+            matchInfoRelation(ds, (RelationInfo) matchInfo);
+            break;
+        case LIST_OF_RELATIONS:
+            matchInfoListOfRelations(ds, (RelationListInfo) matchInfo);
+            break;
+        default:
+            matchInfoCapturedGroup(ds, matchInfo);
+            break;
+        }
+    }
+
+    private static void matchInfoListOfRelations(DataStream ds, RelationListInfo listOfRelations) {
+        ds.startMap();
+        {
+            ds.entry("type", "list");
+            ds.entry("start", listOfRelations.getSpanStart());
+            ds.entry("end", listOfRelations.getSpanEnd());
+            ds.startEntry("infos").startList();
+            {
+                for (RelationInfo relationInfo: listOfRelations.getRelations()) {
+                    ds.startItem("info");
+                    matchInfo(ds, relationInfo);
+                    ds.endItem();
+                }
+            }
+            ds.endList().endEntry();
+        }
+        ds.endMap();
+    }
+
+    private static void matchInfoCapturedGroup(DataStream ds, MatchInfo capturedGroup) {
+        ds.startMap();
+        {
+            ds.entry("type", "span");
+            ds.entry("start", capturedGroup.getSpanStart());
+            ds.entry("end", capturedGroup.getSpanEnd());
+        }
+        ds.endMap();
+    }
+
+    private static void matchInfoInlineTag(DataStream ds, RelationInfo inlineTag) {
+        ds.startMap();
+        {
+            String fullRelationType = inlineTag.getFullRelationType();
+            String tagName = RelationUtil.classAndType(fullRelationType)[1];
+            ds.entry("type", "tag");
+            ds.entry("tagName", tagName);
+            if (!inlineTag.getAttributes().isEmpty()) {
+                ds.startEntry("attributes").startMap();
+                for (Map.Entry<String, String> attr: inlineTag.getAttributes().entrySet()) {
+                    ds.elEntry(attr.getKey(), attr.getValue());
+                }
+            }
+            ds.endMap().endEntry();
+            ds.entry("start", inlineTag.getSourceStart());
+            ds.entry("end", inlineTag.getTargetStart());
+        }
+        ds.endMap();
+    }
+
+    private static void matchInfoRelation(DataStream ds, RelationInfo relationInfo) {
+        ds.startMap();
+        {
+            ds.entry("type", "relation");
+            ds.entry("relType", relationInfo.getFullRelationType());
+            if (!relationInfo.getAttributes().isEmpty()) {
+                ds.startEntry("attributes").startMap();
+                for (Map.Entry<String, String> attr: relationInfo.getAttributes().entrySet()) {
+                    ds.elEntry(attr.getKey(), attr.getValue());
+                }
+            }
+            if (!relationInfo.isRoot()) {
+                ds.entry("sourceStart", relationInfo.getSourceStart());
+                ds.entry("sourceEnd", relationInfo.getSourceEnd());
+            }
+            ds.entry("targetStart", relationInfo.getTargetStart());
+            ds.entry("targetEnd", relationInfo.getTargetEnd());
+            ds.entry("start", relationInfo.getSpanStart());
+            ds.entry("end", relationInfo.getSpanEnd());
+        }
+        ds.endMap();
     }
 
     private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, MatchInfo.Type type) {

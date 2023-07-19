@@ -70,7 +70,7 @@ public class TextPatternExpansion extends TextPattern {
 
     @Override
     public String toString() {
-        return "EXPAND(" + clause + ", " + direction + ", " + min + ", " + inf(max) + ")";
+        return "EXPAND(" + clause + ", " + direction + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
 }

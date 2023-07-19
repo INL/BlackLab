@@ -317,8 +317,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 second = cl.get(highestPrioIndex);
                 if (traceOptimization)
                     logger.info("Execute lowest prio number combiner: " + highestPrioCombiner + "(" + first + ", " + second + ")");
-                first = cl.get(highestPrioIndex - 1);
-                second = cl.get(highestPrioIndex);
                 BLSpanQuery combined = highestPrioCombiner.combine(first, second, reader);
                 // (we used to rewrite() combined here just to be safe, but that could break optimizations later)
                 cl.remove(highestPrioIndex);

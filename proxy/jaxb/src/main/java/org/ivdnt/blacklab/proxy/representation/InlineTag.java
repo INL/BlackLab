@@ -15,7 +15,12 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class InlineTag {
-    public String name;
+
+    public int start;
+
+    public int end;
+
+    public String type;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @XmlJavaTypeAdapter(MapAdapter.class)
@@ -23,14 +28,10 @@ public class InlineTag {
     @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
     public Map<String, String> attributes;
 
-    public int start;
-
-    public int end;
-
     @Override
     public String toString() {
         return "InlineTag{" +
-                "name='" + name + '\'' +
+                "type='" + type + '\'' +
                 ", attributes='" + attributes + '\'' +
                 ", start=" + start +
                 ", end=" + end +

@@ -10,6 +10,13 @@ import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
  */
 public class TextPatternCaptureGroup extends TextPattern {
 
+    public static TextPattern get(TextPattern input, String groupName) {
+        if (input instanceof TextPatternTags) {
+            return ((TextPatternTags)input).withCapture(groupName);
+        }
+        return new TextPatternCaptureGroup(input, groupName);
+    }
+
     private final TextPattern input;
 
     private final String groupName;

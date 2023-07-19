@@ -31,7 +31,7 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
     final String captureAs;
 
     public SpanQueryCaptureRelationsWithinSpan(QueryInfo queryInfo, String relationFieldName, BLSpanQuery query, String toCapture, String captureAs, String relationType) {
-        super(query, new SpanQueryRelations(queryInfo, relationFieldName, relationType, Collections.emptyMap(), SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN));
+        super(query, new SpanQueryRelations(queryInfo, relationFieldName, relationType, Collections.emptyMap(), SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN, ""));
         this.toCapture = toCapture;
         this.captureAs = captureAs;
         this.guarantees = query.guarantees();

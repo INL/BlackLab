@@ -47,6 +47,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** Unique id for this SpansRelations (to avoid match info name collision) */
     private final int uniqueId;
 
+    /** Name to capture the relation info as */
+    private final String captureAs;
+
     /**
      * Construct SpansRelations.
      *
@@ -60,37 +63,30 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param direction direction of the relation
      * @param spanMode what span to return for the relations found
      * @param uniqueId unique id for this SpansRelations (to avoid match info name collision)
+     * @param captureAs name to capture the relation info as
      */
     public SpansRelations(String relationType, BLSpans relationsMatches,
             boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
-            int uniqueId) {
+            int uniqueId, String captureAs) {
         super(relationsMatches, SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
         this.relationType = relationType;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
         this.spanMode = spanMode;
         this.uniqueId = uniqueId;
+        this.captureAs = captureAs;
     }
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
-        // Only keep Unicode letters from relationType
-        String groupName = relationType.replaceAll("::", "-").replaceAll("[^\\p{L}-]", "");
-
-        /*
-
-        @@@@@
-        DISABLED FOR NOW BECAUSE IT MAKES THE GROUP NAMES UNPREDICTABLE. EXPLICITLY ASSIGNING NAMES IS PROBABLY BETTER
-        IF YOU PLAN ON REFERRING BACK TO IT LATER.
-
-        // Add our unique id to the group name to avoid collisions when matching the same
-        // relation type multiple times.
-        // Note that if query rewriting generates multiple SpansRelations for the same relation clause
-        // (e.g. because of optional query parts), those will all have the same id, which is what we want.
-        groupName += "-n" + uniqueId;
-
-
-        */
+        // Discard relation class (if specified), and only keep Unicode letters from relationType
+        // Note that this can result in collisions if your query contains the same relation type multiple times;
+        // if you run into this problem, explicitly capture the relation by a unique name.
+        String groupName = captureAs.isEmpty() ?
+                relationType.replaceAll("^.+::", "").replaceAll("[^\\p{L}]", "") :
+                captureAs;
+        if (groupName.isEmpty())
+            groupName = "rel";
 
         // Register our group
         this.groupIndex = context.registerMatchInfo(groupName);

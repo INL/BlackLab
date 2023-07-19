@@ -6,7 +6,7 @@
 
 We want to index (and search for) relations between two words, such as the dependency relation "verb X has object Y". In this case, we have two words, X and Y, and the `object` relation pointing from X to Y:
 
-    X  ---object-->  Y
+    X  -object->  Y
 
 Example:
 
@@ -57,7 +57,7 @@ We could index these in the same annotation spans are already indexed in (histor
 
 Better yet, we should generalize the notion of an "inline tag" such as `<s/>` we have right now to be indexed as a relation as well, i.e.:
 
-      X ---starts_sentence_ending_at--> Y
+      X -starts_sentence_ending_at-> Y
     Small     man    bites    large    dog.
 
 > **NOTE:** should there be a mechanism to exclude certain inline tag attributes (e.g. id) from being indexed in the term string? See below.
@@ -87,8 +87,8 @@ Obviously, we'd need a query to find a relation, such as:
 
 Of course, we also want to run more complex queries that combine several relations. There's two common ways to combine relations: two relations involving the same word, and two transitive relations. Examples:
 
-- Find verbs where "man" is object and "dog" is subject. In other words, we're looking for a word that is the source for two specific relations. Visually:     `man <--o-- X --s--> dog `
-- Find subjects where its verb is "bite" and that verb has "man" as its object. In other words, we're looking for a word that is the target for a word that is itself the source for another relation. Visually: `man <--o-- bite --s--> X`
+- Find verbs where "man" is object and "dog" is subject. In other words, we're looking for a word that is the source for two specific relations. Visually:     `man <-o- X -s-> dog `
+- Find subjects where its verb is "bite" and that verb has "man" as its object. In other words, we're looking for a word that is the target for a word that is itself the source for another relation. Visually: `man <-o- bite -s-> X`
 
 In the first case, we can search for both relations, and find matches between them based on their source positions.
 
@@ -141,14 +141,14 @@ The dependency relation operator is an n-ary operator to match one or more depen
 
 ```
 parent 
-   --deprel1--> child1;
-   --deprel2--> child2;
-  !--deprel3--> child3; ...
+   -deprel1-> child1;
+   -deprel2-> child2;
+  !-deprel3-> child3; ...
 ```
 
-`deprel` is interpreted as a regular expression. If you omit `deprel` from the operator (i.e. `---->`), it will match any relation type. A different way to write this is `--.*-->`. Also allowed for simplicity is `-->`.
+`deprel` is interpreted as a regular expression. If you omit `deprel` from the operator (i.e. `-->`), it will match any relation type. A different way to write this is `-.*->`.
 
-Note that the NOT version of the operator is `!--deprel-->`; the `!` here is part of the
+Note that the NOT version of the operator is `!-deprel->`; the `!` here is part of the
 operator symbol just like with `!=`, not a separate operator. Adding a NOT clause means "there exists no relation of this type to this target".
 
 The above operator expression is equivalent to the following functional query style:
@@ -163,7 +163,7 @@ rmatch(parent,
 Similarly
 
 ```
-parent --deprel1--> child --deprel2--> grandchild
+parent -deprel1-> child -deprel2-> grandchild
 ```
 
 will be equivalent to
@@ -189,23 +189,23 @@ The source and target operands for the relation operators can be replaced by `_`
 Examples:
 
     # Find subjects that are nouns
-    _ --nsubj--> [pos="NOUN"]
+    _ -nsubj-> [pos="NOUN"]
 
     # Find verbs with an object but no subject
-    [pos="VERB"]    --obj--> _ ;
-                 !--nsubj--> _
+    [pos="VERB"]    -obj-> _ ;
+                 !-nsubj-> _
 
     # Match node with children of certain types)
-    _  --nmod--> _ ;
-        --det--> _ ;
-     --advmod--> _
+    _  -nmod-> _ ;
+        -det-> _ ;
+     -advmod-> _
 
     # Find two different adjectives
-    _ --amod--> _; --amod--> _
+    _ -amod-> _; -amod-> _
 
     # Match a series of descendants of certain types, starting with a root
     # (i.e. vertical paths in dependency trees)
-    ^--> _ --nmod--> _ --case--> _
+    ^-> _ -nmod-> _ -case-> _
 
 ### Generic syntax for relations
 
@@ -223,7 +223,7 @@ Below is a quick reference for these basic "building block" relations functions.
 
 We can find a relation by type and target using:
 
-    rel(reltype = ".*", target = []*, spanMode = 'source', direction = 'both')
+    rel(reltype = ".*", target = []*, spanMode = 'source', captureAs = '', direction = 'both')
 
 If `reltype` does not contain the substring `::`, it will be prefixed with the default relation class `dep::` (for dependency relations). So `.*` would match all dependency relations and `.*::.*` would match relations of all types. The default relation class could be made configurable, of course.
 
@@ -237,6 +237,8 @@ Note that this returns the _source_ of the relation by default, as we've already
 - `"full"` (span becomes the full span of the relation, including source and target)
 
 By default `rel()` returns spans that match the _source_ of the relation. So e.g. `rel('nsubj')` will find words that have a subject, and `rel('nsubj', 'target')` will find the subjects themselves, and `rel('nsubj', 'full')` will find spans that include both the source and target.
+
+If `captureAs` is set to a non-empty string, the relation will be captured as a group with that name. This is useful to avoid collisions if you're capturing the same relation type multiple times in a query. The same can be achieved in operator form with `_&nbsp;A:-det->&nbsp;_` to capture these relations as `A`.
 
 `direction` can be set to `both` (default), `root` (only root relations), `forward` or `backward`.
 

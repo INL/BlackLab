@@ -1,7 +1,7 @@
 # BARK 10 - Searching tree-like structures
 
 - **type:** change
-- **status:** planned (2023)
+- **status:** in development
 
 We want to enable additional search operations on tree-like structures.
 
@@ -12,13 +12,13 @@ This task is part of the CLARIAH-NL project.
 
 ## How?
 
-Open question. Full treebank functionality at speeds competitive with dedicated solutions is probably not in the cards for BlackLab, but with some clever indexing, partial support with reasonable performance should be possible.
+It's now possible to index relationships between (groups of) words, such as dependency relations, and query on them. Querying is limited to explicit parent-child relationships; that is, restrictions on descendants are not supported (yet). We've extended Corpus Query Language to enable relations search. Performance seems to be decent, but certain dedicated solutions may be faster and/or provide more features.
 
-Some new search primitives will be required, such as querying by relationship, and some existing features may need to be improved, such as the containing/within operators.
+See the [plan](../technical/design/plan-relations.md) for more details.
 
 ## When?
 
-before 2024
+Experimental version should be ready before Q3 of 2023. It will be released with version 4.0, probably before the end of 2023.
 
 ## Impact on users
 

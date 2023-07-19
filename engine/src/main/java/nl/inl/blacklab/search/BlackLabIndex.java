@@ -50,10 +50,12 @@ public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
-    BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes);
+    BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes,
+            String captureAs);
 
     BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
-            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode);
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode,
+            String captureAs);
 
     IndexType getType();
 

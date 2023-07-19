@@ -5,7 +5,6 @@ import java.util.Collection;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -183,21 +182,27 @@ public class TestQueryRewrite {
                 "SEQ(TERM(contents%lemma@i:a), TERM(contents%word@i:a))");
     }
 
-    // Ignored because test relies on implementation details that differ between external and integrated index.
-    // But ideally we would like to test if queries are rewritten as expected.
-    @Ignore
+    String repTags(String tagName, int attrValue) {
+        if (index.getType() == BlackLabIndex.IndexType.INTEGRATED)
+            return "TAGS(" + tagName + ", {test=" + attrValue + "})";
+        return "POSFILTER(TAGS(" + tagName + "), TERM(contents%" + relName + "@s:@test__" + attrValue + "), STARTS_AT)";
+    }
+
     @Test
     public void testRewriteRepetitionTags() {
+        String tagsS1  = repTags("s", 1);
+        String tagsT  = repTags("t", 1);
+        String tagsS2 = repTags("s", 2);
         assertRewrite("<s test='1' /> <s test='1' />",
                 "SEQ(TAGS(s, {test=1}), TAGS(s, {test=1}))",
-                "REP(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), 2, 2)");
+                "REP(" + tagsS1 + ", 2, 2)");
 
         assertRewrite("<s test='1' /> <t test='1' />",
                 "SEQ(TAGS(s, {test=1}), TAGS(t, {test=1}))",
-                "SEQ(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), POSFILTER(TAGS(t), TERM(contents%" + relName + "@s:@test__1), STARTS_AT))");
+                "SEQ(" + tagsS1 + ", " + tagsT + ")");
         assertRewrite("<s test='1' /> <s test='2' />",
                 "SEQ(TAGS(s, {test=1}), TAGS(s, {test=2}))",
-                "SEQ(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__2), STARTS_AT))");
+                "SEQ(" + tagsS1 + ", " + tagsS2 + ")");
     }
 
     @Test
@@ -239,11 +244,10 @@ public class TestQueryRewrite {
                 "EXPAND(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), R, 1, 2)");
     }
 
-    @Ignore
     @Test
     public void testRewriteContaining() {
-        assertRewriteResult("(<s/> containing 'a') (<s/> containing 'a')",
-                "REP(POSFILTER(TAGS(s), TERM(contents%word@i:a), CONTAINING), 2, 2)");
+        String expectedAfterRewrite = "REP(POSFILTER(TAGS(s), TERM(contents%word@i:a), CONTAINING), 2, 2)";
+        assertRewriteResult("(<s/> containing 'a') (<s/> containing 'a')", expectedAfterRewrite);
     }
 
     @Test
@@ -293,7 +297,6 @@ public class TestQueryRewrite {
         assertRewriteResult("'a'+ 'a'+", "REP(TERM(contents%word@i:a), 2, INF)");
     }
 
-    @Ignore
     @Test
     public void testRewriteTags() {
         assertRewriteResult("<s/> containing 'a' 'b'",

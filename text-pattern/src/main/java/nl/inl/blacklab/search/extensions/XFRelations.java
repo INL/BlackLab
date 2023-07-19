@@ -39,12 +39,13 @@ public class XFRelations implements ExtensionFunctionClass {
         if (isAnyNGram(matchTarget))
             matchTarget = null;
         RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.fromCode((String)args.get(2));
-        SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.fromCode((String)args.get(3));
+        String label = (String)args.get(3);
+        SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.fromCode((String)args.get(4));
         String field = context.withRelationAnnotation().luceneField();
         if (matchTarget != null) {
             // Ensure relation matches given target
             BLSpanQuery rel = new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String>) null,
-                    direction, RelationInfo.SpanMode.TARGET);
+                    direction, RelationInfo.SpanMode.TARGET, label);
             rel = new SpanQueryAnd(List.of(rel, matchTarget));
             ((SpanQueryAnd)rel).setRequireUniqueRelations(true);
             if (spanMode != RelationInfo.SpanMode.TARGET)
@@ -52,7 +53,7 @@ public class XFRelations implements ExtensionFunctionClass {
             return rel;
         } else {
             return new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String>) null,
-                    direction, spanMode);
+                    direction, spanMode, label);
         }
     }
 
@@ -137,8 +138,8 @@ public class XFRelations implements ExtensionFunctionClass {
     }
 
     public void register() {
-        QueryExtensions.register("rel", XFRelations::rel, QueryExtensions.ARGS_SQSS, Arrays.asList(".*",
-                QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "both"));
+        QueryExtensions.register("rel", XFRelations::rel, QueryExtensions.ARGS_SQSSS, Arrays.asList(".*",
+                QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "", "both"));
         QueryExtensions.register("rmatch", XFRelations::rmatch, QueryExtensions.ARGS_VAR_Q,
                 List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM));
         QueryExtensions.register("rspan", XFRelations::rspan, QueryExtensions.ARGS_QS, Arrays.asList(null, "full"));

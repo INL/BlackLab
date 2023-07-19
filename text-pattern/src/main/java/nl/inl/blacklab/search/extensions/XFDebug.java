@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 /**
  * Extension functions for debugging forward index matching.
  */
-public class XFDebugForwardIndexMatching implements ExtensionFunctionClass {
+public class XFDebug implements ExtensionFunctionClass {
 
     /** Resolve second clause using forward index and the first clause using regular reverse index */
     private static BLSpanQuery _FI1(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
@@ -34,9 +34,15 @@ public class XFDebugForwardIndexMatching implements ExtensionFunctionClass {
                 fiAccessor);
     }
 
+    /** Return our parameter unchanged. Mainly useful to prevent certain optimizations from being applied. */
+    private static BLSpanQuery _ident(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
+        return (BLSpanQuery) args.get(0);
+    }
+
     public void register() {
-        QueryExtensions.register("_FI1", XFDebugForwardIndexMatching::_FI1, QueryExtensions.ARGS_QQ);
-        QueryExtensions.register("_FI2", XFDebugForwardIndexMatching::_FI2, QueryExtensions.ARGS_QQ);
+        QueryExtensions.register("_FI1", XFDebug::_FI1, QueryExtensions.ARGS_QQ);
+        QueryExtensions.register("_FI2", XFDebug::_FI2, QueryExtensions.ARGS_QQ);
+        QueryExtensions.register("_ident", XFDebug::_ident, QueryExtensions.ARGS_Q);
     }
 
 }

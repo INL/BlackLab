@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.proxy.representation;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -29,17 +30,9 @@ public class Hit  {
     @JsonProperty("captureGroups")
     public List<CaptureGroup> captureGroups;
 
-    @XmlElementWrapper(name="relations")
-    @XmlElement(name = "relation")
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("relations")
-    public List<Relation> relations;
-
-    @XmlElementWrapper(name="inlineTags")
-    @XmlElement(name = "inlineTag")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("inlineTags")
-    public List<InlineTag> inlineTags;
+    @JsonProperty("matchInfos")
+    public Map<String, MatchInfo> matchInfo;
 
     public ContextWords left;
 
@@ -64,6 +57,7 @@ public class Hit  {
                 ", start=" + start +
                 ", end=" + end +
                 ", captureGroups=" + captureGroups +
+                ", matchInfo=" + matchInfo +
                 ", left=" + left +
                 ", match=" + match +
                 ", right=" + right +

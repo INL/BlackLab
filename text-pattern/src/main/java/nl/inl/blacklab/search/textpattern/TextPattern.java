@@ -21,10 +21,6 @@ public abstract class TextPattern {
 
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 
-    static String inf(int max) {
-        return BLSpanQuery.inf(max);
-    }
-
     /**
      * Translate this TextPattern into a BLSpanQuery.
      *
@@ -69,5 +65,4 @@ public abstract class TextPattern {
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
         return spanQuery;
     }
-
 }

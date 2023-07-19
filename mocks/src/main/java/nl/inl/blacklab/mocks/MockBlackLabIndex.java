@@ -101,7 +101,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public QueryExecutionContext defaultExecutionContext(AnnotatedField field) {
-        return QueryExecutionContext.simple(this, field);
+        return new QueryExecutionContext(this, field.mainAnnotation(), MatchSensitivity.INSENSITIVE);
     }
 
     @Override
@@ -270,13 +270,14 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
-            Map<String, String> attributes) {
+            Map<String, String> attributes, String captureAs) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
-            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode,
+            String captureAs) {
         throw new UnsupportedOperationException();
     }
 

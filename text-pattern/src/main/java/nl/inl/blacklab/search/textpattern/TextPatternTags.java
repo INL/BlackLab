@@ -4,8 +4,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.lucene.index.Term;
-
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -19,17 +17,12 @@ public class TextPatternTags extends TextPattern {
 
     final Map<String, String> attr;
 
-    public TextPatternTags(String elementName, Map<String, String> attr) {
+    private final String captureAs;
+
+    public TextPatternTags(String elementName, Map<String, String> attr, String captureAs) {
         this.elementName = elementName;
-        this.attr = attr;
-    }
-
-    public TextPatternTags(String elementName) {
-        this(elementName, Collections.emptyMap());
-    }
-
-    public Term getTerm(String fieldName) {
-        return new Term(fieldName, elementName);
+        this.attr = attr == null ? Collections.emptyMap() : attr;
+        this.captureAs = captureAs == null ? "" : captureAs;
     }
 
     @Override
@@ -44,7 +37,7 @@ public class TextPatternTags extends TextPattern {
 
         // Return the proper SpanQuery depending on index version
         QueryInfo queryInfo = QueryInfo.create(context.index(), context.field());
-        return context.index().tagQuery(queryInfo, context.luceneField(), elementName1, attrOptIns);
+        return context.index().tagQuery(queryInfo, context.luceneField(), elementName1, attrOptIns, captureAs);
     }
 
     @Override
@@ -68,4 +61,7 @@ public class TextPatternTags extends TextPattern {
         return "TAGS(" + elementName + ")";
     }
 
+    public TextPatternTags withCapture(String groupName) {
+        return new TextPatternTags(elementName, attr, groupName);
+    }
 }

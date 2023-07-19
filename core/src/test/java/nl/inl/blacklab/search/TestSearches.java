@@ -21,8 +21,8 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
@@ -621,17 +621,18 @@ public class TestSearches {
             "A:[] B:[] :: start(A) < start(B)",
 
             // Relations
-            "[]* --nmod--> []*",
-            "A:[]* --nmod--> B:[]*",
-            "A:[]* --nmod--> B:[]* :: A.word > B.word"
+            "[]* -nmod-> []*",
+            "A:[]* -nmod-> B:[]*",
+            "A:[]* -nmod-> B:[]* :: A.word > B.word"
         );
         for (String query: queries) {
             TextPattern p1 = CorpusQueryLanguageParser.parse(query);
             TextPattern p2 = CorpusQueryLanguageParser.parse(query);
             Assert.assertEquals(p1, p2);
             Assert.assertEquals(p1.hashCode(), p2.hashCode());
-            QueryExecutionContext context = QueryExecutionContext.simple(testIndex.index(),
-                    testIndex.index().mainAnnotatedField());
+            BlackLabIndex index = testIndex.index();
+            QueryExecutionContext context = new QueryExecutionContext(index,
+                    index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE);
             BLSpanQuery q1 = p1.translate(context);
             BLSpanQuery q2 = p2.translate(context);
             Assert.assertEquals(q1, q2);

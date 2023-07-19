@@ -32,7 +32,7 @@ public class TextPatternSensitive extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return input.translate(context.withSensitive(sensitivity));
+        return input.translate(context.withSensitivity(sensitivity));
     }
 
     @Override

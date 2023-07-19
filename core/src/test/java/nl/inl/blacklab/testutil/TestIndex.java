@@ -112,7 +112,7 @@ public class TestIndex {
             // Note that "The|DOH|ZZZ" will be indexed as multiple values at the same token position.
             // All values will be searchable in the reverse index, but only the first will be stored in the
             // forward index.
-            "<doc pid='0' title='Pangram'><s><entity>"
+            "<doc pid='0' title='Pangram'><s test='1'><entity>"
                 + "<w l='the'   p='art'>The|DOH|ZZZ</w> "
                 + "<w l='quick' p='adj'>quick</w> "
                 + "<w l='brown' p='adj'>brown</w> "
@@ -141,7 +141,7 @@ public class TestIndex {
                     + "<w l='aap'>aap</w> "
                     + "</doc>",
 
-            "<doc pid='2' title='Star Wars'> <s><w l='may' p='vrb'>May</w> "
+            "<doc pid='2' title='Star Wars'> <s test='2'><w l='may' p='vrb'>May</w> "
                     + "<entity><w l='the' p='art'>the</w> "
                     + "<w l='force' p='nou'>Force</w></entity> "
                     + "<w l='be' p='vrb'>be</w> "
@@ -228,6 +228,10 @@ public class TestIndex {
 
     public IndexType getIndexType() {
         return index.getType();
+    }
+
+    public boolean isPreindexed() {
+        return dir == null;
     }
 
     @Override

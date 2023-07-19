@@ -47,14 +47,16 @@ public class DataStreamXml extends DataStreamAbstract {
         return print(">").upindent().newline();
     }
 
-    private DataStream openEl(String name) {
+    private DataStreamXml openEl(String name) {
         startOpenEl(name);
-        return endOpenEl();
+        endOpenEl();
+        return this;
     }
 
-    public DataStreamAbstract closeEl() {
+    public DataStreamXml closeEl() {
         String name = tagStack.remove(tagStack.size() - 1);
-        return downindent().indent().print("</").print(name).print(">").newline();
+        downindent().indent().print("</").print(name).print(">").newline();
+        return this;
     }
 
     @Override
@@ -234,6 +236,16 @@ public class DataStreamXml extends DataStreamAbstract {
     }
 
     @Override
+    public DataStream startElEntry(String key) {
+        return openEl("entry").openEl("key").value(key).closeEl().openEl("value");
+    }
+
+    @Override
+    public DataStream endElEntry() {
+        return closeEl().closeEl(); // close value and entry elements
+    }
+
+    @Override
     public DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values) {
         upindent();
         int valuesPerWord = annotations.size();
@@ -262,13 +274,14 @@ public class DataStreamXml extends DataStreamAbstract {
     }
 
     @Override
-    public DataStream value(String value) {
+    public DataStreamXml value(String value) {
         indent();
         if (value == null)
             print("(null)");
         else
             print(StringEscapeUtils.escapeXml10(value));
-        return newline();
+        newline();
+        return this;
     }
 
     @Override

@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -39,6 +41,8 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     /** We assign unique ids to SpanQueryRelations clauses, so the match info names for
      *  multiple relation clauses will be unique. */
     private static AtomicInteger uniqueIdCounter = new AtomicInteger();
+
+    private Map<String, String> attributes;
 
     public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction,
             RelationInfo.SpanMode spanMode) {
@@ -121,7 +125,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     public BLSpanQuery withSpanMode(RelationInfo.SpanMode mode) {
         if (this.spanMode == mode)
             return this;
-        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, clause, direction, mode);
+        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, attributes, clause, direction, mode, captureAs);
     }
 
     public enum Direction {
@@ -174,11 +178,13 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private RelationInfo.SpanMode spanMode;
 
+    private String captureAs;
+
     /** Ensure unique match info name to avoid collision when matching the same relation type twice */
     private int uniqueId = uniqueIdCounter.getAndIncrement();
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
-            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs) {
         super(queryInfo);
 
         if (StringUtils.isEmpty(relationFieldName))
@@ -187,9 +193,8 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             throw new IllegalArgumentException("ALL_SPANS makes no sense for SpanQueryRelations");
 
         // Construct the clause from the field, relation type and attributes
-        BLSpanQuery clause = relationsClause(queryInfo, relationFieldName, relationType,
-                attributes);
-        init(relationFieldName, relationType, clause, direction, spanMode);
+        BLSpanQuery clause = relationsClause(queryInfo, relationFieldName, relationType, attributes);
+        init(relationFieldName, relationType, attributes, clause, direction, spanMode, captureAs);
     }
 
     public static BLSpanQuery relationsClause(QueryInfo queryInfo, String relationFieldName, String relationType,
@@ -199,20 +204,23 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         return new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
     }
 
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause,
-            Direction direction, RelationInfo.SpanMode spanMode) {
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
+            Map<String, String> attributes, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode,
+            String captureAs) {
         super(queryInfo);
-        init(relationFieldName, relationType, clause, direction, spanMode);
+        init(relationFieldName, relationType, attributes, clause, direction, spanMode, captureAs);
     }
 
-    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction,
-            RelationInfo.SpanMode spanMode) {
-        this.relationType = relationType;
-        baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
+    private void init(String relationFieldName, String relationType, Map<String, String> attributes, BLSpanQuery clause, Direction direction,
+            RelationInfo.SpanMode spanMode, String captureAs) {
         this.relationFieldName = relationFieldName;
+        baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
+        this.relationType = relationType;
+        this.attributes = new HashMap<>(attributes == null ? Collections.emptyMap() : attributes);
         this.clause = clause;
         this.direction = direction;
         this.spanMode = spanMode;
+        this.captureAs = captureAs == null ? "" : captureAs;
         this.guarantees = createGuarantees(clause.guarantees(), direction, spanMode);
     }
 
@@ -221,7 +229,8 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         BLSpanQuery rewritten = clause.rewrite(reader);
         if (rewritten == clause)
             return this;
-        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, rewritten, direction, spanMode);
+        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, attributes, rewritten, direction,
+                spanMode, captureAs);
     }
 
     @Override
@@ -270,7 +279,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode, uniqueId);
+            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode, uniqueId, captureAs);
         }
 
     }
@@ -278,11 +287,15 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     @Override
     public String toString(String field) {
         String inlineTagsPrefix = RelationUtil.RELATION_CLASS_INLINE_TAG + RelationUtil.RELATION_CLASS_TYPE_SEPARATOR;
-        if (relationType.startsWith(inlineTagsPrefix))
-            return "TAGS(" + relationType + ")";
-        else {
+        String optCaptureAs = captureAs.isEmpty() ? "" : ", cap:" + captureAs;
+        if (relationType.startsWith(inlineTagsPrefix)) {
+            String type = relationType.substring(inlineTagsPrefix.length());
+            String optAttr = attributes != null && !attributes.isEmpty() ? ", " + attributes : "";
+            return "TAGS(" + type + optAttr + optCaptureAs + ")";
+        } else {
             // relations query
-            return "REL(" + relationType + ", " + spanMode + (direction != Direction.BOTH_DIRECTIONS ? ", " + direction : "") + ")";
+            String optDirection = direction != Direction.BOTH_DIRECTIONS ? ", dir:" + direction : "";
+            return "REL(" + relationType + ", " + spanMode + optDirection + optCaptureAs + ")";
         }
     }
 

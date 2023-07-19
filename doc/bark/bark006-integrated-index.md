@@ -1,7 +1,7 @@
 # BARK 6 - Integrated index format
 
 - **type:** change
-- **status:** experimental
+- **status:** finished
 
 All external files incorporated into the Lucene index.
 
@@ -17,8 +17,8 @@ All external files incorporated into the Lucene index.
 
 ## Impact on users
 
-We're adding this new index format as an option, in addition to the classic index format. This should not affect existing users.
+We've added this new index format as an option, in addition to the classic index format. This should not affect existing users.
 
-In a future version, when we've verified that the integrated format works well, we will make it the default for new indexes. It will still be possible to create classic indexes by specifying an option.
+We are currently running the integrated format in production internally and will gradually roll it out externally as well. Eventually, it will become the default in BlackLab for new indexes. It will still be possible to create classic indexes by specifying an option.
 
-Eventually, the classic index format will be deprecated and eventually dropped, but that will be on a scale of years, and only if supporting it becomes a burden.
+Eventually, the classic index format will be deprecated and ultimately dropped, but that will be on a scale of years, and only if supporting it becomes a burden.

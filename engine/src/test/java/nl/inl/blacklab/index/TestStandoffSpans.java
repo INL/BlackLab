@@ -81,7 +81,7 @@ public class TestStandoffSpans {
         AnnotatedField field = testIndex.mainAnnotatedField();
         String luceneFieldName = field.annotation(AnnotatedFieldNameUtil.relationAnnotationName(testIndex.getType())).
                 sensitivity(MatchSensitivity.SENSITIVE).luceneField();
-        BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), luceneFieldName, "character", null);
+        BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), luceneFieldName, "character", null, null);
         Hits results = s.find(query).execute();
         Assert.assertEquals(2, results.size());
         Assert.assertEquals(0, results.get(0).start());

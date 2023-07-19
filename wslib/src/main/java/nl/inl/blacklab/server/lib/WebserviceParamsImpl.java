@@ -142,7 +142,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
             if (!isWithinTag(tagName)) {
                 // add "within <TAGNAME/>" to the pattern, so we can produce the requested context later
                 pattern = new TextPatternPositionFilter(pattern,
-                        new TextPatternTags(tagName), SpanQueryPositionFilter.Operation.WITHIN);
+                        new TextPatternTags(tagName, null, null),
+                        SpanQueryPositionFilter.Operation.WITHIN);
             }
         }
         return pattern == null ? Optional.empty() : Optional.of(pattern);

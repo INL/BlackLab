@@ -69,6 +69,7 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "\"!\"",
     "\".\"",
     "\";\"",
+    "\":\"",
     "\"/\"",
     "\"*\"",
     "\"+\"",
@@ -79,7 +80,6 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "\"&\"",
     "\"|\"",
     "\"->\"",
-    "\":\"",
     "\"[\"",
     "\"]\"",
   };

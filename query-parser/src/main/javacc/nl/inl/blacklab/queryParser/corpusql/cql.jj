@@ -90,9 +90,10 @@ TOKEN [IGNORE_CASE]:
 |   <NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |   <NUMBER: (["0"-"9"])+ >
-    /* valid are e.g. --> ----> --root--> --.*--> --a-b--> (and same preceded by ^) */
-|   <ROOT_DEP_OP: "^--" ( ( ~[">"] (~["-"] | "-" ~["-"] )* )? "--" )? ">" >
-|   <DEP_OP: ("!")? "--" ( ( ~[">"] (~["-"] | "-" ~["-"] )* )? "--" )? ">" >
+    /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
+    /* double-dash versions ----> --root--> --.*--> --a-b--> are DEPRECATED; don't use! */
+|   <ROOT_DEP_OP: "^" ( "-" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "-" | "--" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "--" ) ">" >
+|   <DEP_OP: ("!")? ( "-" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "-" | "--" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "--" ) ">" >
 |   <QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 |   <SINGLE_QUOTED_STRING: "'" (~["'","\\"] | "\\" ~[] )* "'" >
 }
@@ -274,6 +275,7 @@ TextPattern relationQuery():
 {
     parent=captureQuery()                            { clauses.add(parent); }
     [
+        LOOKAHEAD(3)
         child=childRelation()                        { clauses.add(child); }
         ( LOOKAHEAD( ";" ) ";" child=childRelation() { clauses.add(child); } )*   /* LOOKAHEAD( ";" ) suppresses dangling-else problem */
     ]
@@ -292,13 +294,15 @@ TextPattern childRelation():
 {
     Pair<Boolean, String> relType = null;
     TextPattern target = null;
+    String label = "";
 }
 {
+    [ label=captureLabel() ":" ]
     relType=relationType() target=relationQuery()
     {
         boolean negate = relType.getLeft();
         String type = relType.getRight();
-        target = new TextPatternQueryFunction("rel", List.of(type, target));
+        target = new TextPatternQueryFunction("rel", List.of(type, target, "source", label));
         if (negate)
             target = new TextPatternNot(target);
         return target;
@@ -318,11 +322,8 @@ Pair<Boolean, String> relationType():
             negate = true;
             text = text.substring(1);
         }
-        text = text.replaceAll("-->$", "");
-        text = text.replaceAll("^--", "");
-        if (text.isEmpty())
-            text = ".*"; // any relation
-        return Pair.of(negate, text);
+        String typeRegex = wrapper.getTypeRegexFromRelationOperator(text);
+        return Pair.of(negate, typeRegex);
     }
 }
 
@@ -336,11 +337,8 @@ TextPattern rootRelationType():
     {
         String text = t.toString();
         text = text.substring(1); // strip ^ at start
-        text = text.replaceAll("-->$", "");
-        text = text.replaceAll("^--", "");
-        if (text.isEmpty())
-            text = ".*"; // any relation
-        return new TextPatternQueryFunction("rel", List.of(text, target, "target", "root"));
+        String typeRegex = wrapper.getTypeRegexFromRelationOperator(text);
+        return new TextPatternQueryFunction("rel", List.of(typeRegex, target, "target", "root"));
     }
 }
 
@@ -360,7 +358,7 @@ TextPattern tag():
         if (endTagSlash != null && selfCloseSlash != null) {
             throw new MalformedTagException();
         }
-        TextPattern tags = new TextPatternTags(tagName.toString(), attr);
+        TextPattern tags = new TextPatternTags(tagName.toString(), attr, "");
         if (selfCloseSlash != null)
             return tags;
         if (endTagSlash != null) {
@@ -436,7 +434,7 @@ TextPattern captureQuery():
 {
     LOOKAHEAD(2)
     m=sequencePartNoCapture()    { return m; }
-|   label=captureLabel() ":" m=sequencePartNoCapture()    { return new TextPatternCaptureGroup(m, label); }
+|   label=captureLabel() ":" m=sequencePartNoCapture()    { return TextPatternCaptureGroup.get(m, label); }
 }
 
 

@@ -175,11 +175,24 @@ public interface DataStream {
         return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
     }
 
+    default DataStream elEntry(String key, String value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
     DataStream startAttrEntry(String elementName, String attrName, String key);
 
     DataStream startAttrEntry(String elementName, String attrName, int key);
 
     DataStream endAttrEntry();
+
+    /** An entry that will be rendered using separate elements in XML (default JAXB serialization) */
+    default DataStream startElEntry(String key) {
+        return startEntry(key);
+    }
+
+    default DataStream endElEntry() {
+        return endEntry();
+    }
 
     DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values);
 

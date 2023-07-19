@@ -74,7 +74,10 @@ public class QueryExtensions {
     /** A string, a query, and two strings */
     public static final List<ArgType> ARGS_SQSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING);
 
-    /** A query, a string and another query */
+    /** A string, a query, and three strings */
+    public static final List<ArgType> ARGS_SQSSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
+
+    /** A query and three strings */
     public static final List<ArgType> ARGS_QSSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
 
     enum ArgType {
@@ -123,8 +126,8 @@ public class QueryExtensions {
     private static Map<String, FuncInfo> functions = new HashMap<>();
 
     static {
-        register(XFDebugForwardIndexMatching.class); // _FI1(), _FI2()
-        register(XFRelations.class);                 // rel(), ...
+        register(XFDebug.class);      // Debug functions such as _ident(), _FI1(), _FI2()
+        register(XFRelations.class);  // Functions for working with relations
     }
 
     public static void register(Class<? extends ExtensionFunctionClass> extClass) {

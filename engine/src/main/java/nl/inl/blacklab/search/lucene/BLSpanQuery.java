@@ -78,11 +78,10 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      */
     public static int addMaxValues(int a, int b) {
         if (a < 0 || b < 0)
-            throw new BlackLabRuntimeException(
-                    "max values cannot be negative (possible use of old -1 == max, now BLSpanQuery.MAX_UNLIMITED)");
+            throw new BlackLabRuntimeException("max values cannot be negative");
         // Is either value infinite?
-        if (a == Integer.MAX_VALUE || b == Integer.MAX_VALUE)
-            return Integer.MAX_VALUE; // Yes, result is infinite
+        if (a == MAX_UNLIMITED || b == MAX_UNLIMITED)
+            return MAX_UNLIMITED; // Yes, result is infinite
         // Add regular values
         return a + b;
     }
@@ -271,7 +270,12 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     }
 
     public abstract String getRealField();
-    
+
+    /**
+     * Set the query info object.
+     *
+     * @param queryInfo query info object
+     */
     public void setQueryInfo(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
     }
