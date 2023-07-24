@@ -2,18 +2,19 @@ package nl.inl.blacklab.server.lib.results;
 
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultSummaryNumDocs {
     private boolean isViewDocGroup;
     private DocResults docResults;
-    private boolean countFailed;
+    private SearchTimings timings;
     private CorpusSize subcorpusSize;
 
-    ResultSummaryNumDocs(boolean isViewDocGroup, DocResults docResults, boolean countFailed,
+    ResultSummaryNumDocs(boolean isViewDocGroup, DocResults docResults, SearchTimings timings,
             CorpusSize subcorpusSize) {
         this.isViewDocGroup = isViewDocGroup;
         this.docResults = docResults;
-        this.countFailed = countFailed;
+        this.timings = timings;
         this.subcorpusSize = subcorpusSize;
     }
 
@@ -26,7 +27,11 @@ public class ResultSummaryNumDocs {
     }
 
     public boolean isCountFailed() {
-        return countFailed;
+        return timings.getCountTime() < 0;
+    }
+
+    public SearchTimings getTimings() {
+        return timings;
     }
 
     public CorpusSize getSubcorpusSize() {

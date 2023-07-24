@@ -41,7 +41,7 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     }
 
     public HitPropertyAfterHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens) {
-        super("right context", "right", index, annotation, sensitivity, false);
+        super("context after", "right", index, annotation, sensitivity, false);
         this.numberOfTokens = numberOfTokens >= 1 ? numberOfTokens : index.defaultContextSize().after();
     }
 

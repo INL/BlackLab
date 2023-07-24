@@ -37,8 +37,6 @@ public class ResultHitsGrouped {
 
     private final WindowStats window;
 
-    private final SearchTimings timings;
-
     private final ResultsStats hitsStats;
 
     private ResultsStats docsStats;
@@ -83,7 +81,6 @@ public class ResultHitsGrouped {
                 : requestedWindowSize;
         window = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize,
                 actualWindowSize);
-        timings = new SearchTimings(search.timer().time(), 0);
 
         hitsStats = groups.hitsStats();
         docsStats = groups.docsStats();
@@ -120,10 +117,11 @@ public class ResultHitsGrouped {
             docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataToWrite);
         }
 
+        SearchTimings timings = new SearchTimings(search.timer().time(), 0);
         summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus,
-                getTimings(), getGroups(), getWindow());
+                timings, getGroups(), getWindow());
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
-                getHitsStats(), getDocsStats(), true, false, getSubcorpusSize());
+                getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize(), -1);
 
     }
 
@@ -133,10 +131,6 @@ public class ResultHitsGrouped {
 
     public WindowStats getWindow() {
         return window;
-    }
-
-    public SearchTimings getTimings() {
-        return timings;
     }
 
     public ResultsStats getHitsStats() {

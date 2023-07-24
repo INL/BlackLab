@@ -282,7 +282,7 @@ public class HitGroupsTokenFrequencies {
                         final int[] emptyTokenValuesArray = new int[0];
 
                         docIds.parallelStream().forEach(docId -> {
-                            final int docLength = (int) propTokens.get(docId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                            final int docLength = (int) propTokens.get(docId); // already excludes dummy closing token!
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(
                                     index, docId), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];

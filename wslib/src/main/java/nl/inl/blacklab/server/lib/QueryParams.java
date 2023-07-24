@@ -121,6 +121,8 @@ public interface QueryParams {
 
     boolean getIncludeTokenCount();
 
+    boolean getIncludeCustomInfo();
+
     boolean getCsvIncludeSummary();
 
     boolean getCsvDeclareSeparator();

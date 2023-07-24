@@ -42,6 +42,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.UserRequestBls;
@@ -244,13 +245,14 @@ public class BlackLabServer extends HttpServlet {
         // === Handle the request
         StringWriter buf = new StringWriter();
         PrintWriter out = new PrintWriter(buf);
-        DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint);
+        ApiVersion api = requestHandler.apiCompatibility();
+        DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint, api);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
         ds.startDocument(rootEl);
         ResponseStreamer dstream = ResponseStreamer.get(ds, requestHandler.apiCompatibility());
         StringWriter errorBuf = new StringWriter();
         PrintWriter errorOut = new PrintWriter(errorBuf);
-        DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint);
+        DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint, api);
         es.outputProlog();
         ResponseStreamer errorWriter = ResponseStreamer.get(es, requestHandler.apiCompatibility());
         int errorBufLengthBefore = errorBuf.getBuffer().length();

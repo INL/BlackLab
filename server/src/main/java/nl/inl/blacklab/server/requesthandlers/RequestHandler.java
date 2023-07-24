@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
@@ -47,6 +49,14 @@ public abstract class RequestHandler {
 
     /** The available request handlers by name */
     static final Map<String, Class<? extends RequestHandler>> availableHandlers;
+
+    public static final String ENDPOINT_CACHE_CLEAR = "cache-clear";
+
+    public static final String ENDPOINT_CACHE_INFO = "cache-info";
+
+    public static final String ENDPOINT_INPUT_FORMATS = "input-formats";
+
+    public static final List<String> TOP_LEVEL_ENDPOINTS = Arrays.asList(ENDPOINT_CACHE_CLEAR, ENDPOINT_CACHE_INFO, ENDPOINT_INPUT_FORMATS);
 
     // Fill the map with all the handler classes
     static {
@@ -123,10 +133,15 @@ public abstract class RequestHandler {
         String urlResource = userRequest.getUrlResource();
         String urlPathInfo = userRequest.getUrlPathInfo();
         boolean resourceOrPathGiven = !urlResource.isEmpty() || !urlPathInfo.isEmpty();
+        boolean corporaApi = userRequest.isCorporaRequest(); // /corpora/... in API v4+
+        boolean isNewApi = userRequest.apiVersion().getMajor() >= 5;
+        if (!corporaApi && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi)
+            throw new UnsupportedOperationException("Old API not supported anymore. Migrate to new /corpora/... endpoints, or use api=4 for backward compat.");
         String method = request.getMethod();
+        boolean isInputFormatsRequest = !corporaApi && indexName.equals(ENDPOINT_INPUT_FORMATS);
         if (method.equals("DELETE")) {
             // Index given and nothing else?
-            if (indexName.equals("input-formats")) {
+            if (isInputFormatsRequest) {
                 if (!urlPathInfo.isEmpty())
                     return errorObj.methodNotAllowed("DELETE", null);
                 requestHandler = new RequestHandlerDeleteFormat(userRequest);
@@ -146,7 +161,7 @@ public abstract class RequestHandler {
                 if (indexName.length() == 0 && !resourceOrPathGiven) {
                     // POST to /blacklab-server/ : create private index
                     requestHandler = new RequestHandlerCreateIndex(userRequest);
-                } else if (indexName.equals("cache-clear")) {
+                } else if (!corporaApi && indexName.equals(ENDPOINT_CACHE_CLEAR)) {
                     // Clear the cache
                     if (resourceOrPathGiven) {
                         return errorObj.unknownOperation(indexName);
@@ -156,7 +171,7 @@ public abstract class RequestHandler {
                                 .unauthorized("You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to do this.");
                     }
                     requestHandler = new RequestHandlerClearCache(userRequest);
-                } else if (indexName.equals("input-formats")) {
+                } else if (isInputFormatsRequest) {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You must be logged in to add a format.");
                     requestHandler = new RequestHandlerAddFormat(userRequest);
@@ -185,7 +200,7 @@ public abstract class RequestHandler {
                 }
             }
             if (method.equals("GET") || (method.equals("POST") && postAsGet)) {
-                if (indexName.equals("cache-info")) {
+                if (!corporaApi && indexName.equals(ENDPOINT_CACHE_INFO)) {
                     if (resourceOrPathGiven) {
                         return errorObj.unknownOperation(indexName);
                     }
@@ -194,7 +209,7 @@ public abstract class RequestHandler {
                                 "You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to see this information.");
                     }
                     requestHandler = new RequestHandlerCacheInfo(userRequest);
-                } else if (indexName.equals("input-formats")) {
+                } else if (isInputFormatsRequest) {
                     requestHandler = new RequestHandlerListInputFormats(userRequest);
                 } else if (indexName.length() == 0) {
                     // No index or operation given; server info
@@ -276,7 +291,30 @@ public abstract class RequestHandler {
             return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
                     "INTERR_WRONG_HTTP_METHOD");
         }
+        requestHandler.setCorporaApi(corporaApi);
         return requestHandler;
+    }
+
+    /**
+     * Is this a /corpora/... request?
+     *
+     * @param b true if this is a /corpora/... request
+     */
+    private void setCorporaApi(boolean b) {
+        this.corporaApi = b;
+    }
+
+    /**
+     * Is this a /corpora/... request?
+     *
+     * These endpoints were added in API v4+ and use a new version of the API.
+     * They replace the old index-related endpoints in API v5.
+     * You can test this already, using api=exp (or set in config file).
+     *
+     * @return true if this is a /corpora/... request
+     */
+    private boolean isCorporaApi() {
+        return this.corporaApi;
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {
@@ -299,6 +337,13 @@ public abstract class RequestHandler {
     private UserRequestBls userRequest;
 
     protected boolean debugMode;
+
+    /** Is this a new API request? (/corpora/... in API v4+)
+     * These endpoints were added in API v4+ and use a new version of the API.
+     * They replace the old index-related endpoints in API v5.
+     * You can test this already, using api=exp (or set in config file)
+     */
+    private boolean corporaApi = false;
 
     /** The servlet object */
     protected BlackLabServer servlet;
@@ -453,6 +498,15 @@ public abstract class RequestHandler {
     public abstract int handle(ResponseStreamer rs) throws BlsException, InvalidQuery;
 
     public ApiVersion apiCompatibility() {
-        return params.apiCompatibility();
+        ApiVersion api = params.apiCompatibility();
+        if (isCorporaApi() && api.getMajor() <= 4) {
+            // The new /corpora/... endpoints always use the new version of the API.
+            return ApiVersion.EXPERIMENTAL;
+        }
+        return api;
+    }
+
+    public WebserviceParams getParams() {
+        return params;
     }
 }

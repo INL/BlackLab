@@ -63,40 +63,48 @@ public class MetadataField implements Cloneable {
 
 
     @XmlAttribute
-    public String name = "title";
+    public String name;
 
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String indexName;
 
-    public String fieldName = "title";
+    public String fieldName;
 
     public boolean isAnnotatedField = false;
 
-    public String displayName = "Title";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String displayName;
 
-    public String description = "Document title";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String description;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String uiType = "";
 
     public String type = "";
 
     public String analyzer = "";
 
-    public String unknownCondition = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String unknownCondition;
 
-    public String unknownValue = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String unknownValue;
 
     @XmlJavaTypeAdapter(MapAdapter.class)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonSerialize(using = SerializationUtil.StringMapSerializer.class)
     @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
     public Map<String, String> displayValues = new LinkedHashMap<>();
 
     @XmlJavaTypeAdapter(MapAdapterFieldValues.class)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonSerialize(using = FieldValuesSerializer.class)
     @JsonDeserialize(using = FieldValuesDeserializer.class)
     public Map<String, Integer> fieldValues = new LinkedHashMap<>();
 
-    public boolean valueListComplete = true;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Boolean valueListComplete = true;
 
     @Override
     public MetadataField clone() {

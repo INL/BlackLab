@@ -23,7 +23,7 @@ import nl.inl.util.NumericDocValuesCacher;
  * Retrieves the length of an annotated field (i.e. the main "contents" field) in
  * tokens.
  *
- * This INCLUDES the extra closing token at the end.
+ * This EXCLUDES the extra closing token at the end!
  *
  * This class is thread-safe.
  * (using synchronization on DocValues instance; DocValues are stored for each LeafReader,

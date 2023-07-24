@@ -744,13 +744,13 @@ public class WebserviceOperations {
     }
 
     public static ResultSummaryNumDocs numResultsSummaryDocs(boolean isViewGroup, DocResults docResults,
-            boolean countFailed, CorpusSize subcorpusSize) {
-        return new ResultSummaryNumDocs(isViewGroup, docResults, countFailed, subcorpusSize);
+            SearchTimings timings, CorpusSize subcorpusSize) {
+        return new ResultSummaryNumDocs(isViewGroup, docResults, timings, subcorpusSize);
     }
 
     public static ResultSummaryNumHits numResultsSummaryHits(ResultsStats hitsStats, ResultsStats docsStats,
-            boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
-        return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, countFailed, subcorpusSize);
+            boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize, long totalTokens) {
+        return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, timings, subcorpusSize, totalTokens);
     }
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,

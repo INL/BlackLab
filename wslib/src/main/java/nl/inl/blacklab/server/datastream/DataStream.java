@@ -151,6 +151,10 @@ public interface DataStream {
         return startEntry(key).value(value).endEntry();
     }
 
+    DataStream startAttrEntry(String elementName, String attrName, String key);
+
+    default DataStream endAttrEntry() { return endEntry(); }
+
     default DataStream attrEntry(String elementName, String attrName, String key, String value) {
         return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
     }
@@ -175,15 +179,44 @@ public interface DataStream {
         return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
     }
 
-    default DataStream elEntry(String key, String value) {
-        return startElEntry(key).value(value).endElEntry();
+    /** Start map entry with dynamic key.
+     *
+     *  XML format depends on the API version.
+     *  For API v5+, entry/key/value elements will be used in XML.
+     *  Replaces startEntry() for dynamic keys, to avoid illegal element names.
+     */
+    default DataStream startDynEntry(String key) {
+        return startEntry(key);
     }
 
-    DataStream startAttrEntry(String elementName, String attrName, String key);
+    /** End dynamic key map entry. */
+    default DataStream endDynEntry() {
+        return endEntry();
+    }
 
-    DataStream startAttrEntry(String elementName, String attrName, int key);
+    default DataStream dynEntry(String key, String value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
 
-    DataStream endAttrEntry();
+    default DataStream dynEntry(String key, Object value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, int value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, long value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, double value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, boolean value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
 
     /** An entry that will be rendered using separate elements in XML (default JAXB serialization) */
     default DataStream startElEntry(String key) {
@@ -192,6 +225,30 @@ public interface DataStream {
 
     default DataStream endElEntry() {
         return endEntry();
+    }
+
+    default DataStream elEntry(String key, String value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, Object value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, int value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, long value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, double value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, boolean value) {
+        return startElEntry(key).value(value).endElEntry();
     }
 
     DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values);
@@ -217,7 +274,7 @@ public interface DataStream {
         startMap();
         if (value != null) {
             for (Map.Entry<S, T> entry: value.entrySet()) {
-                startEntry(entry.getKey().toString()).value(entry.getValue()).endEntry();
+                startDynEntry(entry.getKey().toString()).value(entry.getValue()).endDynEntry();
             }
         }
         endMap();

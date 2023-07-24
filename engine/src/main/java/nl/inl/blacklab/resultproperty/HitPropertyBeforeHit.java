@@ -41,7 +41,7 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     }
 
     public HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens) {
-        super("left context", "left", index, annotation, sensitivity, true);
+        super("context before", "left", index, annotation, sensitivity, true);
         this.numberOfTokens = numberOfTokens >= 1 ? numberOfTokens : index.defaultContextSize().before();
     }
 

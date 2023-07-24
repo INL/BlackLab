@@ -340,9 +340,8 @@ public class ResultHits {
             window = hits.window(windowSettings.first(), windowSettings.size());
         }
 
-        boolean includeTokenCount = params.getIncludeTokenCount();
         totalTokens = -1;
-        if (includeTokenCount) {
+        if (params.getIncludeTokenCount()) {
             DocResults perDocResults = hits.perDocResults(Results.NO_LIMIT);
             // Determine total number of tokens in result set
             totalTokens = perDocResults.subcorpusSize().getTokens();
@@ -367,7 +366,7 @@ public class ResultHits {
         SearchTimings searchTimings = getSearchTimings();
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(),
-                params.getWaitForTotal(), searchTimings.getCountTime() < 0, null);
+                params.getWaitForTotal(), searchTimings, null, totalTokens);
         summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
                 getIndexStatus(), searchTimings, null, window.windowStats());
         listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),

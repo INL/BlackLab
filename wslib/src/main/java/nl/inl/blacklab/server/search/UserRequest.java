@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.search;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
@@ -104,4 +105,6 @@ public interface UserRequest {
      * @return corpus name
      */
     public String getCorpusName();
+
+    ApiVersion apiVersion();
 }

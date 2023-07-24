@@ -1,7 +1,6 @@
 {
   "summary": {
     "searchParam": {
-      "api": "4.0",
       "facets": "field:pid",
       "indexname": "test",
       "number": "0",
@@ -10,6 +9,10 @@
     },
     "searchTime": "VALUE_REMOVED",
     "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
     "windowFirstResult": 0,
     "requestedWindowSize": 0,
     "actualWindowSize": 0,

@@ -20,10 +20,13 @@ public class Annotation implements Cloneable {
     @XmlAttribute
     public String name;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String displayName = "";
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String description = "";
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String uiType = "";
 
     public boolean hasForwardIndex;
@@ -49,8 +52,8 @@ public class Annotation implements Cloneable {
     @JsonInclude(Include.NON_NULL)
     public List<String> subannotations;
 
-    @JsonInclude(Include.NON_EMPTY)
-    public String parentAnnotation = null;
+    @JsonInclude(Include.NON_NULL)
+    public String parentAnnotation;
 
     @Override
     public Annotation clone() {

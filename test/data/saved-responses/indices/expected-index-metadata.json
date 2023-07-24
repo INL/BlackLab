@@ -15,6 +15,7 @@
     "timeCreated": "2022-02-17 16:04:26",
     "timeModified": "2022-02-17 16:04:26"
   },
+  "pidField": "pid",
   "fieldInfo": {
     "pidField": "pid",
     "titleField": "title",

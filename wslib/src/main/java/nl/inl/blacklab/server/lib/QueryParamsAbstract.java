@@ -353,6 +353,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
     }
 
     @Override
+    public boolean getIncludeCustomInfo() {
+        return getBool(WebserviceParameter.INCLUDE_CUSTOM_INFO);
+    }
+
+    @Override
     public boolean getCsvIncludeSummary() {
         return getBool(WebserviceParameter.CSV_INCLUDE_SUMMARY);
     }
@@ -428,7 +433,12 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public Optional<String> getInputFormat() { return opt(WebserviceParameter.INPUT_FORMAT); }
 
     @Override
-    public ApiVersion apiCompatibility() { return ApiVersion.fromValue(get(WebserviceParameter.API_COMPATIBILITY)); }
+    public ApiVersion apiCompatibility() {
+        ApiVersion apiVersion = ApiVersion.fromValue(get(WebserviceParameter.API_VERSION));
+        if (apiVersion.getMajor() < 3)
+            throw new UnsupportedOperationException("API version " + apiVersion + " is no longer supported");
+        return apiVersion;
+    }
 
     @Override
     public SearchManager getSearchManager() { return searchMan; }

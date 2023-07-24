@@ -20,10 +20,15 @@ const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
 function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
     const keysToMakeConstant = {
         // Server information page
-        apiVersion: 'DELETE',
+        apiVersion: true, //'DELETE',
         blacklabBuildTime: true,
         blacklabVersion: true,
-        indices: {
+        corpora: { // API v4/5
+            test: {
+                timeModified: true
+            }
+        },
+        indices: { // API v3/4
             test: {
                 timeModified: true
             }
@@ -193,12 +198,15 @@ function expectUnchanged(category, testName, actualResponse, removeParametersFro
 }
 
 function expectUrlUnchanged(category, testName, url, expectedType = 'application/json') {
+    const params = url.indexOf('api=') >= 0 ? undefined : { api: constants.TEST_API_VERSION };
     describe(`${category}: ${testName}`, () => {
         it('response should match previous', done => {
-            chai
+            const get = chai
                     .request(constants.SERVER_URL)
-                    .get(url)
-                    .query({ api: constants.TEST_API_VERSION })
+                    .get(url);
+            console.log(`URL=${url}, params=${JSON.stringify(params)}`);
+            const query = params ? get.query(params) : get;
+            query
                     .set('Accept', expectedType)
                     .end((err, res) => {
                         if (err)

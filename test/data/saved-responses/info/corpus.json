@@ -15,6 +15,7 @@
     "timeCreated": "VALUE_REMOVED",
     "timeModified": "VALUE_REMOVED"
   },
+  "pidField": "pid",
   "fieldInfo": {
     "pidField": "pid",
     "titleField": "title",

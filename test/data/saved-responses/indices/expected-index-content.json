@@ -1,7 +1,6 @@
 {
   "summary": {
     "searchParam": {
-      "api": "4.0",
       "indexname": "test-index-1938",
       "op": "docs"
     },

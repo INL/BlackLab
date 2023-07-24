@@ -86,7 +86,7 @@ public class CorpusResource {
     @POST
     @Consumes("application/x-www-form-urlencoded")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
-    public Response hits(
+    public Response postHits(
             @PathParam("corpusName") String corpusName,
             MultivaluedMap<String, String> formParams,
             @Context HttpHeaders headers) {

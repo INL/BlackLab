@@ -108,9 +108,9 @@ public class ProxyRequest {
                 Requests.request(client, params, method, List.of(AutocompleteResponse.class, List.class)));
     }
 
-    public static Response serverInfo(Client client, String method) {
+    public static Response serverInfo(Client client, String api, String method) {
         Map<WebserviceParameter, String> params = Map.of(WebserviceParameter.OPERATION,
-                WebserviceOperation.SERVER_INFO.value());
+                WebserviceOperation.SERVER_INFO.value(), WebserviceParameter.API_VERSION, api);
         return ProxyResponse.success(Requests.request(client, params, method, Server.class));
     }
 

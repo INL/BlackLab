@@ -17,6 +17,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
@@ -32,6 +33,8 @@ public class UserRequestBls implements UserRequest {
     private final HttpServletRequest request;
 
     private final HttpServletResponse response;
+
+    private boolean newApi = false;
 
     /** Corpus name from the URL path */
     private String corpusName;
@@ -55,6 +58,11 @@ public class UserRequestBls implements UserRequest {
 
         // Parse the URL path
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
+        if (servletPath.startsWith("corpora/")) {
+            // Strip "corpora/" prefix, but remember it (new API)
+            servletPath = servletPath.substring("corpora/".length());
+            this.newApi = true;
+        }
         String[] parts = servletPath.split("/", 3);
         corpusName = parts.length >= 1 ? parts[0] : "";
         if (corpusName.startsWith(":")) {
@@ -63,6 +71,10 @@ public class UserRequestBls implements UserRequest {
         }
         urlResource = parts.length >= 2 ? parts[1] : "";
         urlPathInfo = parts.length >= 3 ? parts[2] : "";
+    }
+
+    public boolean isCorporaRequest() {
+        return newApi;
     }
 
     @Override
@@ -207,5 +219,12 @@ public class UserRequestBls implements UserRequest {
 
     public String getUrlPathInfo() {
         return urlPathInfo;
+    }
+
+    @Override
+    public ApiVersion apiVersion() {
+        String paramApi = request.getParameter("api");
+        return paramApi == null ? servlet.getSearchManager().config().getParameters().getApi() :
+                ApiVersion.fromValue(paramApi);
     }
 }

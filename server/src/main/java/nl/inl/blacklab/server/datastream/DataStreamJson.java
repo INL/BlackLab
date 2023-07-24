@@ -96,16 +96,6 @@ public class DataStreamJson extends DataStreamAbstract {
     }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, int key) {
-        return startEntry(Integer.toString(key));
-    }
-
-    @Override
-    public DataStreamAbstract endAttrEntry() {
-        return this;
-    }
-
-    @Override
     public DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values) {
         openbl("{");
         int valuesPerWord = annotations.size();

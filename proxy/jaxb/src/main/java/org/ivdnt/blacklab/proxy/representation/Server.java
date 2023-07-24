@@ -3,6 +3,7 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion",
         //"blackLabBuildTime", "blackLabVersion", // <-- (v3 inconsistent names)
-        "indices", "user", "cacheStatus" })
+        "corpora", "indices", "user", "cacheStatus" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
 public class Server implements Cloneable {
 
@@ -88,26 +89,26 @@ public class Server implements Cloneable {
         }
     }
 
-    @XmlElement
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String apiVersion;
 
-    @XmlElement
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabBuildTime;
 
-    @XmlElement
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabVersion;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Map<String, CorpusSummary> corpora;
+
     @XmlElementWrapper(name="indices")
     @XmlElement(name = "index")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("indices")
     @JsonSerialize(using= ListCorpusSummarySerializer.class)
     @JsonDeserialize(using= ListCorpusSummaryDeserializer.class)
     public List<CorpusSummary> indices;
 
-    @XmlElement
     public User user;
 
     @SuppressWarnings("unused")
@@ -130,6 +131,7 @@ public class Server implements Cloneable {
     @Override
     public String toString() {
         return "Server{" +
+                "apiVersion='" + apiVersion + '\'' +
                 "blacklabBuildTime='" + blacklabBuildTime + '\'' +
                 ", blacklabVersion='" + blacklabVersion + '\'' +
                 ", indices=" + indices +

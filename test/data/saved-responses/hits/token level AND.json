@@ -1,7 +1,6 @@
 {
   "summary": {
     "searchParam": {
-      "api": "4.0",
       "indexname": "test",
       "matchinfo": "captures",
       "op": "hits",
@@ -12,6 +11,10 @@
     },
     "searchTime": "VALUE_REMOVED",
     "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
     "windowFirstResult": 0,
     "requestedWindowSize": 50,
     "actualWindowSize": 7,

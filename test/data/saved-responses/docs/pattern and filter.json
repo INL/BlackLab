@@ -1,7 +1,6 @@
 {
   "summary": {
     "searchParam": {
-      "api": "4.0",
       "filter": "pid:PBsve435",
       "indexname": "test",
       "op": "docs",

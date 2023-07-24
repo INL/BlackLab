@@ -9,10 +9,12 @@ public interface Field {
 
 	/** Get this field's display name
 	 * @return this field's display name */
+    @Deprecated
 	String displayName();
 
 	/** Get this field's display name
 	 * @return this field's display name */
+    @Deprecated
 	String description();
 	
 	/** Is this field's content stored in a content store? 

@@ -1,7 +1,6 @@
 {
   "summary": {
     "searchParam": {
-      "api": "4.0",
       "facets": "field:title",
       "indexname": "test",
       "number": "0",

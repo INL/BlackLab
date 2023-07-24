@@ -51,7 +51,7 @@ public class BLSConfigParameters {
         WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefault());
         WebserviceParameter.setDefaultValue(WebserviceParameter.SENSITIVE, getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
         WebserviceParameter.setDefaultValue(WebserviceParameter.CONTEXT, "" + getContextSize().getDefault());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.API_COMPATIBILITY, "" + getApi().versionString());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.API_VERSION, "" + getApi().versionString());
     }
 
     @JsonGetter("defaultSearchSensitivity")
@@ -157,6 +157,8 @@ public class BLSConfigParameters {
 
     public void setApi(String api) {
         this.api = ApiVersion.fromValue(api);
+        if (this.api.getMajor() < 3)
+            throw new UnsupportedOperationException("API version " + api + " is no longer supported");
     }
 
     public ApiVersion getApi() {

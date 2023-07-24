@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * An AND-node where none of the clauses cycle back to an earlier node. This can
@@ -167,12 +168,7 @@ public class NfaStateAndAcyclic extends NfaState {
 
     @Override
     protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
-        StringBuilder b = new StringBuilder();
-        for (NfaState s : clauses) {
-            if (b.length() > 0)
-                b.append(",");
-            b.append(dump(s, stateNrs));
-        }
+        String b = clauses.stream().map(s -> dump(s, stateNrs)).collect(Collectors.joining(","));
         return "AND(" + b + ", " + dump(nextState, stateNrs) + ")";
     }
 

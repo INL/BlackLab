@@ -176,13 +176,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public String name() {
-        StringBuilder b = new StringBuilder();
-        for (HitProperty crit: properties) {
-            if (b.length() > 0)
-                b.append(", ");
-            b.append(crit.name());
-        }
-        return b.toString();
+        return properties.stream().map(HitProperty::name).collect(Collectors.joining(", "));
     }
     
     @Override

@@ -3,8 +3,9 @@
 Here's some requests and (commented) JSON responses to illustrate 
 a possible new REST API for Blacklab.
 
-All new requests would get a `/v2/` prefix, and the old requests 
-could still be supported for a while until eventually being removed.
+There would be a way to choose the API, probably using the `api` parameter that already exists. Another option would be to expose the new API on a different path, e.g. `/v2/`.
+
+The older API would eventually be removed, after a transition period.
 
 Any information not generated or used by BlackLab, such as `displayName`, `description`, 
 `documentFormat`, `textDirection`, `uiType`, etc. was moved into `"custom": {}` 

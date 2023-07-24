@@ -1,7 +1,6 @@
 {
   "summary": {
     "searchParam": {
-      "api": "4.0",
       "group": "field:title",
       "indexname": "test",
       "number": "30",
@@ -42,7 +41,7 @@
           "value": "interview about conference experience and impressions of city"
         }
       ],
-      "numberOfTokens": 267,
+      "numberOfTokens": 268,
       "subcorpusSize": {
         "documents": 1,
         "tokens": 268
@@ -58,7 +57,7 @@
           "value": "service encounter about getting an address printed out"
         }
       ],
-      "numberOfTokens": 163,
+      "numberOfTokens": 164,
       "subcorpusSize": {
         "documents": 1,
         "tokens": 164
@@ -74,7 +73,7 @@
           "value": "service encounter about visa application for family members"
         }
       ],
-      "numberOfTokens": 333,
+      "numberOfTokens": 334,
       "subcorpusSize": {
         "documents": 1,
         "tokens": 334

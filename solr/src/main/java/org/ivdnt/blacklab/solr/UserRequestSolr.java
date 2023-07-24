@@ -14,6 +14,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
@@ -135,5 +136,12 @@ public class UserRequestSolr implements UserRequest {
     @Override
     public RequestInstrumentationProvider getInstrumentationProvider() {
         return searchComponent.getInstrumentationProvider();
+    }
+
+    @Override
+    public ApiVersion apiVersion() {
+        String paramApi = rb.req.getParams().get("bl.api");
+        return paramApi == null ? searchMan.config().getParameters().getApi() :
+                ApiVersion.fromValue(paramApi);
     }
 }

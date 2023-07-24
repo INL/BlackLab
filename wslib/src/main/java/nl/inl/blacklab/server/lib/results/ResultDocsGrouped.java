@@ -82,11 +82,11 @@ public class ResultDocsGrouped {
         numResultDocs = null;
         numResultHits = null;
         if (hitsStats == null) {
-            numResultDocs = WebserviceOperations.numResultsSummaryDocs(false, docResults, false,
+            numResultDocs = WebserviceOperations.numResultsSummaryDocs(false, docResults, timings,
                     subcorpusSize);
         } else {
             numResultHits = WebserviceOperations.numResultsSummaryHits(
-                    hitsStats, docsStats, true, false, subcorpusSize);
+                    hitsStats, docsStats, true, timings, subcorpusSize, -1);
         }
 
         corpusSizes = new ArrayList<>();

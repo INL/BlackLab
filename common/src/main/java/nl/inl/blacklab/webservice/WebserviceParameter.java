@@ -70,6 +70,7 @@ public enum WebserviceParameter {
     // How to process results
     INCLUDE_FACETS("facets"), // include facet information?
     INCLUDE_TOKEN_COUNT("includetokencount"), // count tokens in all matched documents?
+    INCLUDE_CUSTOM_INFO("custom"), // include custom metadata?
     MAX_HITS_TO_RETRIEVE("maxretrieve"),
     MAX_HITS_TO_COUNT("maxcount"), // limits to numbers of hits to process
 
@@ -82,6 +83,7 @@ public enum WebserviceParameter {
     INCLUDE_GROUP_CONTENTS("includegroupcontents"), // include hits with the group response? (false)
 
     // for term frequency
+    PROPERTY("property"), // DEPRECATED, now called "annotation",
     ANNOTATION("annotation"),
     SENSITIVE("sensitive"),
     TERMS("terms"),
@@ -94,16 +96,13 @@ public enum WebserviceParameter {
     CSV_INCLUDE_SUMMARY("csvsummary"), // include summary of search in the CSV output? [no]
     CSV_DECLARE_SEPARATOR("csvsepline"), // include separator declaration for Excel? [no]
 
-    // Deprecated parameters
-    PROPERTY("property"), // now called "annotation",
-
     DEBUG("debug"), // include debug info (cache)
 
     OPERATION("op"),
     CORPUS_NAME("indexname"),
     FIELD("field"),
     INPUT_FORMAT("inputformat"),
-    API_COMPATIBILITY("api");
+    API_VERSION("api");
 
     public static Optional<WebserviceParameter> fromValue(String str) {
         for (WebserviceParameter v: values()) {
@@ -134,6 +133,7 @@ public enum WebserviceParameter {
         defaultValues.put(HIT_START, "0");
         defaultValues.put(INCLUDE_GROUP_CONTENTS, "no");
         defaultValues.put(INCLUDE_TOKEN_COUNT, "no");
+        defaultValues.put(INCLUDE_CUSTOM_INFO, "no");
         defaultValues.put(MAX_HITS_TO_COUNT, "10000000");
         defaultValues.put(MAX_HITS_TO_RETRIEVE, "1000000");
         defaultValues.put(NUMBER_OF_RESULTS, "50");

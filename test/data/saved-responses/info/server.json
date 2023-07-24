@@ -1,12 +1,15 @@
 {
+  "apiVersion": "VALUE_REMOVED",
   "blacklabBuildTime": "VALUE_REMOVED",
   "blacklabVersion": "VALUE_REMOVED",
-  "indices": {
+  "corpora": {
     "test": {
-      "displayName": "test",
-      "description": "",
-      "status": "available",
+      "custom": {
+        "description": "",
+        "displayName": "test"
+      },
       "documentFormat": "voice-tei",
+      "status": "available",
       "timeModified": "VALUE_REMOVED",
       "tokenCount": 766
     }

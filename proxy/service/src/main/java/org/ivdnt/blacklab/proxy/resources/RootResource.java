@@ -1,12 +1,15 @@
 package org.ivdnt.blacklab.proxy.resources;
 
 import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -28,14 +31,14 @@ public class RootResource {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getServerInfo() {
-        return ProxyRequest.serverInfo(client, HttpMethod.GET);
+    public Response getServerInfo(@DefaultValue ("") @QueryParam("api") String apiVersion) {
+        return ProxyRequest.serverInfo(client, apiVersion, HttpMethod.GET);
     }
 
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response postServerInfo() {
-        return ProxyRequest.serverInfo(client, HttpMethod.POST);
+    public Response postServerInfo(@DefaultValue ("") @FormParam("api") String apiVersion) {
+        return ProxyRequest.serverInfo(client, apiVersion, HttpMethod.POST);
     }
 
     @Path("/input-formats")

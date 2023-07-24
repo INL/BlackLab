@@ -39,16 +39,17 @@ public class WebserviceRequestHandler {
         BlackLabIndex index = params.blIndex();
         IndexMetadata indexMetadata = index.metadata();
         String fieldName = params.getFieldName();
+        boolean includeCustomInfo = params.getIncludeCustomInfo();
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             // Annotated field
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
             ResultAnnotatedField resultAnnotatedField = WebserviceOperations.annotatedField(params, fieldDesc, true);
-            rs.annotatedField(resultAnnotatedField);
+            rs.annotatedField(resultAnnotatedField, includeCustomInfo);
         } else {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
             ResultMetadataField metadataField = WebserviceOperations.metadataField(fieldDesc, params.getCorpusName());
-            rs.metadataField(metadataField);
+            rs.metadataField(metadataField, includeCustomInfo);
         }
     }
 
@@ -60,7 +61,7 @@ public class WebserviceRequestHandler {
      */
     public static void opCorpusInfo(WebserviceParams params, ResponseStreamer rs) {
         ResultIndexMetadata corpusInfo = WebserviceOperations.indexMetadata(params);
-        rs.indexMetadataResponse(corpusInfo);
+        rs.corpusMetadataResponse(corpusInfo, params.getIncludeCustomInfo());
     }
 
     /**
@@ -71,7 +72,7 @@ public class WebserviceRequestHandler {
      */
     public static void opCorpusStatus(WebserviceParams params, ResponseStreamer rs) {
         ResultIndexStatus corpusStatus = WebserviceOperations.resultIndexStatus(params);
-        rs.indexStatusResponse(corpusStatus);
+        rs.corpusStatusResponse(corpusStatus, params.getIncludeCustomInfo());
     }
 
     /**
@@ -82,7 +83,7 @@ public class WebserviceRequestHandler {
      */
     public static void opServerInfo(WebserviceParams params, boolean debugMode, ResponseStreamer rs) {
         ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
-        rs.serverInfo(serverInfo, params.apiCompatibility());
+        rs.serverInfo(serverInfo);
     }
 
     /**
@@ -105,7 +106,7 @@ public class WebserviceRequestHandler {
             } else {
                 // We're returning a list of results (ungrouped, or viewing single group)
                 ResultHits result = WebserviceOperations.getResultHits(params);
-                rs.hitsResponse(result, params.apiCompatibility() == ApiVersion.V3);
+                rs.hitsResponse(result);
             }
         }
     }
@@ -131,7 +132,7 @@ public class WebserviceRequestHandler {
                 // Regular set of docs (no grouping first)
                 result = WebserviceOperations.regularDocsResponse(params);
             }
-            rs.docsResponse(result, params.apiCompatibility() == ApiVersion.V3);
+            rs.docsResponse(result);
         }
     }
 
@@ -188,8 +189,7 @@ public class WebserviceRequestHandler {
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
 
         // Document info
-        rs.docInfoResponse(docInfo, metadataFieldGroups, docFields, metaDisplayNames,
-                params.apiCompatibility() == ApiVersion.V3);
+        rs.docInfoResponse(docInfo, metadataFieldGroups, docFields, metaDisplayNames);
     }
 
     /**

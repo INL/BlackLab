@@ -680,6 +680,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
+    public boolean getIncludeCustomInfo() {
+        return params.getIncludeCustomInfo();
+    }
+
+    @Override
     public boolean getCsvIncludeSummary() {
         return params.getCsvIncludeSummary();
     }
