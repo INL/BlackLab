@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -346,6 +347,8 @@ public interface Hits extends Results<Hit, HitProperty> {
 
     default Map<String, MatchInfo> getMatchInfoMap(Hit hit, boolean omitEmptyCaptures) {
         MatchInfo[] matchInfo = hit.matchInfo();
+        if (matchInfo == null)
+            return Collections.emptyMap();
         Map<String, MatchInfo> map = new HashMap<>();
         for (int i = 0; i < matchInfo.length; i++) {
             if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())

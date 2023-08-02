@@ -1,0 +1,387 @@
+{
+  "summary": {
+    "searchParam": "VALUE_REMOVED",
+    "searchTime": "VALUE_REMOVED",
+    "countTime": "VALUE_REMOVED",
+    "numberOfGroups": 210,
+    "largestGroupSize": 43,
+    "windowFirstResult": 0,
+    "requestedWindowSize": 30,
+    "actualWindowSize": 30,
+    "windowHasPrevious": false,
+    "windowHasNext": true,
+    "stillCounting": false,
+    "numberOfHits": 766,
+    "numberOfHitsRetrieved": 766,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "subcorpusSize": {
+      "documents": 3,
+      "tokens": 766
+    }
+  },
+  "hitGroups": [
+    {
+      "identity": "cws:word:i:_0",
+      "identityDisplay": "_0",
+      "size": 43,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "_0"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:i",
+      "identityDisplay": "i",
+      "size": 33,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "i"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:you",
+      "identityDisplay": "you",
+      "size": 26,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "you"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:and",
+      "identityDisplay": "and",
+      "size": 25,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "and"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:yeah",
+      "identityDisplay": "yeah",
+      "size": 25,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "yeah"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:it",
+      "identityDisplay": "it",
+      "size": 21,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "it"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:the",
+      "identityDisplay": "the",
+      "size": 21,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "the"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:er",
+      "identityDisplay": "er",
+      "size": 19,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "er"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:okay",
+      "identityDisplay": "okay",
+      "size": 19,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "okay"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:for",
+      "identityDisplay": "for",
+      "size": 18,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "for"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:a",
+      "identityDisplay": "a",
+      "size": 17,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "a"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:mhm",
+      "identityDisplay": "mhm",
+      "size": 17,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "mhm"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:_1",
+      "identityDisplay": "_1",
+      "size": 12,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "_1"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:that",
+      "identityDisplay": "that",
+      "size": 12,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "that"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:'m",
+      "identityDisplay": "'m",
+      "size": 11,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "'m"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:here",
+      "identityDisplay": "here",
+      "size": 11,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "here"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:this",
+      "identityDisplay": "this",
+      "size": 11,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "this"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:'s",
+      "identityDisplay": "'s",
+      "size": 9,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "'s"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:from",
+      "identityDisplay": "from",
+      "size": 9,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "from"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:need",
+      "identityDisplay": "need",
+      "size": 9,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "need"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:to",
+      "identityDisplay": "to",
+      "size": 9,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "to"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:erm",
+      "identityDisplay": "erm",
+      "size": 8,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "erm"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:so",
+      "identityDisplay": "so",
+      "size": 8,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "so"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:are",
+      "identityDisplay": "are",
+      "size": 7,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "are"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:confirmation",
+      "identityDisplay": "confirmation",
+      "size": 7,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "confirmation"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:living",
+      "identityDisplay": "living",
+      "size": 7,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "living"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:me",
+      "identityDisplay": "me",
+      "size": 7,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "me"
+        }
+      ],
+      "numberOfDocs": 3
+    },
+    {
+      "identity": "cws:word:i:very",
+      "identityDisplay": "very",
+      "size": 7,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "very"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cws:word:i:yes",
+      "identityDisplay": "yes",
+      "size": 7,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "yes"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:paying",
+      "identityDisplay": "paying",
+      "size": 6,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "paying"
+        }
+      ],
+      "numberOfDocs": 1
+    }
+  ]
+}

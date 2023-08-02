@@ -204,7 +204,7 @@ function expectUrlUnchanged(category, testName, url, expectedType = 'application
             const get = chai
                     .request(constants.SERVER_URL)
                     .get(url);
-            console.log(`URL=${url}, params=${JSON.stringify(params)}`);
+            //console.log(`URL=${url}, params=${JSON.stringify(params)}`);
             const query = params ? get.query(params) : get;
             query
                     .set('Accept', expectedType)

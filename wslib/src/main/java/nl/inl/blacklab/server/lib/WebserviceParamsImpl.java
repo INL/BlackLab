@@ -206,11 +206,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return params.getOmitEmptyCaptures() || configParam().isOmitEmptyCaptures();
     }
 
-    @Override
-    public String getReturnMatchInfo() {
-        return params.getReturnMatchInfo().isEmpty() ? configParam().getReturnMatchInfo() : params.getReturnMatchInfo();
-    }
-
     private DocGroupSettings docGroupSettings() throws BlsException {
         if (!isDocsOperation)
             return null; // we're doing per-hits stuff, so sort doesn't apply to docs

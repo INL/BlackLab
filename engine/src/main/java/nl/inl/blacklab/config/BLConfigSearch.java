@@ -82,7 +82,8 @@ public class BLConfigSearch {
      */
     public void apply(BlackLabIndex index) {
         index.setCollator(getCollator().get());
-        index.setDefaultContextSize(ContextSize.get(getContextSize()));
+        int maxContextSize = getContextSize();
+        index.setDefaultContextSize(ContextSize.get(maxContextSize, ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize)));
         long maxHitsToProcess = getMaxHitsToRetrieve();
         long maxHitsToCount = getMaxHitsToCount();
         long fiMatchFactor = getFiMatchFactor();
@@ -90,4 +91,5 @@ public class BLConfigSearch {
         ClauseCombinerNfa.setNfaThreshold(fiMatchFactor);
         index.setSearchSettings(sett);
     }
+
 }

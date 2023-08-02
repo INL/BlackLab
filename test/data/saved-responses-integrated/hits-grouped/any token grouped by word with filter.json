@@ -1,0 +1,387 @@
+{
+  "summary": {
+    "searchParam": "VALUE_REMOVED",
+    "searchTime": "VALUE_REMOVED",
+    "countTime": "VALUE_REMOVED",
+    "numberOfGroups": 118,
+    "largestGroupSize": 22,
+    "windowFirstResult": 0,
+    "requestedWindowSize": 30,
+    "actualWindowSize": 30,
+    "windowHasPrevious": false,
+    "windowHasNext": true,
+    "stillCounting": false,
+    "numberOfHits": 334,
+    "numberOfHitsRetrieved": 334,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "subcorpusSize": {
+      "documents": 1,
+      "tokens": 334
+    }
+  },
+  "hitGroups": [
+    {
+      "identity": "cws:word:i:_0",
+      "identityDisplay": "_0",
+      "size": 22,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "_0"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:i",
+      "identityDisplay": "i",
+      "size": 22,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "i"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:it",
+      "identityDisplay": "it",
+      "size": 15,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "it"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:that",
+      "identityDisplay": "that",
+      "size": 11,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "that"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:for",
+      "identityDisplay": "for",
+      "size": 10,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "for"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:okay",
+      "identityDisplay": "okay",
+      "size": 10,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "okay"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:_1",
+      "identityDisplay": "_1",
+      "size": 9,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "_1"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:and",
+      "identityDisplay": "and",
+      "size": 9,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "and"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:'m",
+      "identityDisplay": "'m",
+      "size": 8,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "'m"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:the",
+      "identityDisplay": "the",
+      "size": 8,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "the"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:here",
+      "identityDisplay": "here",
+      "size": 7,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "here"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:mhm",
+      "identityDisplay": "mhm",
+      "size": 7,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "mhm"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:erm",
+      "identityDisplay": "erm",
+      "size": 6,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "erm"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:living",
+      "identityDisplay": "living",
+      "size": 6,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "living"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:need",
+      "identityDisplay": "need",
+      "size": 6,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "need"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:paying",
+      "identityDisplay": "paying",
+      "size": 6,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "paying"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:a",
+      "identityDisplay": "a",
+      "size": 5,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "a"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:rent",
+      "identityDisplay": "rent",
+      "size": 5,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "rent"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:she",
+      "identityDisplay": "she",
+      "size": 5,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "she"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:this",
+      "identityDisplay": "this",
+      "size": 5,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "this"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:confirmation",
+      "identityDisplay": "confirmation",
+      "size": 4,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "confirmation"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:regularly",
+      "identityDisplay": "regularly",
+      "size": 4,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "regularly"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:to",
+      "identityDisplay": "to",
+      "size": 4,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "to"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:visa",
+      "identityDisplay": "visa",
+      "size": 4,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "visa"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:you",
+      "identityDisplay": "you",
+      "size": 4,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "you"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:'s",
+      "identityDisplay": "'s",
+      "size": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "'s"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:but",
+      "identityDisplay": "but",
+      "size": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "but"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:er",
+      "identityDisplay": "er",
+      "size": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "er"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:family",
+      "identityDisplay": "family",
+      "size": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "family"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cws:word:i:me",
+      "identityDisplay": "me",
+      "size": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "me"
+        }
+      ],
+      "numberOfDocs": 1
+    }
+  ]
+}

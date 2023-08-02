@@ -6,14 +6,18 @@
       "wordsaroundhit": "1",
       "waitfortotal": "true",
       "op": "hits",
-      "indexname": "test",
-      "matchinfo": "captures"
+      "indexname": "test"
     },
     "searchTime": "VALUE_REMOVED",
     "countTime": "VALUE_REMOVED",
     "docFields": {
       "pidField": "pid",
       "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
     },
     "windowFirstResult": 0,
     "requestedWindowSize": 50,

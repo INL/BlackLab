@@ -67,6 +67,7 @@ services:
       - CORPUS_NAME=${CORPUS_NAME:-test}
       - TEST_DATA_ROOT=${TEST_DATA_ROOT:-data}
       - SKIP_INDEXING_TESTS=${SKIP_INDEXING_TESTS:-false} # Solr doesn't implement these ops yet
+      - INDEX_TYPE=${INDEX_TYPE:-}
 
       # If response file for a test does not exist, the test will FAIL.
       - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=false
@@ -83,6 +84,7 @@ services:
       - CORPUS_NAME=${CORPUS_NAME:-test}
       - TEST_DATA_ROOT=${TEST_DATA_ROOT:-data}
       - SKIP_INDEXING_TESTS=${SKIP_INDEXING_TESTS:-false} # Solr doesn't implement these ops yet
+      - INDEX_TYPE=${INDEX_TYPE:-}
 
       # If response file for a test does not exist, the test will SUCCEED,
       # and the response file will be saved for future runs.
@@ -94,6 +96,7 @@ services:
     volumes:
       # We need access to the previous responses and be able to save responses for any new tests.
       - ./data/saved-responses:/app/data/saved-responses
+      - ./data/saved-responses-integrated:/app/data/saved-responses-integrated
 
 
 

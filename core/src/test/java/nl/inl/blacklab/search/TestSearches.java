@@ -37,6 +37,7 @@ import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
 import nl.inl.blacklab.testutil.TestIndex;
 
 @RunWith(Parameterized.class)
@@ -638,6 +639,19 @@ public class TestSearches {
             Assert.assertEquals(q1, q2);
             Assert.assertEquals(q1.hashCode(), q2.hashCode());
         }
+    }
+
+    @Test
+    public void testFixedSpan() throws InvalidQuery {
+        List<String> expected = Arrays.asList(
+                "The [quick] brown",
+                "noot [mier] aap",
+                "May [the] Force",
+                "To [find] or");
+        TextPattern patt = new TextPatternFixedSpan(1, 2);
+        BLSpanQuery query = patt.translate(new QueryExecutionContext(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
     }
 
 }

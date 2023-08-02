@@ -94,15 +94,14 @@ public class Concordances {
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1; // last word (inclusive)
 
-            int start = wordsAroundHit.snippetStart(hit);
-            if (start < 0)
-                start = 0;
-            int end = wordsAroundHit.snippetEnd(hit) - 1; // last word (inclusive)
-
-            startsOfWords[startEndArrayIndex] = start;
+            wordsAroundHit.getSnippetStartEnd(hit, hits.matchInfoNames(), true, startsOfWords, startEndArrayIndex, endsOfWords, startEndArrayIndex + 1);
+//            // Above call replaces this:
+//            int start = wordsAroundHit.snippetStart(hit, hits.matchInfoNames());
+//            int end = wordsAroundHit.snippetEnd(hit, hits.matchInfoNames()) - 1; // last word (inclusive)
+//            startsOfWords[startEndArrayIndex] = start;
+//            endsOfWords[startEndArrayIndex + 1] = end;
             startsOfWords[startEndArrayIndex + 1] = hitStart;
             endsOfWords[startEndArrayIndex] = hitEnd;
-            endsOfWords[startEndArrayIndex + 1] = end;
 
             startEndArrayIndex += 2;
         }
@@ -151,5 +150,4 @@ public class Concordances {
         }
         return conc;
     }
-    
 }

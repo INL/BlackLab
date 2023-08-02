@@ -209,7 +209,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public ContextSize defaultContextSize() {
-        return ContextSize.get(5);
+        return ContextSize.get(5, Integer.MAX_VALUE);
     }
 
     @Override

@@ -4,7 +4,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -12,8 +11,6 @@ import nl.inl.blacklab.search.results.Hits;
  * A hit property for grouping on the text actually matched.
  */
 public class HitPropertyHitText extends HitPropertyContextBase {
-
-    protected static final ContextSize CONTEXT_SIZE = ContextSize.get(0,0,true);
     
     static HitPropertyHitText deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         return deserializeProp(HitPropertyHitText.class, index, field, info);

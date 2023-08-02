@@ -326,10 +326,9 @@ public class WebserviceOperations {
      * @return collocations
      */
     public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        ContextSize contextSize = ContextSize.get(params.getWordsAroundHit());
+        ContextSize contextSize = ContextSize.get(params.getWordsAroundHit(), Integer.MAX_VALUE);
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        return hits.collocations(hits.field().mainAnnotation(), contextSize,
-                sensitivity);
+        return hits.collocations(hits.field().mainAnnotation(), contextSize, sensitivity);
     }
 
     /**

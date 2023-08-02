@@ -311,7 +311,7 @@ public class QueryTool {
     private boolean commandWasQuery;
 
     /** Size of larger snippet */
-    private ContextSize snippetSize = ContextSize.get(50);
+    private ContextSize snippetSize = ContextSize.get(50, Integer.MAX_VALUE);
 
     /** Don't allow file operations in web mode */
     private boolean webSafeOperationOnly = false;
@@ -715,7 +715,7 @@ public class QueryTool {
                 firstResult = 0;
                 showResultsPage();
             } else if (lcased.startsWith("context ")) {
-                contextSize = ContextSize.get(parseInt(lcased.substring(8), 0));
+                contextSize = ContextSize.get(parseInt(lcased.substring(8), 0), Integer.MAX_VALUE);
                 collocations = null;
                 showResultsPage();
             } else if (lcased.startsWith("snippet ")) {
@@ -747,7 +747,7 @@ public class QueryTool {
                     outprintln(WordUtils.wrap(DocUtil.highlightContent(index, docId, hitsInDoc, -1, -1), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
-                snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0));
+                snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0), Integer.MAX_VALUE);
                 outprintln("Snippets will show " + snippetSize + " words of context.");
             } else if (lcased.startsWith("doc ")) {
                 int docId = parseInt(lcased.substring(4), 0);

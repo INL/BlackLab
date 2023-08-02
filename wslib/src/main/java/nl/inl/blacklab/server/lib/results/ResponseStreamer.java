@@ -14,6 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
@@ -44,7 +45,6 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -53,7 +53,6 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
@@ -502,18 +501,54 @@ public class ResponseStreamer {
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(ds, params, result.getConcordanceContext(), result.getAnnotationsToWrite(), hit, docPid,
-                        capturedGroups);
+                hit(docPid, hit, capturedGroups, params.contextSettings().size(), result.getConcordanceContext(), result.getAnnotationsToWrite()
+                );
             }
             ds.endItem();
         }
         ds.endList().endEntry();
     }
 
-    private void hit(DataStream ds, nl.inl.blacklab.server.lib.WebserviceParams params, ConcordanceContext concordanceContext,
-            Collection<Annotation> annotationsToList, Hit hit, String docPid, Map<String, MatchInfo> matchInfo) {
+    private void hit(String docPid, Hit hit, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
+            Collection<Annotation> annotationsToList) {
+        boolean isSnippet = false;
+
+        outputHitOrSnippet(docPid, hit, matchInfo, context, concordanceContext, annotationsToList,
+                isSnippet);
+    }
+
+    /**
+     * Output a hit (or just a document fragment with no hit in it)
+     *
+     * @param result hit to output
+     */
+    public void hitOrFragmentInfo(ResultDocSnippet result) {
+        String docPid = result.getParams().getDocPid();
+        Hits hits = result.getHits();
+        if (!hits.hitsStats().processedAtLeast(1))
+            throw new BlackLabRuntimeException("Hit for snippet not found");
+        Hit hit = hits.get(0);
+        hits = hits.size() > 1 ? hits.window(hit) : hits; // make sure we only have 1 hit
+        Map<String, MatchInfo> matchInfo = hits.getMatchInfoMap(hit);
+        ContextSize context = result.getContext();
+        ConcordanceContext concordanceContext = result.isOrigContent() ?
+                ConcordanceContext.concordances(hits.concordances(context, ConcordanceType.CONTENT_STORE)) :
+                ConcordanceContext.kwics(hits.kwics(context));
+        List<Annotation> annotationsToList = result.getAnnotsToWrite();
+        //boolean includeContext = result.isHit(); // i.e. did we specify hitstart/hitend (include context) or
+                                                 // wordstart/wordend (no context, just the snippet)
+        boolean isSnippet = true;
+
+        outputHitOrSnippet(docPid, hit, matchInfo, context, concordanceContext, annotationsToList,
+                isSnippet);
+    }
+
+    private void outputHitOrSnippet(String docPid, Hit hit, Map<String, MatchInfo> matchInfo,
+            ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
+            boolean isSnippet) {
+        boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;
         ds.startMap();
-        if (docPid != null) {
+        if (!StringUtils.isEmpty(docPid)) { // (should never be empty..?)
             // Add basic hit info
             ds.entry(KEY_DOC_PID, docPid);
             ds.entry(KEY_SPAN_START, hit.start());
@@ -535,10 +570,8 @@ public class ResponseStreamer {
             }
         }
 
-        // Captured groups, (list of) relations, inline tags as a map
-        String returnMatchInfo = params.getReturnMatchInfo();
-        if (returnMatchInfo.isEmpty() || returnMatchInfo.equalsIgnoreCase("all")) {
-            // If there's any match info, include it here
+        // If there's any match info, include it here
+        if (modernizeApi) {
             if (matchInfo != null && !matchInfo.isEmpty()) {
                 ds.startEntry("matchInfos").startMap();
                 for (Map.Entry<String, MatchInfo> e: matchInfo.entrySet()) {
@@ -550,8 +583,6 @@ public class ResponseStreamer {
             }
         }
 
-        ContextSize contextSize = params.contextSettings().size();
-        boolean includeContext = contextSize.inlineTagName() != null || contextSize.before() > 0 || contextSize.after() > 0;
         if (concordanceContext.isConcordances()) {
             // Add concordance from original XML
             Concordance c = concordanceContext.getConcordance(hit);
@@ -560,7 +591,11 @@ public class ResponseStreamer {
                         .startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry()
                         .startEntry(keyAfter).xmlFragment(c.right()).endEntry();
             } else {
-                ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
+                if (isSnippet) {
+                    ds.xmlFragment(c.match());
+                } else {
+                    ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
+                }
             }
         } else {
             // Add KWIC info
@@ -570,7 +605,11 @@ public class ResponseStreamer {
                         .startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry()
                         .startEntry(keyAfter).contextList(c.annotations(), annotationsToList, c.right()).endEntry();
             } else {
-                ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
+                if (isSnippet) {
+                    ds.startEntry("snippet").contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
+                } else {
+                    ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
+                }
             }
         }
         ds.endMap();
@@ -1390,56 +1429,6 @@ public class ResponseStreamer {
                 metadataGroupInfo(metadataFieldGroups);
                 stringMap("docFields", docFields);
                 stringMap("metadataFieldDisplayNames", metaDisplayNames);
-            }
-        }
-        ds.endMap();
-    }
-
-    /**
-     * Output a hit (or just a document fragment with no hit in it)
-     *
-     * @param result hit to output
-     */
-    public void hitOrFragmentInfo(ResultDocSnippet result) {
-
-        Hits hits = result.getHits();
-        Hit hit = hits.get(0);
-        ContextSize wordsAroundHit = result.getWordsAroundHit();
-        boolean useOrigContent = result.isOrigContent();
-        boolean isFragment = !result.isHit();
-        String docPid = null; // (not sure why this is always null..?) result.getParams().getDocPid();
-        List<Annotation> annotationsToList = result.getAnnotsToWrite();
-
-        // TODO: can we merge this with hit()...?
-        ds.startMap();
-        if (docPid != null) {  // always false, see above? weird!
-            // Add basic hit info
-            ds.entry(KEY_DOC_PID, docPid);
-            ds.entry(KEY_SPAN_START, hit.start());
-            ds.entry(KEY_SPAN_END, hit.end());
-        }
-
-        Hits singleHit = hits.window(hit);
-        if (useOrigContent) {
-            // We're using original content.
-            Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
-            Concordance c = concordances.get(hit);
-            if (!isFragment) {
-                ds.startEntry(keyBefore).xmlFragment(c.left()).endEntry()
-                        .startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry()
-                        .startEntry(keyAfter).xmlFragment(c.right()).endEntry();
-            } else {
-                ds.xmlFragment(c.match());
-            }
-        } else {
-            Kwics kwics = singleHit.kwics(wordsAroundHit);
-            Kwic c = kwics.get(hit);
-            if (!isFragment) {
-                ds.startEntry(keyBefore).contextList(c.annotations(), annotationsToList, c.left()).endEntry()
-                        .startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry()
-                        .startEntry(keyAfter).contextList(c.annotations(), annotationsToList, c.right()).endEntry();
-            } else {
-                ds.startEntry("snippet").contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
             }
         }
         ds.endMap();

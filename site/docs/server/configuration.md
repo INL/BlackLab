@@ -140,11 +140,6 @@ parameters:
     # "omitemptycaptures" URL parameter.
     omitEmptyCaptures: false
 
-    # Return match info for captured groups, relations and 
-    # inline tags in the response, or just captures (old behaviour)?
-    # Override using the "matchinfo" URL parameter.
-    returnMatchInfo: all
-
     # What REST API version to attempt compatibility with.
     # Valid values are currently: 3.0, 4.0, current, experimental.
     # Defaults to current.

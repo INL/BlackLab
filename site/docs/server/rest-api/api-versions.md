@@ -26,39 +26,70 @@ Note that the additions to API v4 are currently considered experimental, until t
 
 ## API changes from 3.0 to 4.0
 
-These are the differences between API version 3.0 and 4.0:
+This version is the current default API (unless configured otherwise).
+
+Below are all the differences between API version 3.0 and 4.0.
+
+To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0), you should stop using the deprecated features.
+
+### Changed
+
+- Corpus info page (`/CORPUSNAME`):
+    - Two keys were renamed to be more consistent: in the `versionInfo` block,
+      `blacklabVersion` and `blacklabBuildTime` are now spelled with a lowercase `l`, just like on the server info page. This is unlikely to break any clients.
+- Annotated fields:
+    - `displayOrder` will no longer include internal annotations (e.g. `punct` and `_relation`, previously called `starttag`), as these are generally not meant to be displayed as search fields.
+
+### Added
 
 - Server info page:
   - New key added (`/`): `apiVersion` (valid values: `3.0` and `4.0`; assume `3.0` if missing)
   - In addition to `indices`, the new `corpora` key was added that provides the same information in a slightly different format. You should use `corpora` instead of `indices` for future compatibility.
   - In addition to being reported under `fieldInfo`, `pidField` is now also a top-level key. You should use this version of the key for future compatibility. (the other special fields in `fieldInfo` will be moved to `custom` in v5)
-- Corpus info page (`/CORPUSNAME`):
-  - Two keys were renamed to be more consistent: in the `versionInfo` block,
-  `blacklabVersion` and `blacklabBuildTime` are now spelled with a lowercase `l`, just like on the server info page. This is unlikely to break any clients.
-- Annotated fields: 
-  - `displayOrder` will no longer include internal annotations (e.g. `punct` and `_relation`, previously called `starttag`), as these are generally not meant to be displayed as search fields.
 - Results:
   - In addition to `captureGroups`, `matchInfos` will be reported that includes the same information as well as any inline tags and relations matched. You should use this instead of `captureGroups` for future compatibility.
   - `before`/`after` are the new, preferred alternatives to `left`/`right` for sorting/grouping on context. Not all languages are LTR, so this makes more sense. Response structures in API v4 still use `left`/`right` for compatibility, but will eventually be updated as well. These properties can now get a number of tokens as an extra parameter, e.g. `before:lemma:i:2`.
   - For grouping on context, `wordleft`/`wordright` have been deprecated. Use `before`/`after` with 1 token instead.
 - New endpoints were added for all operations on corpora, at `/corpora/CORPUSNAME/...` (for now alongside existing endpoints `/CORPUSNAME`). These endpoints are available in API v4 but only "speak" API v5 (see below). You should move to these endpoints for future compatibility.
 
+### Deprecated
+
+These features still work for now, but will be removed in the future.
+
+- Server info page:
+  - The `indices` object. Use `corpora` instead.
+  - The top-level `fieldInfo` object. Instead, use the top-level `pidField` to find the persistent identifier field. For other special fields, you still have to use `fieldInfo`, but that will move to `custom` in API v5.
+- Document info page (`/docs/DOC_PID`) and results pages: `metadataFieldDisplayNames`, `metadataFieldGroups` and `docFields` are deprecated. This information can be found on the corpus info page, so it should be retrieved from there once.
+- Results:
+  - The `captureGroups` key. Use `matchInfos` instead.
+  - sort/group properties `wordleft`,`wordright`. Use `before`/`after` instead with `1` as the number of tokens, e.g. `before:lemma:i:1` instead of `wordleft:lemma:i`.
+- The old `/CORPUSNAME/...` endpoints. Use the new `/corpora/CORPUSNAME/...` endpoints (that respond with API v5 responses) instead.
+
 ## API changes from 4.0 to 5.0-exp
 
+This will likely become the default in BlackLab 5.0. Right now it's experimental and can be used for testing. Use `api=exp` to test that your client works with this API version.
+
+### Removed
+
+All these were deprecated in v4.0.
+
 - Old endpoints related to corpora have been removed. Use the new `/corpora/...` endpoints introduced in API v4 instead.
-- All XML responses:
-  - XML responses don't use dynamic values as element names anymore, but instead adopt a `<entry><key>...</key><value>...</value></entry>` structure. This avoids problems with and simplifies maintaining the (less-used) XML format. Affects: `summary/searchParams`, `docInfos`, `users[]` in `/sharing` response.
-  - Wherever the XML used attributes for map entries, e.g. `<entry key="key">value</entry>`, this was changed to `<entry><key>...</key><value>...</value></entry>` as well.
-- server, corpus, field info:
-  - `indexName` in responses has been replaced with `corpusName`.
-  - Corpora, metadata and annotated field and annotations report certain properties (such as `displayName`, `description`) inside a `custom` block now etc. These are all ignored by BlackLab but may be useful for client applications such as BlackLab Frontend. They are only included in responses if you specify `custom=true`.
-- Server info page:
-  - Dropped `indices`. Use `corpora` instead.
-- Document info page (`/docs/DOC_PID`):
-  - No longer includes `metadataFieldDisplayNames`, `metadataFieldGroups` or `docFields`. This information can be found on the corpus info page and need not be sent with each document info request.
+- Server info page removed `indices`. Use `corpora` instead.
+- Document info page (`/docs/DOC_PID`) and results pages no longer include `metadataFieldDisplayNames`, `metadataFieldGroups` or `docFields`. This information can be found on the corpus info page and need not be sent with each document info request.
 - Results pages:
-  - No longer include `metadataFieldDisplayNames`, `metadataFieldGroups` or `docFields`. This information can be found on the corpus info page and need not be sent with each search request.
-  - `summary` has been restructured to group related values together. Keys have been renamed for clarity.
-  - Dropped `captureGroups`. Use `matchInfos` instead.
-  - response keys `left`/`right` have been replaced with `before`/`after` in the `/hits` response.
-  - `docInfos` now have a `metadata` subobject instead of mixing metadata with `mayView` and `lengthInTokens`.
+    - Dropped `captureGroups`. Use `matchInfos` instead.
+
+### Changed
+
+These are breaking changes compared to v4.0. Make sure you update your client accordingly.
+
+- All XML responses:
+    - XML responses don't use dynamic values as element names anymore, but instead adopt a `<entry><key>...</key><value>...</value></entry>` structure. This avoids problems with and simplifies maintaining the (less-used) XML format. Affects: `summary/searchParams`, `docInfos`, `users[]` in `/sharing` response.
+    - Wherever the XML used attributes for map entries, e.g. `<entry key="key">value</entry>`, this was changed to `<entry><key>...</key><value>...</value></entry>` as well.
+- server, corpus, field info:
+    - `indexName` in responses has been replaced with `corpusName`.
+    - Corpora, metadata and annotated field and annotations report certain properties (such as `displayName`, `description`) inside a `custom` block now etc. These are all ignored by BlackLab but may be useful for client applications such as BlackLab Frontend. They are only included in responses if you specify `custom=true`.
+- Results pages:
+    - `summary` has been restructured to group related values together. Keys have been renamed for clarity.
+    - response keys `left`/`right` have been replaced with `before`/`after` in the `/hits` response.
+    - `docInfos` now have a `metadata` subobject instead of mixing metadata with `mayView` and `lengthInTokens`.

@@ -345,7 +345,7 @@ public class TestIndex {
      */
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
-        Kwics kwics = hits.kwics(ContextSize.get(1));
+        Kwics kwics = hits.kwics(ContextSize.get(1, Integer.MAX_VALUE));
         for (Hit hit : hits) {
             Kwic kwic = kwics.get(hit);
             String left = StringUtils.join(kwic.left(word), " ");

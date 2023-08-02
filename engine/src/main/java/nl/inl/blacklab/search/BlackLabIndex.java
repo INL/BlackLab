@@ -67,7 +67,7 @@ public interface BlackLabIndex extends AutoCloseable {
     /**
      * Default number of context words to return around a hit.
      */
-    ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
+    ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5, Integer.MAX_VALUE);
 
     // Static [factory] methods
     //---------------------------------------------------------------

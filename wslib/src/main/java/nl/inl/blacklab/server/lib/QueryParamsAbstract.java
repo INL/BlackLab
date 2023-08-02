@@ -294,7 +294,10 @@ public abstract class QueryParamsAbstract implements QueryParams {
         } else {
             throw new IllegalArgumentException("Invalid context value: " + str);
         }
-        return ContextSize.get(before, after, true, inlineTagName);
+
+        int maxContextSize = getSearchManager().config().getParameters().getContextSize().getMaxInt();
+
+        return ContextSize.get(before, after, true, inlineTagName, ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize));
     }
 
     @Override
@@ -308,9 +311,6 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public boolean getOmitEmptyCaptures() { return getBool(WebserviceParameter.OMIT_EMPTY_CAPTURES); }
-
-    @Override
-    public String getReturnMatchInfo() { return get(WebserviceParameter.RETURN_MATCH_INFO); }
 
     @Override
     public Optional<String> getFacetProps() { return opt(WebserviceParameter.INCLUDE_FACETS); }
