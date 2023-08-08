@@ -1,64 +1,38 @@
 {
-  "summary": {
-    "searchParam": {
-      "patt": "<u/> containing \"good\"",
-      "sort": "field:pid,hitposition",
-      "wordsaroundhit": "1",
-      "waitfortotal": "true",
-      "op": "hits",
-      "indexname": "test"
-    },
-    "searchTime": "VALUE_REMOVED",
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "windowFirstResult": 0,
-    "requestedWindowSize": 50,
-    "actualWindowSize": 5,
-    "windowHasPrevious": false,
-    "windowHasNext": false,
-    "stillCounting": false,
-    "numberOfHits": 5,
-    "numberOfHitsRetrieved": 5,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1
+  "docInfos": {
+    "PRint602": {
+      "fromInputFile": [
+        "PRint602.xml"
+      ],
+      "lengthInTokens": 268,
+      "mayView": true,
+      "pid": [
+        "PRint602"
+      ],
+      "title": [
+        "interview about conference experience and impressions of city"
+      ]
+    }
   },
   "hits": [
     {
       "docPid": "PRint602",
-      "start": 153,
       "end": 158,
       "left": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           "meet/meeting"
         ],
         "pos": [
           ""
         ],
+        "punct": [
+          " "
+        ],
         "word": [
           "meeting"
         ]
       },
       "match": {
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
         "lemma": [
           "yes",
           "it",
@@ -73,6 +47,13 @@
           "",
           ""
         ],
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
+        ],
         "word": [
           "yes",
           "it",
@@ -82,46 +63,39 @@
         ]
       },
       "right": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           "yes"
         ],
         "pos": [
           ""
         ],
+        "punct": [
+          " "
+        ],
         "word": [
           "yes"
         ]
-      }
+      },
+      "start": 153
     },
     {
       "docPid": "PRint602",
-      "start": 159,
       "end": 164,
       "left": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           "yes"
         ],
         "pos": [
           ""
         ],
+        "punct": [
+          " "
+        ],
         "word": [
           "yes"
         ]
       },
       "match": {
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
         "lemma": [
           "it",
           "be",
@@ -136,6 +110,13 @@
           "",
           ""
         ],
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
+        ],
         "word": [
           "it",
           "'s",
@@ -145,61 +126,39 @@
         ]
       },
       "right": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           "there"
         ],
         "pos": [
           ""
         ],
+        "punct": [
+          " "
+        ],
         "word": [
           "there"
         ]
-      }
+      },
+      "start": 159
     },
     {
       "docPid": "PRint602",
-      "start": 226,
       "end": 246,
       "left": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           ""
         ],
         "pos": [
           ""
         ],
+        "punct": [
+          " "
+        ],
         "word": [
           "_0"
         ]
       },
       "match": {
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
         "lemma": [
           "oh",
           "er",
@@ -243,6 +202,28 @@
           "",
           "",
           ""
+        ],
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
         ],
         "word": [
           "oh",
@@ -268,47 +249,39 @@
         ]
       },
       "right": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           "mhm"
         ],
         "pos": [
           ""
+        ],
+        "punct": [
+          " "
         ],
         "word": [
           "mhm"
         ]
-      }
+      },
+      "start": 226
     },
     {
       "docPid": "PRint602",
-      "start": 247,
       "end": 253,
       "left": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           "mhm"
         ],
         "pos": [
           ""
+        ],
+        "punct": [
+          " "
         ],
         "word": [
           "mhm"
         ]
       },
       "match": {
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
         "lemma": [
           "and",
           "er",
@@ -325,6 +298,14 @@
           "",
           ""
         ],
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
+        ],
         "word": [
           "and",
           "er",
@@ -335,52 +316,39 @@
         ]
       },
       "right": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           "good"
         ],
         "pos": [
           ""
+        ],
+        "punct": [
+          " "
         ],
         "word": [
           "good"
         ]
-      }
+      },
+      "start": 247
     },
     {
       "docPid": "PRint602",
-      "start": 253,
       "end": 264,
       "left": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           ""
         ],
         "pos": [
           ""
+        ],
+        "punct": [
+          " "
         ],
         "word": [
           "@@@@"
         ]
       },
       "match": {
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
         "lemma": [
           "good",
           "food",
@@ -406,6 +374,19 @@
           "",
           "",
           ""
+        ],
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
         ],
         "word": [
           "good",
@@ -422,34 +403,68 @@
         ]
       },
       "right": {
-        "punct": [
-          " "
-        ],
         "lemma": [
           "okay"
         ],
         "pos": [
           ""
         ],
+        "punct": [
+          " "
+        ],
         "word": [
           "okay"
         ]
-      }
+      },
+      "start": 253
     }
   ],
-  "docInfos": {
-    "PRint602": {
-      "fromInputFile": [
-        "PRint602.xml"
-      ],
-      "pid": [
-        "PRint602"
-      ],
-      "title": [
-        "interview about conference experience and impressions of city"
-      ],
-      "lengthInTokens": 268,
-      "mayView": true
-    }
+  "summary": {
+    "actualWindowSize": 5,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "numberOfHits": 5,
+    "numberOfHitsRetrieved": 5,
+    "pattern": {
+      "corpusql": "<u/> containing 'good'",
+      "json": {
+        "filter": {
+          "type": "regex",
+          "value": "good"
+        },
+        "operation": "containing",
+        "producer": {
+          "name": "u",
+          "type": "tags"
+        },
+        "type": "posfilter"
+      }
+    },
+    "requestedWindowSize": 50,
+    "searchParam": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "<u/> containing \"good\"",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
   }
 }

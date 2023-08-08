@@ -1,64 +1,24 @@
 {
-  "summary": {
-    "searchParam": {
-      "indexname": "test",
-      "op": "docs",
-      "patt": "\"they\"",
-      "sort": "field:pid",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
-    },
-    "searchTime": "VALUE_REMOVED",
-    "countTime": "VALUE_REMOVED",
-    "windowFirstResult": 0,
-    "requestedWindowSize": 50,
-    "actualWindowSize": 1,
-    "windowHasPrevious": false,
-    "windowHasNext": false,
-    "stillCounting": false,
-    "numberOfHits": 3,
-    "numberOfHitsRetrieved": 3,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    }
-  },
   "docs": [
     {
-      "docPid": "PBsve430",
-      "numberOfHits": 3,
       "docInfo": {
         "fromInputFile": [
           "PBsve430.xml"
         ],
+        "lengthInTokens": 334,
+        "mayView": true,
         "pid": [
           "PBsve430"
         ],
         "title": [
           "service encounter about visa application for family members"
-        ],
-        "lengthInTokens": 334,
-        "mayView": true
+        ]
       },
+      "docPid": "PBsve430",
+      "numberOfHits": 3,
       "snippets": [
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "the",
@@ -72,6 +32,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "_0",
@@ -82,27 +49,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "they"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "they"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "tell",
               "i",
@@ -117,6 +77,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "told",
               "me",
@@ -128,13 +95,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "this",
               "i",
@@ -149,6 +109,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "this",
               "i",
@@ -158,27 +125,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "they"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "they"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "have",
               "it",
@@ -193,6 +153,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "had",
               "it",
@@ -204,13 +171,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "yah",
               "for",
@@ -225,6 +185,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "yah",
               "for",
@@ -234,27 +201,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "they"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "they"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "she",
@@ -269,6 +229,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "the-",
               "she",
@@ -280,5 +247,45 @@
         }
       ]
     }
-  ]
+  ],
+  "summary": {
+    "actualWindowSize": 1,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "numberOfHits": 3,
+    "numberOfHitsRetrieved": 3,
+    "pattern": {
+      "corpusql": "'they'",
+      "json": {
+        "type": "regex",
+        "value": "they"
+      }
+    },
+    "requestedWindowSize": 50,
+    "searchParam": {
+      "indexname": "test",
+      "op": "docs",
+      "patt": "\"they\"",
+      "sort": "field:pid",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
 }

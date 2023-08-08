@@ -137,7 +137,7 @@ public enum WebserviceParameter {
         defaultValues.put(MAX_HITS_TO_RETRIEVE, "1000000");
         defaultValues.put(NUMBER_OF_RESULTS, "50");
         defaultValues.put(OMIT_EMPTY_CAPTURES, "no");
-        defaultValues.put(PATTERN_LANGUAGE, "corpusql");
+        defaultValues.put(PATTERN_LANGUAGE, "default");
         defaultValues.put(PROPERTY, Constants.DEFAULT_MAIN_ANNOT_NAME); // deprecated, use "annotation" now
         defaultValues.put(SENSITIVE, "no");
         defaultValues.put(USE_CACHE, "yes");

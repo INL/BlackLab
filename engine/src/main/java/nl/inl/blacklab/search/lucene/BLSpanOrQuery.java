@@ -160,6 +160,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      */
     public BLSpanOrQuery(BLSpanQuery... clauses) {
         super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo : null);
+        if (clauses.length == 0)
+            throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
         inner = new SpanOrQuery(clauses);
         this.field = inner.getField();
         this.luceneField = clauses.length > 0 ? clauses[0].getRealField() : field;
@@ -168,8 +170,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         this.guarantees = createGuarantees(clauseGuarantees);
     }
 
-    static BLSpanOrQuery from(QueryInfo queryInfo, SpanOrQuery in) {
+    static BLSpanQuery from(QueryInfo queryInfo, SpanOrQuery in) {
         SpanQuery[] clauses = in.getClauses();
+        if (clauses.length == 0)
+            return new SpanQueryNoHits(queryInfo, queryInfo.field().mainAnnotation().mainSensitivity().luceneField());
         BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];
         String field = null;
         boolean allInSameField = true;

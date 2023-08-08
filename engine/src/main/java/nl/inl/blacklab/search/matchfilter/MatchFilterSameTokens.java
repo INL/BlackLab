@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.matchfilter;
 
 import java.util.Arrays;
+import java.util.List;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
@@ -9,6 +10,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterSameTokens extends MatchFilter {
+
     private final String annotationName;
 
     private int annotIndex = -1;
@@ -108,4 +110,15 @@ public class MatchFilterSameTokens extends MatchFilter {
         return this;
     }
 
+    public List<String> getCaptures() {
+        return List.of(groupName);
+    }
+
+    public String getAnnotation() {
+        return annotationName;
+    }
+
+    public MatchSensitivity getSensitivity() {
+        return sensitivity;
+    }
 }

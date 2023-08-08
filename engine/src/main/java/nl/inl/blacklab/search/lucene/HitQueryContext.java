@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.results.QueryInfo;
+
 /**
  * Provides per-hit query-wide context, such as captured groups.
  *

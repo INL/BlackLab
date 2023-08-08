@@ -478,4 +478,9 @@ public class DataStreamXml extends DataStreamAbstract {
         return plain(fragment);
     }
 
+    @Override
+    public String getType() {
+        return "xml";
+    }
+
 }

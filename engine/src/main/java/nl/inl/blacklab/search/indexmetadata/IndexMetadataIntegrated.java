@@ -23,9 +23,6 @@ import org.apache.lucene.search.TermQuery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -76,11 +73,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             } else {
                 // Load and deserialize metadata document.
                 String json = MetadataDocument.getMetadataJson(index.reader(), docId);
-                ObjectMapper mapper = Json.getJsonObjectMapper();
-                JaxbAnnotationModule jaxbAnnotationModule = new JaxbAnnotationModule();
-                mapper.registerModule(jaxbAnnotationModule);
-                metadata = mapper.readValue(new StringReader(json),
-                        IndexMetadataIntegrated.class);
+                metadata = Json.getJaxbReader().readValue(
+                        new StringReader(json), IndexMetadataIntegrated.class);
                 metadata.fixAfterDeserialization(index, docId);
             }
             return metadata;
@@ -170,14 +164,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
 
         private String serializeToJson(IndexMetadataIntegrated metadata) {
-            // Eventually, we'd like to serialize using JAXB annotations instead of a lot of manual code.
-            // The biggest hurdle for now is neatly serializing custom properties for fields and annotations,
-            // which are currently still done through a delegate class instead of CustomPropsMap.
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.registerModule(new JaxbAnnotationModule());
-                ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-                return writer.writeValueAsString(metadata);
+                return Json.getJaxbWriter().writeValueAsString(metadata);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

@@ -86,7 +86,7 @@
 
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
-            <artifactId>blacklab-text-pattern</artifactId>
+            <artifactId>blacklab-engine</artifactId>
             <version>${project.version}</version>
         </dependency>
         

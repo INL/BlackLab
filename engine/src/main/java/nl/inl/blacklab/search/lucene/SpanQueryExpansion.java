@@ -88,6 +88,15 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         LEFT,
         RIGHT;
 
+        public static Direction fromStringValue(String s) {
+            for (Direction dir : values()) {
+                if (dir.name().equalsIgnoreCase(s)) {
+                    return dir;
+                }
+            }
+            throw new IllegalArgumentException("Unknown direction: " + s);
+        }
+
         @Override
         public String toString() {
             return this == LEFT ? "L" : "R";

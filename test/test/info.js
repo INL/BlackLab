@@ -1,3 +1,4 @@
+"use strict";
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
@@ -7,7 +8,7 @@ const { expectUnchanged, expectUrlUnchanged} = require("./compare-responses");
 const constants = require('./constants');
 const SERVER_URL = constants.SERVER_URL;
 
-describe('Server info page', () => {
+describe('info/Server info page', () => {
     it('should return server info', done => {
         chai
             .request(constants.SERVER_URL)

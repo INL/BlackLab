@@ -1,9 +1,9 @@
 {
-  "indexName": "test",
-  "displayName": "test",
   "description": "",
-  "status": "available",
+  "displayName": "test",
   "documentFormat": "voice-tei",
+  "indexName": "test",
+  "status": "available",
   "timeModified": "VALUE_REMOVED",
   "tokenCount": 766
 }

@@ -15,7 +15,7 @@
     }
   },
   "user": {
-    "loggedIn": false,
-    "canCreateIndex": false
+    "canCreateIndex": false,
+    "loggedIn": false
   }
 }

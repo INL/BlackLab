@@ -1,84 +1,48 @@
 {
-  "summary": {
-    "searchParam": {
-      "indexname": "test",
-      "op": "docs",
-      "patt": "[]",
-      "sort": "field:pid",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
-    },
-    "searchTime": "VALUE_REMOVED",
-    "countTime": "VALUE_REMOVED",
-    "windowFirstResult": 0,
-    "requestedWindowSize": 50,
-    "actualWindowSize": 3,
-    "windowHasPrevious": false,
-    "windowHasNext": false,
-    "stillCounting": false,
-    "numberOfHits": 766,
-    "numberOfHitsRetrieved": 766,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "numberOfDocs": 3,
-    "numberOfDocsRetrieved": 3,
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    }
-  },
   "docs": [
     {
-      "docPid": "PBsve430",
-      "numberOfHits": 334,
       "docInfo": {
         "fromInputFile": [
           "PBsve430.xml"
         ],
+        "lengthInTokens": 334,
+        "mayView": true,
         "pid": [
           "PBsve430"
         ],
         "title": [
           "service encounter about visa application for family members"
-        ],
-        "lengthInTokens": 334,
-        "mayView": true
+        ]
       },
+      "docPid": "PBsve430",
+      "numberOfHits": 334,
       "snippets": [
         {
           "left": {
-            "punct": [],
-            "lemma": [],
-            "pos": [],
-            "word": []
+            "lemma": [
+            ],
+            "pos": [
+            ],
+            "punct": [
+            ],
+            "word": [
+            ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               ""
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "f_hallo"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "hello",
@@ -93,6 +57,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "_1",
               "hello",
@@ -104,41 +75,34 @@
         },
         {
           "left": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               ""
             ],
             "pos": [
               ""
+            ],
+            "punct": [
+              " "
             ],
             "word": [
               "f_hallo"
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               ""
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "_1"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "hello",
               "i",
@@ -153,6 +117,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "hello",
               "i",
@@ -164,10 +135,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               ""
@@ -175,6 +142,10 @@
             "pos": [
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " "
             ],
             "word": [
               "f_hallo",
@@ -182,27 +153,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "hello"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "hello"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "i",
               "want",
@@ -217,6 +181,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "i",
               "want",
@@ -228,11 +199,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "",
@@ -242,6 +208,11 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "f_hallo",
@@ -250,27 +221,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "i"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "i"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "want",
               "to",
@@ -284,6 +248,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "want",
@@ -296,12 +267,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "",
@@ -313,6 +278,12 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "f_hallo",
@@ -322,27 +293,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "want"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "want"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "to",
               "apply",
@@ -356,6 +320,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "to",
@@ -369,51 +340,48 @@
       ]
     },
     {
-      "docPid": "PBsve435",
-      "numberOfHits": 164,
       "docInfo": {
         "fromInputFile": [
           "PBsve435.xml"
         ],
+        "lengthInTokens": 164,
+        "mayView": true,
         "pid": [
           "PBsve435"
         ],
         "title": [
           "service encounter about getting an address printed out"
-        ],
-        "lengthInTokens": 164,
-        "mayView": true
+        ]
       },
+      "docPid": "PBsve435",
+      "numberOfHits": 164,
       "snippets": [
         {
           "left": {
-            "punct": [],
-            "lemma": [],
-            "pos": [],
-            "word": []
+            "lemma": [
+            ],
+            "pos": [
+            ],
+            "punct": [
+            ],
+            "word": [
+            ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "hello"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "hello"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "hello",
               "",
@@ -427,6 +395,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "hello",
@@ -439,41 +414,34 @@
         },
         {
           "left": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "hello"
             ],
             "pos": [
               ""
+            ],
+            "punct": [
+              " "
             ],
             "word": [
               "hello"
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "hello"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "hello"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "",
@@ -487,6 +455,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "f_gruess",
@@ -499,10 +474,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " "
-            ],
             "lemma": [
               "hello",
               "hello"
@@ -511,33 +482,30 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " "
+            ],
             "word": [
               "hello",
               "hello"
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               ""
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "f_gruess"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "yeah",
@@ -552,6 +520,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "f_gott",
               "yeah",
@@ -563,11 +538,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "hello",
               "hello",
@@ -577,6 +547,11 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "hello",
@@ -585,27 +560,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               ""
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "f_gott"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "yeah",
               "this",
@@ -620,6 +588,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "yeah",
               "this",
@@ -631,12 +606,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "hello",
               "hello",
@@ -648,6 +617,12 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "hello",
@@ -657,27 +632,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "yeah"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "yeah"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "this",
               "be",
@@ -691,6 +659,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "this",
@@ -704,51 +679,48 @@
       ]
     },
     {
-      "docPid": "PRint602",
-      "numberOfHits": 268,
       "docInfo": {
         "fromInputFile": [
           "PRint602.xml"
         ],
+        "lengthInTokens": 268,
+        "mayView": true,
         "pid": [
           "PRint602"
         ],
         "title": [
           "interview about conference experience and impressions of city"
-        ],
-        "lengthInTokens": 268,
-        "mayView": true
+        ]
       },
+      "docPid": "PRint602",
+      "numberOfHits": 268,
       "snippets": [
         {
           "left": {
-            "punct": [],
-            "lemma": [],
-            "pos": [],
-            "word": []
+            "lemma": [
+            ],
+            "pos": [
+            ],
+            "punct": [
+            ],
+            "word": [
+            ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "hello"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "hello"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "excuse",
               "i",
@@ -763,6 +735,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "excuse",
               "me",
@@ -774,41 +753,34 @@
         },
         {
           "left": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "hello"
             ],
             "pos": [
               ""
+            ],
+            "punct": [
+              " "
             ],
             "word": [
               "hello"
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "excuse"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "excuse"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "i",
               "i",
@@ -823,6 +795,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "me",
               "i",
@@ -834,10 +813,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " "
-            ],
             "lemma": [
               "hello",
               "excuse"
@@ -846,33 +821,30 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " "
+            ],
             "word": [
               "hello",
               "excuse"
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "i"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "me"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "i",
               "be",
@@ -887,6 +859,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "i",
               "'m",
@@ -898,11 +877,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "hello",
               "excuse",
@@ -912,6 +886,11 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "hello",
@@ -920,27 +899,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "i"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "i"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "be",
               "from",
@@ -955,6 +927,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "'m",
               "from",
@@ -966,12 +945,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "hello",
               "excuse",
@@ -983,6 +956,12 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "hello",
@@ -992,27 +971,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "be"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "'m"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "from",
               "vienna",
@@ -1026,6 +998,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "from",
@@ -1038,5 +1017,46 @@
         }
       ]
     }
-  ]
+  ],
+  "summary": {
+    "actualWindowSize": 3,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "numberOfHits": 766,
+    "numberOfHitsRetrieved": 766,
+    "pattern": {
+      "corpusql": "[]",
+      "json": {
+        "max": 1,
+        "min": 1,
+        "type": "anytoken"
+      }
+    },
+    "requestedWindowSize": 50,
+    "searchParam": {
+      "indexname": "test",
+      "op": "docs",
+      "patt": "[]",
+      "sort": "field:pid",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
 }

@@ -13,6 +13,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import org.ivdnt.blacklab.proxy.ProxyConfig;
+import org.ivdnt.blacklab.proxy.representation.EntityWithSummary;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.SolrGeneralErrorResponse;
@@ -46,27 +47,6 @@ public class Requests {
         return false;
     }
 
-    /**
-     * Add query params if not empty or default value.
-     *
-     * @param src target to add params to
-     * @param params params to add (key, value, key, value, etc.)
-     * @return new target
-     */
-    public static WebTarget optParams(WebTarget src, Object... params) {
-        WebTarget result = src;
-        for (int i = 0; i < params.length; i += 2) {
-            if (params[i + 1] != null) {
-                String key = params[i].toString();
-                String value = params[i + 1].toString();
-                if (!value.isEmpty() && !isParamDefault(key, value)) {
-                    result = result.queryParam(key, value);
-                }
-            }
-        }
-        return result;
-    }
-
     public static <T> T get(Client client, Map<WebserviceParameter, String> queryParams, Class<T> entityType) {
         return (T)request(client, queryParams, "GET", List.of(entityType));
     }
@@ -84,14 +64,15 @@ public class Requests {
         ProxyConfig.ProxyTarget proxyTarget = ProxyConfig.get().getProxyTarget();
         String url = proxyTarget.getUrl();
         WebTarget target = client.target(url);
-        if (!queryParams.containsKey(WebserviceParameter.CORPUS_NAME)) {
+        boolean isSolr = proxyTarget.getProtocol().equalsIgnoreCase("solr");
+        if (isSolr && !queryParams.containsKey(WebserviceParameter.CORPUS_NAME)) {
             // Solr always needs a corpus name even for "server-wide" requests.
             if (proxyTarget.getDefaultCorpusName().isEmpty())
                 throw new IllegalStateException("No corpus name. Please specify proxyTarget.defaultCorpusName in proxy config file");
             queryParams = new HashMap<>(queryParams);
             queryParams.put(WebserviceParameter.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
         }
-        return proxyTarget.getProtocol().equalsIgnoreCase("solr") ?
+        return isSolr ?
                 requestSolr(target, queryParams, method, entityTypes) :
                 requestBls(target, queryParams, method, entityTypes);
     }
@@ -104,12 +85,13 @@ public class Requests {
             String operation = queryParams.get(WebserviceParameter.OPERATION);
             if (operation != null) {
                 WebserviceOperation op = WebserviceOperation.fromValue(operation).orElseThrow();
-                target = target.path(op.getBlacklabServerPath());
+                target = target.path(op.path());
             }
             for (Map.Entry<WebserviceParameter, String> e: queryParams.entrySet()) {
                 WebserviceParameter key = e.getKey();
-                if (key != WebserviceParameter.CORPUS_NAME && key != WebserviceParameter.OPERATION)
-                    target = target.queryParam(e.getKey().value(), e.getValue());
+                if (key != WebserviceParameter.CORPUS_NAME && key != WebserviceParameter.OPERATION) {
+                    target = target.queryParam(e.getKey().value(), escapeBraces(e.getValue()));
+                }
             }
         }
         if (entityTypes.size() == 1) {
@@ -140,6 +122,13 @@ public class Requests {
         }
     }
 
+    /** Escape { and } in parameter values or they will be interpreted by Jersey as template slots
+     * (no, this shouldn't be necessary, but it is)
+     */
+    private static String escapeBraces(String value) {
+        return value.replaceAll("\\{", "%7B").replaceAll("\\}", "%7D");
+    }
+
     private static Object requestSolr(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, List<Class<?>> entityTypes) {
         if (queryParams != null) {
             String corpusName = queryParams.get(WebserviceParameter.CORPUS_NAME);
@@ -149,12 +138,7 @@ public class Requests {
             for (Map.Entry<WebserviceParameter, String> e: queryParams.entrySet()) {
                 WebserviceParameter key = e.getKey();
                 if (key != WebserviceParameter.CORPUS_NAME) {
-                    // Escape { and } or they will be interpreted them as template slots
-                    // (no, this shouldn't be necessary, but it is)
-                    String value = e.getValue()
-                            .replaceAll("\\{", "%7B")
-                            .replaceAll("\\}", "%7D");
-                    target = target.queryParam(BL_PAR_NAME_PREFIX + key, value);
+                    target = target.queryParam(BL_PAR_NAME_PREFIX + key, escapeBraces(e.getValue()));
                 }
             }
         }
@@ -202,15 +186,21 @@ public class Requests {
     /**
      * Process a request that could return a CSV response.
      *
-     * @param corpusName corpus we're querying
-     * @param parameters parameters to the request
-     * @param op operation to perform
+     * @param corpusName  corpus we're querying
+     * @param parameters  parameters to the request
+     * @param op          operation to perform
      * @param resultTypes what types the result entity could be
+     * @param isXml
      * @return response
      */
     public static Response requestWithPossibleCsvResponse(Client client, String method, String corpusName,
-            MultivaluedMap<String, String> parameters, WebserviceOperation op, List<Class<?>> resultTypes) {
+            MultivaluedMap<String, String> parameters, WebserviceOperation op, List<Class<?>> resultTypes,
+            boolean isXml) {
         Object entity = request(client, ParamsUtil.get(parameters, corpusName, op), method, resultTypes);
+        if (isXml && entity instanceof EntityWithSummary) {
+            // Don't try to serialize the pattern to XML, this induces headaches.
+            ((EntityWithSummary) entity).getSummary().pattern = null;
+        }
         if (entity instanceof JsonCsvResponse) {
             // Return actual CSV contents instead of JSON
             String csv = ((JsonCsvResponse) entity).csv;

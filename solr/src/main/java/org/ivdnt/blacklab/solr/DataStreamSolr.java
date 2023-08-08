@@ -258,4 +258,9 @@ public class DataStreamSolr implements DataStream {
         // which the client should easily be able to extract.
         startMap().entry("xslt", xslt).endMap();
     }
+
+    @Override
+    public String getType() {
+        return "json";
+    }
 }

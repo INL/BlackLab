@@ -168,69 +168,105 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         for (int i = 0; i < clauses.size(); i++) {
             BLSpanQuery clause = clauses.get(i);
             if (clause instanceof SpanQueryEdge) {
-                SpanQueryEdge start = (SpanQueryEdge) clause;
-                if (!start.isTrailingEdge()) {
-                    String tagName = start.getElementName();
-                    if (tagName != null) {
-                        // Start tag found. Is there a matching end tag?
-                        for (int j = i + 1; j < clauses.size(); j++) {
-                            BLSpanQuery clause2 = clauses.get(j);
-                            if (clause2 instanceof SpanQueryEdge) {
-                                SpanQueryEdge end = (SpanQueryEdge) clause2;
-                                if (end.isTrailingEdge() && end.getElementName().equals(tagName)) {
-                                    // Found start and end tags in sequence. Convert to containing
-                                    // query.
-                                    List<BLSpanQuery> search = new ArrayList<>();
-                                    clauses.remove(i); // start tag
-                                    for (int k = 0; k < j - i - 1; k++) {
-                                        search.add(clauses.remove(i));
-                                    }
-                                    clauses.remove(i); // end tag
-                                    boolean startAny = false;
-                                    if (search.get(0) instanceof SpanQueryAnyToken) {
-                                        SpanQueryAnyToken any1 = (SpanQueryAnyToken) search.get(0);
-                                        if (any1.guarantees().hitsLengthMin() == 0 &&
-                                                any1.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
-                                            startAny = true;
-                                            search.remove(0);
-                                        }
-                                    }
-                                    boolean endAny = false;
-                                    int last = search.size() - 1;
-                                    if (search.get(last) instanceof SpanQueryAnyToken) {
-                                        SpanQueryAnyToken any2 = (SpanQueryAnyToken) search.get(last);
-                                        if (any2.guarantees().hitsLengthMin() == 0 &&
-                                                any2.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
-                                            endAny = true;
-                                            search.remove(last);
-                                        }
-                                    }
-                                    BLSpanQuery producer = start.getClause();
-                                    BLSpanQuery filter = new SpanQuerySequence(search.toArray(new BLSpanQuery[0]));
-                                    SpanQueryPositionFilter.Operation op;
-                                    if (startAny) {
-                                        if (endAny) {
-                                            op = SpanQueryPositionFilter.Operation.CONTAINING;
-                                        } else {
-                                            op = SpanQueryPositionFilter.Operation.CONTAINING_AT_END;
-                                        }
-                                    } else {
-                                        if (endAny) {
-                                            op = SpanQueryPositionFilter.Operation.CONTAINING_AT_START;
-                                        } else {
-                                            op = SpanQueryPositionFilter.Operation.MATCHES;
-                                        }
-                                    }
-                                    clauses.add(i, new SpanQueryPositionFilter(producer, filter, op, false));
-                                    anyRewritten = true;
-                                }
-                            }
+                anyRewritten = anyRewritten || matchingTagsWithEdge(clauses, i);
+            } else if (clause instanceof SpanQueryRelations) {
+                anyRewritten = anyRewritten || matchingTagsWithRelations(clauses, i);
+            }
+        }
+        return anyRewritten;
+    }
+
+    private boolean matchingTagsWithRelations(List<BLSpanQuery> clauses, int startTagIndex) {
+        SpanQueryRelations start = (SpanQueryRelations)clauses.get(startTagIndex);
+        if (!start.isTagQuery())
+            return false;
+        if (start.getSpanMode() == RelationInfo.SpanMode.SOURCE) {
+            String tagName = start.getElementName();
+            // Start tag found. Is there a matching end tag?
+            for (int j = startTagIndex + 1; j < clauses.size(); j++) {
+                BLSpanQuery clause2 = clauses.get(j);
+                if (clause2 instanceof SpanQueryRelations) {
+                    SpanQueryRelations end = (SpanQueryRelations) clause2;
+                    if (end.isTagQuery() && end.getSpanMode() == RelationInfo.SpanMode.TARGET && end.getElementName().equals(tagName)) {
+                        BLSpanQuery producer = start.withSpanMode(RelationInfo.SpanMode.FULL_SPAN);
+                        // Found start and end tags in sequence. Convert to containing
+                        // query.
+                        rewriteToWithin(clauses, startTagIndex, j, producer);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchingTagsWithEdge(List<BLSpanQuery> clauses, int startTagIndex) {
+        SpanQueryEdge start = (SpanQueryEdge)clauses.get(startTagIndex);
+        if (!start.isTrailingEdge()) {
+            String tagName = start.getElementName();
+            if (tagName != null) {
+                // Start tag found. Is there a matching end tag?
+                for (int j = startTagIndex + 1; j < clauses.size(); j++) {
+                    BLSpanQuery clause2 = clauses.get(j);
+                    if (clause2 instanceof SpanQueryEdge) {
+                        SpanQueryEdge end = (SpanQueryEdge) clause2;
+                        if (end.isTrailingEdge() && end.getElementName().equals(tagName)) {
+                            BLSpanQuery producer = start.getClause();
+                            // Found start and end tags in sequence. Convert to containing
+                            // query.
+                            rewriteToWithin(clauses, startTagIndex, j, producer);
+                            return true;
                         }
                     }
                 }
             }
         }
-        return anyRewritten;
+        return false;
+    }
+
+    private static void rewriteToWithin(List<BLSpanQuery> clauses, int startTagIndex, int endTagIndex,
+            BLSpanQuery producer) {
+        List<BLSpanQuery> search = new ArrayList<>();
+        clauses.remove(startTagIndex); // start tag
+        for (int k = 0; k < endTagIndex - startTagIndex - 1; k++) {
+            search.add(clauses.remove(startTagIndex));
+        }
+        clauses.remove(startTagIndex); // end tag
+        boolean startAny = false;
+        if (search.get(0) instanceof SpanQueryAnyToken) {
+            SpanQueryAnyToken any1 = (SpanQueryAnyToken) search.get(0);
+            if (any1.guarantees().hitsLengthMin() == 0 &&
+                    any1.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
+                startAny = true;
+                search.remove(0);
+            }
+        }
+        boolean endAny = false;
+        int last = search.size() - 1;
+        if (search.get(last) instanceof SpanQueryAnyToken) {
+            SpanQueryAnyToken any2 = (SpanQueryAnyToken) search.get(last);
+            if (any2.guarantees().hitsLengthMin() == 0 &&
+                    any2.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
+                endAny = true;
+                search.remove(last);
+            }
+        }
+        BLSpanQuery filter = new SpanQuerySequence(search.toArray(new BLSpanQuery[0]));
+        SpanQueryPositionFilter.Operation op;
+        if (startAny) {
+            if (endAny) {
+                op = SpanQueryPositionFilter.Operation.CONTAINING;
+            } else {
+                op = SpanQueryPositionFilter.Operation.CONTAINING_AT_END;
+            }
+        } else {
+            if (endAny) {
+                op = SpanQueryPositionFilter.Operation.CONTAINING_AT_START;
+            } else {
+                op = SpanQueryPositionFilter.Operation.MATCHES;
+            }
+        }
+        clauses.add(startTagIndex, new SpanQueryPositionFilter(producer, filter, op, false));
     }
 
     static boolean rewriteClauses(List<BLSpanQuery> clauses, IndexReader reader) throws IOException {

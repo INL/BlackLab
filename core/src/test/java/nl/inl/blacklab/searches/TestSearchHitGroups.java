@@ -24,7 +24,6 @@ import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -61,7 +60,7 @@ public class TestSearchHitGroups {
 
     private void testGroup(boolean fastPath, Query filter) throws InvalidQuery {
         String title = fastPath ? "group fast path" : "group slow path";
-        TextPattern tp = new TextPatternAnnotation("word", new TextPatternAnyToken(1, 1));
+        TextPattern tp = new TextPatternAnyToken(1, 1);
         BLSpanQuery query = tp.toQuery(QueryInfo.create(index));
         if (filter != null)
             query = new SpanQueryFiltered(query, filter);

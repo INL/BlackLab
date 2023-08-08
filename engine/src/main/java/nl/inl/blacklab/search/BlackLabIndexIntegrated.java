@@ -43,6 +43,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
 /**
  * A BlackLab index with all files included in the Lucene index.
@@ -184,19 +185,18 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     @Override
     public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
-            Map<String, String> attributes, String captureAs) {
+            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
         // Note: tags are always indexed as a forward relation (source always occurs before target)
-        return relationQuery(queryInfo, luceneField, RelationUtil.inlineTagFullType(tagName),
-                attributes, SpanQueryRelations.Direction.FORWARD, RelationInfo.SpanMode.FULL_SPAN,
-                captureAs);
-    }
-
-    @Override
-    public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
-            Map<String, String> attributes, SpanQueryRelations.Direction direction, RelationInfo.SpanMode spanMode,
-            String captureAs) {
-        return new SpanQueryRelations(queryInfo, luceneField, relationType, attributes, direction,
-                spanMode, captureAs);
+        RelationInfo.SpanMode spanMode;
+        switch (adjust) {
+        case LEADING_EDGE:  spanMode = RelationInfo.SpanMode.SOURCE;    break;
+        case TRAILING_EDGE: spanMode = RelationInfo.SpanMode.TARGET;    break;
+        default:
+        case FULL_TAG:      spanMode = RelationInfo.SpanMode.FULL_SPAN; break;
+        }
+        return new SpanQueryRelations(queryInfo, luceneField,
+                RelationUtil.inlineTagFullType(tagName), attributes,
+                SpanQueryRelations.Direction.FORWARD, spanMode, captureAs);
     }
 
     @Override

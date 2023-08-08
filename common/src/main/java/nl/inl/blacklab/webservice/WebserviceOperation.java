@@ -19,6 +19,7 @@ public enum WebserviceOperation {
     HITS("hits", "hits"),
     HITS_CSV("hits-csv", "hits"), // TODO: shouldn't be separate operations
     HITS_GROUPED("hits-grouped", "hits"),  // should -grouped be separate? (triggered by group/viewgroup params)
+    PARSE_PATTERN("parse-pattern", "parse-pattern"),
     DOCS("docs", "docs"),
     DOCS_CSV("docs-csv", "docs"), // TODO: shouldn't be separate operations
     DOCS_GROUPED("docs-grouped", "docs"),  // should -grouped be separate? (triggered by group/viewgroup params)
@@ -80,7 +81,7 @@ public enum WebserviceOperation {
         return value().startsWith("doc");
     }
 
-    public String getBlacklabServerPath() {
+    public String path() {
         return blsPath;
     }
 

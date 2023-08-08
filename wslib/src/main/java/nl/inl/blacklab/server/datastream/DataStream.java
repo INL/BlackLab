@@ -6,8 +6,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.util.WebserviceUtil;
+import nl.inl.util.Json;
 
 public interface DataStream {
     String XML_PROLOG = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>";
@@ -253,6 +257,15 @@ public interface DataStream {
 
     DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values);
 
+    default DataStream value(TextPattern pattern) {
+        try {
+            // By default, write it as a string (only JSON "properly" incorporates it into the response).
+            return value(Json.getJaxbWriter().writeValueAsString(pattern));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     DataStream value(String value);
 
     DataStream value(long value);
@@ -308,7 +321,9 @@ public interface DataStream {
      * @return this data stream
      */
     default DataStream value(Object value) {
-        if (value instanceof Map) {
+        if (value instanceof TextPattern) {
+            return value((TextPattern) value);
+        } else if (value instanceof Map) {
             return value((Map) value);
         } else if (value instanceof List) {
             return value((List) value);
@@ -382,4 +397,10 @@ public interface DataStream {
     default DataStream closeEl() {
         throw new UnsupportedOperationException();
     }
+
+    /** Type of data stream we're writing (json/xml/csv).
+     *
+     * (DataStreamSolr also says 'json')
+     */
+    String getType();
 }

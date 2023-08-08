@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.FieldInfo;
@@ -37,10 +36,6 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * elements in the document.
  */
 public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
-
-    /** We assign unique ids to SpanQueryRelations clauses, so the match info names for
-     *  multiple relation clauses will be unique. */
-    private static AtomicInteger uniqueIdCounter = new AtomicInteger();
 
     private Map<String, String> attributes;
 
@@ -128,6 +123,11 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         return new SpanQueryRelations(queryInfo, relationFieldName, relationType, attributes, clause, direction, mode, captureAs);
     }
 
+    public boolean isTagQuery() {
+        String relationClass = RelationUtil.classAndType(relationType)[0];
+        return relationClass.equals(RelationUtil.RELATION_CLASS_INLINE_TAG);
+    }
+
     public enum Direction {
         // Only return root relations (relations without a source)
         ROOT("root"),
@@ -179,9 +179,6 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     private RelationInfo.SpanMode spanMode;
 
     private String captureAs;
-
-    /** Ensure unique match info name to avoid collision when matching the same relation type twice */
-    private int uniqueId = uniqueIdCounter.getAndIncrement();
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
             Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs) {
@@ -279,7 +276,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode, uniqueId, captureAs);
+            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode, captureAs);
         }
 
     }
@@ -306,15 +303,17 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         if (o == null || getClass() != o.getClass())
             return false;
         SpanQueryRelations that = (SpanQueryRelations) o;
-        return Objects.equals(clause, that.clause) && Objects.equals(
-                relationType, that.relationType) && Objects.equals(baseFieldName, that.baseFieldName)
-                && Objects.equals(relationFieldName, that.relationFieldName) && direction == that.direction
-                && spanMode == that.spanMode;
+        return Objects.equals(attributes, that.attributes) && Objects.equals(clause, that.clause)
+                && Objects.equals(relationType, that.relationType) && Objects.equals(baseFieldName,
+                that.baseFieldName) && Objects.equals(relationFieldName, that.relationFieldName)
+                && direction == that.direction && spanMode == that.spanMode && Objects.equals(captureAs,
+                that.captureAs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clause, relationType, baseFieldName, relationFieldName, direction, spanMode);
+        return Objects.hash(attributes, clause, relationType, baseFieldName, relationFieldName, direction, spanMode,
+                captureAs);
     }
 
     /**

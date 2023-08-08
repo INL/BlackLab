@@ -299,7 +299,7 @@ public class MockSpans extends BLSpans {
         return spans;
     }
 
-    public static MockSpans withMatchInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, RelationInfo[] aRelationInfo) {
+    public static MockSpans withRelationInfoObjectsInPayload(int[] aDoc, int[] aStart, int[] aEnd, RelationInfo[] aRelationInfo) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
         spans.setPayloadsMatchInfo(aStart, aEnd, aRelationInfo);
         return spans;

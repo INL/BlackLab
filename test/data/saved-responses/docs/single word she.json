@@ -1,64 +1,24 @@
 {
-  "summary": {
-    "searchParam": {
-      "indexname": "test",
-      "op": "docs",
-      "patt": "\"she\"",
-      "sort": "field:pid",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
-    },
-    "searchTime": "VALUE_REMOVED",
-    "countTime": "VALUE_REMOVED",
-    "windowFirstResult": 0,
-    "requestedWindowSize": 50,
-    "actualWindowSize": 1,
-    "windowHasPrevious": false,
-    "windowHasNext": false,
-    "stillCounting": false,
-    "numberOfHits": 5,
-    "numberOfHitsRetrieved": 5,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    }
-  },
   "docs": [
     {
-      "docPid": "PBsve430",
-      "numberOfHits": 5,
       "docInfo": {
         "fromInputFile": [
           "PBsve430.xml"
         ],
+        "lengthInTokens": 334,
+        "mayView": true,
         "pid": [
           "PBsve430"
         ],
         "title": [
           "service encounter about visa application for family members"
-        ],
-        "lengthInTokens": 334,
-        "mayView": true
+        ]
       },
+      "docPid": "PBsve430",
+      "numberOfHits": 5,
       "snippets": [
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "family",
               "visum",
@@ -73,6 +33,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "family",
               "visa",
@@ -82,27 +49,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "she"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "she"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "tell",
               "i",
@@ -117,6 +77,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "told",
               "me",
@@ -128,13 +95,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "rent",
               "erm",
@@ -148,6 +108,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "rent",
@@ -158,27 +125,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "she"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "she"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "be",
               "say",
@@ -193,6 +153,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "was",
               "saying",
@@ -204,13 +171,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "okay",
               "so",
@@ -224,6 +184,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "okay",
@@ -234,27 +201,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "she"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "she"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "ask",
               "something",
@@ -268,6 +228,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "ask",
@@ -280,13 +247,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "okay",
               "",
@@ -300,6 +260,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "okay",
@@ -310,27 +277,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "she"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "she"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "she",
               "tell",
@@ -344,6 +304,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "she",
@@ -356,13 +323,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "no",
@@ -376,6 +336,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "@@",
@@ -386,27 +353,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "she"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "she"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "tell",
               "i",
@@ -420,6 +380,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "told",
@@ -432,5 +399,45 @@
         }
       ]
     }
-  ]
+  ],
+  "summary": {
+    "actualWindowSize": 1,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "numberOfHits": 5,
+    "numberOfHitsRetrieved": 5,
+    "pattern": {
+      "corpusql": "'she'",
+      "json": {
+        "type": "regex",
+        "value": "she"
+      }
+    },
+    "requestedWindowSize": 50,
+    "searchParam": {
+      "indexname": "test",
+      "op": "docs",
+      "patt": "\"she\"",
+      "sort": "field:pid",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
 }

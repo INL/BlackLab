@@ -12,7 +12,7 @@ public class TestSpansRelations {
     private SpansRelations tagRelationQuery(BLSpans a, boolean hasPrimaryValueIndicators) {
         return new SpansRelations("test", a,
                 hasPrimaryValueIndicators, SpanQueryRelations.Direction.FORWARD,
-                RelationInfo.SpanMode.FULL_SPAN, 0, "");
+                RelationInfo.SpanMode.FULL_SPAN, "");
     }
 
     private void testRelationsAndAdjust(int[] aDoc, int[] aStart, int[] aEnd, Callable<BLSpans> createSpans) throws Exception {

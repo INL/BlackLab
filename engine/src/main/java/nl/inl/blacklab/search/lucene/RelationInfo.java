@@ -399,10 +399,10 @@ public class RelationInfo implements MatchInfo {
         int targetLen = targetEnd - targetStart;
         String target = targetStart + (targetLen != 1 ? " (len=" + targetEnd + ")" : "");
         if (isRoot())
-            return "rel( ^--" + fullRelationType + "--> " + target + ")";
+            return "rel( ^-" + fullRelationType + "-> " + target + ")";
         int sourceLen = sourceEnd - sourceStart;
         String source = sourceStart + (sourceLen != 1 ? " (len=" + sourceEnd + ")" : "");
-        return "rel(" + source + " --" + fullRelationType + "--> " + target + ")";
+        return "rel(" + source + " -" + fullRelationType + "-> " + target + ")";
     }
 
     @Override

@@ -6,7 +6,11 @@ import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.util.Json;
 
 /**
  * Class to stream out JSON data.
@@ -122,6 +126,15 @@ public class DataStreamJson extends DataStreamAbstract {
     }
 
     @Override
+    public DataStream value(TextPattern pattern) {
+        try {
+            return print(Json.getJaxbWriter().writeValueAsString(pattern));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public DataStream value(String value) {
         return value == null ? print("null") : print("\"").print(StringEscapeUtils.escapeJson(value)).print("\"");
     }
@@ -139,6 +152,11 @@ public class DataStreamJson extends DataStreamAbstract {
     @Override
     public DataStream value(boolean value) {
         return print(value);
+    }
+
+    @Override
+    public String getType() {
+        return "json";
     }
 
 }

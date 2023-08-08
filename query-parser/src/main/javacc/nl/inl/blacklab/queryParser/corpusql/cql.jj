@@ -25,7 +25,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.ChildRelationStruct;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.RelationTypeStruct;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
@@ -52,6 +53,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
 import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
+import nl.inl.blacklab.search.textpattern.TextPatternTags.Adjust;import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
 @SuppressWarnings("all")
@@ -91,9 +93,8 @@ TOKEN [IGNORE_CASE]:
 |   <FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |   <NUMBER: (["0"-"9"])+ >
     /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
-    /* double-dash versions ----> --root--> --.*--> --a-b--> are DEPRECATED; don't use! */
-|   <ROOT_DEP_OP: "^" ( "-" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "-" | "--" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "--" ) ">" >
-|   <DEP_OP: ("!")? ( "-" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "-" | "--" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "--" ) ">" >
+|   <ROOT_DEP_OP: "^-" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "->" >
+|   <DEP_OP: ("!")? "-" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "->" >
 |   <QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 |   <SINGLE_QUOTED_STRING: "'" (~["'","\\"] | "\\" ~[] )* "'" >
 }
@@ -268,21 +269,22 @@ TextPattern sequence():
 TextPattern relationQuery():
 {
     TextPattern parent = null;
-    TextPattern child = null;
-    List<TextPattern> clauses = new ArrayList<TextPattern>();
+    ChildRelationStruct childRel = null;
+    List<ChildRelationStruct> childRels = new ArrayList<ChildRelationStruct>();
     String relType = null;
 }
-{
-    parent=captureQuery()                            { clauses.add(parent); }
+{   LOOKAHEAD(3)
+    parent=captureQuery()
     [
         LOOKAHEAD(3)
-        child=childRelation()                        { clauses.add(child); }
-        ( LOOKAHEAD( ";" ) ";" child=childRelation() { clauses.add(child); } )*   /* LOOKAHEAD( ";" ) suppresses dangling-else problem */
+        childRel=childRelation()                        { childRels.add(childRel); }
+        /* LOOKAHEAD( ";" ) suppresses dangling-else problem */
+        ( LOOKAHEAD( ";" ) ";" childRel=childRelation() { childRels.add(childRel); } )*
     ]
     {
-        if (clauses.size() == 1)
-            return clauses.get(0);
-        return new TextPatternQueryFunction("rmatch", clauses);
+        if (childRels.isEmpty())
+            return parent;
+        return wrapper.relationQuery(parent, childRels);
     }
 |   parent=rootRelationType()
     {
@@ -290,9 +292,9 @@ TextPattern relationQuery():
     }
 }
 
-TextPattern childRelation():
+ChildRelationStruct childRelation():
 {
-    Pair<Boolean, String> relType = null;
+    RelationTypeStruct relType = null;
     TextPattern target = null;
     String label = "";
 }
@@ -300,30 +302,18 @@ TextPattern childRelation():
     [ label=captureLabel() ":" ]
     relType=relationType() target=relationQuery()
     {
-        boolean negate = relType.getLeft();
-        String type = relType.getRight();
-        target = new TextPatternQueryFunction("rel", List.of(type, target, "source", label));
-        if (negate)
-            target = new TextPatternNot(target);
-        return target;
+        return new ChildRelationStruct(relType, target, label);
     }
 }
 
-Pair<Boolean, String> relationType():
+RelationTypeStruct relationType():
 {
     Token t = null;
 }
 {
     t=<DEP_OP>
     {
-        String text = t.toString();
-        boolean negate = false;
-        if (text.charAt(0) == '!') {
-            negate = true;
-            text = text.substring(1);
-        }
-        String typeRegex = wrapper.getTypeRegexFromRelationOperator(text);
-        return Pair.of(negate, typeRegex);
+        return RelationTypeStruct.fromOperator(t.toString());
     }
 }
 
@@ -331,14 +321,14 @@ TextPattern rootRelationType():
 {
     Token t = null;
     TextPattern target = null;
+    String label = "";
 }
 {
+    [ label=captureLabel() ":" ]
     t=<ROOT_DEP_OP> target=relationQuery()
     {
-        String text = t.toString();
-        text = text.substring(1); // strip ^ at start
-        String typeRegex = wrapper.getTypeRegexFromRelationOperator(text);
-        return new TextPatternQueryFunction("rel", List.of(typeRegex, target, "target", "root"));
+        RelationTypeStruct relType = RelationTypeStruct.fromOperator(t.toString().substring(1));
+        return wrapper.rootRelationQuery(new ChildRelationStruct(relType, target, label));
     }
 }
 
@@ -358,16 +348,14 @@ TextPattern tag():
         if (endTagSlash != null && selfCloseSlash != null) {
             throw new MalformedTagException();
         }
-        TextPattern tags = new TextPatternTags(tagName.toString(), attr, "");
+        TextPatternTags.Adjust adjust;
         if (selfCloseSlash != null)
-            return tags;
-        if (endTagSlash != null) {
-            if (attr.size() > 0) {
-                throw new MalformedTagException("Cannot filter XML end tag on attributes");
-            }
-            return new TextPatternEdge(tags, true); // right edge
-        }
-        return new TextPatternEdge(tags, false); // left edge
+            adjust = Adjust.FULL_TAG;
+        else
+            adjust = Adjust.LEADING_EDGE;
+        if (endTagSlash != null)
+            adjust = Adjust.TRAILING_EDGE;
+        return new TextPatternTags(tagName.toString(), attr, adjust, "");
     }
 }
 
@@ -454,7 +442,7 @@ TextPattern sequencePartNoCapture():
                 TextPatternAnyToken any = (TextPatternAnyToken)m;
                 m = any.repeat(rep[0], rep[1]);
             } else
-                m = new TextPatternRepetition(m, rep[0], rep[1]);
+                m = TextPatternRepetition.get(m, rep[0], rep[1]);
         }
         return m;
     }
@@ -582,7 +570,7 @@ TextPattern positionLongPart():
 /* attribute/value pair, with equals or not equals sign, or possibly just a value (default attribute) */
 TextPattern attValuePair():
 {
-    TextPattern v = null;
+    TextPatternTerm v = null;
     String annot;
     String f = null;
 }
@@ -590,7 +578,9 @@ TextPattern attValuePair():
     LOOKAHEAD(2)
     annot=annotName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
 |   annot=annotName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
+/* UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. ["word"], meaning the same as just "word" without brackets)
 |   v=valuePart() [f=flags()]                      { return v; }
+*/
 }
 
 String annotName():
@@ -608,6 +598,7 @@ String annotName():
 }
 
 /* value expression: a value or multiple values combined with boolean operators */
+/*   UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. [word=("word"|"other")], use [word="word|other"] or [word="word" | word="other"])
 TextPattern value():
 {
     TextPattern a = null, c = null;
@@ -624,14 +615,17 @@ TextPattern value():
     }
 |   a=valuePart()                   { return a; }
 }
+*/
 
 /* value: a quoted string or a value expression between parentheses */
-TextPattern valuePart():
+TextPatternTerm valuePart():
 {
-    TextPattern m = null;
+    TextPatternTerm m = null;
     String t = null;
 }
 {
     t=quotedString()               { return wrapper.simplePattern(t); }
+/*  UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. [word=("word"|"other")], use [word="word|other"] or [word="word" | word="other"])
 |   "(" m=value() ")"              { return m; }
+ */
 }

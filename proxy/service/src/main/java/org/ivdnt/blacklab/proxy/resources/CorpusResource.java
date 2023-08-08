@@ -72,6 +72,26 @@ public class CorpusResource {
         return ProxyResponse.success(Requests.get(client, params, Corpus.class));
     }
 
+    @Path("/parse-pattern")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getParsePattern(
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo) {
+        Response hits = ProxyRequest.parsePattern(client, corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        return hits;
+    }
+
+    @Path("/parse-pattern")
+    @POST
+    @Consumes("application/x-www-form-urlencoded")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response postParsePattern(
+            @PathParam("corpusName") String corpusName,
+            MultivaluedMap<String, String> formParams) {
+        return ProxyRequest.parsePattern(client, corpusName, formParams, HttpMethod.POST);
+    }
+
     @Path("/hits")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
@@ -79,7 +99,8 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers) {
-        return ProxyRequest.hits(client, corpusName, uriInfo.getQueryParameters(), headers, HttpMethod.GET);
+        Response hits = ProxyRequest.hits(client, corpusName, uriInfo.getQueryParameters(), headers, HttpMethod.GET);
+        return hits;
     }
 
     @Path("/hits")

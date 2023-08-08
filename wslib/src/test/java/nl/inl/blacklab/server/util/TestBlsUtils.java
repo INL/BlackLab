@@ -12,7 +12,6 @@ import org.junit.Test;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternWildcard;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -42,23 +41,23 @@ public class TestBlsUtils {
     @Test
     public void testParsePatt() throws BlsException {
         TextPattern pattThe = new TextPatternRegex("^the$");
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "corpusql", true));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "corpusql"));
     }
 
     @Test
     public void testParsePattContextQL() throws BlsException {
-        TextPattern pattThe = new TextPatternAnnotation("word", new TextPatternWildcard("the"));
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "contextql", true));
+        TextPattern pattThe = new TextPatternWildcard("the", "word", null);
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "contextql"));
     }
 
     @Test(expected = BadRequest.class)
     public void testParsePattWrongLanguage() throws BlsException {
-        BlsUtils.parsePatt(index, "word", "\"the\"", "swahili", true);
+        BlsUtils.parsePatt(index, "word", "\"the\"", "swahili");
     }
 
     @Test(expected = BadRequest.class)
     public void testParsePattNoPattern() throws BlsException {
-        BlsUtils.parsePatt(index, "word", "", "corpusql", true);
+        BlsUtils.parsePatt(index, "word", "", "corpusql");
     }
 
     @Test

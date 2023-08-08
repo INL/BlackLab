@@ -103,6 +103,12 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
         if (rewritten == null)
             return this;
+        SpanGuarantees g = rewritten.get(0).guarantees();
+        if (g.hitsAllSameLength() && g.hitsHaveUniqueStartEnd() && g.hitsLengthMin() == min && g.hitsLengthMin() == max) {
+            // Clause's hits are unique and the exact length as the n-grams we're looking for.
+            // Just return the clause.
+            return rewritten.get(0);
+        }
         return new SpanQueryFilterNGrams(rewritten.get(0), op, min, max, leftAdjust, rightAdjust);
     }
 

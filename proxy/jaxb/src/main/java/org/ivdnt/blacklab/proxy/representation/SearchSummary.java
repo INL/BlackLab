@@ -24,6 +24,9 @@ public class SearchSummary implements Cloneable {
     @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
     public Map<String, String> searchParam;
 
+    @JsonInclude(Include.NON_NULL)
+    public SummaryTextPattern pattern;
+
     public long searchTime;
 
     @JsonInclude(Include.NON_NULL)

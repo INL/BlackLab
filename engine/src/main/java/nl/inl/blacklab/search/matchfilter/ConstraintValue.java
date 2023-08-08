@@ -7,7 +7,7 @@ package nl.inl.blacklab.search.matchfilter;
  * ConstraintValueString while the constraint
  * <code>a.lemma = b.lemma</code> evaluates to a ConstraintValueBoolean.
  */
-public abstract class ConstraintValue implements Comparable<ConstraintValue> {
+public abstract class ConstraintValue implements Comparable<ConstraintValue>, TextPatternStruct {
 
     private static final ConstraintValue FALSE = new ConstraintValueBoolean(false);
 

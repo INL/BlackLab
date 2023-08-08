@@ -8,9 +8,12 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 /**
  * Supports reading/writing JSON and YAML files.
@@ -23,7 +26,15 @@ public class Json {
 
     static private ObjectMapper jsonObjectMapper;
 
+    static private ObjectMapper jsonWithJaxbAnnotation;
+
     static private ObjectMapper yamlObjectMapper;
+
+    private static ObjectReader jaxbReader;
+
+    private static ObjectWriter jaxbWriter;
+
+    private static ObjectWriter jaxbWriterPretty;
 
     static {
         initObjectMappers();
@@ -35,6 +46,12 @@ public class Json {
         jsonObjectMapper = new ObjectMapper(jsonFactory);
         jsonObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
 
+        jsonWithJaxbAnnotation = jsonObjectMapper.copy();
+        jsonWithJaxbAnnotation.registerModule(new JaxbAnnotationModule());
+        jaxbReader = jsonWithJaxbAnnotation.reader();
+        jaxbWriterPretty = jsonWithJaxbAnnotation.writerWithDefaultPrettyPrinter();
+        jaxbWriter = jsonWithJaxbAnnotation.writer();
+
         YAMLFactory yamlFactory = new YAMLFactory();
         yamlObjectMapper = new ObjectMapper(yamlFactory);
         yamlObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
@@ -42,6 +59,18 @@ public class Json {
 
     public static ObjectMapper getJsonObjectMapper() {
         return jsonObjectMapper;
+    }
+
+    public static ObjectWriter getJaxbWriter() {
+        return getJaxbWriter(true);
+    }
+
+    public static ObjectWriter getJaxbWriter(boolean prettyPrint) {
+        return prettyPrint ? jaxbWriterPretty : jaxbWriter;
+    }
+
+    public static ObjectReader getJaxbReader() {
+        return jaxbReader;
     }
 
     public static ObjectMapper getYamlObjectMapper() {
@@ -145,5 +174,4 @@ public class Json {
         }
         return result;
     }
-
 }

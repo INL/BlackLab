@@ -39,11 +39,11 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
-import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
+import nl.inl.blacklab.search.lucene.SpanQueryEdge;
 import nl.inl.blacklab.search.lucene.SpanQueryTagsExternal;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.util.VersionFile;
 
 /**
@@ -155,18 +155,13 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
 
     @Override
     public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
-            Map<String, String> attributes, String captureAs) {
+            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
         BLSpanQuery q = new SpanQueryTagsExternal(queryInfo, luceneField, tagName, attributes);
+        if (adjust == TextPatternTags.Adjust.LEADING_EDGE || adjust == TextPatternTags.Adjust.TRAILING_EDGE)
+            q = new SpanQueryEdge(q, adjust == TextPatternTags.Adjust.TRAILING_EDGE);
         if (!StringUtils.isEmpty(captureAs))
             q = new SpanQueryCaptureGroup(q, captureAs, 0, 0);
         return q;
-    }
-
-    @Override
-    public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
-            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode,
-            String captureAs) {
-        throw new UnsupportedOperationException("Relations queries are not supported with the external index format.");
     }
 
     @Override

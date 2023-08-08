@@ -1,64 +1,24 @@
 {
-  "summary": {
-    "searchParam": {
-      "group": "field:title",
-      "indexname": "test",
-      "number": "30",
-      "op": "docs",
-      "patt": "\"a\"",
-      "sort": "size,identity",
-      "viewgroup": "str:interview about conference experience and impressions of city",
-      "wordsaroundhit": "1"
-    },
-    "searchTime": "VALUE_REMOVED",
-    "countTime": "VALUE_REMOVED",
-    "windowFirstResult": 0,
-    "requestedWindowSize": 30,
-    "actualWindowSize": 1,
-    "windowHasPrevious": false,
-    "windowHasNext": false,
-    "stillCounting": false,
-    "numberOfHits": 8,
-    "numberOfHitsRetrieved": 8,
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    }
-  },
   "docs": [
     {
-      "docPid": "PRint602",
-      "numberOfHits": 8,
       "docInfo": {
         "fromInputFile": [
           "PRint602.xml"
         ],
+        "lengthInTokens": 268,
+        "mayView": true,
         "pid": [
           "PRint602"
         ],
         "title": [
           "interview about conference experience and impressions of city"
-        ],
-        "lengthInTokens": 268,
-        "mayView": true
+        ]
       },
+      "docPid": "PRint602",
+      "numberOfHits": 8,
       "snippets": [
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "mhm",
               "and",
@@ -73,6 +33,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "mhm",
               "and",
@@ -82,27 +49,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "a"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "a"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "project",
               "on",
@@ -116,6 +76,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "project",
@@ -128,13 +95,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "something",
               "or",
@@ -149,6 +109,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "something",
               "or",
@@ -158,27 +125,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "a"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "a"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "listener",
               "to",
@@ -192,6 +152,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "listener",
@@ -204,13 +171,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "erm",
               "er",
@@ -225,6 +185,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "erm",
               "er",
@@ -234,27 +201,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "a"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "a"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "a",
@@ -268,6 +228,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "sess-",
@@ -280,13 +247,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "er",
               "i",
@@ -301,6 +261,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "er",
               "i",
@@ -310,27 +277,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "a"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "a"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "session",
               "chair",
@@ -344,6 +304,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "session",
@@ -356,13 +323,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "session",
               "chair",
@@ -377,6 +337,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "session",
               "chair",
@@ -386,27 +353,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "a"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "a"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "session",
               "chair",
@@ -420,6 +380,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "session",
@@ -432,5 +399,45 @@
         }
       ]
     }
-  ]
+  ],
+  "summary": {
+    "actualWindowSize": 1,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "numberOfHits": 8,
+    "numberOfHitsRetrieved": 8,
+    "pattern": {
+      "corpusql": "'a'",
+      "json": {
+        "type": "regex",
+        "value": "a"
+      }
+    },
+    "requestedWindowSize": 30,
+    "searchParam": {
+      "group": "field:title",
+      "indexname": "test",
+      "number": "30",
+      "op": "docs",
+      "patt": "\"a\"",
+      "sort": "size,identity",
+      "viewgroup": "str:interview about conference experience and impressions of city",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
 }

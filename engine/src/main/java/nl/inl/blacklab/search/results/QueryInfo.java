@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
@@ -80,6 +82,5 @@ public final class QueryInfo {
             return false;
         return true;
     }
-
 }
 

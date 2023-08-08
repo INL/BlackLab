@@ -85,7 +85,7 @@ public class ResultDocSnippet {
         if (context.isInlineTag()) {
             // Make sure we capture the tag so we can use its boundaries for the snippet
             TextPattern pattern = new TextPatternPositionFilter(new TextPatternFixedSpan(start, end),
-                    new TextPatternTags(context.inlineTagName(), null, context.inlineTagName()),
+                    new TextPatternTags(context.inlineTagName(), null, TextPatternTags.Adjust.FULL_TAG, context.inlineTagName()),
                     SpanQueryPositionFilter.Operation.WITHIN);
             pattern = new TextPatternQueryFunction("rcapture", List.of(pattern, context.inlineTagName(), "rels"));
             QueryExecutionContext queryContext = new QueryExecutionContext(index,

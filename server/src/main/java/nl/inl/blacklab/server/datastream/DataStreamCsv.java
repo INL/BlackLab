@@ -94,4 +94,8 @@ public class DataStreamCsv extends DataStreamAbstract {
     @Override
     public DataStream value(boolean value) { return csvNotSupported(); }
 
+    @Override
+    public String getType() {
+        return "csv";
+    }
 }

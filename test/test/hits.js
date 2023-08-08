@@ -1,3 +1,4 @@
+"use strict";
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
@@ -24,7 +25,7 @@ function expectHitsUnchanged(testName, params) {
     if (typeof params === 'string')
         params = { patt: params };
 
-    describe(testName, () => {
+    describe(`hits/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
             .get('/test/hits')

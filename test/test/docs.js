@@ -1,3 +1,4 @@
+"use strict";
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
@@ -28,7 +29,7 @@ function expectDocsUnchanged(testName, params, filter) {
     if (params.filter)
         crit.push(`filter ${params.filter}`);
 
-    describe(`/docs with ${crit.join(' and ')}`, () => {
+    describe(`docs/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
             .get('/test/docs')

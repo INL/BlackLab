@@ -15,8 +15,8 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
 
     private int annotationIndex = -1;
 
-    public MatchFilterTokenAnnotation(String label, String annotationName) {
-        this.groupName = label;
+    public MatchFilterTokenAnnotation(String groupName, String annotationName) {
+        this.groupName = groupName;
         this.annotationName = annotationName;
     }
 
@@ -86,7 +86,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
     }
 
     public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
-        return new MatchFilterTokenPropertyEqualsString(groupName, annotationName, str, sensitivity);
+        return new MatchFilterTokenAnnotationEqualsString(groupName, annotationName, str, sensitivity);
     }
 
     public MatchFilter matchOtherTokenSameProperty(String otherGroupName, MatchSensitivity sensitivity) {
@@ -105,4 +105,11 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
         return groupName;
     }
 
+    public String getCapture() {
+        return groupName;
+    }
+
+    public String getAnnotation() {
+        return annotationName;
+    }
 }

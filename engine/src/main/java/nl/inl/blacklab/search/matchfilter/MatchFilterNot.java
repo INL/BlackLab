@@ -67,4 +67,7 @@ public class MatchFilterNot extends MatchFilter {
         return this;
     }
 
+    public TextPatternStruct getClause() {
+        return a;
+    }
 }

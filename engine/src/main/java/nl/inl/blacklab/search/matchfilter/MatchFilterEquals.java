@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import java.util.List;
+
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -8,8 +10,9 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterEquals extends MatchFilter {
 
-    final MatchFilter a;
-    final MatchFilter b;
+    private final MatchFilter a;
+
+    private final MatchFilter b;
 
     private final MatchSensitivity sensitivity;
 
@@ -106,6 +109,14 @@ public class MatchFilterEquals extends MatchFilter {
         if (x != a || y != b)
             return new MatchFilterEquals(x, y, sensitivity);
         return this;
+    }
+
+    public List<MatchFilter> getClauses() {
+        return List.of(a, b);
+    }
+
+    public MatchSensitivity getSensitivity() {
+        return sensitivity;
     }
 
 }

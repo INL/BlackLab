@@ -60,6 +60,7 @@ import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -299,8 +300,9 @@ public class ResponseStreamer {
         Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
         WindowStats window = summaryFields.getWindow();
 
-        // Our search parameters
-        ds.startEntry("searchParam").startMap();
+        // Include parameters
+        String paramKey = isNewApi ? "params" : "searchParam";
+        ds.startEntry(paramKey).startMap();
         for (Map.Entry<WebserviceParameter, String> e: params.getParameters().entrySet()) {
             ds.dynEntry(e.getKey().value(), e.getValue());
         }
@@ -308,6 +310,19 @@ public class ResponseStreamer {
 
         if (indexStatus != null && indexStatus != Index.IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", indexStatus.toString());
+        }
+
+        TextPattern textPattern = summaryFields.getTextPattern();
+        if (modernizeApi && textPattern != null && ds.getType().equals("json")) {
+            ds.startEntry("pattern").startMap();
+            ds.entry("json", textPattern);
+            try {
+                ds.entry("corpusql", TextPatternSerializerCql.serialize(textPattern));
+            } catch (Exception e) {
+                // some queries cannot be serialized to CQL;
+                // that's okay, just leave it out
+            }
+            ds.endMap().endEntry();
         }
 
         // Information about hit sampling
@@ -575,9 +590,11 @@ public class ResponseStreamer {
             if (matchInfo != null && !matchInfo.isEmpty()) {
                 ds.startEntry("matchInfos").startMap();
                 for (Map.Entry<String, MatchInfo> e: matchInfo.entrySet()) {
-                    ds.startElEntry(e.getKey());
-                    matchInfo(ds, e.getValue());
-                    ds.endElEntry();
+                    if (e.getValue() != null) {
+                        ds.startElEntry(e.getKey());
+                        matchInfo(ds, e.getValue());
+                        ds.endElEntry();
+                    }
                 }
                 ds.endMap().endEntry();
             }
@@ -653,9 +670,11 @@ public class ResponseStreamer {
             ds.startEntry("infos").startList();
             {
                 for (RelationInfo relationInfo: listOfRelations.getRelations()) {
-                    ds.startItem("info");
-                    matchInfo(ds, relationInfo);
-                    ds.endItem();
+                    if (relationInfo != null) {
+                        ds.startItem("info");
+                        matchInfo(ds, relationInfo);
+                        ds.endItem();
+                    }
                 }
             }
             ds.endList().endEntry();

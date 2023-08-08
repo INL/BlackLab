@@ -44,9 +44,6 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** Relation type we're looking for */
     private final String relationType;
 
-    /** Unique id for this SpansRelations (to avoid match info name collision) */
-    private final int uniqueId;
-
     /** Name to capture the relation info as */
     private final String captureAs;
 
@@ -63,43 +60,34 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param direction direction of the relation
      * @param spanMode what span to return for the relations found
      * @param uniqueId unique id for this SpansRelations (to avoid match info name collision)
-     * @param captureAs name to capture the relation info as
+     * @param captureAs name to capture the relation info as, or empty not to capture
      */
     public SpansRelations(String relationType, BLSpans relationsMatches,
-            boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
-            int uniqueId, String captureAs) {
+            boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode, String captureAs) {
         super(relationsMatches, SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
         this.relationType = relationType;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
         this.spanMode = spanMode;
-        this.uniqueId = uniqueId;
-        this.captureAs = captureAs;
+        this.captureAs = captureAs == null ? "" : captureAs;
     }
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
-        // Discard relation class (if specified), and only keep Unicode letters from relationType
-        // Note that this can result in collisions if your query contains the same relation type multiple times;
-        // if you run into this problem, explicitly capture the relation by a unique name.
-        String groupName = captureAs.isEmpty() ?
-                relationType.replaceAll("^.+::", "").replaceAll("[^\\p{L}]", "") :
-                captureAs;
-        if (groupName.isEmpty())
-            groupName = "rel";
-
         // Register our group
-        this.groupIndex = context.registerMatchInfo(groupName);
+        if (!captureAs.isEmpty())
+            this.groupIndex = context.registerMatchInfo(captureAs);
     }
 
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
-        matchInfo[groupIndex] = this.relationInfo.copy();
+        if (!captureAs.isEmpty())
+            matchInfo[groupIndex] = this.relationInfo.copy();
     }
 
     @Override
     public boolean hasMatchInfo() {
-        return true;
+        return !captureAs.isEmpty() || in.hasMatchInfo();
     }
 
     /** Return current relation info.

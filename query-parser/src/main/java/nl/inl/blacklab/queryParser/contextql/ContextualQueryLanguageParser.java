@@ -12,12 +12,11 @@ import org.apache.lucene.search.WildcardQuery;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 import nl.inl.blacklab.search.textpattern.TextPatternWildcard;
 import nl.inl.util.StringUtil;
@@ -90,7 +89,7 @@ public class ContextualQueryLanguageParser {
     CompleteQuery contains(BlackLabIndex index, String field, String value) {
 
         boolean isContentsSearch = false;
-        String prop = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
+        String annotation = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         boolean isProperty;
         if (index != null && !index.getClass().getSimpleName().startsWith("Mock"))
             isProperty = index.mainAnnotatedField().annotations().exists(field);
@@ -98,12 +97,12 @@ public class ContextualQueryLanguageParser {
             isProperty = field.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME) || field.equals("lemma") || field.equals("pos"); // common case
         if (isProperty) {
             isContentsSearch = true;
-            prop = field;
+            annotation = field;
         } else if (field.equals("contents")) {
             isContentsSearch = true;
         } else if (field.startsWith("contents.")) {
             isContentsSearch = true;
-            prop = field.substring(9);
+            annotation = field.substring(9);
         }
 
         String[] parts = value.trim().split(StringUtil.REGEX_WHITESPACE);
@@ -112,7 +111,7 @@ public class ContextualQueryLanguageParser {
         if (parts.length == 1) {
             // Single term, possibly with wildcards
             if (isContentsSearch)
-                tp = new TextPatternWildcard(value.trim());
+                tp = new TextPatternWildcard(value.trim(), annotation, null);
             else
                 q = new WildcardQuery(new Term(field, value));
         } else {
@@ -120,7 +119,7 @@ public class ContextualQueryLanguageParser {
             if (isContentsSearch) {
                 List<TextPattern> clauses = new ArrayList<>();
                 for (String part : parts) {
-                    clauses.add(new TextPatternWildcard(part));
+                    clauses.add(new TextPatternWildcard(part, annotation, null));
                 }
                 tp = new TextPatternSequence(clauses.toArray(new TextPattern[0]));
             } else {
@@ -133,7 +132,7 @@ public class ContextualQueryLanguageParser {
         }
 
         if (isContentsSearch)
-            return new CompleteQuery(new TextPatternAnnotation(prop, tp), null);
+            return new CompleteQuery(tp, null);
         return new CompleteQuery(null, q);
     }
 

@@ -1,65 +1,24 @@
 {
-  "summary": {
-    "searchParam": {
-      "filter": "pid:PBsve435",
-      "indexname": "test",
-      "op": "docs",
-      "patt": "\"the\"",
-      "sort": "field:pid",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
-    },
-    "searchTime": "VALUE_REMOVED",
-    "countTime": "VALUE_REMOVED",
-    "windowFirstResult": 0,
-    "requestedWindowSize": 50,
-    "actualWindowSize": 1,
-    "windowHasPrevious": false,
-    "windowHasNext": false,
-    "stillCounting": false,
-    "numberOfHits": 9,
-    "numberOfHitsRetrieved": 9,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    }
-  },
   "docs": [
     {
-      "docPid": "PBsve435",
-      "numberOfHits": 9,
       "docInfo": {
         "fromInputFile": [
           "PBsve435.xml"
         ],
+        "lengthInTokens": 164,
+        "mayView": true,
         "pid": [
           "PBsve435"
         ],
         "title": [
           "service encounter about getting an address printed out"
-        ],
-        "lengthInTokens": 164,
-        "mayView": true
+        ]
       },
+      "docPid": "PBsve435",
+      "numberOfHits": 9,
       "snippets": [
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "er",
               "now",
@@ -73,6 +32,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "er",
@@ -83,27 +49,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "the"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "the"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "address",
               "so",
@@ -117,6 +76,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "address",
@@ -129,13 +95,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "so",
               "can",
@@ -149,6 +108,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "so",
@@ -159,27 +125,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "the"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "the"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "new",
               "address",
@@ -193,6 +152,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "new",
@@ -205,13 +171,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "you",
               "print",
@@ -225,6 +184,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "you",
@@ -235,27 +201,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "the"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "the"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "address",
               "for",
@@ -269,6 +228,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "address",
@@ -281,13 +247,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "the",
               "address",
@@ -302,6 +261,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "the",
               "address",
@@ -311,27 +277,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "the"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "the"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "confirmation",
               "for",
@@ -346,6 +305,13 @@
               "",
               ""
             ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
             "word": [
               "confirmation",
               "for",
@@ -357,13 +323,6 @@
         },
         {
           "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "yeah",
               "yeah",
@@ -377,6 +336,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "yeah",
@@ -387,27 +353,20 @@
             ]
           },
           "match": {
-            "punct": [
-              " "
-            ],
             "lemma": [
               "the"
             ],
             "pos": [
               ""
             ],
+            "punct": [
+              " "
+            ],
             "word": [
               "the"
             ]
           },
           "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
             "lemma": [
               "",
               "for",
@@ -421,6 +380,13 @@
               "",
               "",
               ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
             ],
             "word": [
               "_0",
@@ -433,5 +399,46 @@
         }
       ]
     }
-  ]
+  ],
+  "summary": {
+    "actualWindowSize": 1,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "numberOfHits": 9,
+    "numberOfHitsRetrieved": 9,
+    "pattern": {
+      "corpusql": "'the'",
+      "json": {
+        "type": "regex",
+        "value": "the"
+      }
+    },
+    "requestedWindowSize": 50,
+    "searchParam": {
+      "filter": "pid:PBsve435",
+      "indexname": "test",
+      "op": "docs",
+      "patt": "\"the\"",
+      "sort": "field:pid",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
 }

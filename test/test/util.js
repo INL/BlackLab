@@ -1,3 +1,4 @@
+"use strict";
 function toBeDocInfo(expectDocInfo) {
     expectDocInfo.to.be.an("object").that.has.all.keys(
         "fromInputFile", "lengthInTokens", "mayView", "pid", "title"

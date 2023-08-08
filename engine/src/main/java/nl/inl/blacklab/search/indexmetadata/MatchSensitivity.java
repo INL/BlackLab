@@ -92,6 +92,5 @@ public enum MatchSensitivity {
         default:
             throw new UnsupportedOperationException("Unknown sensitivity " + this);
         }
-    }	
-
+    }
 }

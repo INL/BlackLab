@@ -187,7 +187,6 @@ This the current list of modules:
 | `mocks`           | mock objects useful for testing. Shouldn't be included in library build.                                                                                                                                                    |
 | `query-parser`    | the main Corpus Query Language parser (as well the more limited Contextual Query Language parser).                                                                                                                          |
 | `server`          | the BlackLab Server web service                                                                                                                                                                                             |
-| `text-pattern`    | the `TextPattern` classes that currently sit between the query parser and the `SpanQuery` classes.                                                                                                                          |
 
 Future plans for this module structure:
 

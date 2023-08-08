@@ -1,172 +1,175 @@
 {
-  "indexName": "test",
-  "displayName": "test",
-  "description": "",
-  "status": "available",
+  "annotatedFields": {
+    "contents": {
+      "annotations": {
+        "_relation": {
+          "description": "",
+          "displayName": "_relation",
+          "hasForwardIndex": false,
+          "isInternal": true,
+          "offsetsAlternative": "",
+          "sensitivity": "ONLY_SENSITIVE",
+          "uiType": ""
+        },
+        "lemma": {
+          "description": "",
+          "displayName": "Lemma",
+          "hasForwardIndex": true,
+          "isInternal": false,
+          "offsetsAlternative": "",
+          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
+          "uiType": ""
+        },
+        "pos": {
+          "description": "",
+          "displayName": "PoS",
+          "hasForwardIndex": true,
+          "isInternal": false,
+          "offsetsAlternative": "",
+          "sensitivity": "ONLY_INSENSITIVE",
+          "uiType": ""
+        },
+        "punct": {
+          "description": "",
+          "displayName": "Punct",
+          "hasForwardIndex": true,
+          "isInternal": true,
+          "offsetsAlternative": "",
+          "sensitivity": "ONLY_INSENSITIVE",
+          "uiType": ""
+        },
+        "word": {
+          "description": "",
+          "displayName": "Word",
+          "hasForwardIndex": true,
+          "isInternal": false,
+          "offsetsAlternative": "s",
+          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
+          "uiType": ""
+        }
+      },
+      "description": "Contents of the documents.",
+      "displayName": "Contents",
+      "displayOrder": [
+        "word",
+        "lemma",
+        "pos"
+      ],
+      "fieldName": "contents",
+      "hasContentStore": true,
+      "hasXmlTags": true,
+      "isAnnotatedField": true,
+      "mainAnnotation": "word"
+    }
+  },
+  "annotationGroups": {
+    "contents": [
+      {
+        "annotations": [
+          "word",
+          "lemma"
+        ],
+        "name": "Basic"
+      },
+      {
+        "annotations": [
+          "pos"
+        ],
+        "name": "Advanced"
+      }
+    ]
+  },
   "contentViewable": true,
-  "textDirection": "ltr",
-  "documentFormat": "voice-tei",
-  "tokenCount": 766,
+  "description": "",
+  "displayName": "test",
   "documentCount": 3,
+  "documentFormat": "voice-tei",
+  "fieldInfo": {
+    "authorField": "",
+    "dateField": "",
+    "pidField": "pid",
+    "titleField": "title"
+  },
+  "indexName": "test",
+  "metadataFieldGroups": [
+    {
+      "fields": [
+        "fromInputFile",
+        "pid"
+      ],
+      "name": "Other fields group"
+    },
+    {
+      "fields": [
+        "title"
+      ],
+      "name": "Title group"
+    }
+  ],
+  "metadataFields": {
+    "fromInputFile": {
+      "analyzer": "DEFAULT",
+      "description": "",
+      "displayName": "From input file",
+      "displayValues": {
+      },
+      "fieldName": "fromInputFile",
+      "fieldValues": "VALUE_REMOVED",
+      "isAnnotatedField": false,
+      "type": "UNTOKENIZED",
+      "uiType": "",
+      "unknownCondition": "NEVER",
+      "unknownValue": "unknown",
+      "valueListComplete": true
+    },
+    "pid": {
+      "analyzer": "DEFAULT",
+      "description": "",
+      "displayName": "Pid",
+      "displayValues": {
+      },
+      "fieldName": "pid",
+      "fieldValues": {
+        "PBsve430": 1,
+        "PBsve435": 1,
+        "PRint602": 1
+      },
+      "isAnnotatedField": false,
+      "type": "TOKENIZED",
+      "uiType": "",
+      "unknownCondition": "NEVER",
+      "unknownValue": "unknown",
+      "valueListComplete": true
+    },
+    "title": {
+      "analyzer": "DEFAULT",
+      "description": "",
+      "displayName": "Title",
+      "displayValues": {
+      },
+      "fieldName": "title",
+      "fieldValues": {
+        "interview about conference experience and impressions of city": 1,
+        "service encounter about getting an address printed out": 1,
+        "service encounter about visa application for family members": 1
+      },
+      "isAnnotatedField": false,
+      "type": "TOKENIZED",
+      "uiType": "",
+      "unknownCondition": "NEVER",
+      "unknownValue": "unknown",
+      "valueListComplete": true
+    }
+  },
+  "pidField": "pid",
+  "status": "available",
+  "textDirection": "ltr",
+  "tokenCount": 766,
   "versionInfo": {
     "blacklabBuildTime": "VALUE_REMOVED",
     "blacklabVersion": "VALUE_REMOVED",
     "indexFormat": "VALUE_REMOVED",
     "timeCreated": "VALUE_REMOVED",
     "timeModified": "VALUE_REMOVED"
-  },
-  "pidField": "pid",
-  "fieldInfo": {
-    "pidField": "pid",
-    "titleField": "title",
-    "authorField": "",
-    "dateField": ""
-  },
-  "annotatedFields": {
-    "contents": {
-      "fieldName": "contents",
-      "isAnnotatedField": true,
-      "displayName": "Contents",
-      "description": "Contents of the documents.",
-      "hasContentStore": true,
-      "hasXmlTags": true,
-      "mainAnnotation": "word",
-      "displayOrder": [
-        "word",
-        "lemma",
-        "pos"
-      ],
-      "annotations": {
-        "word": {
-          "displayName": "Word",
-          "description": "",
-          "uiType": "",
-          "hasForwardIndex": true,
-          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
-          "offsetsAlternative": "s",
-          "isInternal": false
-        },
-        "lemma": {
-          "displayName": "Lemma",
-          "description": "",
-          "uiType": "",
-          "hasForwardIndex": true,
-          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
-          "offsetsAlternative": "",
-          "isInternal": false
-        },
-        "pos": {
-          "displayName": "PoS",
-          "description": "",
-          "uiType": "",
-          "hasForwardIndex": true,
-          "sensitivity": "ONLY_INSENSITIVE",
-          "offsetsAlternative": "",
-          "isInternal": false
-        },
-        "_relation": {
-          "displayName": "_relation",
-          "description": "",
-          "uiType": "",
-          "hasForwardIndex": false,
-          "sensitivity": "ONLY_SENSITIVE",
-          "offsetsAlternative": "",
-          "isInternal": true
-        },
-        "punct": {
-          "displayName": "Punct",
-          "description": "",
-          "uiType": "",
-          "hasForwardIndex": true,
-          "sensitivity": "ONLY_INSENSITIVE",
-          "offsetsAlternative": "",
-          "isInternal": true
-        }
-      }
-    }
-  },
-  "metadataFields": {
-    "fromInputFile": {
-      "fieldName": "fromInputFile",
-      "isAnnotatedField": false,
-      "displayName": "From input file",
-      "description": "",
-      "uiType": "",
-      "type": "UNTOKENIZED",
-      "analyzer": "DEFAULT",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
-      "displayValues": {},
-      "fieldValues": "VALUE_REMOVED",
-      "valueListComplete": true
-    },
-    "pid": {
-      "fieldName": "pid",
-      "isAnnotatedField": false,
-      "displayName": "Pid",
-      "description": "",
-      "uiType": "",
-      "type": "TOKENIZED",
-      "analyzer": "DEFAULT",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
-      "displayValues": {},
-      "fieldValues": {
-        "PBsve430": 1,
-        "PBsve435": 1,
-        "PRint602": 1
-      },
-      "valueListComplete": true
-    },
-    "title": {
-      "fieldName": "title",
-      "isAnnotatedField": false,
-      "displayName": "Title",
-      "description": "",
-      "uiType": "",
-      "type": "TOKENIZED",
-      "analyzer": "DEFAULT",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
-      "displayValues": {},
-      "fieldValues": {
-        "interview about conference experience and impressions of city": 1,
-        "service encounter about getting an address printed out": 1,
-        "service encounter about visa application for family members": 1
-      },
-      "valueListComplete": true
-    }
-  },
-  "metadataFieldGroups": [
-    {
-      "name": "Other fields group",
-      "fields": [
-        "fromInputFile",
-        "pid"
-      ]
-    },
-    {
-      "name": "Title group",
-      "fields": [
-        "title"
-      ]
-    }
-  ],
-  "annotationGroups": {
-    "contents": [
-      {
-        "name": "Basic",
-        "annotations": [
-          "word",
-          "lemma"
-        ]
-      },
-      {
-        "name": "Advanced",
-        "annotations": [
-          "pos"
-        ]
-      }
-    ]
   }
 }

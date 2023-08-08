@@ -46,11 +46,14 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
   - New key added (`/`): `apiVersion` (valid values: `3.0` and `4.0`; assume `3.0` if missing)
   - In addition to `indices`, the new `corpora` key was added that provides the same information in a slightly different format. You should use `corpora` instead of `indices` for future compatibility.
   - In addition to being reported under `fieldInfo`, `pidField` is now also a top-level key. You should use this version of the key for future compatibility. (the other special fields in `fieldInfo` will be moved to `custom` in v5)
-- Results:
+- Search (hits) operations:
+  - The `patt` parameter may also be specified as a JSON query structure. This will be detected automatically, or you can set `pattlang` to `json` to make it explicit.
+  - In the JSON response, `summary` will now include a `pattern` object containing a `json` key that giving the JSON query structure and a `corpusql` key giving the (re-)serialized pattern in Corpus Query Language. You can use this and `patt` to convert between the two representations, e.g. for query builders. The XML response does not contain `pattern`.
   - In addition to `captureGroups`, `matchInfos` will be reported that includes the same information as well as any inline tags and relations matched. You should use this instead of `captureGroups` for future compatibility.
   - `before`/`after` are the new, preferred alternatives to `left`/`right` for sorting/grouping on context. Not all languages are LTR, so this makes more sense. Response structures in API v4 still use `left`/`right` for compatibility, but will eventually be updated as well. These properties can now get a number of tokens as an extra parameter, e.g. `before:lemma:i:2`.
   - For grouping on context, `wordleft`/`wordright` have been deprecated. Use `before`/`after` with 1 token instead.
 - New endpoints were added for all operations on corpora, at `/corpora/CORPUSNAME/...` (for now alongside existing endpoints `/CORPUSNAME`). These endpoints are available in API v4 but only "speak" API v5 (see below). You should move to these endpoints for future compatibility.
+- A new endpoint `/parse-pattern` was added that allows you to parse a CorpusQL or JSON query structure pattern without actually executing the search.
 
 ### Deprecated
 

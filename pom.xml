@@ -22,7 +22,6 @@
         <module>common</module>
         <module>content-store</module>
         <module>engine</module>
-        <module>text-pattern</module>
         <module>query-parser</module>
         <module>tools</module>
         <module>mocks</module>

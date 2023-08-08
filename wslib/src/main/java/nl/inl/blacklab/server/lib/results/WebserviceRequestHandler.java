@@ -13,11 +13,15 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -286,5 +290,37 @@ public class WebserviceRequestHandler {
             throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WebserviceParameter.INPUT_FORMAT.value() + ")");
         ResultInputFormat result = WebserviceOperations.inputFormat(inputFormat.get());
         rs.formatXsltResponse(result);
+    }
+
+    public static void opParsePattern(WebserviceParamsImpl params, ResponseStreamer rs) {
+        if (!rs.getDataStream().getType().equals("json"))
+            throw new UnsupportedOperationException("/parse-pattern only supports JSON output");
+        // Write response
+        DataStream ds = rs.getDataStream();
+        ds.startMap();
+        {
+            ds.startEntry("params").startMap();
+            {
+                ds.entry("patt", params.getPattern());
+                ds.entry("pattlang", params.getPattLanguage());
+            }
+            ds.endMap().endEntry();
+            ds.startEntry("parsed").startMap();
+            {
+                try {
+                    TextPattern tp = params.pattern().orElse(null);
+                    try {
+                        ds.entry("corpusql", TextPatternSerializerCql.serialize(tp));
+                    } catch (Exception e) {
+                        ds.entry("corpusql-error", e.getMessage());
+                    }
+                    ds.entry("json", tp);
+                } catch (Exception e) {
+                    ds.entry("error", e.getMessage());
+                }
+            }
+            ds.endMap().endEntry();
+        }
+        ds.endMap();
     }
 }

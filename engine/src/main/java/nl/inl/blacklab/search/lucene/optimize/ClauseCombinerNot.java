@@ -44,7 +44,7 @@ class ClauseCombinerNot extends ClauseCombiner {
             int myLen = right.guarantees().hitsLengthMin();
             container = new SpanQueryExpansion(right, Direction.LEFT, 1, 1);
             posf = new SpanQueryPositionFilter(container, left.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
-            posf.adjustRight(-myLen);
+            posf.adjustTrailing(-myLen);
             return posf;
         case CONST_NOT:
             // Negative, single-token child after constant-length part.
@@ -53,7 +53,7 @@ class ClauseCombinerNot extends ClauseCombiner {
             container = new SpanQueryExpansion(left, Direction.RIGHT, 1, 1);
             posf = new SpanQueryPositionFilter(container, right.inverted(),
                     SpanQueryPositionFilter.Operation.CONTAINING, true);
-            posf.adjustLeft(prevLen);
+            posf.adjustLeading(prevLen);
             return posf;
         default:
             throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);

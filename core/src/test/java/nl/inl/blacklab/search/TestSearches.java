@@ -635,6 +635,8 @@ public class TestSearches {
             QueryExecutionContext context = new QueryExecutionContext(index,
                     index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE);
             BLSpanQuery q1 = p1.translate(context);
+            context = new QueryExecutionContext(index,
+                    index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE);
             BLSpanQuery q2 = p2.translate(context);
             Assert.assertEquals(q1, q2);
             Assert.assertEquals(q1.hashCode(), q2.hashCode());

@@ -1,12 +1,14 @@
+"use strict";
 const chai = require("chai");
 const expect = chai.expect;
 const fs = require('fs')
 const path = require('path')
 const sanitizeFileName = require("sanitize-filename");
+const stableStringify = require('json-stable-stringify'); // for diffable output
 
 const constants = require('./constants');
 const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
-
+const LATEST_TEST_OUTPUT_PATH = constants.LATEST_TEST_OUTPUT_PATH;
 
 /**
  * Remove variable values such as build time, version, etc. from response.
@@ -14,10 +16,9 @@ const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
  * This enables us to compare responses from tests.
  *
  * @param response response to sanitize
- * @param removeParametersFromResponse if true, also remove summary.searchParam (for comparing different
- *   requests that should have same results) * @return response with variable values replaces with fixed ones
+ * @return response with variable values replaces with fixed ones
  */
-function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
+function sanitizeBlsResponse(response) {
     const keysToMakeConstant = {
         // Server information page
         apiVersion: true, //'DELETE',
@@ -60,9 +61,6 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
         // Top-level timeModified key on index status page (e.g. /test/status/)
         timeModified: true
     };
-    if (removeParametersFromResponse) {
-        keysToMakeConstant.summary.searchParam = true;
-    }
 
     const transformValues = (value, key) => {
         if (key === 'displayName' && value === 'Starttag') {
@@ -167,30 +165,55 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
  * @param category test category (e.g. "hits")
  * @param testName name of this test, and file name for the response
  * @param actualResponse webservice response we got (parsed JSON)
- * @param removeParametersFromResponse if true, also remove summary.searchParam (for comparing different
- * requests that should have same results)
  */
-function expectUnchanged(category, testName, actualResponse, removeParametersFromResponse = false) {
+function expectUnchanged(category, testName, actualResponse) {
+    const sanCategory = sanitizeFileName(category);
+    const sanFileName = sanitizeFileName(testName);
+
     // Remove anything that's variable (e.g. search time) from the response.
-    const sanitized = sanitizeBlsResponse(actualResponse, removeParametersFromResponse);
+    const sanitized = sanitizeBlsResponse(actualResponse);
+
+    // Stringify to JSON if we're saving the response to a file
+    let json = '';
+    if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
+        json = stableStringify(sanitized, { space: 2 });
+
+        // Write to latest test path so we can compare (and easily update) in case of changes.
+        if (!fs.existsSync(LATEST_TEST_OUTPUT_PATH))
+            fs.mkdirSync(LATEST_TEST_OUTPUT_PATH);
+        const categoryDir = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory);
+        if (!fs.existsSync(categoryDir))
+            fs.mkdirSync(categoryDir);
+
+        const saveTestOutputFile = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory, `${sanFileName}.json`);
+        fs.writeFileSync(saveTestOutputFile, json, {encoding: 'utf8'});
+    }
 
     // Ensure category dir exists
-    const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category));
+    const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanCategory);
     if (!fs.existsSync(categoryDir))
         fs.mkdirSync(categoryDir);
 
     // Did we have a previous response?
-    const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category), `${sanitizeFileName(testName)}.json`);
+    const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanCategory, `${sanFileName}.json`);
     if (fs.existsSync(savedResponseFile)) {
         // Read previously saved response to compare
         const savedResponse = JSON.parse(fs.readFileSync(savedResponseFile, { encoding: 'utf8' }));
 
         // Compare
         expect(sanitized).to.be.deep.equal(savedResponse);
+
+        /*
+        // DEBUG. Overwrite our new stable JSON response, which we know is identical.
+        if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
+            // Save this response for subsequent tests
+            fs.writeFileSync(savedResponseFile, json, {encoding: 'utf8'});
+        }*/
+
     } else {
         if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
             // Save this response for subsequent tests
-            fs.writeFileSync(savedResponseFile, JSON.stringify(sanitized, null, 2), {encoding: 'utf8'});
+            fs.writeFileSync(savedResponseFile, json, {encoding: 'utf8'});
         } else {
             expect.fail(`Response for ${category}/${testName} not found. Make sure it exists (use run-local.sh to save responses)`);
         }
@@ -199,7 +222,7 @@ function expectUnchanged(category, testName, actualResponse, removeParametersFro
 
 function expectUrlUnchanged(category, testName, url, expectedType = 'application/json') {
     const params = url.indexOf('api=') >= 0 ? undefined : { api: constants.TEST_API_VERSION };
-    describe(`${category}: ${testName}`, () => {
+    describe(`${category}/${testName}`, () => {
         it('response should match previous', done => {
             const get = chai
                     .request(constants.SERVER_URL)

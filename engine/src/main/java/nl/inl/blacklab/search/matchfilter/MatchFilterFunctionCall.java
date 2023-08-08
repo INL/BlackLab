@@ -68,4 +68,11 @@ public class MatchFilterFunctionCall extends MatchFilter {
         return this;
     }
 
+    public String getName() {
+        return functionName;
+    }
+
+    public String getCapture() {
+        return groupName;
+    }
 }

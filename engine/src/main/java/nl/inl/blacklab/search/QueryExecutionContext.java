@@ -1,13 +1,13 @@
 package nl.inl.blacklab.search;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Represents the current "execution context" for executing a TextPattern query.
@@ -45,11 +45,24 @@ public class QueryExecutionContext {
     }
 
     public QueryExecutionContext withAnnotation(Annotation annotation) {
-        return new QueryExecutionContext(index, annotation, requestedSensitivity);
+        return withAnnotationAndSensitivity(annotation, null);
     }
 
     public QueryExecutionContext withSensitivity(MatchSensitivity matchSensitivity) {
-        return new QueryExecutionContext(index, sensitivity.annotation(), matchSensitivity);
+        return withAnnotationAndSensitivity((Annotation)null, matchSensitivity);
+    }
+
+    public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
+        if (annotation == null)
+            annotation = sensitivity.annotation();
+        if (matchSensitivity == null)
+            matchSensitivity = requestedSensitivity;
+        return new QueryExecutionContext(index, annotation, matchSensitivity);
+    }
+
+    public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity) {
+        Annotation annotation = annotationName == null ? null : field().annotation(annotationName);
+        return withAnnotationAndSensitivity(annotation, matchSensitivity);
     }
 
     public QueryExecutionContext withRelationAnnotation() {
@@ -132,5 +145,17 @@ public class QueryExecutionContext {
      */
     public AnnotatedField field() {
         return sensitivity.annotation().field();
+    }
+
+    public QueryInfo queryInfo() {
+        return QueryInfo.create(index(), field());
+    }
+
+    /** We need to be able to get unique ids per query, e.g. to auto-number relations captures if you
+     *  don't explicitly name your captures. */
+    private AtomicInteger uniqueIdCounter = new AtomicInteger();
+
+    public int nextUniqueId() {
+        return uniqueIdCounter.getAndIncrement();
     }
 }

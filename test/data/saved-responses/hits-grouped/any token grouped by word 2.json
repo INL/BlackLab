@@ -1,0 +1,403 @@
+{
+  "hitGroups": [
+    {
+      "identity": "cws:word:i:_0",
+      "identityDisplay": "_0",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "_0"
+        }
+      ],
+      "size": 43
+    },
+    {
+      "identity": "cws:word:i:i",
+      "identityDisplay": "i",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "i"
+        }
+      ],
+      "size": 33
+    },
+    {
+      "identity": "cws:word:i:you",
+      "identityDisplay": "you",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "you"
+        }
+      ],
+      "size": 26
+    },
+    {
+      "identity": "cws:word:i:and",
+      "identityDisplay": "and",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "and"
+        }
+      ],
+      "size": 25
+    },
+    {
+      "identity": "cws:word:i:yeah",
+      "identityDisplay": "yeah",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "yeah"
+        }
+      ],
+      "size": 25
+    },
+    {
+      "identity": "cws:word:i:it",
+      "identityDisplay": "it",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "it"
+        }
+      ],
+      "size": 21
+    },
+    {
+      "identity": "cws:word:i:the",
+      "identityDisplay": "the",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "the"
+        }
+      ],
+      "size": 21
+    },
+    {
+      "identity": "cws:word:i:er",
+      "identityDisplay": "er",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "er"
+        }
+      ],
+      "size": 19
+    },
+    {
+      "identity": "cws:word:i:okay",
+      "identityDisplay": "okay",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "okay"
+        }
+      ],
+      "size": 19
+    },
+    {
+      "identity": "cws:word:i:for",
+      "identityDisplay": "for",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "for"
+        }
+      ],
+      "size": 18
+    },
+    {
+      "identity": "cws:word:i:a",
+      "identityDisplay": "a",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "a"
+        }
+      ],
+      "size": 17
+    },
+    {
+      "identity": "cws:word:i:mhm",
+      "identityDisplay": "mhm",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "mhm"
+        }
+      ],
+      "size": 17
+    },
+    {
+      "identity": "cws:word:i:_1",
+      "identityDisplay": "_1",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "_1"
+        }
+      ],
+      "size": 12
+    },
+    {
+      "identity": "cws:word:i:that",
+      "identityDisplay": "that",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "that"
+        }
+      ],
+      "size": 12
+    },
+    {
+      "identity": "cws:word:i:'m",
+      "identityDisplay": "'m",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "'m"
+        }
+      ],
+      "size": 11
+    },
+    {
+      "identity": "cws:word:i:here",
+      "identityDisplay": "here",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "here"
+        }
+      ],
+      "size": 11
+    },
+    {
+      "identity": "cws:word:i:this",
+      "identityDisplay": "this",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "this"
+        }
+      ],
+      "size": 11
+    },
+    {
+      "identity": "cws:word:i:'s",
+      "identityDisplay": "'s",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "'s"
+        }
+      ],
+      "size": 9
+    },
+    {
+      "identity": "cws:word:i:from",
+      "identityDisplay": "from",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "from"
+        }
+      ],
+      "size": 9
+    },
+    {
+      "identity": "cws:word:i:need",
+      "identityDisplay": "need",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "need"
+        }
+      ],
+      "size": 9
+    },
+    {
+      "identity": "cws:word:i:to",
+      "identityDisplay": "to",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "to"
+        }
+      ],
+      "size": 9
+    },
+    {
+      "identity": "cws:word:i:erm",
+      "identityDisplay": "erm",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "erm"
+        }
+      ],
+      "size": 8
+    },
+    {
+      "identity": "cws:word:i:so",
+      "identityDisplay": "so",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "so"
+        }
+      ],
+      "size": 8
+    },
+    {
+      "identity": "cws:word:i:are",
+      "identityDisplay": "are",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "are"
+        }
+      ],
+      "size": 7
+    },
+    {
+      "identity": "cws:word:i:confirmation",
+      "identityDisplay": "confirmation",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "confirmation"
+        }
+      ],
+      "size": 7
+    },
+    {
+      "identity": "cws:word:i:living",
+      "identityDisplay": "living",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "living"
+        }
+      ],
+      "size": 7
+    },
+    {
+      "identity": "cws:word:i:me",
+      "identityDisplay": "me",
+      "numberOfDocs": 3,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "me"
+        }
+      ],
+      "size": 7
+    },
+    {
+      "identity": "cws:word:i:very",
+      "identityDisplay": "very",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "very"
+        }
+      ],
+      "size": 7
+    },
+    {
+      "identity": "cws:word:i:yes",
+      "identityDisplay": "yes",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "yes"
+        }
+      ],
+      "size": 7
+    },
+    {
+      "identity": "cws:word:i:paying",
+      "identityDisplay": "paying",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "hit:word:i",
+          "value": "paying"
+        }
+      ],
+      "size": 6
+    }
+  ],
+  "summary": {
+    "actualWindowSize": 30,
+    "countTime": "VALUE_REMOVED",
+    "largestGroupSize": 43,
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "numberOfGroups": 210,
+    "numberOfHits": 766,
+    "numberOfHitsRetrieved": 766,
+    "pattern": {
+      "corpusql": "[]",
+      "json": {
+        "max": 1,
+        "min": 1,
+        "type": "anytoken"
+      }
+    },
+    "requestedWindowSize": 30,
+    "searchParam": {
+      "group": "hit:word:i",
+      "indexname": "test",
+      "number": "30",
+      "op": "hits-grouped",
+      "patt": "[]",
+      "sort": "size,identity",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "subcorpusSize": {
+      "documents": 3,
+      "tokens": 766
+    },
+    "windowFirstResult": 0,
+    "windowHasNext": true,
+    "windowHasPrevious": false
+  }
+}

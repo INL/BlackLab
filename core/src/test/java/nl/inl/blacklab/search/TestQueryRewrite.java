@@ -94,21 +94,21 @@ public class TestQueryRewrite {
     @Test
     public void testRewriteInsensitive2() {
         assertRewrite("[word = '(?i)b.*']",
-                "SPANWRAP(contents%word@i:/b.*/)",
+                "contents%word@i:/b.*/",
                 "OR(TERM(contents%word@i:be), TERM(contents%word@i:brown))");
     }
 
     @Test
     public void testRewriteInsensitive3() {
         assertRewrite("[word = '(?i).*s']",
-                "SPANWRAP(contents%word@i:/.*s/)",
+                "contents%word@i:/.*s/",
                 "OR(TERM(contents%word@i:is), TERM(contents%word@i:jumps))");
     }
 
     @Test
     public void testRewriteInsensitive4() {
         assertRewrite("[word = '(?i)(th|b)e']",
-                "SPANWRAP(contents%word@i:/(th|b)e/)",
+                "contents%word@i:/(th|b)e/",
                 "OR(TERM(contents%word@i:be), TERM(contents%word@i:the))");
     }
 
@@ -122,14 +122,14 @@ public class TestQueryRewrite {
     @Test
     public void testRewriteNestedAnd() {
         assertRewrite("[word = 'a' & lemma = 'b' & pos != 'c']",
-                "AND(TERM(contents%word@i:a), AND(TERM(contents%lemma@i:b), NOT(TERM(contents%pos@i:c))))",
-                "POSFILTER(AND(TERM(contents%word@i:a), TERM(contents%lemma@i:b)), TERM(contents%pos@i:c), NOTMATCHES)");
+                "AND(TERM(contents%word@i:a), TERM(contents%lemma@i:b), NOT(TERM(contents%pos@i:c)))",
+                "POSFILTER(AND(TERM(contents%word@i:a), TERM(contents%lemma@i:b)), TERM(contents%pos@i:c), notmatches)");
     }
 
     @Test
     public void testRewriteNestedOr() {
         assertRewrite("[word = 'a' | word = 'b' | word = 'c']",
-                "OR(TERM(contents%word@i:a), OR(TERM(contents%word@i:b), TERM(contents%word@i:c)))",
+                "OR(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c))",
                 "OR(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c))");
     }
 
@@ -151,14 +151,14 @@ public class TestQueryRewrite {
     public void testRewriteAndNot() {
         assertRewrite("[word = 'a' & lemma != 'b']",
                 "AND(TERM(contents%word@i:a), NOT(TERM(contents%lemma@i:b)))",
-                "POSFILTER(TERM(contents%word@i:a), TERM(contents%lemma@i:b), NOTMATCHES)");
+                "POSFILTER(TERM(contents%word@i:a), TERM(contents%lemma@i:b), notmatches)");
     }
 
     @Test
     public void testRewriteNotAndNot() {
         assertRewrite("[ !(word = 'a' & lemma != 'b') ]",
                 "NOT(AND(TERM(contents%word@i:a), NOT(TERM(contents%lemma@i:b))))",
-                "NOT(POSFILTER(TERM(contents%word@i:a), TERM(contents%lemma@i:b), NOTMATCHES))");
+                "NOT(POSFILTER(TERM(contents%word@i:a), TERM(contents%lemma@i:b), notmatches))");
     }
 
     @Test
@@ -167,7 +167,7 @@ public class TestQueryRewrite {
                 "SEQ(TERM(contents%word@i:the), TERM(contents%word@i:the))",
                 "REP(TERM(contents%word@i:the), 2, 2)");
         assertRewrite("'the.*' 'the.*'",
-                "SEQ(SPANWRAP(contents%word@i:/the.*/), SPANWRAP(contents%word@i:/the.*/))",
+                "SEQ(contents%word@i:/the.*/, contents%word@i:/the.*/)",
                 "REP(TERM(contents%word@i:the), 2, 2)");
     }
 
@@ -185,7 +185,7 @@ public class TestQueryRewrite {
     String repTags(String tagName, int attrValue) {
         if (index.getType() == BlackLabIndex.IndexType.INTEGRATED)
             return "TAGS(" + tagName + ", {test=" + attrValue + "})";
-        return "POSFILTER(TAGS(" + tagName + "), TERM(contents%" + relName + "@s:@test__" + attrValue + "), STARTS_AT)";
+        return "POSFILTER(TAGS(" + tagName + "), TERM(contents%" + relName + "@s:@test__" + attrValue + "), starts_at)";
     }
 
     @Test
@@ -218,9 +218,9 @@ public class TestQueryRewrite {
                 "SEQ(AND(TERM(contents%word@i:a), TERM(contents%word@i:b)), AND(TERM(contents%word@i:a), TERM(contents%word@i:c)))");
 
         assertRewriteResult("('a'& [word != 'b']) ('a'& [word != 'b'])",
-                "REP(POSFILTER(TERM(contents%word@i:a), TERM(contents%word@i:b), NOTMATCHES), 2, 2)");
+                "REP(POSFILTER(TERM(contents%word@i:a), TERM(contents%word@i:b), notmatches), 2, 2)");
         assertRewriteResult("('a'& [word != 'b']) ('a'& [word != 'c'])",
-                "POSFILTER(POSFILTER(REP(TERM(contents%word@i:a), 2, 2), TERM(contents%word@i:c), NOTMATCHES, 1, 0), TERM(contents%word@i:b), NOTMATCHES, 0, -1)");
+                "POSFILTER(POSFILTER(REP(TERM(contents%word@i:a), 2, 2), TERM(contents%word@i:c), notmatches, 1, 0), TERM(contents%word@i:b), notmatches, 0, -1)");
     }
 
     @Test
@@ -246,28 +246,28 @@ public class TestQueryRewrite {
 
     @Test
     public void testRewriteContaining() {
-        String expectedAfterRewrite = "REP(POSFILTER(TAGS(s), TERM(contents%word@i:a), CONTAINING), 2, 2)";
+        String expectedAfterRewrite = "REP(POSFILTER(TAGS(s), TERM(contents%word@i:a), containing), 2, 2)";
         assertRewriteResult("(<s/> containing 'a') (<s/> containing 'a')", expectedAfterRewrite);
     }
 
     @Test
     public void testRewriteProblematicNegativeClauses() {
         assertRewriteResult("'b' [word != 'a']",
-                "POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 1, 0)");
+                "POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:a), notcontaining, 1, 0)");
         assertRewriteResult("'b' [word != 'a']{2}",
-                "POSFILTER(EXPAND(TERM(contents%word@i:b), R, 2, 2), TERM(contents%word@i:a), NOTCONTAINING, 1, 0)");
+                "POSFILTER(EXPAND(TERM(contents%word@i:b), R, 2, 2), TERM(contents%word@i:a), notcontaining, 1, 0)");
         assertRewriteResult("'b' 'c' [word != 'a']{2}",
-                "POSFILTER(EXPAND(SEQ(TERM(contents%word@i:b), TERM(contents%word@i:c)), R, 2, 2), TERM(contents%word@i:a), NOTCONTAINING, 2, 0)");
+                "POSFILTER(EXPAND(SEQ(TERM(contents%word@i:b), TERM(contents%word@i:c)), R, 2, 2), TERM(contents%word@i:a), notcontaining, 2, 0)");
         assertRewriteResult("[word != 'a']{2} 'b' 'c'",
-                "POSFILTER(EXPAND(SEQ(TERM(contents%word@i:b), TERM(contents%word@i:c)), L, 2, 2), TERM(contents%word@i:a), NOTCONTAINING, 0, -2)");
+                "POSFILTER(EXPAND(SEQ(TERM(contents%word@i:b), TERM(contents%word@i:c)), L, 2, 2), TERM(contents%word@i:a), notcontaining, 0, -2)");
         assertRewriteResult("'a' [word != 'b']{1,20} 'c'",
-                "POSFILTER(SEQ(EXPAND(TERM(contents%word@i:a), R, 1, 20), TERM(contents%word@i:c)), TERM(contents%word@i:b), NOTCONTAINING, 1, -1)");
+                "POSFILTER(SEQ(EXPAND(TERM(contents%word@i:a), R, 1, 20), TERM(contents%word@i:c)), TERM(contents%word@i:b), notcontaining, 1, -1)");
         assertRewriteResult("[word != 'a']? 'b' [word != 'c']?",
-                "OR(POSFILTER(EXPAND(POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:c), NOTCONTAINING, 1, 0), L, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 0, -2), POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:c), NOTCONTAINING, 1, 0), POSFILTER(EXPAND(TERM(contents%word@i:b), L, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 0, -1), TERM(contents%word@i:b))");
+                "OR(POSFILTER(EXPAND(POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:c), notcontaining, 1, 0), L, 1, 1), TERM(contents%word@i:a), notcontaining, 0, -2), POSFILTER(EXPAND(TERM(contents%word@i:b), R, 1, 1), TERM(contents%word@i:c), notcontaining, 1, 0), POSFILTER(EXPAND(TERM(contents%word@i:b), L, 1, 1), TERM(contents%word@i:a), notcontaining, 0, -1), TERM(contents%word@i:b))");
         assertRewriteResult("[word != 'a'] [pos='V.*']?",
-                "OR(POSFILTER(EXPAND(TERM(contents%pos@i:vrb), L, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 0, -1), NOT(TERM(contents%word@i:a)))");
+                "OR(POSFILTER(EXPAND(TERM(contents%pos@i:vrb), L, 1, 1), TERM(contents%word@i:a), notcontaining, 0, -1), NOT(TERM(contents%word@i:a)))");
         assertRewriteResult("[pos='V.*']? [word != 'a']",
-                "OR(POSFILTER(EXPAND(TERM(contents%pos@i:vrb), R, 1, 1), TERM(contents%word@i:a), NOTCONTAINING, 1, 0), NOT(TERM(contents%word@i:a)))");
+                "OR(POSFILTER(EXPAND(TERM(contents%pos@i:vrb), R, 1, 1), TERM(contents%word@i:a), notcontaining, 1, 0), NOT(TERM(contents%word@i:a)))");
     }
 
     @Test
@@ -300,17 +300,17 @@ public class TestQueryRewrite {
     @Test
     public void testRewriteTags() {
         assertRewriteResult("<s/> containing 'a' 'b'",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), CONTAINING)");
+                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
         assertRewriteResult("<s> []* 'a' 'b' []* </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), CONTAINING)");
+                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
         assertRewriteResult("<s> 'a' 'b' []* </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), CONTAINING_AT_START)");
+                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing_at_start)");
         assertRewriteResult("<s> []* 'a' 'b' </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), CONTAINING_AT_END)");
+                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing_at_end)");
         assertRewriteResult("<s> 'a' 'b' </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), MATCHES)");
+                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), matches)");
         assertRewriteResult("<s> ('a' 'b') 'c' </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), MATCHES)");
+                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), matches)");
         // Depends on implementation...
         //assertRewriteResult("<s test='1'> 'a' </s>",
         //        "POSFILTER(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), TERM(contents%word@i:a), MATCHES)");
@@ -319,9 +319,9 @@ public class TestQueryRewrite {
     @Test
     public void testRewriteNGramFilter() {
         assertRewriteResult("[]{2,4} containing 'a' 'b'",
-                "FILTERNGRAMS(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), CONTAINING, 2, 4)");
+                "FILTERNGRAMS(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing, 2, 4)");
         assertRewriteResult("[]{1,2} within 'a' 'b' 'c'",
-                "FILTERNGRAMS(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), WITHIN, 1, 2)");
+                "FILTERNGRAMS(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), within, 1, 2)");
     }
 
     @Test

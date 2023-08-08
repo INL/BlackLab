@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import java.util.List;
 import java.util.Objects;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -53,20 +54,20 @@ public class MatchFilterCompare extends MatchFilter {
 
     private final MatchFilter a;
     private final MatchFilter b;
-    private final Operator op;
+    private final Operator operator;
     private final MatchSensitivity sensitivity;
 
-    public MatchFilterCompare(MatchFilter a, MatchFilter b, Operator op, MatchSensitivity sensitivity) {
+    public MatchFilterCompare(MatchFilter a, MatchFilter b, Operator operator, MatchSensitivity sensitivity) {
         super();
         this.a = a;
         this.b = b;
-        this.op = op;
+        this.operator = operator;
         this.sensitivity = sensitivity;
     }
 
     @Override
     public String toString() {
-        return a + " " + op + " " + b;
+        return a + " " + operator + " " + b;
     }
 
     @Override
@@ -76,12 +77,12 @@ public class MatchFilterCompare extends MatchFilter {
         if (!(o instanceof MatchFilterCompare))
             return false;
         MatchFilterCompare that = (MatchFilterCompare) o;
-        return a.equals(that.a) && b.equals(that.b) && op == that.op && sensitivity == that.sensitivity;
+        return a.equals(that.a) && b.equals(that.b) && operator == that.operator && sensitivity == that.sensitivity;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(a, b, op, sensitivity);
+        return Objects.hash(a, b, operator, sensitivity);
     }
 
     @Override
@@ -103,7 +104,7 @@ public class MatchFilterCompare extends MatchFilter {
             cmp = ra.compareTo(rb);
         }
         // Return result of comparison depending on operator
-        return ConstraintValue.get(op.perform(cmp));
+        return ConstraintValue.get(operator.perform(cmp));
     }
 
     @Override
@@ -117,7 +118,7 @@ public class MatchFilterCompare extends MatchFilter {
         MatchFilter x = a.rewrite();
         MatchFilter y = b.rewrite();
 
-        if (op == Operator.EQUAL) {
+        if (operator == Operator.EQUAL) {
             if (x instanceof MatchFilterTokenAnnotation && ((MatchFilterTokenAnnotation) x).hasAnnotation()
                     && y instanceof MatchFilterString) {
                 // Simple annotation to string comparison, e.g. a.word = "cow"
@@ -140,10 +141,22 @@ public class MatchFilterCompare extends MatchFilter {
         // Some other comparison.
         if (x != a || y != b) {
             // clauses rewritten; return new instance
-            return new MatchFilterCompare(x, y, op, sensitivity);
+            return new MatchFilterCompare(x, y, operator, sensitivity);
         }
         // return unchanged
         return this;
+    }
+
+    public Operator getOperator() {
+        return operator;
+    }
+
+    public List<MatchFilter> getClauses() {
+        return List.of(a, b);
+    }
+
+    public MatchSensitivity getSensitivity() {
+        return sensitivity;
     }
 
 }

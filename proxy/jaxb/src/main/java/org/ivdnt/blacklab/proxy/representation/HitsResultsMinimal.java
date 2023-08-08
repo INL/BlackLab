@@ -30,7 +30,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 /** /hits results with aggregator=true (minimal hit info) */
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class HitsResultsMinimal implements Cloneable {
+public class HitsResultsMinimal implements Cloneable, EntityWithSummary {
 
     private static class BigListSerializer extends JsonSerializer<BigList<List<Object>>> {
         @Override
@@ -64,6 +64,11 @@ public class HitsResultsMinimal implements Cloneable {
             }
             return hits;
         }
+    }
+
+    @Override
+    public SearchSummary getSummary() {
+        return summary;
     }
 
     public SearchSummary summary;

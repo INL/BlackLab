@@ -23,6 +23,7 @@ import org.ivdnt.blacklab.proxy.representation.InputFormatXsltResults;
 import org.ivdnt.blacklab.proxy.representation.InputFormats;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.MetadataField;
+import org.ivdnt.blacklab.proxy.representation.ParsePatternResponse;
 import org.ivdnt.blacklab.proxy.representation.Server;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
 import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
@@ -37,7 +38,8 @@ public class ProxyRequest {
         boolean isCsv = ParamsUtil.isCsvRequest(headers);
         WebserviceOperation op = isCsv ? WebserviceOperation.HITS_CSV : WebserviceOperation.HITS;
         List<Class<?>> resultTypes = isCsv ? List.of(JsonCsvResponse.class) : List.of(TokenFreqList.class, HitsResults.class);
-        return Requests.requestWithPossibleCsvResponse(client, method, corpusName, parameters, op, resultTypes);
+        boolean isXml = !isCsv && !headers.getAcceptableMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE);
+        return Requests.requestWithPossibleCsvResponse(client, method, corpusName, parameters, op, resultTypes, isXml);
     }
 
     public static Response docs(Client client, String corpusName, MultivaluedMap<String, String> parameters,
@@ -45,7 +47,14 @@ public class ProxyRequest {
         boolean isCsv = ParamsUtil.isCsvRequest(headers);
         WebserviceOperation op = isCsv ? WebserviceOperation.DOCS_CSV : WebserviceOperation.DOCS;
         List<Class<?>> resultTypes = List.of(isCsv ? JsonCsvResponse.class : DocsResults.class);
-        return Requests.requestWithPossibleCsvResponse(client, corpusName, method, parameters, op, resultTypes);
+        boolean isXml = !isCsv && !headers.getAcceptableMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE);
+        return Requests.requestWithPossibleCsvResponse(client, corpusName, method, parameters, op, resultTypes, isXml);
+    }
+
+    static Response parsePattern(Client client, String corpusName, MultivaluedMap<String, String> parameters,
+            String method) {
+        Map<WebserviceParameter, String> params = ParamsUtil.get(parameters, corpusName, WebserviceOperation.PARSE_PATTERN);
+        return ProxyResponse.success(Requests.request(client, params, method, ParsePatternResponse.class));
     }
 
     static Response docInfo(Client client, String corpusName, String docPid, MultivaluedMap<String, String> parameters,

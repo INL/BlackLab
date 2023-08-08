@@ -1,35 +1,23 @@
 {
-  "indexName": "test",
-  "fieldName": "contents",
-  "isAnnotatedField": true,
-  "displayName": "Contents",
-  "description": "Contents of the documents.",
-  "hasContentStore": true,
-  "hasXmlTags": true,
-  "mainAnnotation": "word",
-  "displayOrder": [
-    "word",
-    "lemma",
-    "pos"
-  ],
   "annotations": {
-    "word": {
-      "displayName": "Word",
+    "_relation": {
       "description": "",
-      "uiType": "",
-      "hasForwardIndex": true,
-      "sensitivity": "SENSITIVE_AND_INSENSITIVE",
-      "offsetsAlternative": "s",
-      "isInternal": false
+      "displayName": "_relation",
+      "hasForwardIndex": false,
+      "isInternal": true,
+      "offsetsAlternative": "",
+      "sensitivity": "ONLY_SENSITIVE",
+      "uiType": ""
     },
     "lemma": {
-      "displayName": "Lemma",
       "description": "",
-      "uiType": "",
+      "displayName": "Lemma",
       "hasForwardIndex": true,
-      "sensitivity": "SENSITIVE_AND_INSENSITIVE",
-      "offsetsAlternative": "",
       "isInternal": false,
+      "offsetsAlternative": "",
+      "sensitivity": "SENSITIVE_AND_INSENSITIVE",
+      "uiType": "",
+      "valueListComplete": true,
       "values": [
         "",
         "a",
@@ -195,35 +183,47 @@
         "year",
         "yes",
         "you"
-      ],
-      "valueListComplete": true
+      ]
     },
     "pos": {
+      "description": "",
       "displayName": "PoS",
-      "description": "",
-      "uiType": "",
       "hasForwardIndex": true,
+      "isInternal": false,
+      "offsetsAlternative": "",
       "sensitivity": "ONLY_INSENSITIVE",
-      "offsetsAlternative": "",
-      "isInternal": false
-    },
-    "_relation": {
-      "displayName": "_relation",
-      "description": "",
-      "uiType": "",
-      "hasForwardIndex": false,
-      "sensitivity": "ONLY_SENSITIVE",
-      "offsetsAlternative": "",
-      "isInternal": true
+      "uiType": ""
     },
     "punct": {
-      "displayName": "Punct",
       "description": "",
-      "uiType": "",
+      "displayName": "Punct",
       "hasForwardIndex": true,
-      "sensitivity": "ONLY_INSENSITIVE",
+      "isInternal": true,
       "offsetsAlternative": "",
-      "isInternal": true
+      "sensitivity": "ONLY_INSENSITIVE",
+      "uiType": ""
+    },
+    "word": {
+      "description": "",
+      "displayName": "Word",
+      "hasForwardIndex": true,
+      "isInternal": false,
+      "offsetsAlternative": "s",
+      "sensitivity": "SENSITIVE_AND_INSENSITIVE",
+      "uiType": ""
     }
-  }
+  },
+  "description": "Contents of the documents.",
+  "displayName": "Contents",
+  "displayOrder": [
+    "word",
+    "lemma",
+    "pos"
+  ],
+  "fieldName": "contents",
+  "hasContentStore": true,
+  "hasXmlTags": true,
+  "indexName": "test",
+  "isAnnotatedField": true,
+  "mainAnnotation": "word"
 }

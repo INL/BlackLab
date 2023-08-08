@@ -1,3 +1,4 @@
+"use strict";
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
@@ -14,7 +15,7 @@ function expectDocsGroupedUnchanged(testName, params) {
     const groupBy = params.group;
     const filteredBy  = params.filter ? `, filtered by ${params.filter}` : '';
 
-    describe(testName, () => {
+    describe(`docs-grouped/${testName}`, () => {
         it('response should match previous', done => {
             chai
             .request(constants.SERVER_URL)

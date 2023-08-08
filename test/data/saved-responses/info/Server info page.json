@@ -12,16 +12,16 @@
   },
   "indices": {
     "test": {
-      "displayName": "test",
       "description": "",
-      "status": "available",
+      "displayName": "test",
       "documentFormat": "voice-tei",
+      "status": "available",
       "timeModified": "VALUE_REMOVED",
       "tokenCount": 766
     }
   },
   "user": {
-    "loggedIn": false,
-    "canCreateIndex": false
+    "canCreateIndex": false,
+    "loggedIn": false
   }
 }
