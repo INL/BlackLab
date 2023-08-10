@@ -21,9 +21,42 @@ For now, this guide will focus on BlackLab Server. If you're interested in the J
 
 ## Install BlackLab Server
 
-You will need a JVM version of 11 or higher to use the latest BlackLab versions. Also install Apache Tomcat 9.
+You will need a JVM version of 11 or higher to use the latest BlackLab versions. Also install Apache Tomcat 9. For example, on Ubuntu:
 
-Create an empty directory where you want to store your indexed corpora, for example `/data/blacklab-corpora`. Make sure this directory can be read by the user running Tomcat (making it world-readable ensures this). Now create a directory `/etc/blacklab` with a file named `blacklab-server.yaml`:
+```bash
+sudo apt install openjdk-11-jdk tomcat9
+```
+
+Create an empty directory where you want to store your indexed corpora. Make sure it has the permissions you require. For example:
+
+```bash
+# Create directory
+sudo mkdir -p /data/blacklab-corpora
+
+# Make sure you own it, so you can create corpora there
+sudo chown $USER:$GROUP /data/blacklab-corpora
+
+# Make sure it's world-readable so Tomcat can read it
+chmod a+rx /data/blacklab-corpora
+```
+
+Now create a directory `/etc/blacklab` with a file named `blacklab-server.yaml`:
+
+```bash
+# Create directory
+sudo mkdir /etc/blacklab
+
+# Create empty config file and take ownership of it
+sudo touch /etc/blacklab/blacklab-server.yaml
+sudo chown $USER:$GROUP /etc/blacklab/blacklab-server.yaml
+
+# Make sure Tomcat can access the directory and file
+sudo chmod -R a+rX /etc/blacklab
+```
+
+(NOTE: if you cannot create a directory under `/etc/`, see the TIP under [configuration file](../server/#configuration-file) for alternatives)
+
+Now, edit the file `/etc/blacklab/blacklab-server.yaml` using a text editor:
 
 ```yaml
 ---
@@ -35,7 +68,7 @@ indexLocations:
 - /data/blacklab-corpora
 ```
 
-On the [GitHub releases page](https://github.com/INL/BlackLab/releases/), find the latest stable version (usually at the top) and download the attached file named blacklab-server-VERSION.war. Place this file in Tomcat's `webapps` directory. Tomcat should automatically recognize the file and initialize the application (usually, it will extract it to a subdirectory).
+On the [GitHub releases page](https://github.com/INL/BlackLab/releases/), find the latest stable version (usually at the top) and download the attached file named `blacklab-server-VERSION.war`. Place this file in Tomcat's `webapps` directory. Tomcat should automatically recognize the file and initialize the application (usually, it will extract it to a subdirectory).
 
 Now go to [https://localhost:8080/blacklab-server/](https://localhost:8080/blacklab-server/) (or substitute the hostname of the server you've installed it on if not running locally) and you should see an XML response from BlackLab.
 
@@ -66,10 +99,10 @@ A [web-based user interface](http://openconvert.clarin.inl.nl/) for converting a
 
 If you can't use your own data yet, we've provided a [tokenized, annotated TEI version of the Brown corpus](https://github.com/INL/BlackLab/wiki/brownCorpus.lemmatized.xml.zip) for you to test with. 
 
+**NOTE:** to index this version of the Brown corpus, use the `tei-p5-legacy` input format.
+
 ::: tip Brown corpus
 The [Brown corpus](http://en.wikipedia.org/wiki/Brown_Corpus "http://en.wikipedia.org/wiki/Brown_Corpus") is a corpus compiled in the 1960s by [Nelson Francis and Henry Kucera](http://archive.org/details/BrownCorpus) at Brown University. It is small by today's standard (500 documents, 1M words). It was converted to TEI format by [Lou Burnard](http://users.ox.ac.uk/~lou/). It is available from archive.org under the [CC-BY-NC 3.0](http://creativecommons.org/licenses/by-nc/3.0/) license, but we've created our own version which includes lemmata.<br/>(Please note that we didn't check the lemmatization, and it probably contains errors - useful for testing purposes only!)
-
-**NOTE:** to index this version of the Brown corpus, use the `tei-p5-legacy` input format.
 :::
 
 
@@ -91,9 +124,11 @@ We want to create a new index, so we need to supply an index directory, input fi
 
 If you specify a directory as the `INPUT_FILES`, it will be scanned recursively. You can also specify a file glob (such as \*.xml) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index its contents.
 
-For example, if you have TEI-P5 data in `/tmp/my-tei/` and want to create an index as a subdirectory of the current directory called "test-index", run the following command:
+For example, if you have TEI-P5 data in `/tmp/my-tei/` and want to create an index `/data/blacklab-corpora/my-corpus`, run the following command:
 
-	java -cp "blacklab-VERSION.jar" nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei-p5
+	java -cp "blacklab-VERSION.jar" nl.inl.blacklab.tools.IndexTool create /data/blacklab-corpora/my-corpus /tmp/my-tei/ tei-p5
+
+(**NOTE:** for the included Brown corpus data, use the `tei-p5-legacy` input format)
 
 Your data is indexed and placed in a new BlackLab corpus in the `/data/blacklab-corpora/my-corpus` directory.
 
@@ -105,7 +140,7 @@ Please note that if you're indexing very large files, you should [give java more
 
 ::: details <b>TIP:</b> TEI variants
 
-BlackLab now includes three TEI variants: `tei-p5` (TEI-P5 using the `pos` attribute), `tei-p5-legacy` (same but using the nonstandard `type` attribute for part of speech) and `tei-p4-legacy` (TEI-P5 using the `type` attribute). Make sure you pick the right variant for you, or copy one of the `tei-*.blf.yaml` files and customize it to your needs.
+BlackLab now includes three TEI variants: `tei-p5` (TEI-P5 using the `pos` attribute), `tei-p5-legacy` (same but using the nonstandard `type` attribute for part of speech) and `tei-p4-legacy` (TEI-P4 using the `type` attribute). Make sure you pick the right variant for you, or copy one of the `tei-*.blf.yaml` files and customize it to your needs.
 
 :::
 

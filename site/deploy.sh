@@ -18,7 +18,7 @@ git commit -m 'Deploy BlackLab site.'
 
 # Force push to the "publishing source" of your GitHub pages site
 # in this case, the gh-pages branch
-git push -f git@github.com:INL/BlackLab.git master:gh-pages
+git push -f git@github.com:INL/BlackLab.git main:gh-pages
 
 # Back to previous directory (the root of your repo)
 cd -
