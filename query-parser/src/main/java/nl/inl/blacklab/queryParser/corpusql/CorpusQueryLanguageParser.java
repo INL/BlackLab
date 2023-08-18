@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
@@ -39,8 +40,32 @@ public class CorpusQueryLanguageParser {
         return parse(query, AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME);
     }
 
+    /** Automatically add rspan so hit encompasses all matched relations.
+     *
+     * Only does this if this is a relations query and if setting enabled.
+     */
+    public TextPattern ensureHitSpansMatchedRelations(TextPattern pattern) {
+        boolean addRspanAll = false;
+        if (hitsShouldSpanMatchedRelations && pattern.isRelationsQuery()) {
+            addRspanAll = true;
+            if (pattern instanceof TextPatternQueryFunction) {
+                TextPatternQueryFunction qf = (TextPatternQueryFunction) pattern;
+                // Only add rspan if not already doing it explicitly
+                if (qf.getName().equals(XFRelations.FUNC_RSPAN) || qf.getName().equals(XFRelations.FUNC_REL)) {
+                    addRspanAll = false;
+                }
+            }
+        }
+        return addRspanAll ? new TextPatternQueryFunction(XFRelations.FUNC_RSPAN,
+                List.of(pattern, "all")) : pattern;
+    }
+
     /** Allow strings to be quoted using single quotes? */
     private boolean allowSingleQuotes = true;
+
+    /** If this is a relations query, should we automatically add rspan(..., 'all') so the resulting hit encompasses all
+     *  matches relations? */
+    private boolean hitsShouldSpanMatchedRelations = true;
 
     private String defaultAnnotation;
 
@@ -51,7 +76,7 @@ public class CorpusQueryLanguageParser {
         try {
             GeneratedCorpusQueryLanguageParser parser = new GeneratedCorpusQueryLanguageParser(new StringReader(query));
             parser.wrapper = this;
-            return parser.query();
+            return ensureHitSpansMatchedRelations(parser.query());
         } catch (ParseException | TokenMgrError e) {
             throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
         }
@@ -93,7 +118,7 @@ public class CorpusQueryLanguageParser {
     }
 
     /** Allow strings to be quoted using single quotes? */
-    boolean getAllowSingleQuotes() {
+    boolean isAllowSingleQuotes() {
         return allowSingleQuotes;
     }
 
@@ -107,6 +132,14 @@ public class CorpusQueryLanguageParser {
 
     public String getDefaultAnnotation() {
         return defaultAnnotation;
+    }
+
+    public void setHitsShouldSpanMatchedRelations(boolean hitsShouldSpanMatchedRelations) {
+        this.hitsShouldSpanMatchedRelations = hitsShouldSpanMatchedRelations;
+    }
+
+    public boolean isHitsShouldSpanMatchedRelations() {
+        return hitsShouldSpanMatchedRelations;
     }
 
     TextPattern annotationClause(String annot, TextPatternTerm value) {
@@ -182,13 +215,13 @@ public class CorpusQueryLanguageParser {
             List<TextPattern> clauses = new ArrayList<>();
             clauses.add(parent);
             clauses.addAll(childRels.stream().map(rel -> {
-                TextPattern tp = new TextPatternQueryFunction("rel",
+                TextPattern tp = new TextPatternQueryFunction(XFRelations.FUNC_REL,
                         List.of(rel.type.regex, rel.target, "source", rel.captureAs));
                 if (rel.type.negate)
                     tp = new TextPatternNot(tp);
                 return tp;
             }).collect(Collectors.toList()));
-            return new TextPatternQueryFunction("rmatch", clauses);
+            return new TextPatternQueryFunction(XFRelations.FUNC_RMATCH, clauses);
         }
     }
 
@@ -199,7 +232,8 @@ public class CorpusQueryLanguageParser {
                     childRel.type.regex, false, childRel.target, RelationInfo.SpanMode.TARGET,
                     SpanQueryRelations.Direction.ROOT, childRel.captureAs);
         } else {
-            return new TextPatternQueryFunction("rel", List.of(childRel.type.regex, childRel.target, "target",
+            return new TextPatternQueryFunction(
+                    XFRelations.FUNC_REL, List.of(childRel.type.regex, childRel.target, "target",
                     childRel.captureAs, "root"));
         }
     }

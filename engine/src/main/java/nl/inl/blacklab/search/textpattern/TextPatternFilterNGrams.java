@@ -73,4 +73,9 @@ public class TextPatternFilterNGrams extends TextPattern {
     public String toString() {
         return "FILTERNGRAMS(" + clause + ", " + operation + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return clause.isRelationsQuery();
+    }
 }

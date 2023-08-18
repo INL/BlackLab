@@ -63,4 +63,9 @@ public class TextPatternConstrained extends TextPattern {
     public MatchFilter getConstraint() {
         return constraint;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return clause.isRelationsQuery();
+    }
 }

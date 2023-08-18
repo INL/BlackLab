@@ -97,4 +97,9 @@ public class TextPatternQueryFunction extends TextPattern {
     public List<?> getArgs() {
         return args;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return QueryExtensions.isRelationsFunction(name);
+    }
 }

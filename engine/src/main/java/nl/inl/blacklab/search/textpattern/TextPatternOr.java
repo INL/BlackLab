@@ -73,4 +73,9 @@ public class TextPatternOr extends TextPattern {
     public boolean isBracketQuery() {
         return clauses.stream().allMatch(TextPattern::isBracketQuery);
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return clauses.stream().anyMatch(TextPattern::isRelationsQuery);
+    }
 }

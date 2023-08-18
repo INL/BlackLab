@@ -11,6 +11,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -87,7 +88,7 @@ public class ResultDocSnippet {
             TextPattern pattern = new TextPatternPositionFilter(new TextPatternFixedSpan(start, end),
                     new TextPatternTags(context.inlineTagName(), null, TextPatternTags.Adjust.FULL_TAG, context.inlineTagName()),
                     SpanQueryPositionFilter.Operation.WITHIN);
-            pattern = new TextPatternQueryFunction("rcapture", List.of(pattern, context.inlineTagName(), "rels"));
+            pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, context.inlineTagName(), "rels"));
             QueryExecutionContext queryContext = new QueryExecutionContext(index,
                     index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {

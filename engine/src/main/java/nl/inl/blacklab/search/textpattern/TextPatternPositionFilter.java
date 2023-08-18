@@ -116,4 +116,9 @@ public class TextPatternPositionFilter extends TextPattern {
     public int getAdjustTrailing() {
         return adjustTrailing;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return producer.isRelationsQuery() || filter.isRelationsQuery() && !invert;
+    }
 }

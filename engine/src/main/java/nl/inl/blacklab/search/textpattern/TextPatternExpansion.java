@@ -84,4 +84,9 @@ public class TextPatternExpansion extends TextPattern {
     public Direction getDirection() {
         return direction;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return clause.isRelationsQuery();
+    }
 }

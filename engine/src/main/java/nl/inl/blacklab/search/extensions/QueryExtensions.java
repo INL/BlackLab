@@ -80,6 +80,13 @@ public class QueryExtensions {
     /** A query and three strings */
     public static final List<ArgType> ARGS_QSSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
 
+    public static boolean isRelationsFunction(String name) {
+        FuncInfo funcInfo = functions.get(name);
+        if (funcInfo == null)
+            throw new UnsupportedOperationException("Unknown function: " + name);
+        return funcInfo.isRelationsFunction();
+    }
+
     enum ArgType {
         QUERY,
         STRING,
@@ -95,7 +102,13 @@ public class QueryExtensions {
 
         private boolean isVarArg;
 
+        private boolean relationsFunction;
+
         public FuncInfo(ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues) {
+            this(func, argTypes, defaultValues, false);
+        }
+
+        public FuncInfo(ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues, boolean relationsFunction) {
             this.func = func;
             this.argTypes = argTypes;
             isVarArg = argTypes.size() == 2 && argTypes.get(1) == ArgType.ELLIPSIS;
@@ -107,6 +120,7 @@ public class QueryExtensions {
                     throw new IllegalArgumentException("Illegal argument type ELLIPSIS");
             }
             this.defaultValues = defaultValues;
+            this.relationsFunction = relationsFunction;
         }
 
         private int requiredNumberOfArguments() {
@@ -119,6 +133,10 @@ public class QueryExtensions {
 
         private ArgType getExpectedParameterType(int i) {
             return argTypes.get(isVarArg ? 0 : i);
+        }
+
+        public boolean isRelationsFunction() {
+            return relationsFunction;
         }
     }
 
@@ -145,7 +163,7 @@ public class QueryExtensions {
      * @param argTypes argument types
      */
     public static void register(String name, ExtensionFunction func, List<ArgType> argTypes) {
-        functions.put(name, new FuncInfo(func, argTypes, Collections.emptyList()));
+        register(name, func, argTypes, Collections.emptyList(), false);
     }
 
     /**
@@ -156,7 +174,11 @@ public class QueryExtensions {
      * @param defaultValues default values for arguments
      */
     public static void register(String name, ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues) {
-        functions.put(name, new FuncInfo(func, argTypes, defaultValues));
+        register(name, func, argTypes, defaultValues, false);
+    }
+
+    public static void register(String name, ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues, boolean relationsFunction) {
+        functions.put(name, new FuncInfo(func, argTypes, defaultValues, relationsFunction));
     }
 
     /**

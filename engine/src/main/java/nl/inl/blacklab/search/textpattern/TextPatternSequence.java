@@ -64,4 +64,9 @@ public class TextPatternSequence extends TextPattern {
     public List<TextPattern> getClauses() {
         return clauses;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return clauses.stream().anyMatch(TextPattern::isRelationsQuery);
+    }
 }

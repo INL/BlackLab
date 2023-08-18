@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -428,34 +429,19 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((exclude == null) ? 0 : exclude.hashCode());
-        result = prime * result + ((include == null) ? 0 : include.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        SpanQueryAndNot that = (SpanQueryAndNot) o;
+        return requireUniqueRelations == that.requireUniqueRelations && Objects.equals(include, that.include)
+                && Objects.equals(exclude, that.exclude);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SpanQueryAndNot other = (SpanQueryAndNot) obj;
-        if (exclude == null) {
-            if (other.exclude != null)
-                return false;
-        } else if (!exclude.equals(other.exclude))
-            return false;
-        if (include == null) {
-            if (other.include != null)
-                return false;
-        } else if (!include.equals(other.include))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(include, exclude, requireUniqueRelations);
     }
 
     @Override

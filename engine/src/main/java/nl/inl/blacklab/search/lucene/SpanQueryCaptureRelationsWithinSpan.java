@@ -24,30 +24,62 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
 
-    /** Spans to capture relations from */
-    final String toCapture;
+    /** Name of match info to capture relations from, e.g. "s" to capture relations inside the sentence captured as "s".
+     */
+    final String captureRelsInside;
 
-    /** Match info name for the captured relations */
-    final String captureAs;
+    /** Match info name for the list of captured relations */
+    final String captureRelsAs;
 
-    public SpanQueryCaptureRelationsWithinSpan(QueryInfo queryInfo, String relationFieldName, BLSpanQuery query, String toCapture, String captureAs, String relationType) {
-        super(query, new SpanQueryRelations(queryInfo, relationFieldName, relationType, Collections.emptyMap(), SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN, ""));
-        this.toCapture = toCapture;
-        this.captureAs = captureAs;
+    /**
+     * Capture all matching relations occurring within a captured span.
+     *
+     * The query might be something like <code>'dog' within &lt;s/&gt;</code>.
+     * In that case, captureRelsInside would be "s" (name of the capture containing the
+     * sentence spans, automatically assigned).
+     *
+     * @param queryInfo query info
+     * @param relationFieldName field where relations where indexed
+     * @param query query capturing the span to capture relations from
+     * @param captureRelsInside name of the match info span to capture relations from
+     * @param captureRelsAs name to capture the list of relations as
+     * @param relationType type of relation to capture (regex)
+     */
+    public SpanQueryCaptureRelationsWithinSpan(QueryInfo queryInfo, String relationFieldName, BLSpanQuery query,
+            String captureRelsInside, String captureRelsAs, String relationType) {
+        super(query, new SpanQueryRelations(queryInfo, relationFieldName, relationType, Collections.emptyMap(),
+                SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN, ""));
+        this.captureRelsInside = captureRelsInside;
+        this.captureRelsAs = captureRelsAs;
         this.guarantees = query.guarantees();
     }
 
-    public SpanQueryCaptureRelationsWithinSpan(BLSpanQuery query, BLSpanQuery relations, String toCapture, String captureAs) {
+
+    /**
+     * Capture all matching relations occurring within a captured span.
+     *
+     * The query might be something like <code>'dog' within &lt;s/&gt;</code>.
+     * In that case, captureRelsInside would be "s" (name of the capture containing the
+     * sentence spans, automatically assigned).
+     *
+     * @param query query capturing the span to capture relations from
+     * @param relations relations to capture
+     * @param captureRelsInside name of the match info span to capture relations from
+     * @param captureRelsAs name to capture the list of relations as
+     */
+    public SpanQueryCaptureRelationsWithinSpan(BLSpanQuery query, BLSpanQuery relations, String captureRelsInside,
+            String captureRelsAs) {
         super(query, relations);
-        this.toCapture = toCapture;
-        this.captureAs = captureAs;
+        this.captureRelsInside = captureRelsInside;
+        this.captureRelsAs = captureRelsAs;
         this.guarantees = query.guarantees();
     }
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
-        return rewritten == null ? this : new SpanQueryCaptureRelationsWithinSpan(rewritten.get(0), rewritten.get(1), toCapture, captureAs);
+        return rewritten == null ? this : new SpanQueryCaptureRelationsWithinSpan(rewritten.get(0), rewritten.get(1),
+                captureRelsInside, captureRelsAs);
     }
 
     @Override
@@ -59,7 +91,8 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
     public BLSpanQuery noEmpty() {
         if (!matchesEmptySequence())
             return this;
-        return new SpanQueryCaptureRelationsWithinSpan(clauses.get(0).noEmpty(), clauses.get(1).noEmpty(), toCapture, captureAs);
+        return new SpanQueryCaptureRelationsWithinSpan(clauses.get(0).noEmpty(), clauses.get(1).noEmpty(),
+                captureRelsInside, captureRelsAs);
     }
 
     @Override
@@ -109,14 +142,16 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
             if (spans == null)
                 return null;
             SpansRelations relations = relationsWeight.getSpans(context, requiredPostings);
-            return new SpansCaptureRelationsWithinSpan(spans, relations, toCapture, captureAs);
+            return new SpansCaptureRelationsWithinSpan(spans, relations, captureRelsInside,
+                    captureRelsAs);
         }
 
     }
 
     @Override
     public String toString(String field) {
-        return "RCAP(" + clausesToString(field) + ", " + toCapture + ", " + captureAs + ")";
+        return "RCAP(" + clausesToString(field) + ", " + captureRelsInside + ", " + captureRelsAs
+                + ")";
     }
 
     @Override
@@ -128,7 +163,7 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
         return new SpanQueryCaptureRelationsWithinSpan(
                 SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, onTheRight),
-                clauses.get(1), toCapture, captureAs);
+                clauses.get(1), captureRelsInside, captureRelsAs);
     }
 
     @Override
@@ -150,11 +185,12 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
         if (!super.equals(o))
             return false;
         SpanQueryCaptureRelationsWithinSpan that = (SpanQueryCaptureRelationsWithinSpan) o;
-        return Objects.equals(toCapture, that.toCapture) && Objects.equals(captureAs, that.captureAs);
+        return Objects.equals(captureRelsInside, that.captureRelsInside) && Objects.equals(
+                captureRelsAs, that.captureRelsAs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), toCapture, captureAs);
+        return Objects.hash(super.hashCode(), captureRelsInside, captureRelsAs);
     }
 }

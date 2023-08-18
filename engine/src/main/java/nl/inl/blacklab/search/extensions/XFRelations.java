@@ -25,6 +25,11 @@ public class XFRelations implements ExtensionFunctionClass {
     /** Relation type to prepend if argument does not contain substring "::" */
     private static final String DEFAULT_RELATION_TYPE = "dep"; // could be made configurable if needed
 
+    public static final String FUNC_REL = "rel";
+    public static final String FUNC_RMATCH = "rmatch";
+    public static final String FUNC_RSPAN = "rspan";
+    public static final String FUNC_RCAPTURE = "rcapture";
+
     /**
      * Find relations matching type and target.
      * <p>
@@ -53,8 +58,8 @@ public class XFRelations implements ExtensionFunctionClass {
         if (StringUtils.isEmpty(captureAs)) {
             String relTypeNoClass = relationType.replaceAll("^.+::", "").replaceAll("[^\\p{L}]", "");
             if (relTypeNoClass.isEmpty())
-                relTypeNoClass = "rel";
-            captureAs = relTypeNoClass + "-" + context.nextUniqueId();
+                relTypeNoClass = FUNC_REL;
+            captureAs = context.ensureUniqueCapture(relTypeNoClass);
         }
 
         // Make sure relationType has a relation class
@@ -153,6 +158,17 @@ public class XFRelations implements ExtensionFunctionClass {
         return spanQueryAnd;
     }
 
+    /**
+     * Capture relations inside a span.
+     *
+     * Will capture all relations matching the specified type regex as a list
+     * under the specified capture name.
+     *
+     * @param queryInfo
+     * @param context
+     * @param args function arguments: query, toCapture, captureAs, relationType
+     * @return
+     */
     private static BLSpanQuery rcapture(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         if (args.size() < 3)
             throw new IllegalArgumentException("rcapture() requires at least three arguments: query, toCapture, and captureAs");
@@ -165,12 +181,15 @@ public class XFRelations implements ExtensionFunctionClass {
     }
 
     public void register() {
-        QueryExtensions.register("rel", XFRelations::rel, QueryExtensions.ARGS_SQSSS, Arrays.asList(".*",
-                QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "", "both"));
-        QueryExtensions.register("rmatch", XFRelations::rmatch, QueryExtensions.ARGS_VAR_Q,
+        QueryExtensions.register(FUNC_REL, XFRelations::rel, QueryExtensions.ARGS_SQSSS,
+                Arrays.asList(".*", QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
+                true);
+        QueryExtensions.register(FUNC_RMATCH, XFRelations::rmatch, QueryExtensions.ARGS_VAR_Q,
                 List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM));
-        QueryExtensions.register("rspan", XFRelations::rspan, QueryExtensions.ARGS_QS, Arrays.asList(null, "full"));
-        QueryExtensions.register("rcapture", XFRelations::rcapture, QueryExtensions.ARGS_QSSS, Arrays.asList(null, null, null, ".*"));
+        QueryExtensions.register(FUNC_RSPAN, XFRelations::rspan, QueryExtensions.ARGS_QS,
+                Arrays.asList(null, "full"));
+        QueryExtensions.register(FUNC_RCAPTURE, XFRelations::rcapture, QueryExtensions.ARGS_QSSS,
+                Arrays.asList(null, null, null, ".*"), true);
     }
 
 }

@@ -80,4 +80,8 @@ public class TextPatternRepetition extends TextPattern {
         return "REP(" + clause.toString() + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
+    @Override
+    public boolean isRelationsQuery() {
+        return clause.isRelationsQuery();
+    }
 }

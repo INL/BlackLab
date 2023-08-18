@@ -96,4 +96,7 @@ public abstract class TextPattern implements TextPatternStruct {
         return spanQuery;
     }
 
+    public boolean isRelationsQuery() {
+        return false;
+    }
 }

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashSet;
+import java.util.Set;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -151,11 +152,16 @@ public class QueryExecutionContext {
         return QueryInfo.create(index(), field());
     }
 
-    /** We need to be able to get unique ids per query, e.g. to auto-number relations captures if you
-     *  don't explicitly name your captures. */
-    private AtomicInteger uniqueIdCounter = new AtomicInteger();
+    Set<String> captures = new HashSet<>();
 
-    public int nextUniqueId() {
-        return uniqueIdCounter.getAndIncrement();
+    public String ensureUniqueCapture(String captureBaseName) {
+        String capture = captureBaseName;
+        int i = 2;
+        while (captures.contains(capture)) {
+            capture = captureBaseName + i;
+            i++;
+        }
+        captures.add(capture);
+        return capture;
     }
 }

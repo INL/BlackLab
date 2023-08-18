@@ -81,4 +81,9 @@ public class TextPatternCaptureGroup extends TextPattern {
     public TextPattern getClause() {
         return clause;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return clause.isRelationsQuery();
+    }
 }

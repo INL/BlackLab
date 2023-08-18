@@ -63,4 +63,9 @@ public class TextPatternRelationMatch extends TextPattern {
     public List<TextPattern> getChildren() {
         return children;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return parent.isRelationsQuery() || children.stream().anyMatch(TextPattern::isRelationsQuery);
+    }
 }

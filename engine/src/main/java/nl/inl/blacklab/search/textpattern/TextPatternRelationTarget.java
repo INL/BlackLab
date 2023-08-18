@@ -102,4 +102,9 @@ public class TextPatternRelationTarget extends TextPattern {
     public SpanQueryRelations.Direction getDirection() {
         return direction;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return true;
+    }
 }

@@ -55,4 +55,9 @@ public class TextPatternEdge extends TextPattern {
     public boolean isTrailingEdge() {
         return trailingEdge;
     }
+
+    @Override
+    public boolean isRelationsQuery() {
+        return clause.isRelationsQuery();
+    }
 }

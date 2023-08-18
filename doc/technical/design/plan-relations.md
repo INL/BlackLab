@@ -502,11 +502,11 @@ Attributes are sorted alphabetically by name. Each attribute name is followed by
 
 ### Payload
 
-The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the other end to save space, but we don't need `ZInt` right now because we always index relations at the first position in the document, so the relative position is always non-negative.
+The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the other end to save space.
 
 The payload for a relation consists of the following fields:
 
-* `relOtherStart: VInt`: relative position of the (start of the) other end. This should always be non-negative if we index relations at the first position in the document. Default: `1`.
+* `relOtherStart: ZInt`: relative position of the (start of the) other end. Default: `1`.
 * `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. If `0x08` is set, `targetField` will follow the flags field. The other bits are reserved for future use and must not be set. Default: `0`.
 * `targetField: VInt`: (only present if flag `0x08` set) annotated field the target points to. Uses the forward index field numbering. Default: `0`
 * `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)

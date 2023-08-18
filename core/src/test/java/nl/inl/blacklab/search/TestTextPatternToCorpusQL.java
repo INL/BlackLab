@@ -84,10 +84,17 @@ public class TestTextPatternToCorpusQL {
     }
 
     @Test
+    public void testRelationsWithoutRspan() throws InvalidQuery {
+        assertCanonicalized("rspan(_ -test-> _, 'all')", "_ -test-> _");
+        assertCanonicalized("rspan([]+ -test-> []+, 'all')", "[]+ -test-> []+");
+        assertCanonicalized("rspan(^--> _, 'all')", "^--> _");
+    }
+
+    @Test
     public void testRelations() throws InvalidQuery {
-        assertRoundtrip("_ -test-> _");
-        assertRoundtrip("[]+ -test-> []+");
-        assertRoundtrip("^--> _");
+        assertRoundtrip("rspan(_ -test-> _, 'all')");
+        assertRoundtrip("rspan([]+ -test-> []+, 'all')");
+        assertRoundtrip("rspan(^--> _, 'all')");
     }
 
     @Test
