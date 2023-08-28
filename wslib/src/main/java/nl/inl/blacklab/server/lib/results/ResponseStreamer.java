@@ -1297,6 +1297,11 @@ public class ResponseStreamer {
 
             ds.startEntry("annotatedFields").startMap();
             for (ResultAnnotatedField annotatedField: result.getAnnotatedFields()) {
+                // internal fields.
+                // TODO figure out how to prevent this.
+                // This happens when we have linked metadata, a dummy annotatedField is written, but it's required for the contentstore (apparently?).
+                if (annotatedField.getAnnotInfos().isEmpty())
+                    continue;
                 ds.startAttrEntry("annotatedField", "name", annotatedField.getFieldDesc().name());
                 {
                     annotatedField(annotatedField, includeCustom);
