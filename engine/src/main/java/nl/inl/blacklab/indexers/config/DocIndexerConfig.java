@@ -7,12 +7,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -25,7 +28,9 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.util.StringUtil;
 
 /**
@@ -45,18 +50,10 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     public static DocIndexerConfig fromConfig(ConfigInputFormat config) {
-        DocIndexerConfig docIndexer = null;
+        DocIndexerConfig docIndexer;
         switch (config.getFileType()) {
         case XML:
-            for (ConfigInputFormat.FileTypeOption fto: ConfigInputFormat.FileTypeOption.fromConfig(config, ConfigInputFormat.FileType.XML)) {
-                if (fto == ConfigInputFormat.FileTypeOption.SAXONICA) {
-                    docIndexer = new DocIndexerSaxon();
-                    break;
-                }
-            }
-            if (docIndexer == null) {
-                docIndexer = new DocIndexerXPath();
-            }
+            docIndexer = DocIndexerXPath.create(config.getFileTypeOptions());
             break;
         case TABULAR:
             docIndexer = new DocIndexerTabular();
@@ -112,7 +109,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             return;
         inited = true;
         setStoreDocuments(config.shouldStore());
-        for (ConfigAnnotatedField af : config.getAnnotatedFields().values()) {
+        for (ConfigAnnotatedField af: config.getAnnotatedFields().values()) {
 
             // Define the properties that make up our annotated field
             if (af.isDummyForStoringLinkedDocuments())
@@ -138,8 +135,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
                             annot.createForwardIndex());
             }
-            for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
-                for (ConfigAnnotation annot : standoff.getAnnotations().values()) {
+            for (ConfigStandoffAnnotations standoff: af.getStandoffAnnotations()) {
+                for (ConfigAnnotation annot: standoff.getAnnotations().values()) {
                     fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
                             annot.createForwardIndex());
                 }
@@ -168,6 +165,71 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 break;
             case FAIL:
                 throw new BlackLabRuntimeException("Link path " + path + " not found in document " + documentName);
+        }
+    }
+
+    protected Collection<String> processAnnotationValues(ConfigAnnotation annotation, Collection<String> values) {
+        List<ConfigProcessStep> processingSteps = annotation.getProcess();
+        boolean hasProcessing = !processingSteps.isEmpty();
+
+        // Do we have anything to do?
+        boolean nothingToProcess = !hasProcessing || values.isEmpty();
+        boolean noDupesToEliminate = values.size() <= 1 || annotation.isAllowDuplicateValues();
+        if (nothingToProcess && noDupesToEliminate) {
+            // No processing or deduplication to do; just return the values as-is (but sanitized/normalized)
+            return values.stream().map(StringUtil::sanitizeAndNormalizeUnicode).collect(Collectors.toList());
+        }
+
+        Collection<String> results = new ArrayList<>();
+
+        // Apply processing steps
+        if (annotation.isMultipleValues()) {
+            // Could there be multiple values here? (either there already are, or a processing step might create them)
+            // (this is to prevent allocating a set if we don't have to)
+
+            // If duplicates are not allowed, keep track of values we've already added
+            Set<String> valuesSeen = annotation.isAllowDuplicateValues() ? null : new HashSet<>();
+            for (String rawValue: values) {
+                rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
+                for (String processedValue: processStringMultipleValues(rawValue, processingSteps, null)) {
+                    if (annotation.isAllowDuplicateValues() || !valuesSeen.contains(processedValue)) {
+                        // Not a duplicate, or we don't care about duplicates. Add it.
+                        results.add(processedValue);
+                        if (valuesSeen != null)
+                            valuesSeen.add(processedValue);
+                    }
+                }
+            }
+        } else {
+            // Single value (the collection should only contain one entry)
+            for (String rawValue: values) {
+                rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
+                results.add(processString(rawValue, processingSteps, null));
+                break; // if multiple were matched, only index the first one
+            }
+        }
+        return results;
+    }
+
+    protected void indexAnnotationValues(ConfigAnnotation annotation, int indexAtPosition, int spanEndPos,
+            Collection<String> valuesToIndex) {
+        // For span annotations (which are all added to the same annotation),
+        // the span name has already been indexed at this position with an increment of 1,
+        // so the attribute values we're indexing here should all get position increment 0.
+        //   (only true for classic external index; integrated index combines tag name and attributes into 1 value)
+        boolean isSpan = spanEndPos >= 0;
+
+        String name = isSpan ? AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()) : annotation.getName();
+        // Now add values to the index
+        for (String value: valuesToIndex) {
+            if (isSpan) {
+                assert getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
+                // External index, attribute values are indexed separately from the tag name
+                // For the external index format (annotation "starrtag"), we index several terms:
+                // // one for the span name, and one for each attribute name and value.
+                value = RelationUtil.tagAttributeIndexValue(annotation.getName(), value, BlackLabIndex.IndexType.EXTERNAL_FILES);
+            }
+            annotationValue(name, value, indexAtPosition, spanEndPos, false);
         }
     }
 

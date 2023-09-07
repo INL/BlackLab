@@ -105,7 +105,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                     for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
                         String processedWord = processString(word, annotation.getProcess(), null);
                         if (annotation.getValuePath().equals(".")) {
-                            annotation(annotation.getName(), processedWord, 1, null);
+                            annotationValueAppend(annotation.getName(), processedWord, 1);
                         } else {
                             throw new InvalidInputFormatConfig("Plain text annotation must have valuePath '.'");
                         }

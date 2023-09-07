@@ -38,13 +38,13 @@ public abstract class DocIndexerTabularBase extends DocIndexerConfig {
             values = valueStream.collect(Collectors.toList());
             boolean first = true;
             for (String v: values) {
-                annotation(annotation.getName(), v, first ? 1 : 0, null);
+                annotationValueAppend(annotation.getName(), v, first ? 1 : 0);
                 first = false;
             }
         } else {
             // Single value.
             value = processString(value, annotation.getProcess(), null);
-            annotation(annotation.getName(), value, 1, null);
+            annotationValueAppend(annotation.getName(), value, 1);
         }
     }
 }

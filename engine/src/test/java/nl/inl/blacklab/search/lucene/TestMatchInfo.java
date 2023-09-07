@@ -1,12 +1,9 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Random;
 
 import org.apache.lucene.store.ByteArrayDataInput;
-import org.apache.lucene.store.OutputStreamDataOutput;
-import org.apache.lucene.util.BytesRef;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,9 +44,7 @@ public class TestMatchInfo {
             int currentPos = random.nextBoolean() ? sourceStart : targetStart;
 
             // Encode the payload
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            matchInfo.serialize(currentPos, new OutputStreamDataOutput(os));
-            byte[] payload = new BytesRef(os.toByteArray()).bytes;
+            byte[] payload = matchInfo.serialize(currentPos).bytes;
 
             // Decode it again
             RelationInfo decoded = new RelationInfo();

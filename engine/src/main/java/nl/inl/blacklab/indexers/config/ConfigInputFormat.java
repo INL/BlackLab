@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -50,50 +49,6 @@ public class ConfigInputFormat {
 
         public String stringValue() {
             return toString().toLowerCase().replaceAll("_", "-");
-        }
-    }
-
-    /** file type options for a FileType */
-    public enum FileTypeOption {
-
-        VTD(FileType.XML, Constants.PROCESSING),
-        SAXONICA(FileType.XML, Constants.PROCESSING, "saxon");
-
-        private final FileType fileType;
-        private final String key;
-        private final String alternativeName;
-
-        FileTypeOption(FileType fileType, String key) {
-            this(fileType, key, null);
-        }
-
-        FileTypeOption(FileType fileType, String key, String alternativeName) {
-            this.fileType = fileType;
-            this.key = key;
-            this.alternativeName = alternativeName;
-        }
-
-        public String getKey() {
-            return key;
-        }
-
-        public static FileTypeOption byKeyValue(String key, String value) {
-            for (FileTypeOption fto : values()) {
-                if (fto.getKey().equals(key) && (fto.name().equalsIgnoreCase(value) || value.equalsIgnoreCase(fto.alternativeName))) {
-                    return fto;
-                }
-            }
-            return null;
-        }
-
-        public static List<FileTypeOption> fromConfig (ConfigInputFormat config, FileType ft) {
-            return config.getFileTypeOptions().entrySet().stream()
-                    .filter(opt -> byKeyValue(opt.getKey(),opt.getValue()) !=null && byKeyValue(opt.getKey(),opt.getValue()).fileType==ft)
-                    .map(opt -> byKeyValue(opt.getKey(),opt.getValue())).collect(Collectors.toList());
-        }
-
-        public static class Constants {
-            public static final String PROCESSING = "processing";
         }
     }
 

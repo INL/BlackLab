@@ -469,7 +469,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             beginWord();
             for (ConfigAnnotation annot : currentAnnotatedField.getAnnotationsFlattened().values()) {
                 String processed = processString(word, annot.getProcess(), null);
-                annotation(annot.getName(), processed, 1, null);
+                annotationValueAppend(annot.getName(), processed, 1);
             }
             endWord();
         }

@@ -21,7 +21,7 @@ public class ConfigInlineTag {
      * so we can refer to them from standoff annotations.
      * (Used for tei:anchor, so end position is not used)
      */
-    private String tokenIdPath = "";
+    private String tokenIdPath = null;
 
     public ConfigInlineTag() {
     }

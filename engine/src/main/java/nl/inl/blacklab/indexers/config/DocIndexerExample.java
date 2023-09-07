@@ -270,7 +270,7 @@ public class DocIndexerExample extends DocIndexerBase {
             }
             String annotationName = parameters[0];
             String value = parameters[1];
-            annotation(annotationName, value, -1, List.of(currentTokenPosition));
+            annotationValue(annotationName, value, currentTokenPosition);
             break;
 
         case "ADVANCE":

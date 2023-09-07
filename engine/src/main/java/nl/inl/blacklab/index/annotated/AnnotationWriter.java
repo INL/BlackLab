@@ -1,7 +1,5 @@
 package nl.inl.blacklab.index.annotated;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -10,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
@@ -478,14 +475,8 @@ public class AnnotationWriter {
             }
         } else {
             // integrated index; everything is indexed as a single term
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try {
-                relationInfo.serialize(indexAt, new OutputStreamDataOutput(os));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            payload = new BytesRef(os.toByteArray());
             String value = RelationUtil.indexTerm(fullRelationType, attributes);
+            payload = relationInfo.serialize(indexAt);
             addValueAtPosition(value, indexAt, payload);
             tagIndexInAnnotation = lastValueIndex();
         }

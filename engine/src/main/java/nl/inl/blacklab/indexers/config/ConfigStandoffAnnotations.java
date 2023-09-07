@@ -3,13 +3,36 @@ package nl.inl.blacklab.indexers.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Configuration for a block of standoff annotations (annotations that don't
  * reside under the word tag but elsewhere in the document).
  */
 public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
+
+    enum Type {
+        TOKEN,
+        SPAN,
+        RELATION;
+
+        public static Type fromStringValue(String t) {
+            switch (t.toLowerCase()) {
+            case "token": return TOKEN;
+            case "span": return SPAN;
+            case "relation": return RELATION;
+            }
+            throw new IllegalArgumentException("Unknown standoff annotation type: " + t);
+        }
+
+        @Override
+        public String toString() {
+            return super.toString().toLowerCase();
+        }
+    }
+
+    /**
+     * The type of standoff annotation (e.g. "token" (default), "span" or "relation")
+     */
+    private Type type = Type.TOKEN;
 
     /**
      * Path to the elements containing the values to index (values may apply to
@@ -38,10 +61,10 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     private boolean spanEndIsInclusive = true;
 
     /**
-     * XPath needed to find the name of the span, if this is one (i.e. spanEndPath is non-empty).
+     * XPath needed to find the name of the span or type of relation, if this is one (i.e. type is not "token").
      * E.g. for a sentence this will usually resolve to "s".
      */
-    private String spanNamePath;
+    private String valuePath;
 
     /** The annotations to index at the referenced token positions. */
     private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
@@ -106,10 +129,6 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         return spanEndPath;
     }
 
-    public boolean isSpans() {
-        return !StringUtils.isEmpty(spanEndPath);
-    }
-
     public void setSpanEndPath(String spanEndPath) {
         this.spanEndPath = spanEndPath;
     }
@@ -122,12 +141,12 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.spanEndIsInclusive = spanEndIsInclusive;
     }
 
-    public String getSpanNamePath() {
-        return spanNamePath;
+    public String getValuePath() {
+        return valuePath;
     }
 
-    public void setSpanNamePath(String spanNamePath) {
-        this.spanNamePath = spanNamePath;
+    public void setValuePath(String valuePath) {
+        this.valuePath = valuePath;
     }
 
     @Override
@@ -149,5 +168,12 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     public String toString() {
         return "ConfigStandoffAnnotations [path=" + path + "]";
     }
-    
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public Type getType() {
+        return type;
+    }
 }

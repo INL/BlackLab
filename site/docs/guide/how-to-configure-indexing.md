@@ -120,21 +120,27 @@ The rest of this page will address how to accomplish specific things with the in
 
 ## XPath support level
 
-BlackLab uses the XML library VTD-XML by default for processing documents while indexing.
+BlackLab supports two different XML processors: VTD and Saxon. Currently the default is still VTD-XML, which is memory-efficient but only supports XPath 1.0. Saxon uses more memory, but is also faster and supports XPath 3.1, which can make writing indexing configurations much easier.
 
-A more feature-rich and potentially (much) faster alternative is Saxon, but it uses more memory while indexing.
+Some of the more [quirky indexing features](https://github.com/INL/BlackLab/issues/447) added in the past may not be needed at all when using Saxon; many things can be done in XPath directly now. See [XPath examples](xpath-examples.md) to get an idea of the wide range of possibilities.
 
-VTD supports XPath 1, Saxon at this time XPath 3.1. Saxon gives you far more possibilities to build solutions in XPath, obsoleting some configuration options. 
-Depending on your data Saxon processing may be 2 to 30 times faster. It does however require significantly more memory, depending on the size of your input documents.
+To use Saxon, place this in your input format config (.blf.yaml) file (at the top level):
 
-Some features may not be implemented for Saxon processing, when there is a good XPath alternative this is the preferred solution. See [XPath examples](xpath-examples.md)
+```yaml
+processor: saxon
+```
 
-To use Saxon, place this in your input format config (.blf.yaml) file:
+This works for the current development version and releases 4.0 and up.
+
+Older versions of BlackLab (release 3.0.1 and before) didn't support this top-level key; in this case, use this alternative:
+
 ```yaml
 fileType: xml
 fileTypeOptions:
   processing: saxon   # (instead of vtd, which is the default)
 ```
+
+These older versions of the Saxon indexer didn't implement all the features the VTD indexer had. The current version has feature parity, although as stated, some features are best avoided if there's a good XPath alternative.
 
 
 ## Case- and diacritics sensitivity
@@ -296,9 +302,15 @@ annotatedFields:
         valuePath: "@pos"
 ```
 
-### Standoff annotations for spans
+> **NOTE:** it is often also possible to achieve the same effect using XPath expressions in the valuePath of a regular annotation, espcially when using Saxon as your XML processor. Where possible, this is recommended.
+> 
+> This approach doesn't work for spans (inline tags) and relations though; read on for those.
+
+### Standoff annotations for spans (inline tags)
 
 The default standoff annotations as shown above apply an annotation to a single token (or several tokens, but each get the annotation value separately). What if instead you want to define a span of tokens?
+
+(you can also do this with `inlineTags`, but that relies on the tags being part of the document contents, e.g. `<p/>` or `<s/>`, and prevents you from having partially overlapping spans)
 
 This is possible using `spanStartPath`, `spanEndPath` and `spanNamePath` (instead of `tokenRefPath` used above). So to index this XML:
 
@@ -334,6 +346,45 @@ standoffAnnotations:
 Note the setting `spanEndIsInclusive: true` to indicate that the `to` attribute refers to the last token of the span, not the first token _after_ the span. (`true` is the default value for this setting, but it is included here for completeness)
 
 The above would allow you to search for `<animal/> containing "fox"` or `<animal speed="fast" />` to find "The quick brown fox".
+
+
+### Standoff annotations for relations
+
+It is also possible to index relations (such as dependency relations) using standoff annotations. Aside from implementing your own DocIndexer, this is currently the only way to index relations in BlackLab. Standoff annotations make the most sense as relations can point forward in the document as well.
+
+```xml
+<doc>
+    <s xml:id="s1">
+        <w xml:id="w1">I</w>
+        <w xml:id="w2">support</w>
+        <w xml:id="w3">the</w>
+        <w join="right"
+           xml:id="w4">amendment</w>
+        <pc xml:id="w5">.</pc>
+        <linkGrp targFunc="head argument" type="UD-SYN">
+            <link ana="ud-syn:nsubj" target="#w2 #w1"/>
+            <link ana="ud-syn:root" target="#s1 #w2"/>
+            <link ana="ud-syn:det" target="#w4 #w3"/>
+            <link ana="ud-syn:obj" target="#w2 #w4"/>
+            <link ana="ud-syn:punct" target="#w2 #w5"/>
+        </linkGrp>
+    </s>
+</doc>
+```
+
+You can use this `standoffAnnotations` configuration:
+
+```yaml
+tokenIdPath: "@xml:id"
+
+standoffAnnotations:
+- path: .//linkGrp[@targFunc='head argument']
+  type: relation
+  sourcePath: "id(@target)[0]/@xml:id" # (roundabout way of getting the token id)
+  targetPath: "id(@target)[1]/@xml:id"
+```
+
+The above would allow you to search for `_ -ud-syn:nsubj-> "I"` to find "I support", with the relation information captured.
 
 ### Referring to inline anchors instead of words
 
@@ -708,6 +759,8 @@ Currently the files and exact version of OpenConvert are not publically availabl
 
 ## Processing values 
 
+> **NOTE:** when using Saxon as your XML processor, you can usually achieve the same results using XPath expressions, and this is the recommended approach. See [XPath examples](xpath-examples.md) for some examples.
+
 It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc. Or you might want to map a whole collection of values to different values. Both are possible.
 
 To perform simple value mapping on a metadata field, add the "mapValues" key to its config, like this:
@@ -827,6 +880,8 @@ It's also possible to process metadata values before they are indexed (see Proce
 
 
 ### Linking to external (metadata) files
+
+> **NOTE:** this is a rather complex and little-used feature. We may decide to deprecate or change this in the future. See if you can achieve your desired results using the `document()` function in XPath with the Saxon XML processor.
 
 Sometimes, documents link to external metadata sources, usually using an ID. You can configure linking to external files using a top-level element `linkedDocuments`. If our data looks like this:
 
@@ -962,19 +1017,15 @@ displayName: OpenSonar FoLiA content format
 # For describing input format in user interface (optional, recommended)
 description: The file format used by OpenSonar for document contents.
 
-# Our base format. All settings except the above three are copied from it.
-# We'd like this example to be self-contained, so we don't use this here
-#baseFormat: folia
-
 # What type of input files does this handle? (content, metadata?)
 # (optional; not used by BlackLab; could be used in user interface)
 type: content
 
-# The type of input file we're dealing with (xml, tabular or text)
-fileType: xml
-fileTypeOptions:
-  processing: vtd
-#  processing: saxonica # when saxonica is chosen for processing, xpath 3.1 (at this time) will be supported.
+# What XML processor to use
+# (optional; current default is VTD, but Saxon is recommended because it supports 
+#  XPath 3.1 and is faster. Future format file versions will probably default to Saxon)
+# (omit this setting when parsing CSV/TSV or some other file type)
+processor: saxon
 
 # Each file type may have options associated with it (for now, only "tabular" does)
 # We've shown the options for tabular he're but commented them out as we're describing
@@ -1336,6 +1387,9 @@ A note about forward indices and indexing multiple values at a single corpus pos
 Note that if you want KWICs or snippets that include annotations without a forward index (as well the rest of the original XML), you can switch to using the original XML to generate KWICs and snippets, at the cost of speed. To do this, pass `usecontent=orig` to BlackLab Server, or call `Hits.settings().setConcordanceType(ConcordanceType.CONTENT_STORE)`
 
 ## How to extend existing formats
+
+> **NOTE: NOT RECOMMENDED!** <br/>
+> We advise against using this feature, and it may be deprecated in the near future. Instead, simply copy the format file and make the changes you need
 
 It is possible to extend an existing format. This is done by specifying the "baseFormat" setting at the top-level. You should set it to the name of the format you wish to extend.
 

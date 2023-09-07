@@ -35,7 +35,7 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
@@ -311,18 +311,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         return f;
     }
 
-    /**
-     * If we've already seen this string, return the original copy.
-     *
-     * This prevents us from storing many copies of the same string.
-     *
-     * @param possibleDupe string we may already have stored
-     * @return unique instance of the string
-     */
-    protected String dedupe(String possibleDupe) {
-        return possibleDupe.intern();
-    }
-
     protected void trace(String msg) {
         if (TRACE)
             System.out.print(msg);
@@ -549,80 +537,49 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             punctuation.setLength(0);
     }
 
-    protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions) {
-        annotation(name, value, increment, indexAtPositions, -1);
+    protected void annotationValueAppend(String name, String value, int increment) {
+        int position = getAnnotation(name).lastValuePosition() + increment;
+        annotationValue(name, value, position, -1, false);
     }
 
     /**
      * Index an annotation.
      *
-     * Can be used to add annotation(s) at the current position (indexAtPositions ==
-     * null), or to add annotations at specific positions (indexAtPositions contains
-     * positions). The latter is used for standoff annotations.
+     * @param name annotation name
+     * @param value annotation value (or span name or span attribute value)
+     * @param position position to index value at
+     */
+    protected void annotationValue(String name, String value, int position) {
+        annotationValue(name, value, position, -1, false);
+    }
+
+    /**
+     * Index an annotation.
      *
-     * Also used to index inline tags (spans). In that case, spanEndPos is >= 0.
+     * Also used to index inline tags (spans). In that case, spanEndOrRelTarget is >= 0.
      * For the external index, this method is called several times, once for the tag
      * name and once for each attribute. For the internal index, this method is
      * called once, with an already-prepared term to index that includes all this information.
      *
-     * @param name annotation name (or attribute name for span annotations, see below)
+     * @param name annotation name
      * @param value annotation value (or span name or span attribute value)
-     * @param increment if indexAtPosition == null: the token increment to use relative to the current position
-     * @param indexAtPositions if null: index at the current position; otherwise:
-     *            index at these positions
-     * @param spanEndPos if >= 0, this is a span annotation and this is the first token position after the span
+     * @param position position to index value at
+     * @param spanEndOrRelTarget if >= 0, this is a span or relation annotation and this is the span end (first token position after) or
+     *                           relation target (token position of the target of the relation)
+     * @param isRelation if spanEndOrRelTarget >= 0, this indicates whether this is a relation (true) or a span (false)
      */
-    protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions, int spanEndPos) {
+    protected void annotationValue(String name, String value, int position, int spanEndOrRelTarget, boolean isRelation) {
         // Normally name gives the annotation to index this is, but for span annotations,
         // we already know the annotation and name is instead used for attribute values (see below).
-        AnnotationWriter annotation = getAnnotation(
-                spanEndPos >= 0 ? AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()) : name);
-
+        boolean isInlineTagOrRelation = spanEndOrRelTarget >= 0;
+        AnnotationWriter annotation = getAnnotation(name);
         if (annotation != null) {
-            if (spanEndPos >= 0) {
-                // This is a span annotation.
-
-                // These are all indexed in one annotation (i.e. Lucene field).
-                // For the external index format (annotation "starrtag"), we index several terms:
-                // one for the span name, and one for each attribute name and value.
-                // For the integrated index (annotation "_relation"), we only index one term,
-                // containing both the span name and the attributes.
-                if (name != null) {
-                    // This is the external index, and this is an attribute name and value.
-                    // Encode it as such.
-                    value = RelationUtil.tagAttributeIndexValue(name, value,
-                            BlackLabIndex.IndexType.EXTERNAL_FILES);
-                } else {
-                    // If name == null, value is the span name (external index format) or the
-                    // pre-encoded term to index (integrated index format), so in both cases we can
-                    // just index it unmodified.
-                }
+            BytesRef payload = isInlineTagOrRelation ? getPayload(spanEndOrRelTarget, isRelation, position) : null;
+            if (position < 0) {
+                // root relation, index at target instead of source (because it has no source)
+                position = spanEndOrRelTarget;
             }
-
-            // Actually index the value
-            BytesRef payload = null;
-            if (indexAtPositions == null) {
-                // Index at the current position
-                int position = annotation.lastValuePosition() + increment;
-                if (spanEndPos >= 0) {
-                    // Span annotation payload
-                    payload = PayloadUtils.tagEndPositionPayload(position, spanEndPos, getIndexType());
-                }
-                if (name != null && name.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME))
-                    trace(value + " ");
-                annotation.addValueAtPosition(value, position, payload);
-            } else {
-                // Index at several positions
-                // (these are usually stanoff annotations specifying multiple positions for value)
-                for (Integer position : indexAtPositions) {
-                    if (spanEndPos >= 0) {
-                        // Span annotation payload
-                        payload = PayloadUtils.tagEndPositionPayload(position, spanEndPos, getIndexType());
-                    }
-                    annotation.addValueAtPosition(value, position, payload);
-                }
-            }
-
+            annotation.addValueAtPosition(value, position, payload);
         } else {
             // Annotation not declared; report, but keep going
             if (!skippedAnnotations.contains(name)) {
@@ -630,6 +587,20 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 logger.error(documentName + ": skipping undeclared annotation " + name);
             }
         }
+    }
+
+    private BytesRef getPayload(int spanEndOrRelTarget, boolean isRelation, int position) {
+        BytesRef payload;
+        if (isRelation) {
+            boolean onlyHasTarget = position < 0; // standoff root annotation
+            if (onlyHasTarget)
+                position = spanEndOrRelTarget;
+            RelationInfo info = new RelationInfo(onlyHasTarget, position, position + 1, spanEndOrRelTarget, spanEndOrRelTarget
+                    + 1);
+            payload = info.serialize(position);
+        } else
+            payload = PayloadUtils.tagEndPositionPayload(position, spanEndOrRelTarget, getIndexType());
+        return payload;
     }
 
     @Override

@@ -53,10 +53,6 @@ annotatedFields:
       - "@ID"
       valuePath: "/d:D-Spin/tc:TextCorpus/tc:POStags/tc:tag[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
 
-    #standoffAnnotations:
-    #- path: tc:sentences/tc:sentence
-    #  call: tcfSentence   # Plugin method will handle this
-
 # Embedded CMDI metadata
 metadata:
 

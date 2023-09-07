@@ -33,6 +33,16 @@ import nl.inl.util.StringUtil;
  */
 public class DocIndexerTabular extends DocIndexerTabularBase {
 
+    // Tabular fileTypeOption keys
+    public static final String FT_OPT_TYPE = "type";
+    public static final String FT_OPT_EXPECT_COLUMN_NAMES = "columnNames";
+    public static final String FT_OPT_DELIMITER = "delimiter";
+    public static final String FT_OPT_QUOTE = "quote";
+    public static final String FT_OPT_ALLOW_SEPARATORS_AFTER_INLINE_TAGS = "allowSeparatorsAfterInlineTags";
+    public static final String FT_OPT_HAS_INLINE_TAGS = "inlineTags";
+    public static final String FT_OPT_HAS_GLUE_TAGS = "glueTags";
+    public static final String FT_OPT_MULTIPLE_VALUES_SEPARATOR = "multipleValuesSeparator";
+
     /** Tabular types we support */
     private enum Type {
         CSV,
@@ -78,7 +88,7 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
             throw new InvalidInputFormatConfig("Tabular type can only have 1 annotated field");
         super.setConfigInputFormat(config);
         Map<String, String> opt = config.getFileTypeOptions();
-        Type type = opt.containsKey("type") ? Type.fromStringValue(opt.get("type")) : Type.CSV;
+        Type type = opt.containsKey(FT_OPT_TYPE) ? Type.fromStringValue(opt.get(FT_OPT_TYPE)) : Type.CSV;
         //ConfigTabularOptions tab = config.getTabularOptions();
         switch (type) {
         case TSV:
@@ -88,22 +98,22 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
             tabularFormat = CSVFormat.EXCEL;
             break;
         default:
-            throw new InvalidInputFormatConfig("Unknown tabular type " + opt.get("type") + " (use csv or tsv)");
+            throw new InvalidInputFormatConfig("Unknown tabular type " + opt.get(FT_OPT_TYPE) + " (use csv or tsv)");
         }
-        if (opt.containsKey("columnNames") && opt.get("columnNames").equalsIgnoreCase("true"))
+        if (opt.containsKey(FT_OPT_EXPECT_COLUMN_NAMES) && opt.get(FT_OPT_EXPECT_COLUMN_NAMES).equalsIgnoreCase("true"))
             tabularFormat = tabularFormat.withFirstRecordAsHeader();
-        if (opt.containsKey("delimiter") && opt.get("delimiter").length() > 0)
-            tabularFormat = tabularFormat.withDelimiter(opt.get("delimiter").charAt(0));
-        if (opt.containsKey("quote") && opt.get("quote").length() > 0)
-            tabularFormat = tabularFormat.withQuote(opt.get("quote").charAt(0));
+        if (opt.containsKey(FT_OPT_DELIMITER) && opt.get(FT_OPT_DELIMITER).length() > 0)
+            tabularFormat = tabularFormat.withDelimiter(opt.get(FT_OPT_DELIMITER).charAt(0));
+        if (opt.containsKey(FT_OPT_QUOTE) && opt.get(FT_OPT_QUOTE).length() > 0)
+            tabularFormat = tabularFormat.withQuote(opt.get(FT_OPT_QUOTE).charAt(0));
         else
             tabularFormat = tabularFormat.withQuote(null); // disable quotes altogether
-        allowSeparatorsAfterInlineTags = opt.containsKey("allowSeparatorsAfterInlineTags")
-                && opt.get("allowSeparatorsAfterInlineTags").equalsIgnoreCase("true");
-        hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
-        hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
-        if (opt.containsKey("multipleValuesSeparator"))
-            multipleValuesSeparatorRegex = opt.get("multipleValuesSeparator");
+        allowSeparatorsAfterInlineTags = opt.containsKey(FT_OPT_ALLOW_SEPARATORS_AFTER_INLINE_TAGS)
+                && opt.get(FT_OPT_ALLOW_SEPARATORS_AFTER_INLINE_TAGS).equalsIgnoreCase("true");
+        hasInlineTags = opt.containsKey(FT_OPT_HAS_INLINE_TAGS) && opt.get(FT_OPT_HAS_INLINE_TAGS).equalsIgnoreCase("true");
+        hasGlueTags = opt.containsKey(FT_OPT_HAS_GLUE_TAGS) && opt.get(FT_OPT_HAS_GLUE_TAGS).equalsIgnoreCase("true");
+        if (opt.containsKey(FT_OPT_MULTIPLE_VALUES_SEPARATOR))
+            multipleValuesSeparatorRegex = opt.get(FT_OPT_MULTIPLE_VALUES_SEPARATOR);
     }
 
     @Override

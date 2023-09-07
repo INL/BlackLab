@@ -1,6 +1,6 @@
 # Example XPaths
 
-[When using Saxonica](/guide/how-to-configure-indexing.md#xpath-support-level) you have extensive possibilities using XPath in BlackLab configuration. Some noteworthy examples are shown below (thanks @eduarddrenth).
+[When using Saxon](/guide/how-to-configure-indexing.md#xpath-support-level) you have extensive possibilities using XPath in BlackLab configuration. Some noteworthy examples are shown below (thanks @eduarddrenth).
 
 ## punctPath
 
@@ -12,7 +12,9 @@ To capture text content between `<w/>` tags:
 
 A more complex expression with conditionals and variables:
 
-`let $xid := @xml:id return if (@lemma) then @lemma else if ($xid) then following-sibling::tei:join[@lemma][matches(@target,'#'||$xid||'( |$)')]/@lemma else ()`
+```xpath
+let $xid := @xml:id return if (@lemma) then @lemma else if ($xid) then following-sibling::tei:join[@lemma][matches(@target,'#'||$xid||'( |$)')]/@lemma else ()
+```
 
 - use of if then else can significantly speed up processing
 - variables in xpath obsolete the need for captureValuePaths
