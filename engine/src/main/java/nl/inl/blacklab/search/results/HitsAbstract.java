@@ -166,7 +166,14 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         // Instead, first call ensureResultsRead so we block until we have either have enough or finish
         this.ensureResultsRead(first + windowSize);
         // and only THEN do this, since now we know if we don't have this many hits, we're done, and it's safe to call size
-        long number = hitsProcessedAtLeast(first + windowSize) ? windowSize : size() - first;
+        boolean enoughHitsForFullWindow = hitsProcessedAtLeast(first + windowSize);
+        long number;
+        if (enoughHitsForFullWindow)
+            number = windowSize;
+        else {
+            number = size() - first;
+            assert number < windowSize;
+        }
 
         // Copy the hits we're interested in.
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)

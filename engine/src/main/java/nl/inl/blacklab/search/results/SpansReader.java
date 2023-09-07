@@ -267,12 +267,6 @@ class SpansReader implements Runnable {
             }
 
             while (hasPrefetchedHit) {
-                // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
-                // Otherwise, don't store it either. We're done, just return.
-                final boolean abortBeforeCounting = this.globalHitsCounted.getAndUpdate(incrementCountUnlessAtMax) >= this.globalHitsToCount.get();
-                if (abortBeforeCounting)
-                    return;
-
                 // Find all the hit information
                 final int doc = spans.docID() + docBase;
                 int start = spans.startPosition();
@@ -285,6 +279,15 @@ class SpansReader implements Runnable {
 
                 // Check that this is a unique hit, not the exact same as the previous one.
                 boolean isSameAsLast = isSameAsLast(results, doc, start, end, matchInfo);
+
+                if (!isSameAsLast) {
+                    // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
+                    // Otherwise, don't store it either. We're done, just return.
+                    final boolean abortBeforeCounting = this.globalHitsCounted.getAndUpdate(incrementCountUnlessAtMax)
+                            >= this.globalHitsToCount.get();
+                    if (abortBeforeCounting)
+                        return;
+                }
 
                 // only if unique hit and previous value (which is returned) was not yet at the limit
                 // (and thus we actually incremented) do we store this hit.

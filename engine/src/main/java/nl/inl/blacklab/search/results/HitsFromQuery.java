@@ -157,8 +157,11 @@ public class HitsFromQuery extends HitsMutable {
         }
 
         // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
-        this.requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
+        // NOTE: we first update to process, then to count. If we do it the other way around, and spansReaders
+        //       are running, they might check in between the two statements and conclude that they don't need to save
+        //       hits anymore, only count them.
         this.requestedHitsToProcess.getAndUpdate(c -> Math.max(Math.min(clampedNumber, maxHitsToProcess), c)); // update process
+        this.requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
 
         boolean hasLock = false;
         List<Future<?>> pendingResults = null;
