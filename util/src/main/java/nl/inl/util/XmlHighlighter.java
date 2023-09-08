@@ -380,22 +380,28 @@ public class XmlHighlighter {
         // Regex for finding all XML tags.
         // Group 1 indicates if this is an open or close tag
         // Group 2 is the tag name
-        Pattern xmlTags = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>");
+        Pattern xmlTagsAndComments = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*-->");
 
-        Matcher m = xmlTags.matcher(elementContent);
+        Matcher matcher = xmlTagsAndComments.matcher(elementContent);
         List<TagLocation> openTagStack = new ArrayList<>(); // keep track of open tags
         int fixStartTagObjectNum = -1; // when adding start tags to fix well-formedness, number backwards (for correct sorting)
-        while (m.find()) {
-            TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, m.start(), m.end());
+        int findFrom = 0;
+        while (matcher.find(findFrom)) {
+            findFrom = matcher.end();
+            if (matcher.group(0).startsWith("<!--")) {
+                // This is a comment. Skip it, so we don't match something that looks like a tag inside it.
+                continue;
+            }
+            TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, matcher.start(), matcher.end());
 
             // Keep track of open tags, so we know if the tags are matched
-            boolean isOpenTag = m.group(1).length() == 0;
-            boolean isSelfClosing = isOpenTag && isSelfClosing(m.group());
+            boolean isOpenTag = matcher.group(1).length() == 0;
+            boolean isSelfClosing = isOpenTag && isSelfClosing(matcher.group());
             if (isOpenTag) {
                 if (!isSelfClosing) {
                     // Open tag. Add to the stack.
                     openTagStack.add(tagLocation);
-                    tagLocation.name = m.group(2); // remember in case there's no close tag
+                    tagLocation.name = matcher.group(2); // remember in case there's no close tag
                 } else {
                     // Self-closing tag. Don't add to stack, link to self
                     tagLocation.matchingTagStart = tagLocation.start;
@@ -404,7 +410,7 @@ public class XmlHighlighter {
                 // Close tag. Did we encounter a matching open tag?
                 TagLocation openTag = null;
                 if (!openTagStack.isEmpty()) {
-                    // Yes, this tag is matched. Find matching tag and link them.
+                    // Yes, this tag is matched. Remove matching tag.
                     openTag = openTagStack.remove(openTagStack.size() - 1);
                     openTag.name = null; // no longer necessary to remember tag name
                 } else {
@@ -416,7 +422,7 @@ public class XmlHighlighter {
                         // Insert a dummy open tag at the start
                         // of the content to maintain well-formedness
                         openTag = new TagLocation(TagType.FIX_START, 0, 0);
-                        openTag.name = m.group(2); // we need to know what tag to insert
+                        openTag.name = matcher.group(2); // we need to know what tag to insert
                         openTag.objectNum = fixStartTagObjectNum; // to fix sorting
                         fixStartTagObjectNum--;
                         tags.add(openTag);
