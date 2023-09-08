@@ -21,6 +21,11 @@ annotatedFields:
       valuePath: 2
       sensitivity: sensitive_insensitive
 
+    # multiword tokens (lines with ids like "1-2") are indexed in this annotation
+    - name: mwt
+      displayName: Multiword token
+      sensitivity: sensitive_insensitive
+
     - name: wordnum
       displayName: Word number
       valuePath: 1

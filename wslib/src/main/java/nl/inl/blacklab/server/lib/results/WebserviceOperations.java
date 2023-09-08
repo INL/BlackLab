@@ -64,7 +64,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
+import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
@@ -340,7 +340,7 @@ public class WebserviceOperations {
      */
     public static void addUserFileFormat(WebserviceParams params, String fileName, InputStream fileContents) {
         SearchManager searchMan = params.getSearchManager();
-        DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
+        FinderInputFormatUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_CREATE_INDEX ",
                     "Could not create/overwrite format. The server is not configured with support for user content.");
@@ -678,7 +678,7 @@ public class WebserviceOperations {
 
     public static void deleteUserFormat(WebserviceParams params, String formatIdentifier) {
         IndexManager indexMan = params.getIndexManager();
-        DocIndexerFactoryUserFormats formatMan = indexMan.getUserFormatManager();
+        FinderInputFormatUserFormats formatMan = indexMan.getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_DELETE_INDEX ",
                     "Could not delete format. The server is not configured with support for user content.");

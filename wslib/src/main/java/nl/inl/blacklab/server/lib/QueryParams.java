@@ -113,8 +113,6 @@ public interface QueryParams {
      */
     Collection<String> getListMetadataValuesFor();
 
-    Collection<String> getListSubpropsFor();
-
     boolean getWaitForTotal();
 
     boolean getIncludeTokenCount();
@@ -151,7 +149,7 @@ public interface QueryParams {
 
     /**
      * Get the operation, for webservices that pass operation via a parameter.
-     *
+     * <p>
      * For example, BLS chooses an operation based on the URL path, and doesn't use this method.
      *
      * @return requested operation
@@ -162,7 +160,7 @@ public interface QueryParams {
 
     /**
      * Should the responses include deprecated field information?
-     *
+     * <p>
      * A few requests would always include information that was not specific to that request,
      * and available elsewhere, like metadata field groups, special fields, and metadata display names.
      * This toggle is for applications that rely on these deprecated parts of the response.

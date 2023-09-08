@@ -9,7 +9,7 @@ import java.util.Map;
  */
 public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
-    enum Type {
+    public enum Type {
         TOKEN,
         SPAN,
         RELATION;

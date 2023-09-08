@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -286,7 +286,7 @@ public class IndexTool {
         if (!formatDirs.contains(indexDirParent))
             formatDirs.add(indexDirParent);
 
-        DocumentFormats.registerFormatsInDirectories(formatDirs);
+        DocumentFormats.addConfigFormatsInDirectories(formatDirs);
 
 
         // Create the indexer and index the files
@@ -298,8 +298,8 @@ public class IndexTool {
             File maybeFormatFile = new File(formatIdentifier);
             if (maybeFormatFile.isFile() && maybeFormatFile.canRead()) {
                 try {
-                    ConfigInputFormat format = new ConfigInputFormat(maybeFormatFile, null);
-                    DocumentFormats.registerFormat(format);
+                    ConfigInputFormat format = new ConfigInputFormat(maybeFormatFile);
+                    DocumentFormats.add(format);
                     formatIdentifier = format.getName();
                 } catch (IOException e) {
                     System.err.println("Not a format, not a valid file: " + formatIdentifier + " . " + e.getMessage());
@@ -428,11 +428,11 @@ public class IndexTool {
                         + "  --create-empty                 Create an empty index (ignore inputdir param)\n"
                         + "\n"
                         + "Available input format configurations:");
-        for (Format format : DocumentFormats.getFormats()) {
-            String name = format.getId();
-            String displayName = format.getDisplayName();
-            String desc = format.getDescription();
-            String url = format.getHelpUrl();
+        for (InputFormat inputFormat: DocumentFormats.getFormats()) {
+            String name = inputFormat.getIdentifier();
+            String displayName = inputFormat.getDisplayName();
+            String desc = inputFormat.getDescription();
+            String url = inputFormat.getHelpUrl();
             if (!url.isEmpty())
                 url = "\n      (see " + url + ")";
             if (displayName.length() > 0)

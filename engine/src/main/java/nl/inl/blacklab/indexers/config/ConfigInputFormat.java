@@ -20,10 +20,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.indexers.config.InputFormatReader.BaseFormatFinder;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
 import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
@@ -72,7 +71,7 @@ public class ConfigInputFormat {
     /**
      * Should this format be marked as hidden? Mirrors
      * {@link DocIndexerLegacy#isVisible(Class)}. Used to set
-     * {@link Format#isVisible()}, to indicate internal formats to client
+     * {@link InputFormat#isVisible()}, to indicate internal formats to client
      * applications, but has no other internal meaning.
      */
     private boolean visible = true;
@@ -166,10 +165,10 @@ public class ConfigInputFormat {
      *            null if no baseFormat is required
      * @throws IOException on error
      */
-    public ConfigInputFormat(File file, BaseFormatFinder finder) throws IOException {
+    public ConfigInputFormat(File file) throws IOException {
         this.readFromFile = file;
         this.name = ConfigInputFormat.stripExtensions(file.getName());
-        InputFormatReader.read(file, this, finder);
+        InputFormatReader.read(file, this);
     }
 
     /**
@@ -434,11 +433,6 @@ public class ConfigInputFormat {
 
     public void setReadFromFile(File readFromFile) {
         this.readFromFile = readFromFile;
-    }
-
-    public boolean shouldResolveNamedEntityReferences() {
-        return fileType == FileType.XML && fileTypeOptions.containsKey("resolveNamedEntityReferences")
-                && fileTypeOptions.get("resolveNamedEntityReferences").equalsIgnoreCase("true");
     }
 
     public String getHelpUrl() {

@@ -16,11 +16,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.input.BOMInputStream;
+import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.StringUtil;
@@ -36,9 +38,17 @@ import nl.inl.util.StringUtil;
  */
 public class DocIndexerCoNLLU extends DocIndexerTabularBase {
 
+    public static final int COL_ID = 0;
+
+    public static final int COL_FORM = 1;
+
     public static final int COL_HEAD = 6;
 
     public static final int COL_DEP = 7;
+
+    public static final String ANNOTATION_MULTIWORD_TOKEN = "mwt";
+
+    private AnnotationWriter multiWordAnnotation;
 
     private StringBuilder csvData;
 
@@ -91,7 +101,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         super.endDocument();
 
         // Clear csvData (we use this to store the document)
-        csvData.delete(0, csvData.length());
+        csvData.delete(COL_ID, csvData.length());
     }
 
     /** Single- or double-quoted attribute in a tag */
@@ -123,13 +133,14 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         // For the configured annotated field...
         ConfigAnnotatedField annotatedField = config.getAnnotatedFields().values().iterator().next();
         setCurrentAnnotatedFieldName(annotatedField.getName());
+        multiWordAnnotation = getAnnotation(ANNOTATION_MULTIWORD_TOKEN);
 
         boolean inSentence = false;
 
         // For each token position
         Map<String, String> sentenceAttr = new LinkedHashMap<>();
         int sentenceStartPosition = -1;
-        lineNumber = 0;
+        lineNumber = COL_ID;
         while (true) {
 
             // Read and trim next line
@@ -140,7 +151,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
             String line = StringUtil.trimWhitespace(origLine);
 
             // Is it empty?
-            if (line.length() == 0) {
+            if (line.length() == COL_ID) {
                 if (inSentence) {
                     // Empty line ends sentence
                     inlineTag("s", false, null);
@@ -168,7 +179,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
             // Split the line into columns
             List<String> record = List.of(line.split("\t", -1));
 
-            String id = record.get(0);
+            String id = record.get(COL_ID);
             if (id.contains(".")) {
                 // skip decimal ids; these are "empty tokens" (i.e. implied words that weren't actually in the sentence)
                 // ex. Sue likes coffee and Bill [likes] tea.
@@ -176,46 +187,56 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                 continue;
             }
 
+            if (!inSentence) {
+                // We're not in a sentence yet and encountered a value line; start the sentence now.
+                inlineTag("s", true, sentenceAttr);
+                sentenceAttr.clear();
+                inSentence = true;
+                sentenceStartPosition = getCurrentTokenPosition();
+            }
+
+            // Store this line now, so the start/end offsets are correct
+            if (isStoreDocuments())
+                csvData.append(origLine).append(" ");
+
+            Span span = idSpan(id, sentenceStartPosition);
+            boolean isMultiWordToken = id.contains("-");
+            if (isMultiWordToken && multiWordAnnotation != null) {
+                String form = record.get(COL_FORM);
+                for (int position = span.start; position <= span.end; position++) {
+                    multiWordAnnotation.addValueAtPosition(form, position, null);
+                }
+                continue;
+            }
+
+            // Index dependency relation
+            String strHead = record.size() > COL_HEAD ? record.get(COL_HEAD) : "_";
+            if (!strHead.isEmpty() && !strHead.equals("_")) {
+                boolean isRoot = strHead.equals("0");
+                String relationType = record.size() > COL_DEP ? record.get(COL_DEP) : "_";
+                String fullRelationType = RelationUtil.fullType(
+                        RelationUtil.RELATION_CLASS_DEPENDENCY, relationType);
+                if (!isRoot) {
+                    // Regular relation with source and target.
+                    Span headSpan = idSpan(strHead, sentenceStartPosition);
+                    tagsAnnotation().indexRelation(fullRelationType, false, headSpan.start, headSpan.end,
+                            span.start, span.end, null, getIndexType());
+                } else {
+                    // Root relation has no source. We just use the target positions for the source, so
+                    // the relation is stored in a sane position.
+                    tagsAnnotation().indexRelation(fullRelationType, true, span.start, span.end,
+                            span.start, span.end, null, getIndexType());
+                }
+            }
+
             // Index each annotation
             beginWord();
             try {
-                if (!inSentence) {
-                    // We're not in a sentence yet and encountered a value line; start the sentence now.
-                    inlineTag("s", true, sentenceAttr);
-                    sentenceAttr.clear();
-                    inSentence = true;
-                    sentenceStartPosition = getCurrentTokenPosition();
-                }
-
-                Span span = idSpan(id, sentenceStartPosition);
-
-                // Store this line now, so the start/end offsets are correct
-                if (isStoreDocuments())
-                    csvData.append(origLine).append(" ");
-
-                // Index dependency relation
-                String strHead = record.size() > COL_HEAD ? record.get(COL_HEAD) : "_";
-                if (!strHead.isEmpty() && !strHead.equals("_")) {
-                    boolean isRoot = strHead.equals("0");
-                    String relationType = record.size() > COL_DEP ? record.get(COL_DEP) : "_";
-                    String fullRelationType = RelationUtil.fullType(
-                            RelationUtil.RELATION_CLASS_DEPENDENCY, relationType);
-                    if (!isRoot) {
-                        // Regular relation with source and target.
-                        Span headSpan = idSpan(strHead, sentenceStartPosition);
-                        tagsAnnotation().indexRelation(fullRelationType, false, headSpan.start, headSpan.end,
-                                span.start, span.end, null, getIndexType());
-                    } else {
-                        // Root relation has no source. We just use the target positions for the source, so
-                        // the relation is stored in a sane position.
-                        tagsAnnotation().indexRelation(fullRelationType, true, span.start, span.end,
-                                span.start, span.end, null, getIndexType());
-                    }
-                }
-
                 // Index all annotations defined in the config file
                 for (ConfigAnnotation annotation: annotatedField.getAnnotationsFlattened().values()) {
                     String value;
+                    if (StringUtils.isEmpty(annotation.getValuePath()))
+                        continue; // e.g. mwt annotation doesn't have one
                     if (annotation.isValuePathInteger()) {
                         int i = annotation.getValuePathInt() - 1;
                         if (i < record.size()) {
@@ -237,9 +258,9 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
 
     private Span idSpan(String id, int currentSentenceStart) {
         if (id.matches("\\d+-\\d+")) {
-            // Span ID; calculate length
+            // Span ID; determine boundaries
             String[] parts = id.split("-");
-            int first = Integer.parseInt(parts[0]) - 1;
+            int first = Integer.parseInt(parts[COL_ID]) - 1;
             int second = Integer.parseInt(parts[1]) - 1;
             return new Span(currentSentenceStart + first, currentSentenceStart + second);
         } else if (id.matches("\\d+"))

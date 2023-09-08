@@ -27,8 +27,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.BLInputDocument;
-import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
@@ -351,9 +351,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         // Also (recursively) add metadata and annotated field config from any linked
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            DocIndexerFactory.Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format != null && format.isConfigurationBased()) {
-                addFieldInfoFromConfig(format.getConfig());
+            InputFormat inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
+            if (inputFormat.isConfigurationBased()) {
+                addFieldInfoFromConfig(inputFormat.getConfig());
             }
         }
 
@@ -386,9 +386,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
         // Also (recursively) add groups config from any linked documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            DocIndexerFactory.Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format != null && format.isConfigurationBased())
-                addGroupsInfoFromConfig(format.getConfig());
+            InputFormat inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
+            if (inputFormat.isConfigurationBased())
+                addGroupsInfoFromConfig(inputFormat.getConfig());
         }
     }
 

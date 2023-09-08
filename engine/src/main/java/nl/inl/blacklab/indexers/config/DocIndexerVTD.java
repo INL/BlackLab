@@ -45,8 +45,7 @@ import nl.inl.util.XmlUtil;
  */
 public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
-    /** Did we log a warning about a possible XPath issue? If so, don't keep warning again and again. */
-    private static boolean warnedAboutXpathIssue = false;
+    public static final String FT_OPT_RESOLVE_NAMED_ENTITY_REFERENCES = "resolveNamedEntityReferences";
 
     public enum FragmentPosition {
         BEFORE_OPEN_TAG,
@@ -87,7 +86,9 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     @Override
     public void setDocument(byte[] contents, Charset defaultCharset) {
-        if (config.shouldResolveNamedEntityReferences()) {
+        boolean resolveNamedEntityReferences = Boolean.parseBoolean(
+                config.getFileTypeOptions().getOrDefault(FT_OPT_RESOLVE_NAMED_ENTITY_REFERENCES, "false"));
+        if (resolveNamedEntityReferences) {
             // Document contains old DTD-style named entity declarations. Resolve them because VTD-XML can't deal with these.
             String doc = XmlUtil.readXmlAndResolveReferences(
                     new BufferedReader(new InputStreamReader(new ByteArrayInputStream(contents), defaultCharset)));
@@ -135,11 +136,6 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
     @Override
     protected String xpathXml(String xpath, VTDNav context) {
         return finder.xpathXml(xpath, context);
-    }
-
-    @Override
-    protected String currentNodeValue(Object node) {
-        return finder.currentNodeToString((VTDNav)node);
     }
 
     @Override

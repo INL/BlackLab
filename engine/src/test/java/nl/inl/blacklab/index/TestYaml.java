@@ -16,7 +16,6 @@
 package nl.inl.blacklab.index;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,21 +30,13 @@ public class TestYaml {
 
     @Test
     public void testDuplicatObjects() {
-        DocIndexerFactoryConfig factoryConfig = new DocIndexerFactoryConfig() {
-            @Override
-            public boolean isSupported(String formatIdentifier) {
-                return "nodups".equals(formatIdentifier);
-            }
-
-        };
-
         try {
             ClassLoader classLoader = this.getClass().getClassLoader();
             File file = new File(classLoader.getResource("yaml/nodups.blf.yaml").getFile());
-            //new File("src/test/resources/yaml/nodups.blf.yaml")
-            factoryConfig.load("nodups", file);
+            InputFormatWithConfig inputFormat = new InputFormatWithConfig("nodups", file);
+            inputFormat.getConfig();
             Assert.fail("expected duplicates error");
-        } catch (IOException | InvalidInputFormatConfig ex) {
+        } catch (InvalidInputFormatConfig ex) {
             Assert.assertTrue(ex.getMessage().contains("Duplicate"));
         }
     }

@@ -8,8 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -55,7 +53,6 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  * Wraps the WebserviceParams and interprets them to create searches.
  */
 public class WebserviceParamsImpl implements WebserviceParams {
-    private static final Logger logger = LogManager.getLogger(WebserviceParamsImpl.class);
 
     /**
      * Get the search-related parameters from the request object.
@@ -84,10 +81,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     /** The filter query, if parsed already */
     private Query filterQuery;
-
-    /** If set, keep only hits from these global doc ids (filterQuery will be ignored).
-        Note that this MUST already be sorted! */
-    private Iterable<Integer> acceptedDocs;
 
     private final boolean isDocsOperation;
 
@@ -210,8 +203,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (!isDocsOperation)
             return null; // we're doing per-hits stuff, so sort doesn't apply to docs
         Optional<String> groupProps = getGroupProps();
-        DocProperty groupProp = null;
-        if (!groupProps.isPresent())
+        DocProperty groupProp;
+        if (groupProps.isEmpty())
             return null;
         groupProp = DocProperty.deserialize(blIndex(), groupProps.get());
         if (groupProp == null)
@@ -226,7 +219,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
             if (groupProps.isPresent()) {
                 Optional<String> sortBy = getSortProps();
                 Optional<String> viewGroup = getViewGroup();
-                if (sortBy.isPresent() && !viewGroup.isPresent()) {
+                if (sortBy.isPresent() && viewGroup.isEmpty()) {
                     // Sorting refers to results within the group when viewing contents of a group
                     sortProp = DocGroupProperty.deserialize(sortBy.get());
                 }
@@ -251,7 +244,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         }
 
         Optional<String> sortBy = getSortProps();
-        if (!sortBy.isPresent())
+        if (sortBy.isEmpty())
             return null;
         DocProperty sortProp = DocProperty.deserialize(blIndex(), sortBy.get());
         if (sortProp == null)
@@ -267,7 +260,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
             if (groupProps.isPresent()) {
                 Optional<String> sortBy = getSortProps();
                 Optional<String> viewGroup = getViewGroup();
-                if (sortBy.isPresent() && !viewGroup.isPresent()) { // Sorting refers to results within the group when viewing contents of a group
+                if (sortBy.isPresent() && viewGroup.isEmpty()) { // Sorting refers to results within the group when viewing contents of a group
                     sortProp = HitGroupProperty.deserialize(sortBy.get());
                 }
             }
@@ -283,7 +276,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (isDocsOperation)
             return null; // we're doing per-hits stuff, so sort doesn't apply to docs
         Optional<String> groupBy = getGroupProps();
-        if (!groupBy.isPresent())
+        if (groupBy.isEmpty())
             return null;
         return new HitGroupSettings(groupBy.get());
     }
@@ -301,7 +294,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         }
 
         Optional<String> sortBy = getSortProps();
-        if (!sortBy.isPresent())
+        if (sortBy.isEmpty())
             return null;
         HitProperty sortProp = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), sortBy.get());
         return new HitSortSettings(sortProp);
@@ -311,7 +304,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     public SampleParameters sampleSettings() {
         Optional<Double> sample = getSampleFraction();
         Optional<Integer> sampleNum = getSampleNumber();
-        if (!sample.isPresent() && !sampleNum.isPresent())
+        if (sample.isEmpty() && sampleNum.isEmpty())
             return null;
         Optional<Long> sampleSeed = getSampleSeed();
         boolean withSeed = sampleSeed.isPresent();
@@ -334,7 +327,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     private List<DocProperty> facetProps() {
         if (facetProps == null) {
             Optional<String> facets = getFacetProps();
-            if (!facets.isPresent()) {
+            if (facets.isEmpty()) {
                 facetProps = null;
             } else {
                 DocProperty propFacets = DocProperty.deserialize(blIndex(), facets.get());
@@ -342,8 +335,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
                     facetProps = null;
                 else {
                     facetProps = new ArrayList<>();
-                    for (DocProperty prop: propFacets.propsList())
-                        facetProps.add(prop);
+                    facetProps.addAll(propFacets.propsList());
                 }
             }
         }
@@ -427,7 +419,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         try {
             Query filter = filterQuery();
             Optional<TextPattern> pattern = pattern();
-            if (!pattern.isPresent())
+            if (pattern.isEmpty())
                 throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
 
             SearchSettings searchSettings = searchSettings();
@@ -466,7 +458,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (pattern.isPresent())
             return hitsSample().docs(-1);
         Query docFilterQuery = filterQuery();
-        if (!pattern.isPresent() && docFilterQuery == null) {
+        if (docFilterQuery == null) {
             docFilterQuery = blIndex().getAllRealDocsQuery();
         }
         SearchEmpty search = blIndex().search(null, useCache());
@@ -475,7 +467,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     /**
      * Return our subcorpus.
-     *
+     * <p>
      * The subcorpus is defined as all documents satisfying the metadata query.
      * If no metadata query is given, the subcorpus is all documents in the corpus.
      *
@@ -493,25 +485,32 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     @Override
     public SearchHitGroups hitsGroupedStats() throws BlsException {
-        String groupProps = hitGroupSettings().groupBy();
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupProps);
-        if (prop == null)
-            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
-        return hitsSample().groupStats(prop, Results.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
+        return hitsSample()
+                .groupStats(getHitGroupProperty(), Results.NO_LIMIT)
+                .sort(hitGroupSortSettings().sortBy());
     }
 
     @Override
     public SearchHitGroups hitsGroupedWithStoredHits() throws BlsException {
-        String groupProps = hitGroupSettings().groupBy();
+        return hitsSample().groupWithStoredHits(getHitGroupProperty(), Results.NO_LIMIT)
+                .sort(hitGroupSortSettings().sortBy());
+    }
+
+    private HitProperty getHitGroupProperty() {
+        HitGroupSettings hitGroupSettings = hitGroupSettings();
+        assert hitGroupSettings != null;
+        String groupProps = hitGroupSettings.groupBy();
         HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupProps);
         if (prop == null)
             throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
-        return hitsSample().groupWithStoredHits(prop, Results.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
+        return prop;
     }
 
     @Override
     public SearchDocGroups docsGrouped() throws BlsException {
-        return docs().group(docGroupSettings().groupBy(), Results.NO_LIMIT).sort(docGroupSortSettings().sortBy());
+        DocGroupSettings docGroupSettings = docGroupSettings();
+        assert docGroupSettings != null;
+        return docs().group(docGroupSettings.groupBy(), Results.NO_LIMIT).sort(docGroupSortSettings().sortBy());
     }
 
     @Override
@@ -657,11 +656,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public Collection<String> getListMetadataValuesFor() {
         return params.getListMetadataValuesFor();
-    }
-
-    @Override
-    public Collection<String> getListSubpropsFor() {
-        return params.getListSubpropsFor();
     }
 
     @Override

@@ -29,13 +29,13 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     private static final String REGEX_PROCESSOR_SAXON = "saxon(ica)?";
 
     /** Create a new XPath-based indexer.
-     *
+     * <p>
      * Chooses XML processor based on the fileTypeOptions.
      *
      * @param fileTypeOptions options, including what processor to use
      * @return indexer
      */
-    public static DocIndexerXPath create(Map<String, String> fileTypeOptions) {
+    public static DocIndexerXPath<?> create(Map<String, String> fileTypeOptions) {
         String xmlProcessorName = fileTypeOptions.getOrDefault(FT_OPT_PROCESSOR, "");
         if (xmlProcessorName.isEmpty()) {
             // See if the older version of the key is being used
@@ -66,11 +66,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
      */
     protected static boolean canReuseParentValues(ConfigAnnotation subannotation, String valuePath,
             ConfigAnnotation parentAnnotation) {
-        boolean reuseParentAnnotationValue = valuePath.equals(parentAnnotation.getValuePath()) &&
+        return valuePath.equals(parentAnnotation.getValuePath()) &&
                 subannotation.isMultipleValues() == parentAnnotation.isMultipleValues() &&
                 subannotation.isAllowDuplicateValues() == parentAnnotation.isAllowDuplicateValues() &&
                 subannotation.isCaptureXml() == parentAnnotation.isCaptureXml();
-        return reuseParentAnnotationValue;
     }
 
     protected String optSanitizeFieldName(String origFieldName) {
@@ -97,8 +96,6 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     protected abstract String currentNodeXml(T node);
 
-    protected abstract String currentNodeValue(Object node);
-
     protected abstract void xpathForEach(String xPath, T context, NodeHandler<T> handler);
 
     protected abstract void xpathForEachStringValue(String xPath, T context, StringValueHandler handler);
@@ -109,7 +106,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     /**
      * Process an annotation at the current position.
-     *
+     * <p>
      * If this is a span annotation (spanEndPos >= 0), and the span looks like this:
      * <code>&lt;named-entity type="person"&gt;Santa Claus&lt;/named-entity&gt;</code>,
      * then spanName should be "named-entity" and annotation name should be "type" (and
@@ -219,7 +216,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                                     + standoffNode);
                         } else {
                             // Standoff root relation
-                            processStandoffSpan(standoffNode, type, isRelation, -1, standoffAnnotations,
+                            processStandoffSpan(standoffNode, type, true, -1, standoffAnnotations,
                                     endOrTarget.get(), spanOrRelType);
                         }
                     } else {
@@ -313,7 +310,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             if (annotation.isCaptureXml()) {
                 xpathForEach(valuePath, context, (value) -> values.add(currentNodeXml(value)));
             } else {
-                xpathForEachStringValue(valuePath, context, (unprocessedValue) -> values.add(unprocessedValue));
+                xpathForEachStringValue(valuePath, context, values::add);
             }
             // No annotations have been added, the result of the xPath query must have been empty.
             if (values.isEmpty())
@@ -342,12 +339,12 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     /**
      * Determine the valuePath for an annotation at the current word.
-     *
+     * <p>
      * The reason this can vary per word is the captureValuePath feature.
      * This will capture a value from the current word and substitute it
      * into the valuePath, allowing us to look up information elsewhere in the
      * document.
-     *
+     * <p>
      * This is probably no longer needed when using Saxon, which has better
      * support for advanced XPath features.
      *
@@ -478,9 +475,8 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         setCurrentAnnotatedFieldName(annotatedField.getName());
 
         // For each container (e.g. "text" or "body" element) ...
-        xpathForEach(annotatedField.getContainerPath(), document, (container) -> {
-            processAnnotatedFieldContainer(container, annotatedField, tokenPositionsMap);
-        });
+        xpathForEach(annotatedField.getContainerPath(), document,
+                (container) -> processAnnotatedFieldContainer(container, annotatedField, tokenPositionsMap));
     }
 
     protected boolean indexParsedFile(String docXPath, boolean mustBeSingleDocument) {
@@ -502,7 +498,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     protected abstract T contextNodeWholeDocument();
 
-    interface AnnotationHandler {
+    protected interface AnnotationHandler {
         void values(ConfigAnnotation annotation, int position, int spanEndPos, Collection<String> values);
     }
 }

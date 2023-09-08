@@ -164,14 +164,6 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     }
 
     @Override
-    protected String currentNodeValue(Object node) {
-        if (node instanceof NodeInfo)
-            return finder.currentNodeToString((NodeInfo) node);
-        else
-            return String.valueOf(node);
-    }
-
-    @Override
     protected NodeInfo contextNodeWholeDocument() {
         return contents.getRootNode();
     }

@@ -75,11 +75,14 @@ class IndexerImpl implements DocWriter, Indexer {
             } catch (Exception e) { 
                 logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name()); 
             }
-            DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path, contents, cs);
-            if (docIndexer == null) {
-                throw new PluginException("Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + path);
+            InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
+            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path, contents, cs)) {
+                if (docIndexer == null) {
+                    throw new PluginException(
+                            "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + path);
+                }
+                impl(docIndexer, path);
             }
-            impl(docIndexer, path);
         }
 
         @Override
@@ -93,9 +96,9 @@ class IndexerImpl implements DocWriter, Indexer {
             // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
             // and for text docIndexers, passing a binary file is an error in itself already.
-            try (
-                    UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
-                    DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path,
+            InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
+            try (UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
+                    DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path,
                             inputStream, inputStream.getEncoding())) {
                 impl(docIndexer, path);
             }
@@ -272,7 +275,7 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     private String determineFormat(String indexName, String formatIdentifier, String fallbackFormat)
             throws DocumentFormatNotFound {
-        if (!DocumentFormats.isSupported(formatIdentifier)) {
+        if (formatIdentifier == null || !DocumentFormats.isSupported(formatIdentifier)) {
             // Specified format not found; use index default
             if (fallbackFormat == null || !DocumentFormats.isSupported(fallbackFormat)) {
                 // Index default doesn't work either, error
@@ -291,13 +294,15 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     private String formatError(String formatIdentifier) {
-        String formatError;
+        String formatError = null;
         if (formatIdentifier == null)
             formatError = "No formatIdentifier";
         else {
-            formatError = DocumentFormats.formatError(formatIdentifier);
-            if (formatError == null)
+            Optional<InputFormat> inputFormat = DocumentFormats.getFormatOrError(formatIdentifier);
+            if (!inputFormat.isPresent())
                 formatError =  "Unknown formatIdentifier '" + formatIdentifier + "'";
+            else if (inputFormat.get().isError())
+                formatError = ((InputFormatError)inputFormat.get()).getErrorMessage();
         }
         return formatError;
     }
@@ -592,7 +597,9 @@ class IndexerImpl implements DocWriter, Indexer {
         this.numberOfThreadsToUse = numberOfThreadsToUse;
 
         // Some of the class-based docIndexers don't support theaded indexing
-        if (!DocumentFormats.getFormat(formatIdentifier).isConfigurationBased()) {
+        //@@@ enable threaded indexing with (threadsafe) class-based docIndexers
+        InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow();
+        if (!inputFormat.isConfigurationBased()) {
             logger.info("Threaded indexing is disabled for " + formatIdentifier + " because it is not " +
                     "configuration-based (older DocIndexers may not be threadsafe, so this is a precaution)" );
             this.numberOfThreadsToUse = 1;

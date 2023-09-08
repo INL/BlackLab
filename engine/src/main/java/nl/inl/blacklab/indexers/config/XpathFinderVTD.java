@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.ximpleware.AutoPilot;
 import com.ximpleware.NavException;
 import com.ximpleware.VTDException;
@@ -23,6 +26,11 @@ import nl.inl.blacklab.indexers.config.DocIndexerXPath.NodeHandler;
  * Manages compiled XPaths and finding stuff in the document
  */
 class XpathFinderVTD {
+
+    protected static final Logger logger = LogManager.getLogger(XpathFinderVTD.class);
+
+    /** Did we log a warning about a possible XPath issue? If so, don't keep warning again and again. */
+    private static boolean warnedAboutXpathIssue = false;
 
     private static final String XPATH_CURRENT_NODE = ".";
 
@@ -146,13 +154,13 @@ class XpathFinderVTD {
             // There is no good way to check whether this exception will occur
             // When the exception occurs we try to evaluate the xpath as string
             // NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
-//            if (logger.isDebugEnabled() && !warnedAboutXpathIssue) {
-//                warnedAboutXpathIssue = true;
-//                logger.debug(String.format(
-//                        "An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
-//                        "string(.//tei:availability[1]/@status='free')",
-//                        "string(//tei:availability[1]/@status='free')"));
-//            }
+            if (logger.isDebugEnabled() && !warnedAboutXpathIssue) {
+                warnedAboutXpathIssue = true;
+                logger.debug(String.format(
+                        "An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
+                        "string(.//tei:availability[1]/@status='free')",
+                        "string(//tei:availability[1]/@status='free')"));
+            }
             String value = results.evalXPathToString();
             handler.handle(value);
         } catch (VTDException e) {

@@ -8,9 +8,9 @@ import nl.inl.blacklab.Constants;
 
 /**
  * The different webservice parameters and their default values.
- *
+ * <p>
  * Used by BLS, the Solr component and the proxy.
- *
+ * <p>
  * Note that there are still some parameters not covered here; those are parameters
  * used in operations that have not been extracted to the wslib module yet. They should
  * eventually be added.
@@ -62,9 +62,6 @@ public enum WebserviceParameter {
     // on document info page, list the values for which metadata fields?
     //also controls which metadata fields are sent back with search hits and document search results
     LIST_VALUES_FOR_METADATA_FIELDS("listmetadatavalues"),
-
-    // EXPERIMENTAL, mostly for part of speech, limited to 500 values
-    LIST_SUBPROP_VALUES("subprops"), // on field info page, show all subannotations and values for annotation
 
     // How to process results
     INCLUDE_FACETS("facets"), // include facet information?

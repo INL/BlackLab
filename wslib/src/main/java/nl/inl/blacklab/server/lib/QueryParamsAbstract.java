@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.lib;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -340,9 +339,6 @@ public abstract class QueryParamsAbstract implements QueryParams {
      */
     @Override
     public Set<String> getListMetadataValuesFor() { return getSet(WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS); }
-
-    @Override
-    public Collection<String> getListSubpropsFor() { return getSet(WebserviceParameter.LIST_SUBPROP_VALUES); }
 
     @Override
     public boolean getWaitForTotal() { return getBool(WebserviceParameter.WAIT_FOR_TOTAL_COUNT); }

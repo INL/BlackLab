@@ -27,6 +27,7 @@ import nl.inl.blacklab.index.BLIndexWriterProxySolr;
 import nl.inl.blacklab.index.BLInputDocumentSolr;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.search.BlackLab;
@@ -56,21 +57,21 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         SolrParams params = req.getParams();
         IndexReader reader = req.getSearcher().getIndexReader();
 
-        
-        ConfigInputFormat format = DocumentFormats.getConfigInputFormat(params.get("bl.format"));
-        if (format == null) {
+        String paramFormat = params.get("bl.format");
+        InputFormat inputFormat = DocumentFormats.getFormat(paramFormat).orElse(null);
+        ConfigInputFormat formatConfig = inputFormat != null ? inputFormat.getConfig() : null;
+        if (formatConfig == null) {
             // format isn't recongnized by name, try loading it as string (it might be the contents of the file).
-            format = new ConfigInputFormat("");
-            String formatString = params.get("bl.format");
-            boolean isJson = formatString.trim().charAt(0) == '{';
-            Reader r = new StringReader(formatString);
-            InputFormatReader.read(r, isJson, format, linkedFormat -> null);
+            formatConfig = new ConfigInputFormat("");
+            boolean isJson = paramFormat.trim().charAt(0) == '{';
+            Reader r = new StringReader(paramFormat);
+            InputFormatReader.read(r, isJson, formatConfig);
         }
         
         String fileName = params.get("bl.filename");
         String indexName = req.getCore().getName();
-        try (BlackLabIndexWriter index = BlackLab.implicitInstance().openForWriting(indexName, reader, format)) {
-            Indexer indexer = Indexer.create(index, params.get("bl.format"));
+        try (BlackLabIndexWriter index = BlackLab.implicitInstance().openForWriting(indexName, reader, formatConfig)) {
+            Indexer indexer = Indexer.create(index, paramFormat);
             InputStream is = stream.getStream();
 
             indexer.index(fileName, is);

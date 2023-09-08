@@ -26,8 +26,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormatWithConfig;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
@@ -1068,9 +1069,10 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         // Also (recursively) add metadata and annotated field config from any linked
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format != null && format.isConfigurationBased())
-                addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroupsPerField, format.getConfig());
+            InputFormat inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
+            if (inputFormat.isConfigurationBased())
+                addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroupsPerField,
+                        inputFormat.getConfig());
         }
     }
 

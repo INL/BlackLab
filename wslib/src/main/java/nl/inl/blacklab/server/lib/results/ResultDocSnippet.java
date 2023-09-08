@@ -85,10 +85,12 @@ public class ResultDocSnippet {
 
         if (context.isInlineTag()) {
             // Make sure we capture the tag so we can use its boundaries for the snippet
+            String captureInlineTagAs = context.inlineTagName();
             TextPattern pattern = new TextPatternPositionFilter(new TextPatternFixedSpan(start, end),
-                    new TextPatternTags(context.inlineTagName(), null, TextPatternTags.Adjust.FULL_TAG, context.inlineTagName()),
+                    new TextPatternTags(context.inlineTagName(), null, TextPatternTags.Adjust.FULL_TAG, captureInlineTagAs),
                     SpanQueryPositionFilter.Operation.WITHIN);
-            pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, context.inlineTagName(), "rels"));
+            // Also capture any relations that are in the tag
+            pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, captureInlineTagAs, "rels"));
             QueryExecutionContext queryContext = new QueryExecutionContext(index,
                     index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {

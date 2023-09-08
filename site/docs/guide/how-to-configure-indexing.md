@@ -1388,8 +1388,8 @@ Note that if you want KWICs or snippets that include annotations without a forwa
 
 ## How to extend existing formats
 
-> **NOTE: NOT RECOMMENDED!** <br/>
-> We advise against using this feature, and it may be deprecated in the near future. Instead, simply copy the format file and make the changes you need
+> **NOTE: THIS FUNCTIONALITY IS DEPRECATED** <br/>
+> Don't rely on this feature as it will be removed in a future version. Instead, simply copy the format file and make any changes you need.
 
 It is possible to extend an existing format. This is done by specifying the "baseFormat" setting at the top-level. You should set it to the name of the format you wish to extend.
 

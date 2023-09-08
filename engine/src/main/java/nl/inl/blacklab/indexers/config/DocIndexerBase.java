@@ -30,6 +30,7 @@ import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -258,8 +259,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         }
 
         // Index the data
-        try (DocIndexer docIndexer = DocumentFormats.get(inputFormatIdentifier, getDocWriter(), completePath, data,
-                Indexer.DEFAULT_INPUT_ENCODING)) {
+        InputFormat inputFormat = DocumentFormats.getFormat(inputFormatIdentifier).orElseThrow();
+        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(), completePath,
+                data, Indexer.DEFAULT_INPUT_ENCODING)) {
             if (docIndexer instanceof DocIndexerBase) {
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingDoc = true;

@@ -270,8 +270,6 @@ This operation is the same as a regular AND (NOT) operation with these clauses, 
 
 #### rcapture: capture all relations occurring inside a span
 
-(not yet implemented)
-
 We can capture all relations occurring inside a span using `rcapture`:
 
     rcapture(query, toCapture, captureAs, relationType = '.*')

@@ -16,7 +16,8 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.InputFormat;
+import nl.inl.blacklab.index.InputFormatWithConfig;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -1485,16 +1486,16 @@ public class ResponseStreamer {
             // List supported input formats
             // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
             ds.startEntry("supportedInputFormats").startMap();
-            for (DocIndexerFactory.Format format: result.getFormats()) {
-                ds.startAttrEntry("format", "name", format.getId());
+            for (InputFormat inputFormat: result.getFormats()) {
+                ds.startAttrEntry("format", "name", inputFormat.getIdentifier());
                 {
                     ds.startMap();
                     {
-                        ds.entry("displayName", format.getDisplayName())
-                                .entry("description", format.getDescription())
-                                .entry("helpUrl", format.getHelpUrl())
-                                .entry("configurationBased", format.isConfigurationBased())
-                                .entry("isVisible", format.isVisible());
+                        ds.entry("displayName", inputFormat.getDisplayName())
+                                .entry("description", inputFormat.getDescription())
+                                .entry("helpUrl", inputFormat.getHelpUrl())
+                                .entry("configurationBased", inputFormat instanceof InputFormatWithConfig)
+                                .entry("isVisible", inputFormat.isVisible());
                     }
                     ds.endMap();
                 }

@@ -33,10 +33,9 @@ public class TestStandoffSpans {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        DocIndexerFactoryConfig factoryConfig = new DocIndexerFactoryConfig();
-        File file = getFile("standoff/tei-standoff-spans.blf.yaml");
-        factoryConfig.load(TEST_FORMAT_NAME, file).orElseThrow();
-        DocumentFormats.registerFactory(factoryConfig);
+        InputFormatWithConfig inputFormat = new InputFormatWithConfig(TEST_FORMAT_NAME,
+                getFile("standoff/tei-standoff-spans.blf.yaml"));
+        DocumentFormats.add(inputFormat);
     }
 
     @Before

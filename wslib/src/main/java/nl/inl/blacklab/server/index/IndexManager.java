@@ -27,8 +27,8 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -79,7 +79,7 @@ public class IndexManager {
      * Manages the loaded user document formats and exposes them to BlackLab-core
      * for use.
      */
-    private DocIndexerFactoryUserFormats userFormatManager;
+    private FinderInputFormatUserFormats userFormatManager;
 
     private final Map<String, Index> indices = new HashMap<>();
 
@@ -124,8 +124,8 @@ public class IndexManager {
                 logger.warn("Configured user collections unreadable: " + userIndexesDir);
             else {
                 userCollectionsDir = userIndexesDir;
-                userFormatManager = new DocIndexerFactoryUserFormats(userCollectionsDir);
-                DocumentFormats.registerFactory(userFormatManager);
+                userFormatManager = new FinderInputFormatUserFormats(userCollectionsDir);
+                DocumentFormats.addFinder(userFormatManager);
             }
         }
 
@@ -247,8 +247,8 @@ public class IndexManager {
             BlsUtils.delTree(indexDir);
         }
         boolean contentViewable = true; // user may view his own private corpus documents
-        Format format = DocumentFormats.getFormat(formatIdentifier);
-        ConfigInputFormat config = format == null ? null : format.getConfig();
+        InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
+        ConfigInputFormat config = inputFormat.isConfigurationBased() ? inputFormat.getConfig() : null;
         try (BlackLabIndexWriter indexWriter = searchMan.blackLabInstance().create(indexDir, config)) {
             IndexMetadataWriter indexMetadata = indexWriter.metadata();
             if (!StringUtils.isEmpty(displayName))
@@ -647,7 +647,7 @@ public class IndexManager {
      *
      * @return The user format manager/DocIndexerFactory.
      */
-    public DocIndexerFactoryUserFormats getUserFormatManager() {
+    public FinderInputFormatUserFormats getUserFormatManager() {
         return userFormatManager;
     }
 }
