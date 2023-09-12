@@ -6,7 +6,7 @@ In addition to the Java library (BlackLab Core), there is also a web service (Bl
 
 BlackLab is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-To learn how to index and search your data, see the [official project site](http://inl.github.io/BlackLab/).
+To learn how to index and search your data, see the [official project site](http://inl.github.io/BlackLab/guide/getting-started.html).
 
 To learn about BlackLab development, see the [dev docs](doc/#readme). 
 
@@ -68,11 +68,19 @@ mvn site
 
 ## Using BlackLab with Docker
 
-An experimental Docker setup is provided now. It works well, but details may change in the future. We will eventually publish an official Docker image release, which will then be available on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab).
+An alpha version of the Docker setup is provided on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). For each upcoming release, we will publish a corresponding Docker image.
 
 A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher. 
 
+See the [Docker README](docker/#readme) for more details.
+
+### Indexing with Docker 
+
 We assume here that you are familiar with the BlackLab indexing process; see [indexing with BlackLab](https://inl.github.io/BlackLab/indexing-with-blacklab.html) to learn more.
+
+The easiest is to use the [`index-corpus.sh`](./index-corpus.sh) Bash script in the root of the repository. It will download Docker image and run IndexTool in a container, using bind mounts for the input data and writing the indexed corpus. Run the script without arguments for documentation.
+
+Alternatively, you can use Docker Compose to run the indexer. This will create your index on a named volume defined by the Compose file.
 
 Create a file named `test.env` with your indexing configuration:
 
@@ -97,9 +105,6 @@ docker-compose up -d
 ```
 
 Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
-
-
-See the [Docker README](docker/#readme) for more details.
 
 ## Special thanks
 
