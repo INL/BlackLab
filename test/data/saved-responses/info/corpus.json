@@ -94,16 +94,16 @@
   "metadataFieldGroups": [
     {
       "fields": [
+        "title"
+      ],
+      "name": "Title group"
+    },
+    {
+      "fields": [
         "fromInputFile",
         "pid"
       ],
       "name": "Other fields group"
-    },
-    {
-      "fields": [
-        "title"
-      ],
-      "name": "Title group"
     }
   ],
   "metadataFields": {

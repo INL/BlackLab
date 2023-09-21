@@ -16,6 +16,9 @@ SERVICE_NAME="${1:-test}"
 # Go to the test dir
 cd "$( dirname -- "$0"; )"/
 
+# Ensure latest-test-output dirs exist
+mkdir -p data/latest-test-output data/latest-test-output-integrated
+
 # Check how to call Compose
 COMPOSE=docker-compose
 if ! command -v $COMPOSE &> /dev/null
