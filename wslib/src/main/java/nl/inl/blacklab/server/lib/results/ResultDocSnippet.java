@@ -106,7 +106,7 @@ public class ResultDocSnippet {
             if (snippetSize > maxSnippetSize) {
                 // Snippet too large. Shrink before and after parts to compensate.
                 int overshoot = snippetSize - maxSnippetSize;
-                int beforeAndAfter = Math.min(1, context.before() + context.after());
+                int beforeAndAfter = Math.max(1, context.before() + context.after());
                 int remainingBeforeAndAfter = beforeAndAfter - overshoot;
                 float factor = (float) Math.max(0, remainingBeforeAndAfter) / beforeAndAfter;
                 int newBefore = (int)(context.before() * factor);

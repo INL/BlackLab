@@ -127,8 +127,11 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     private void setDocument(File file, Charset defaultCharset, char[] documentContent) {
         assert defaultCharset != null;
         try {
-            if (documentContent == null)
-                documentContent = IOUtils.toCharArray(new FileReader(file, defaultCharset));
+            if (documentContent == null) {
+                try (FileReader reader = new FileReader(file, defaultCharset)) {
+                    documentContent = IOUtils.toCharArray(reader);
+                }
+            }
             charPositions = new CharPositionsTracker(documentContent);
             contents = SaxonHelper.parseDocument(
                     new CharArrayReader(documentContent), new MyContentHandler(charPositions));
