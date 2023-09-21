@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -98,7 +99,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     public void setDocument(byte[] contents, Charset defaultCharset) {
         try {
             char[] charContents = IOUtils.toCharArray(new ByteArrayInputStream(contents), defaultCharset);
-            setDocument(null, null, charContents);
+            setDocument(null, StandardCharsets.UTF_8, charContents);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -107,7 +108,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     @Override
     public void setDocument(InputStream is, Charset defaultCharset) {
         try {
-            setDocument(null, null, IOUtils.toCharArray(is, defaultCharset));
+            setDocument(null, StandardCharsets.UTF_8, IOUtils.toCharArray(is, defaultCharset));
             is.close();
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -117,13 +118,14 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     @Override
     public void setDocument(Reader reader) {
         try {
-            setDocument(null, null, IOUtils.toCharArray(reader));
+            setDocument(null, StandardCharsets.UTF_8, IOUtils.toCharArray(reader));
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
 
     private void setDocument(File file, Charset defaultCharset, char[] documentContent) {
+        assert defaultCharset != null;
         try {
             if (documentContent == null)
                 documentContent = IOUtils.toCharArray(new FileReader(file, defaultCharset));
@@ -365,7 +367,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(document.get());
+        String document1 = document.get();
+        storeWholeDocument(document1);
         document.clean();
         document = null;
         // make sure we don't hold on to memory needlessly

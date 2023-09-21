@@ -3,6 +3,7 @@ package nl.inl.blacklab.indexers.config.saxon;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -32,14 +33,6 @@ public class DocumentReference {
      */
     private boolean deleteFileOnExit = false;
 
-    public DocumentReference(char[] contents) {
-        this(contents, null);
-    }
-
-    public DocumentReference(File file) {
-        this(null, file);
-    }
-
     public DocumentReference(char[] contents, File file) {
         this.contents = contents;
         this.file = file;
@@ -54,7 +47,9 @@ public class DocumentReference {
                     file = File.createTempFile("blDocToIndex", null);
                     file.deleteOnExit();
                     deleteFileOnExit = true;
-                    IOUtils.write(contents, new FileWriter(file));
+                    try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
+                        IOUtils.write(contents, writer);
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException("Error swapping large doc to disk", e);
                 }
@@ -66,7 +61,7 @@ public class DocumentReference {
     public String get() {
         try {
             if (contents == null)
-                return FileUtils.readFileToString(file);
+                return FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new BlackLabRuntimeException("unable to read document cache from disk");
         }
