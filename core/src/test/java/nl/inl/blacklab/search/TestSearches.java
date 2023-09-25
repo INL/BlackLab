@@ -109,6 +109,17 @@ public class TestSearches {
     }
 
     @Test
+    public void testSequences2() {
+        List<String> expected = List.of(
+                "mier [aap mier] mier"
+        );
+        String query = "'aap' 'mier'";
+        List<String> result = testIndex.findConc(query);
+        Assert.assertEquals(1, result.size());
+        Assert.assertEquals(expected, result);
+    }
+
+    @Test
     public void testMoreSequencesFiMatch() {
         int expected = 33;
         Assert.assertEquals(expected, testIndex.findConc(" [] [] ").size());

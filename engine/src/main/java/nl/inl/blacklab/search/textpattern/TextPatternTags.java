@@ -73,7 +73,8 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        return context.index().tagQuery(context.queryInfo(), context.luceneField(), elementName1, attrOptIns, adjust, captureAs);
+        return context.index().tagQuery(context.queryInfo(), context.luceneField(), elementName1,
+                attrOptIns, adjust, captureAs);
     }
 
     @Override

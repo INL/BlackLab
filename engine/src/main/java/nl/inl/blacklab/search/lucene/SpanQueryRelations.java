@@ -20,7 +20,6 @@ import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.util.automaton.RegExp;
 
-import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -46,27 +45,15 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         boolean sorted;
         switch (spanMode) {
         case SOURCE:
-            if (AnnotationWriter.INDEX_AT_FIRST_POS_IN_DOC) {
-                // Forward relations are indexed at the source, we know these will be sorted.
-                // Root relations don't have a source and are indexed at the target, therefore also sorted.
-                sorted = direction == Direction.FORWARD || direction == Direction.ROOT;
-            } else {
-                // All relations are indexed at the source.
-                // Root relations don't have a source and are indexed at the target, therefore also sorted.
-                sorted = true;
-            }
+            // All relations are indexed at the source.
+            // Root relations don't have a source and are indexed at the target, therefore also sorted.
+            sorted = true;
             break;
         case FULL_SPAN:
-            if (AnnotationWriter.INDEX_AT_FIRST_POS_IN_DOC) {
-                // Relations are indexed at source or target, whichever comes first in the document.
-                // Because full span covers both source and target, it will always be sorted.
-                sorted = true;
-            } else {
-                // All relations are indexed at the source.
-                // Only forward relations will be sorted.
-                // Root relations only have target and are indexed there, therefore also sorted.
-                sorted = direction == Direction.FORWARD || direction == Direction.ROOT;
-            }
+            // All relations are indexed at the source.
+            // Only forward relations will be sorted.
+            // Root relations only have target and are indexed there, therefore also sorted.
+            sorted = direction == Direction.FORWARD || direction == Direction.ROOT;
             break;
         case TARGET:
         default:
@@ -190,15 +177,11 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             throw new IllegalArgumentException("ALL_SPANS makes no sense for SpanQueryRelations");
 
         // Construct the clause from the field, relation type and attributes
-        BLSpanQuery clause = relationsClause(queryInfo, relationFieldName, relationType, attributes);
-        init(relationFieldName, relationType, attributes, clause, direction, spanMode, captureAs);
-    }
-
-    public static BLSpanQuery relationsClause(QueryInfo queryInfo, String relationFieldName, String relationType,
-            Map<String, String> attributes) {
         String regexp = RelationUtil.searchRegex(relationType, attributes);
         RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp), RegExp.COMPLEMENT);
-        return new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
+        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
+
+        init(relationFieldName, relationType, attributes, clause, direction, spanMode, captureAs);
     }
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,

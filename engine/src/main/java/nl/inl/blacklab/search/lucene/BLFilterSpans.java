@@ -100,7 +100,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         return goToNextMatch(true);
     }
 
-    private int goToNextMatch(boolean nextImmediately) throws IOException {
+    protected int goToNextMatch(boolean nextImmediately) throws IOException {
         boolean next = nextImmediately;
         for (;;) {
             if (next)
@@ -136,7 +136,8 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
             startPos = ((BLSpans) in).advanceStartPosition(target);
             return goToNextMatch(false);
         }
-        return super.advanceStartPosition(target);
+        // Use the naive version that simply calls nextStartPosition() until we're there
+        return naiveAdvanceStartPosition(this, target);
     }
 
     @Override

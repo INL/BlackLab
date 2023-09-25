@@ -98,7 +98,8 @@ public class RelationInfo implements MatchInfo {
      */
     private static final int DEFAULT_LENGTH_ALT = 1;
 
-    /** Was the relationship indexed at the target instead of the source? */
+    /** (UNUSED; always indexed at source now)
+     *  Was the relationship indexed at the target instead of the source? */
     public static final byte FLAG_INDEXED_AT_TARGET = 0x01;
 
     /** Is it a root relationship, that only has a target, no source? */
@@ -186,56 +187,30 @@ public class RelationInfo implements MatchInfo {
             }
         }
 
-        // Calculate start and end positions
-        int thisEnd = currentTokenPosition + thisLength;
-        int otherStart = currentTokenPosition + relOtherStart;
-        int otherEnd = otherStart + otherLength;
-
         // Fill the relationinfo structure with the source and target start/end positions
         this.onlyHasTarget = (flags & FLAG_ONLY_HAS_TARGET) != 0;
-        if ((flags & FLAG_INDEXED_AT_TARGET) != 0) {
-            // Relation was indexed at the target position.
-            this.sourceStart = otherStart;
-            this.sourceEnd = otherEnd;
-            this.targetStart = currentTokenPosition;
-            this.targetEnd = thisEnd;
-        } else {
-            // Relation was indexed at the source position.
-            this.sourceStart = currentTokenPosition;
-            this.sourceEnd = thisEnd;
-            this.targetStart = otherStart;
-            this.targetEnd = otherEnd;
-        }
+        this.sourceStart = currentTokenPosition;
+        this.sourceEnd = currentTokenPosition + thisLength;
+        this.targetStart = currentTokenPosition + relOtherStart;
+        this.targetEnd = this.targetStart + otherLength;
     }
 
     /**
-     * Serialize to a DataOutput.
+     * Serialize to a BytesRef.
      *
-     * @param currentTokenPosition the position of the token we're being indexed at
-     * @param dataOutput the DataOutput to write to
+     * @return the serialized data
      */
-    public void serialize(int currentTokenPosition, DataOutput dataOutput) throws IOException {
+    public BytesRef serialize() {
         // Determine values to write from our source and target, and the position we're being indexed at
-        boolean indexedAtTarget = targetStart == currentTokenPosition;
-        int relOtherStart, thisLength, otherLength;
-        if (indexedAtTarget) {
-            // this == target, other == source
-            thisLength = targetEnd - targetStart;
-            relOtherStart = sourceStart - currentTokenPosition;
-            otherLength = sourceEnd - sourceStart;
-        } else {
-            // this == source, other == target
-            thisLength = sourceEnd - sourceStart;
-            relOtherStart = targetStart - currentTokenPosition;
-            otherLength = targetEnd - targetStart;
-        }
+        int thisLength = sourceEnd - sourceStart;
+        int relOtherStart = targetStart - sourceStart;
+        int otherLength = targetEnd - targetStart;
 
         // Which default length should we use? (can save 1 byte per relation)
         boolean useAlternateDefaultLength = thisLength == DEFAULT_LENGTH_ALT && otherLength == DEFAULT_LENGTH_ALT;
         int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
 
         byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
-                | (indexedAtTarget ? FLAG_INDEXED_AT_TARGET : 0)
                 | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0));
 
         // Only write as much as we need (omitting default values from the end)
@@ -243,26 +218,17 @@ public class RelationInfo implements MatchInfo {
         boolean writeThisLength = writeOtherLength || thisLength != defaultLength;
         boolean writeFlags = writeThisLength || flags != DEFAULT_FLAGS;
         boolean writeRelOtherStart = writeFlags || relOtherStart != DEFAULT_REL_OTHER_START;
-        if (writeRelOtherStart)
-            dataOutput.writeZInt(relOtherStart);
-        if (writeFlags)
-            dataOutput.writeByte(flags);
-        if (writeThisLength)
-            dataOutput.writeVInt(thisLength);
-        if (writeOtherLength)
-            dataOutput.writeVInt(otherLength);
-    }
-
-    /**
-     * Serialize to a BytesRef.
-     *
-     * @param currentTokenPosition the position of the token we're being indexed at
-     * @return the serialized data
-     */
-    public BytesRef serialize(int currentTokenPosition) {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
+        DataOutput dataOutput = new OutputStreamDataOutput(os);
         try {
-            serialize(currentTokenPosition, new OutputStreamDataOutput(os));
+            if (writeRelOtherStart)
+                dataOutput.writeZInt(relOtherStart);
+            if (writeFlags)
+                dataOutput.writeByte(flags);
+            if (writeThisLength)
+                dataOutput.writeVInt(thisLength);
+            if (writeOtherLength)
+                dataOutput.writeVInt(otherLength);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

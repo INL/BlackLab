@@ -182,7 +182,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * @param target target start position to advance to
      * @return new start position, or Spans.NO_MORE_POSITIONS
      */
-    public static int naiveAdvanceStartPosition(BLSpans spans, int target) throws IOException {
+    public static int naiveAdvanceStartPosition(Spans spans, int target) throws IOException {
         int pos;
         do {
             pos = spans.nextStartPosition();

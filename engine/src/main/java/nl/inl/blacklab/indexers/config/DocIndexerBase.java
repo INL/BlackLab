@@ -591,17 +591,18 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         }
     }
 
-    private BytesRef getPayload(int spanEndOrRelTarget, boolean isRelation, int position) {
+    private BytesRef getPayload(int targetPos, boolean isRelation, int currentAndSourceStartPos) {
         BytesRef payload;
         if (isRelation) {
-            boolean onlyHasTarget = position < 0; // standoff root annotation
+            boolean onlyHasTarget = currentAndSourceStartPos < 0; // standoff root annotation
             if (onlyHasTarget)
-                position = spanEndOrRelTarget;
-            RelationInfo info = new RelationInfo(onlyHasTarget, position, position + 1, spanEndOrRelTarget, spanEndOrRelTarget
-                    + 1);
-            payload = info.serialize(position);
+                currentAndSourceStartPos = targetPos;
+            RelationInfo info = new RelationInfo(onlyHasTarget,
+                    currentAndSourceStartPos, currentAndSourceStartPos + 1,
+                    targetPos, targetPos + 1);
+            payload = info.serialize();
         } else
-            payload = PayloadUtils.tagEndPositionPayload(position, spanEndOrRelTarget, getIndexType());
+            payload = PayloadUtils.tagEndPositionPayload(currentAndSourceStartPos, targetPos, getIndexType());
         return payload;
     }
 

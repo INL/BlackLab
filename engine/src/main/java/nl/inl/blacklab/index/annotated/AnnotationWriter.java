@@ -33,12 +33,6 @@ import nl.inl.util.CollUtil;
  */
 public class AnnotationWriter {
 
-    /** Where do we index relations? If true, index at source or target (start),
-     * whichever comes first in the document. If false, index at the source start position.
-     * This affects whether we have to sort relations matches (if true, we don't need
-     * to sort spanMode == full; if false, we don't need to sort spanMode == source) */
-    public static final boolean INDEX_AT_FIRST_POS_IN_DOC = false;
-
     /** Maximum length a value is allowed to be. */
     private static final int MAXIMUM_VALUE_LENGTH = 1000;
 
@@ -427,57 +421,47 @@ public class AnnotationWriter {
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo matchInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
         String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : RelationUtil.inlineTagFullType(tagName);
-        return indexRelation(fullRelationType, startPos, attributes, indexType, matchInfo);
+        return indexRelation(fullRelationType, attributes, indexType, matchInfo);
     }
 
-    public int indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd,
+    public int indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+        RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
 
-        int indexAt;
-        // Where should we index relations?
-        // (where we index affects whether we have to sort)
-        if (INDEX_AT_FIRST_POS_IN_DOC) {
-            // Index at the start of the source or target, whichever comes first
-            // this way, we don't have to sort if we need the full span, but we will
-            // have to sort for source or target
-            indexAt = Math.min(sourceStart, targetStart);
-        } else {
-            // Index at the source start position. This way, we don't have to sort
-            // if we need the source, but we will have to sort for the target or full span
-            // (because target position can be before source).
-            indexAt = sourceStart;
-        }
-
-        return indexRelation(fullRelationType, indexAt, attributes, indexType, matchInfo);
+        // We index relations at the source start position. This way, we don't have to sort
+        // if we need the source (which is what we usually use), but we will have to sort
+        // for the target or full span (because target position can be before source).
+        // (we also might not even need to decode the payload if we ONLY need the source
+        //  start position)
+        return indexRelation(fullRelationType, attributes, indexType, matchInfo);
     }
 
-    private int indexRelation(String fullRelationType, int indexAt, Map<String, String> attributes,
+    private int indexRelation(String fullRelationType, Map<String, String> attributes,
             BlackLabIndex.IndexType indexType, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             if (relationInfo.getType() != MatchInfo.Type.INLINE_TAG) {
                 // Classic external index doesn't support relations; ignore
-                return indexAt;
+                return relationInfo.getSourceStart();
             }
             // classic external index; tag name and attributes are indexed separately
             payload = relationInfo.getSpanEnd() >= 0 ?
                     PayloadUtils.tagEndPositionPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
                             BlackLabIndex.IndexType.EXTERNAL_FILES) :
                     null;
-            addValueAtPosition(fullRelationType, indexAt, payload);
+            addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
             tagIndexInAnnotation = lastValueIndex();
             for (Map.Entry<String, String> e: attributes.entrySet()) {
                 String term = RelationUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
                         BlackLabIndex.IndexType.EXTERNAL_FILES);
-                addValueAtPosition(term, indexAt, null);
+                addValueAtPosition(term, relationInfo.getSourceStart(), null);
             }
         } else {
             // integrated index; everything is indexed as a single term
             String value = RelationUtil.indexTerm(fullRelationType, attributes);
-            payload = relationInfo.serialize(indexAt);
-            addValueAtPosition(value, indexAt, payload);
+            payload = relationInfo.serialize();
+            addValueAtPosition(value, relationInfo.getSourceStart(), payload);
             tagIndexInAnnotation = lastValueIndex();
         }
         return tagIndexInAnnotation;

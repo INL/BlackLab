@@ -23,11 +23,11 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     private final int NOT_YET_NEXTED = -1;
 
-    /** Span end position (or NOT_YET_NEXTED) */
-    private int endPos = NOT_YET_NEXTED;
-
     /** Source and target for this relation */
     private final RelationInfo relationInfo = new RelationInfo();
+
+    /** Have we fetched relation info (decoded payload) for current hit yet? */
+    private boolean fetchedRelationInfo = false;
 
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
     private final boolean payloadIndicatesPrimaryValues;
@@ -47,6 +47,12 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** Name to capture the relation info as */
     private final String captureAs;
 
+    /** Can our spans include root relations, or are we sure it doesn't?
+     * If it might include root relations, we need to check for this in accept(),
+     * forcing us to decode the payload.
+     */
+    private final boolean spansMayIncludeRoots = true;
+
     /**
      * Construct SpansRelations.
      *
@@ -59,7 +65,6 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      * @param direction direction of the relation
      * @param spanMode what span to return for the relations found
-     * @param uniqueId unique id for this SpansRelations (to avoid match info name collision)
      * @param captureAs name to capture the relation info as, or empty not to capture
      */
     public SpansRelations(String relationType, BLSpans relationsMatches,
@@ -82,7 +87,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
         if (!captureAs.isEmpty())
-            matchInfo[groupIndex] = this.relationInfo.copy();
+            matchInfo[groupIndex] = getRelationInfo().copy();
     }
 
     @Override
@@ -95,20 +100,37 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @return current relation info object; don't store or modify this, use .copy() first!
      */
     public RelationInfo getRelationInfo() {
+        // Decode the payload if we haven't already
+        if (!fetchedRelationInfo) {
+            collector.reset();
+            // NOTE: relationsMatches is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
+            //   each relation gets a payload, so there should always be one
+            try {
+                in.collect(collector);
+                byte[] payload = collector.getPayloads().iterator().next();
+                ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
+                relationInfo.deserialize(in.startPosition(), dataInput);
+            } catch (IOException e) {
+                throw new BlackLabRuntimeException("Error getting payload");
+            }
+            if (collector.term != null) // can happen during testing...
+                relationInfo.setIndexedTerm(collector.term.text());
+            fetchedRelationInfo = true;
+        }
         return relationInfo;
     }
 
     @Override
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
-        startPos = endPos = NOT_YET_NEXTED;
+        startPos = NOT_YET_NEXTED;
         return super.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
-        startPos = endPos = NOT_YET_NEXTED;
+        startPos = NOT_YET_NEXTED;
         return super.advance(target);
     }
 
@@ -122,16 +144,15 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         while (true) {
             if (in.nextStartPosition() == NO_MORE_POSITIONS) {
                 startPos = NO_MORE_POSITIONS;
-                endPos = NO_MORE_POSITIONS;
                 return startPos;
             }
-            switch (accept(this)) {
+            switch (accept(in)) {
             case YES:
                 return startPos;
             case NO:
                 continue;
             case NO_MORE_IN_CURRENT_DOC:
-                startPos = endPos = NO_MORE_POSITIONS;
+                startPos = NO_MORE_POSITIONS;
                 return startPos;
             }
         }
@@ -146,21 +167,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         }
         if (direction == Direction.FORWARD && spanMode == RelationInfo.SpanMode.FULL_SPAN || spanMode == RelationInfo.SpanMode.SOURCE) {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
-            super.advanceStartPosition(target);
-            if (startPos == NO_MORE_POSITIONS) {
-                endPos = NO_MORE_POSITIONS;
-                return NO_MORE_POSITIONS;
-            }
-            switch (accept(this)) {
-            case YES:
-                break;
-            case NO:
-                nextStartPosition();
-            case NO_MORE_IN_CURRENT_DOC:
-                startPos = endPos = NO_MORE_POSITIONS;
-                return startPos;
-            }
-            return startPos;
+            return super.advanceStartPosition(target);
         }
         // Our spans may not be in order; use the slower implementation
         return BLSpans.naiveAdvanceStartPosition(this, target);
@@ -170,13 +177,16 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     public int endPosition() {
         if (atFirstInCurrentDoc)
             return -1;
-        return startPos == NO_MORE_POSITIONS ? NO_MORE_POSITIONS : endPos;
+        return startPos == NO_MORE_POSITIONS ? NO_MORE_POSITIONS : getRelationInfo().spanEnd(spanMode);
     }
 
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
-        fetchRelationInfo(); // decode the payload
-        if (relationInfo.isRoot() && spanMode == RelationInfo.SpanMode.SOURCE) {
+        fetchedRelationInfo = false; // only decode payload if we need to
+
+        getRelationInfo(); // TEST
+
+        if (spansMayIncludeRoots && spanMode == RelationInfo.SpanMode.SOURCE && getRelationInfo().isRoot()) {
             // Need source, but this has no source
             return FilterSpans.AcceptStatus.NO;
         }
@@ -185,13 +195,13 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         boolean acc;
         switch (direction) {
         case ROOT:
-            acc = relationInfo.isRoot();
+            acc = getRelationInfo().isRoot();
             break;
         case FORWARD:
-            acc = relationInfo.getSourceStart() <= relationInfo.getTargetStart();
+            acc = getRelationInfo().getSourceStart() <= getRelationInfo().getTargetStart();
             break;
         case BACKWARD:
-            acc = relationInfo.getSourceStart() >= relationInfo.getTargetStart();
+            acc = getRelationInfo().getSourceStart() >= getRelationInfo().getTargetStart();
             break;
         case BOTH_DIRECTIONS:
             acc = true;
@@ -200,27 +210,17 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             throw new IllegalArgumentException("Unknown filter: " + direction);
         }
         if (acc) {
-            startPos = relationInfo.spanStart(spanMode);
-            endPos = relationInfo.spanEnd(spanMode);
+            // We have a match. Set the start position.
+            // (if span mode is SOURCE, we don't need to decode the payload)
+
+            if (spanMode == RelationInfo.SpanMode.SOURCE) {
+                assert candidate.startPosition() == getRelationInfo().spanStart(spanMode);
+            }
+
+            startPos = spanMode == RelationInfo.SpanMode.SOURCE ? candidate.startPosition() :
+                    getRelationInfo().spanStart(spanMode);
         }
         return acc ? FilterSpans.AcceptStatus.YES : FilterSpans.AcceptStatus.NO;
-    }
-
-    private void fetchRelationInfo() {
-        try {
-            // Fetch the payload
-            collector.reset();
-            // NOTE: relationsMatches is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
-            //   each relation gets a payload, so there should always be one
-            in.collect(collector);
-            byte[] payload = collector.getPayloads().iterator().next();
-            ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
-            relationInfo.deserialize(in.startPosition(), dataInput);
-            if (collector.term != null) // can happen during testing...
-                relationInfo.setIndexedTerm(collector.term.text());
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException("Error getting payload");
-        }
     }
 
     /** SpanCollector that collects both the the payload and term for the current match. */

@@ -190,7 +190,7 @@ public class MockSpans extends BLSpans {
         for (int i = 0; i < aEnd.length; i++) {
             RelationInfo relInfo = new RelationInfo(false, aStart[i], aStart[i], aEnd[i], aEnd[i],
                     "test", null);
-            BytesRef payload = relInfo.serialize(aStart[i]);
+            BytesRef payload = relInfo.serialize();
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
             this.payloads[i] = payload;
@@ -200,7 +200,7 @@ public class MockSpans extends BLSpans {
     private void setPayloadsMatchInfo(int[] aStart, int[] aEnd, RelationInfo[] relationInfo) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            this.payloads[i] = relationInfo[i].serialize(aStart[i]);
+            this.payloads[i] = relationInfo[i].serialize();
         }
     }
 

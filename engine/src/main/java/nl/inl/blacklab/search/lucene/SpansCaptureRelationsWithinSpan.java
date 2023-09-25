@@ -65,24 +65,27 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
         // (we can only capture relations from match info captured within own clause)
         candidate.getMatchInfo(matchInfo);
         MatchInfo mi = matchInfo[toCaptureIndex];
-        int start = mi.getSpanStart();
-        int end = mi.getSpanEnd();
+        // We can only capture relations if we have the span
+        if (mi != null) {
+            int start = mi.getSpanStart();
+            int end = mi.getSpanEnd();
 
-        // Capture all relations within the toCapture span
-        capturedRelations.clear();
-        int docId = relations.docID();
-        if (docId < candidate.docID())
-            docId = relations.advance(candidate.docID());
-        if (docId == candidate.docID()) {
-            if (relations.startPosition() < start)
-                relations.advanceStartPosition(start);
-            while (relations.endPosition() < end) {
-                capturedRelations.add(relations.getRelationInfo().copy());
-                relations.nextStartPosition();
+            // Capture all relations within the toCapture span
+            capturedRelations.clear();
+            int docId = relations.docID();
+            if (docId < candidate.docID())
+                docId = relations.advance(candidate.docID());
+            if (docId == candidate.docID()) {
+                if (relations.startPosition() < start)
+                    relations.advanceStartPosition(start);
+                while (relations.endPosition() < end) {
+                    capturedRelations.add(relations.getRelationInfo().copy());
+                    relations.nextStartPosition();
+                }
             }
+            capturedRelations.sort(RelationInfo::compareTo);
+            matchInfo[captureAsIndex] = new RelationListInfo(capturedRelations);
         }
-        capturedRelations.sort(RelationInfo::compareTo);
-        matchInfo[captureAsIndex] = new RelationListInfo(capturedRelations);
 
         return FilterSpans.AcceptStatus.YES;
     }

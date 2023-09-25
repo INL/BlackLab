@@ -40,15 +40,12 @@ public class TestMatchInfo {
             }
             RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
 
-            // Randomly index at either source or target
-            int currentPos = random.nextBoolean() ? sourceStart : targetStart;
-
             // Encode the payload
-            byte[] payload = matchInfo.serialize(currentPos).bytes;
+            byte[] payload = matchInfo.serialize().bytes;
 
             // Decode it again
             RelationInfo decoded = new RelationInfo();
-            decoded.deserialize(currentPos, new ByteArrayDataInput(payload));
+            decoded.deserialize(sourceStart, new ByteArrayDataInput(payload));
 
             Assert.assertEquals(matchInfo, decoded);
         }

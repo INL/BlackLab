@@ -126,8 +126,10 @@ class SpansSequenceSimple extends BLConjunctionSpans {
         if (pos != NO_MORE_POSITIONS) {
             atFirstInCurrentDoc = true;
             assert pos != -1;
-            assert subSpans[0].startPosition() >= 0 && subSpans[0].startPosition() != NO_MORE_POSITIONS;
-            assert subSpans[1].startPosition() >= 0 && subSpans[1].startPosition() != NO_MORE_POSITIONS;
+            assert subSpans[0].startPosition() >= 0;
+            assert subSpans[0].startPosition() != NO_MORE_POSITIONS;
+            assert subSpans[1].startPosition() >= 0;
+            assert subSpans[1].startPosition() != NO_MORE_POSITIONS;
             return true;
         }
         return false;
