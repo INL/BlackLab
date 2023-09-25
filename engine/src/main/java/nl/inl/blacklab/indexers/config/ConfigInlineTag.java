@@ -1,5 +1,10 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Configuration for an XML element occurring in an annotated field.
  */
@@ -22,6 +27,8 @@ public class ConfigInlineTag {
      * (Used for tei:anchor, so end position is not used)
      */
     private String tokenIdPath = null;
+
+    private Set<String> excludeAttributes = Collections.emptySet();
 
     public ConfigInlineTag() {
     }
@@ -66,5 +73,13 @@ public class ConfigInlineTag {
     @Override
     public String toString() {
         return "ConfigInlineTag [displayAs=" + displayAs + "]";
+    }
+
+    public void setExcludeAttributes(List<String> exclAttr) {
+        this.excludeAttributes = new HashSet<>(exclAttr);
+    }
+
+    public Set<String> getExcludeAttributes() {
+        return excludeAttributes;
     }
 }

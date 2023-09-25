@@ -48,13 +48,16 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     /** How we collect inline tags and (optionally) their token ids (for standoff annotations) */
     private static class InlineInfo implements Comparable<InlineInfo> {
 
-        private NodeInfo nodeInfo;
+        private final NodeInfo nodeInfo;
 
-        private String tokenId;
+        private final String tokenId;
 
-        public InlineInfo(NodeInfo nodeInfo, String tokenId) {
+        private final ConfigInlineTag config;
+
+        public InlineInfo(NodeInfo nodeInfo, String tokenId, ConfigInlineTag config) {
             this.nodeInfo = nodeInfo;
             this.tokenId = tokenId;
+            this.config = config;
         }
 
         @Override
@@ -72,6 +75,10 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
         public int compareOrder(NodeInfo word) {
             return nodeInfo.compareOrder(word);
+        }
+
+        public boolean indexAttribute(String displayName) {
+            return !config.getExcludeAttributes().contains(displayName);
         }
     }
 
@@ -281,7 +288,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             String tokenIdXPath = inlineTag.getTokenIdPath();
             xpathForEach(inlineTag.getPath(), container, (tag) -> {
                 String tokenId = tokenIdXPath == null ? null : xpathValue(tokenIdXPath, tag);
-                inlines.add(new InlineInfo(tag, tokenId));
+                inlines.add(new InlineInfo(tag, tokenId, inlineTag));
             });
         }
         Collections.sort(inlines);
@@ -306,22 +313,26 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         // Check if this word is within the inline, if so this word will always be the first word in
         // the inline because we only process each inline once.
         NodeInfo nodeInfo = currentInline.getNodeInfo();
-        AxisIterator descendants = nodeInfo.iterateAxis(Axis.DESCENDANT.getAxisNumber());
         boolean isDescendant = false;
         NodeInfo next;
-        while ((next = descendants.next()) != null) {
-            if (next.equals(word)) {
-                isDescendant = true;
-                break;
+        try (AxisIterator descendants = nodeInfo.iterateAxis(Axis.DESCENDANT.getAxisNumber())) {
+            while ((next = descendants.next()) != null) {
+                if (next.equals(word)) {
+                    isDescendant = true;
+                    break;
+                }
             }
         }
         if (isDescendant) {
             // Yes, word is a descendant.   (i.e. not a self-closing inline tag?)
             // Find the attributes and index the tag.
             Map<String, String> atts = new HashMap<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS);
-            AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber());
-            while ((next = attributes.next()) != null) {
-                atts.put(next.getDisplayName(),next.getStringValue());
+            try (AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber())) {
+                while ((next = attributes.next()) != null) {
+                    if (currentInline.indexAttribute(next.getDisplayName())) {
+                        atts.put(next.getDisplayName(), next.getStringValue());
+                    }
+                }
             }
             inlineTag(nodeInfo.getDisplayName(), true, atts);
 
@@ -343,7 +354,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     /**
      * Process an annotation at the current position.
-     *
+     * <p>
      * If this is a span annotation (spanEndPos >= 0), and the span looks like this:
      * <code>&lt;named-entity type="person"&gt;Santa Claus&lt;/named-entity&gt;</code>,
      * then spanName should be "named-entity" and annotation name should be "type" (and

@@ -161,8 +161,6 @@ public class ConfigInputFormat {
      *
      * @param file the file to read, the name of this file (minus the .blf.*
      *            extension) will be used as this format's name.
-     * @param finder finder to locate the baseFormat of this config, if set, may be
-     *            null if no baseFormat is required
      * @throws IOException on error
      */
     public ConfigInputFormat(File file) throws IOException {

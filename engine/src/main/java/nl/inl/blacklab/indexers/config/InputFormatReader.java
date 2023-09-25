@@ -548,6 +548,11 @@ public class InputFormatReader extends YamlJsonReader {
                 case "tokenIdPath":
                     t.setTokenIdPath(str(e));
                     break;
+                case "excludeAttributes":
+                    List<String> exclAttr = new ArrayList<>();
+                    readStringList(e, exclAttr);
+                    t.setExcludeAttributes(exclAttr);
+                    break;
                 default:
                     throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
                 }
