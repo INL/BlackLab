@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -142,7 +143,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             charPositions = new CharPositionsTracker(documentContent);
             contents = SaxonHelper.parseDocument(
                     new CharArrayReader(documentContent), new MyContentHandler(charPositions));
-            finder = new XPathFinder(SaxonHelper.getXPathFactory(),
+            XPath xPath = SaxonHelper.getXPathFactory().newXPath();
+            finder = new XPathFinder(xPath,
                     config.isNamespaceAware() ? config.getNamespaces() : null);
             document = new DocumentReference(documentContent, file);
         } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {

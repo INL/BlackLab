@@ -50,7 +50,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * Position of start tags and their index in the annotation arrays, so we can add
      * payload when we find the end tags
      */
-    static final class OpenTagInfo {
+    private static final class OpenTagInfo {
 
         public final String name;
 

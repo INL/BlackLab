@@ -11,7 +11,6 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.s9api.Processor;
@@ -67,9 +66,9 @@ public class XPathFinder {
      */
     private Map<String, XPathExpression> compiledXPaths = new HashMap<>();
 
-    public XPathFinder(XPathFactory factory, Map<String, String> namespaces) {
+    public XPathFinder(XPath xPath, Map<String, String> namespaces) {
         // setup namespace aware xpath that will compile xpath expressions
-        xPath = factory.newXPath();
+        this.xPath = xPath;
         if (namespaces != null && !namespaces.isEmpty()) {
             MyNamespaceContext context = new MyNamespaceContext();
             context.add("xml", "http://www.w3.org/XML/1998/namespace");
