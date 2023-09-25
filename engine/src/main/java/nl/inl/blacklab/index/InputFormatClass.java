@@ -129,4 +129,10 @@ public class InputFormatClass implements InputFormat {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
+
+    @Override
+    public String toString() {
+        return "class-based input format '" + formatIdentifier +
+                "' from class " + docIndexerClass.getCanonicalName();
+    }
 }

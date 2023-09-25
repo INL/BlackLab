@@ -111,4 +111,12 @@ public class InputFormatWithConfig implements InputFormat {
         d.setDocument(b, cs);
         return d;
     }
+
+    @Override
+    public String toString() {
+        File file = formatFile == null ? getConfig().getReadFromFile() : formatFile;
+        if (file == null)
+            return "(config-based input format without a file reference)";
+        return "config-based input format '" + formatIdentifier + "' (read from " + file + ")";
+    }
 }

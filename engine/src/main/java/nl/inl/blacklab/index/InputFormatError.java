@@ -66,4 +66,9 @@ public class InputFormatError implements InputFormat {
     public String getErrorMessage() {
         return errorMessage;
     }
+
+    @Override
+    public String toString() {
+        return "(error with format " + getIdentifier() + ": " + getErrorMessage() + ")";
+    }
 }
