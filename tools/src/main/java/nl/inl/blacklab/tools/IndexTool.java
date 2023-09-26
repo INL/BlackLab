@@ -120,6 +120,15 @@ public class IndexTool {
                 case "nothreads":
                     numberOfThreadsToUse = 1;
                     break;
+                case "format-dir":
+                    if (i + 1 == args.length) {
+                        System.err.println("--format-dir option needs argument");
+                        usage();
+                        return;
+                    }
+                    DocumentFormats.addConfigFormatsInDirectories(List.of(new File(args[i + 1])));
+                    i++;
+                    break;
                 case "linked-file-dir":
                     if (i + 1 == args.length) {
                         System.err.println("--linked-file-dir option needs argument");
@@ -422,6 +431,7 @@ public class IndexTool {
                         + "Options:\n"
                         + "  --maxdocs <n>                  Stop after indexing <n> documents\n"
                         + "  --linked-file-dir <d>          Look in directory <d> for linked (e.g. metadata) files\n"
+                        + "  --format-dir <d>               Look in directory <d> for formats (i.e. .blf.yaml files)\n"
                         + "  --nothreads                    Disable multithreaded indexing (enabled by default)\n"
                         + "  --threads <n>                  Number of threads to use\n"
                         + "  --index-type <t>               Set the index type, external (old) or integrated (new)\n"
