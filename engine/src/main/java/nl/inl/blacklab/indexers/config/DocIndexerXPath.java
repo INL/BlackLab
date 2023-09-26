@@ -295,7 +295,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected void findAndIndexSubannotation(ConfigAnnotation toIndex, T context, ConfigAnnotation indexAs,
             int position, int spanEndPos, AnnotationHandler handler,
             ConfigAnnotation parent, Collection<String> parentValues) {
-        Collection<String> unprocessed = canReuseParentValues(indexAs, toIndex.getValuePath(), parent) ?
+        Collection<String> unprocessed = !toIndex.isForEach() && canReuseParentValues(indexAs, toIndex.getValuePath(), parent) ?
                 parentValues :
                 findAnnotationMatches(indexAs, toIndex.getValuePath(), context);
         Collection<String> processedValues = processAnnotationValues(indexAs, unprocessed);

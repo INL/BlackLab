@@ -430,6 +430,7 @@ public class InputFormatReader extends YamlJsonReader {
                 annot.setDescription(str(e));
                 break;
             case "basePath":
+                if (parentAnnot != null) throw new InvalidInputFormatConfig("Subannotations may not have their own basePath" + inFormat());
                 annot.setBasePath(str(e));
                 break;
             case "sensitivity":
