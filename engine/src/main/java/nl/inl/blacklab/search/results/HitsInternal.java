@@ -11,11 +11,11 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A list of simple hits.
- *
+ * <p>
  * Contrary to {@link Hits}, this only contains doc, start and end
  * for each hit, so no captured groups information, and no other
  * bookkeeping (hit/doc retrieved/counted stats, hasAscendingLuceneDocIds, etc.).
- *
+ * <p>
  * This is a read-only interface.
  */
 public interface HitsInternal extends Iterable<EphemeralHit> {
@@ -118,7 +118,7 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
 
     /**
      * Get extra information for a match, such as captured groups and relations.
-     *
+     * <p>
      * Only available if the query captures such information.
      *
      * @return extra information for a match, or null if none available

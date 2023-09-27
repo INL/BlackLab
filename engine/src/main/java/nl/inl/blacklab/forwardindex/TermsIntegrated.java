@@ -225,7 +225,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
                 // Keep the same sort position because the terms are the same
                 sortPosition = prevSortPosition;
                 // This should never happen with sensitive sort (all values should be unique)
-                assert cmp == CMP_TERM_INSENSITIVE;
+                assert cmp == CMP_TERM_INSENSITIVE : "Duplicate term in sensitive sort: " + terms[prevTermId].term + " vs. " + terms[termId].term;
             } else {
                 // Remember the sort position in case the next term is identical
                 prevSortPosition = sortPosition;
