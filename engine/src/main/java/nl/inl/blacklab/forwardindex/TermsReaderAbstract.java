@@ -14,6 +14,20 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
 
+/**
+ * Abstrct base class for TermsReader and TermsIntegrated.
+ *
+ * Each term gets a sensitive and insensitive sort position.
+ * Multiple terms may get the same sort position, if those terms
+ * are considered equal by the collators involved.
+ * For each sort position, a "group id" is assigned, which is
+ * actually an offset into the groupId2TermIds array. At this
+ * offset is the number of terms n in the group, and then the
+ * n term ids themselves.
+ * Finally, there's a big character array containing the term
+ * string data, and an offsets array that specified for each term id
+ * where that term string begins in the character array.
+ */
 public abstract class TermsReaderAbstract implements Terms {
 
     /** Will automatically be set to true if assertions are enabled (-ea). */
@@ -28,14 +42,10 @@ public abstract class TermsReaderAbstract implements Terms {
     /** How many terms total are there? (always valid) */
     private int numberOfTerms;
 
-    /**
-     * Collator to use for sensitive string comparisons
-     */
+    /** Collator to use for sensitive string comparisons */
     protected final Collator collator;
 
-    /**
-     * Collator to use for insensitive string comparisons
-     */
+    /** Collator to use for insensitive string comparisons */
     protected final Collator collatorInsensitive;
 
     /** Insensitive sort position to start index of group in groupId2TermIds */
@@ -52,7 +62,7 @@ public abstract class TermsReaderAbstract implements Terms {
 
     /**
      * Contains a leading int specifying how many ids for a given group, followed by the list of ids.
-     * For a group of size 2 containing the ids 4 and 8, contains [...2, 4, 8, ...]
+     * For a group of size 2 containing the ids 4 and 8, contains [..., 2, 4, 8, ...]
      * {@link #insensitivePosition2GroupId} and {@link #sensitivePosition2GroupId} contain the index of the leading int
      * in this array for all sensitive/insensitive sorting positions respectively.
      */
@@ -77,29 +87,49 @@ public abstract class TermsReaderAbstract implements Terms {
             int[] termId2InsensitivePosition) {
 
         numberOfTerms = terms.length;
+        this.termId2SensitivePosition = termId2SensitivePosition;
+        this.termId2InsensitivePosition = termId2InsensitivePosition;
+
+        assert this.termId2SensitivePosition.length == numberOfTerms;
+        assert this.termId2InsensitivePosition.length == numberOfTerms;
 
         TIntObjectHashMap<IntList> insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
         int numGroupsThatAreNotSizeOne = 0;
         try (BlockTimer ignored = BlockTimer.create(LOG_TIMINGS, name + ": finish > invert mapping")) {
             // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
-            for (int termId = 0; termId < termId2InsensitivePosition.length; ++termId) {
-                int insensitivePosition = termId2InsensitivePosition[termId];
-                IntList v = new IntArrayList(1);
-                v.add(termId);
+            IntArrayList newList = new IntArrayList(1);
+            for (int termId = 0; termId < this.termId2InsensitivePosition.length; ++termId) {
+                int insensitivePosition = this.termId2InsensitivePosition[termId];
 
-                IntList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
-                if (prev != null) {
-                    v.addAll(prev);
-
-                    if (prev.size() == 1)
-                        ++numGroupsThatAreNotSizeOne;
+                IntList termIdsForInsensitivePosition =
+                        insensitivePosition2TermIds.putIfAbsent(insensitivePosition, newList);
+                if (termIdsForInsensitivePosition == null) {
+                    // There was no list associated with this insensitivePosition yet, so our new list was used.
+                    termIdsForInsensitivePosition = newList;
+                    newList = new IntArrayList(1); // prepare a new list for next time
                 }
+                // add at index 0 to stay consistent with previous code...
+                // (probably not needed? replace with just add()? then the first term in the group will be the first
+                //  term encountered as opposed to the last, makes more sense?)
+                termIdsForInsensitivePosition.add(0, termId);
+                if (termIdsForInsensitivePosition.size() == 2)
+                    ++numGroupsThatAreNotSizeOne;
+
+//                IntList v = new IntArrayList(1);
+//                v.add(termId);
+//                IntList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
+//                if (prev != null) {
+//                    v.addAll(prev);
+//                    if (prev.size() == 1)
+//                        ++numGroupsThatAreNotSizeOne;
+//                }
+
+
             }
         }
 
         try (BlockTimer ignored = BlockTimer.create(LOG_TIMINGS, name + ": finish > fillTermDataGroups")) {
-            fillTermDataGroups(terms.length, termId2SensitivePosition, termId2InsensitivePosition,
-                    insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
+            fillTermDataGroups(insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
         }
 
         if (DEBUGGING && DEBUG_VALIDATE_SORT) {
@@ -149,31 +179,31 @@ public abstract class TermsReaderAbstract implements Terms {
      *
      * @param numGroupsThatAreNotSizeOne in the insensitive hashmap - used to initialize the groupId2termIds map at the right length.
      */
-    protected void fillTermDataGroups(int numberOfTerms, int[] termId2SortPositionSensitive,
-            int[] termId2SortPositionInsensitive, TIntObjectHashMap<IntList> insensitiveSortPosition2TermIds,
+    protected void fillTermDataGroups(TIntObjectHashMap<IntList> insensitivePosition2TermIds,
             int numGroupsThatAreNotSizeOne) {
+
         // This is a safe upper bound: one group per sensitive (with one entry) = 2*numberOfTerms.
         // Then for the insensitive side, one group per entry in insensitiveSortPosition2TermIds + 1 int for each term
         // in reality this is the maximum upper bound.
-        // to accurately do this we'd need to know the number of groups with only one entry
+        // Because we know how many insensitive groups are size 1 (and can therefore re-use the sensitive group),
+        // we can lower it a bit.
+        int numberOfIntsForSensitiveEntries = numberOfTerms * 2;
+        int numInsensitiveGroupsOfSizeOne = insensitivePosition2TermIds.size() - numGroupsThatAreNotSizeOne;
+        int numTermsInGroupsAboveSizeOne = numberOfTerms - numInsensitiveGroupsOfSizeOne;
+        int numberOfIntsForInsensitiveEntries = numGroupsThatAreNotSizeOne + numTermsInGroupsAboveSizeOne;
+        int maxNumberOfGroups = numberOfIntsForSensitiveEntries + numberOfIntsForInsensitiveEntries;
 
-        int numGroupsOfSizeOne = insensitiveSortPosition2TermIds.size() - numGroupsThatAreNotSizeOne;
-        int numTermsInGroupsAboveSizeOne = numberOfTerms - numGroupsOfSizeOne;
+        this.groupId2TermIds = new int[maxNumberOfGroups];
 
-        this.termId2SensitivePosition = termId2SortPositionSensitive;
-        this.termId2InsensitivePosition = termId2SortPositionInsensitive;
-        // to be filled
-        this.groupId2TermIds = new int[numberOfTerms * 2 /* sensitive groups - all size 1 */ + numGroupsThatAreNotSizeOne
-                + numTermsInGroupsAboveSizeOne];
         this.insensitivePosition2GroupId = new int[numberOfTerms]; // NOTE: since not every insensitive sort position exists, this will have empty spots
-        this.sensitivePosition2GroupId = new int[numberOfTerms];
-
         Arrays.fill(this.insensitivePosition2GroupId, -1);
+
+        this.sensitivePosition2GroupId = new int[numberOfTerms];
         Arrays.fill(this.sensitivePosition2GroupId, -1);
 
         // First create all sensitive entries
         int offset = 0;
-        for (int termId = 0; termId < termId2SensitivePosition.length; ++termId) {
+        for (int termId = 0; termId < numberOfTerms; ++termId) {
             final int positionSensitive = termId2SensitivePosition[termId];
 
             this.sensitivePosition2GroupId[positionSensitive] = offset;
@@ -182,7 +212,7 @@ public abstract class TermsReaderAbstract implements Terms {
         }
 
         // now place all insensitives
-        TIntObjectIterator<IntList> it = insensitiveSortPosition2TermIds.iterator();
+        TIntObjectIterator<IntList> it = insensitivePosition2TermIds.iterator();
         while (it.hasNext()) {
             it.advance();
 
@@ -204,8 +234,7 @@ public abstract class TermsReaderAbstract implements Terms {
             this.insensitivePosition2GroupId[insensitivePosition] = offset;
             this.groupId2TermIds[offset++] = numTermIds;
             for (int i = 0; i < numTermIds; ++i) {
-                groupId2TermIds[offset++] = termIds.getInt(
-                        i); // NOTE: became termIds.getInt(0) in move to IntArrayList; probably a typo?
+                groupId2TermIds[offset++] = termIds.getInt(i);
             }
         }
 
