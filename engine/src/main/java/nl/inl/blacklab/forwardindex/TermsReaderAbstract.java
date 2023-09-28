@@ -269,7 +269,7 @@ public abstract class TermsReaderAbstract implements Terms {
         this.termId2CharDataOffset = new long[numberOfTerms];
         for (int i = 0; i < numberOfTerms; ++i) {
             this.termId2CharDataOffset[i] = bytesWritten;
-            byte[] bytes = terms[i].getBytes(DEFAULT_CHARSET);
+            byte[] bytes = terms[i].getBytes(TERMS_CHARSET);
             byte[][] bb = BigArrays.wrap(bytes);
             termCharData.addElements(bytesWritten, bb);
             bytesWritten += bytes.length;
@@ -330,13 +330,13 @@ public abstract class TermsReaderAbstract implements Terms {
             return "";
         }
         boolean isLastId = id == (this.termId2CharDataOffset.length - 1);
-        long start = this.termId2CharDataOffset[id];
-        long end = (isLastId ? this.termCharData.size64() : this.termId2CharDataOffset[id+1]);
-        int length = (int) (end-start);
+        long startOffsetBytes = this.termId2CharDataOffset[id];
+        long endOffsetBytes = (isLastId ? this.termCharData.size64() : this.termId2CharDataOffset[id+1]);
+        int termLengthBytes = (int) (endOffsetBytes - startOffsetBytes);
 
-        byte[] out = new byte[length];
-        this.termCharData.getElements(start, out, 0, length);
-        return new String(out, DEFAULT_CHARSET);
+        byte[] termBytes = new byte[termLengthBytes];
+        this.termCharData.getElements(startOffsetBytes, termBytes, 0, termLengthBytes);
+        return new String(termBytes, TERMS_CHARSET);
     }
 
     @Override

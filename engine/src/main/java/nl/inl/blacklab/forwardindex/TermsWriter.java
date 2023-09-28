@@ -143,7 +143,7 @@ class TermsWriter implements Terms {
                     for (Map.Entry<CollationKey, Integer> entry : termIndex.entrySet()) {
                         String term = entry.getKey().getSourceString();
                         terms[entry.getValue()] = term;
-                        termStringsByteSize += term.getBytes(DEFAULT_CHARSET).length;
+                        termStringsByteSize += term.getBytes(TERMS_CHARSET).length;
                     }
 
                     // Calculate the file length and map the file
@@ -174,7 +174,7 @@ class TermsWriter implements Terms {
                         long blockSizeBytes = 2 * Integer.BYTES;
                         while (currentTerm < n) {
                             termStringOffsets[currentTerm] = currentOffset;
-                            byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
+                            byte[] termBytes = terms[currentTerm].getBytes(TERMS_CHARSET);
                             long newBlockSizeBytes = blockSizeBytes + Integer.BYTES + termBytes.length; // block grows by 1 offset and this term's bytes
                             if (newBlockSizeBytes > maxBlockSize) {
                                 // Block is full. Write it and continue with next block.
