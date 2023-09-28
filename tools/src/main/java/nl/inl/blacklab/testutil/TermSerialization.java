@@ -2,12 +2,14 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.Collator;
 
 import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -41,6 +43,9 @@ public class TermSerialization {
         terms.indexOf(s, word, MatchSensitivity.INSENSITIVE);
         report("terms.indexOf insensitive", s);
 
+        Collators collators = fi.collators();
+        Collator collator = collators.get(MatchSensitivity.SENSITIVE);
+
         System.out.println("Checking these insensitive terms...");
         System.out.flush();
         IntIterator it = s.intIterator();
@@ -48,8 +53,9 @@ public class TermSerialization {
             int termId = it.next();
             String term = terms.get(termId);
             int termId2 = terms.indexOf(term);
-            if (termId != termId2) {
-                System.out.println("termId != termId2: " + termId + " != " + termId2 + " (term: " + term + ")");
+            String term2 = terms.get(termId2);
+            if (collator.compare(term, term2) != 0) {
+                System.out.println("term != term2: '" + term + "' != '" + term2 + "'");
             }
         }
 
@@ -59,8 +65,9 @@ public class TermSerialization {
         for (int termId = 0; termId < terms.numberOfTerms(); termId++) {
             String term = terms.get(termId);
             int termId2 = terms.indexOf(term);
-            if (termId != termId2) {
-                System.out.println("termId != termId2: " + termId + " != " + termId2 + " (term: " + term + ")");
+            String term2 = terms.get(termId2);
+            if (collator.compare(term, term2) != 0) {
+                System.out.println("term != term2: '" + term + "' != '" + term2 + "'");
                 System.out.flush();
             }
             n++;

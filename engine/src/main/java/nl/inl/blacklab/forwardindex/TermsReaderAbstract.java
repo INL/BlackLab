@@ -213,8 +213,7 @@ public abstract class TermsReaderAbstract implements Terms {
             }
             sortPosition2GroupOffset[sortPosition] = groupOffset;
         }
-
-        fixSortPosition2GroupOffsetArray(sortPosition2GroupOffset);
+        fixSortPosition2GroupOffsetArray(sortPosition2GroupOffset); // fix empty spaces in array so binary search works
         return sortPosition2GroupOffset;
     }
 
