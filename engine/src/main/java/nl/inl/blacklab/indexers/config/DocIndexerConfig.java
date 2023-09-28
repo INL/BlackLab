@@ -661,6 +661,12 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      */
     @Override
     public void addMetadataField(String name, String value) {
+        assert name != null;
+        assert value != null;
+        if (name.isEmpty()) {
+            warn("Tried to add metadata value but field name is empty, ignoring (value: " + value + ")");
+            return;
+        }
         this.sortedMetadataValues.computeIfAbsent(name, __ -> {
             ConfigMetadataField conf = this.config.getMetadataField(name);
             if (conf != null && conf.getSortValues()) {

@@ -145,7 +145,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     @Override
     protected VTDNav contextNodeWholeDocument() {
-        return null; // VTD indexer keeps current context globally
+        return finder.getNav(); // VTD indexer keeps current context globally
     }
 
     @Override

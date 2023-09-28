@@ -85,17 +85,13 @@ class XpathFinderVTD {
         fragPos = fragPosStack.remove(fragPosStack.size() - 1);
     }
 
-    public AutoPilot acquireExpression(String xpathExpr) {
-        return acquireExpression(xpathExpr, true);
-    }
-
     /**
      * Create AutoPilot and declare namespaces on it.
      *
      * @param xpathExpr xpath expression for the AutoPilot
      * @return the AutoPilot
      */
-    public AutoPilot acquireExpression(String xpathExpr, boolean resetNeeded) {
+    public AutoPilot acquireExpression(String xpathExpr) {
         AutoPilot ap = compiledXPaths.remove(xpathExpr);
         if (ap == null) {
             ap = new AutoPilot(nav);
@@ -112,8 +108,9 @@ class XpathFinderVTD {
                         e);
             }
         } else {
-            if (resetNeeded)
-                ap.resetXPath();
+            // We always reset this to be safe, even though it's only needed if the same xpath was previously used in
+            // a different context (e.g. @type might be used in different parts of the document).
+            ap.resetXPath();
         }
         autoPilotsInUse.put(ap, xpathExpr);
         return ap;
@@ -130,7 +127,7 @@ class XpathFinderVTD {
         AutoPilot results = acquireExpression(xPath);
         try {
             while (results.evalXPath() != -1)
-                handler.handle(null);
+                handler.handle(context);
         } catch (VTDException e) {
             // @@@ catch and add documentname to message?
             throw new MalformedInputFile("Error indexing file, XPath = " + xPath, e);
@@ -175,7 +172,7 @@ class XpathFinderVTD {
     public String xpathValue(String xpath, VTDNav context) {
         assert context == null || context == nav;
         // Resolve value using XPath
-        AutoPilot apLinkPath = acquireExpression(xpath, false);
+        AutoPilot apLinkPath = acquireExpression(xpath);
         String result = apLinkPath.evalXPathToString();
         releaseExpression(apLinkPath);
         return result;
