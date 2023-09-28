@@ -40,7 +40,7 @@ public class TermSerialization {
         s.clear();
         terms.indexOf(s, word, MatchSensitivity.INSENSITIVE);
         report("terms.indexOf insensitive", s);
-`
+
         System.out.println("Checking these insensitive terms...");
         System.out.flush();
         IntIterator it = s.intIterator();

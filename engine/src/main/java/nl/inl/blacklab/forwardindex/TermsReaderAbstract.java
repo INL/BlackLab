@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
 
@@ -20,8 +21,8 @@ import nl.inl.util.BlockTimer;
  * Each term gets a sensitive and insensitive sort position.
  * Multiple terms may get the same sort position, if those terms
  * are considered equal by the collators involved.
- * For each sort position, a "group id" is assigned, which is
- * actually an offset into the groupId2TermIds array. At this
+ * For each sort position, a "group offset" is assigned, which is
+ * an offset into the groupTermIds array. At this
  * offset is the number of terms n in the group, and then the
  * n term ids themselves.
  * Finally, there's a big character array containing the term
@@ -43,16 +44,16 @@ public abstract class TermsReaderAbstract implements Terms {
     private int numberOfTerms;
 
     /** Collator to use for sensitive string comparisons */
-    protected final Collator collator;
+    protected final Collator collatorSensitive;
 
     /** Collator to use for insensitive string comparisons */
     protected final Collator collatorInsensitive;
 
-    /** Insensitive sort position to start index of group in groupId2TermIds */
-    private int[] insensitivePosition2GroupId;
+    /** Insensitive sort position to start index of group in groupTermIds */
+    private int[] insensitivePosition2GroupOffset;
 
-    /** Sensitive sort position to start index of group in groupId2TermIds */
-    private int[] sensitivePosition2GroupId;
+    /** Sensitive sort position to start index of group in groupTermIds */
+    private int[] sensitivePosition2GroupOffset;
 
     /** Term id to sensitive sort position */
     private int[] termId2SensitivePosition;
@@ -61,12 +62,17 @@ public abstract class TermsReaderAbstract implements Terms {
     private int[] termId2InsensitivePosition;
 
     /**
+     * Array containing the termids for each group, preceded by the group length.
+     *
      * Contains a leading int specifying how many ids for a given group, followed by the list of ids.
      * For a group of size 2 containing the ids 4 and 8, contains [..., 2, 4, 8, ...]
-     * {@link #insensitivePosition2GroupId} and {@link #sensitivePosition2GroupId} contain the index of the leading int
+     * {@link #insensitivePosition2GroupOffset} and {@link #sensitivePosition2GroupOffset} contain the index of the leading int
      * in this array for all sensitive/insensitive sorting positions respectively.
      */
-    private int[] groupId2TermIds;
+    private int[] groupTermIds;
+
+    /** Indicates how much of groupTermIds has been filled in */
+    private int groupTermIdsOffset = 0;
 
     /** The character data for all terms. */
     private ByteBigArrayBigList termCharData;
@@ -77,10 +83,20 @@ public abstract class TermsReaderAbstract implements Terms {
      */
     private long[] termId2CharDataOffset;
 
+    /**
+     * While creating groups, we keep a mapping from the first term id in
+     * each group to the group offset, so we can quickly check if a group is
+     * identical to an existing one.
+     * This relies on the fact that the term ids in groups are sorted during this
+     * process, and that a term will only occur once in groupTermIds when we're
+     * processing the second array (e.g. insensitive after we've done sensitive).
+     */
+    private int[] cacheFirstTermIdInGroup2GroupOffset;
+
     public TermsReaderAbstract(Collators collators) {
         assert DEBUGGING = true;
-        this.collator = collators.get(MatchSensitivity.SENSITIVE);
-        this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
+        collatorSensitive = collators.get(MatchSensitivity.SENSITIVE);
+        collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
     }
 
     protected void finishInitialization(String name, String[] terms, int[] termId2SensitivePosition,
@@ -93,73 +109,19 @@ public abstract class TermsReaderAbstract implements Terms {
         assert this.termId2SensitivePosition.length == numberOfTerms;
         assert this.termId2InsensitivePosition.length == numberOfTerms;
 
-        TIntObjectHashMap<IntList> insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
-        int numGroupsThatAreNotSizeOne = 0;
+        TIntObjectHashMap<IntList> sensitivePosition2TermIds;
+        TIntObjectHashMap<IntList> insensitivePosition2TermIds;
         try (BlockTimer ignored = BlockTimer.create(LOG_TIMINGS, name + ": finish > invert mapping")) {
-            // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
-            IntArrayList newList = new IntArrayList(1);
-            for (int termId = 0; termId < this.termId2InsensitivePosition.length; ++termId) {
-                int insensitivePosition = this.termId2InsensitivePosition[termId];
-
-                IntList termIdsForInsensitivePosition =
-                        insensitivePosition2TermIds.putIfAbsent(insensitivePosition, newList);
-                if (termIdsForInsensitivePosition == null) {
-                    // There was no list associated with this insensitivePosition yet, so our new list was used.
-                    termIdsForInsensitivePosition = newList;
-                    newList = new IntArrayList(1); // prepare a new list for next time
-                }
-                // add at index 0 to stay consistent with previous code...
-                // (probably not needed? replace with just add()? then the first term in the group will be the first
-                //  term encountered as opposed to the last, makes more sense?)
-                termIdsForInsensitivePosition.add(0, termId);
-                if (termIdsForInsensitivePosition.size() == 2)
-                    ++numGroupsThatAreNotSizeOne;
-
-//                IntList v = new IntArrayList(1);
-//                v.add(termId);
-//                IntList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
-//                if (prev != null) {
-//                    v.addAll(prev);
-//                    if (prev.size() == 1)
-//                        ++numGroupsThatAreNotSizeOne;
-//                }
-
-
-            }
+            sensitivePosition2TermIds = findTermIdsForSortPositions(this.termId2SensitivePosition);
+            insensitivePosition2TermIds = findTermIdsForSortPositions(this.termId2InsensitivePosition);
         }
 
         try (BlockTimer ignored = BlockTimer.create(LOG_TIMINGS, name + ": finish > fillTermDataGroups")) {
-            fillTermDataGroups(insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
+            fillTermDataGroups(sensitivePosition2TermIds, insensitivePosition2TermIds);
         }
 
         if (DEBUGGING && DEBUG_VALIDATE_SORT) {
-            // Verify sorts
-            String prev = null;
-            for (int i = 0; i < sensitivePosition2GroupId.length; i++) {
-                int groupId = sensitivePosition2GroupId[i];
-                assert groupId >= 0;
-                assert groupId2TermIds[groupId] == 1;
-                int termId = groupId2TermIds[groupId + 1];
-                assert termId >= 0 && termId < terms.length;
-                String term = terms[termId];
-                if (prev != null)
-                    assert collator.compare(prev, term) == -1;
-                prev = term;
-            }
-            prev = null;
-            int prevTermId = -1;
-            for (int i = 0; i < insensitivePosition2GroupId.length; i++) {
-                int groupId = insensitivePosition2GroupId[i];
-                assert groupId >= 0;
-                int termId = groupId2TermIds[groupId + 1];
-                if (prevTermId != -1 && termId != prevTermId) {
-                    String firstTerm = terms[termId];
-                    if (prev != null)
-                        assert collatorInsensitive.compare(prev, firstTerm) <= 0;
-                    prev = firstTerm;
-                }
-                prevTermId = termId;
-            }
+            debugVerifySorts(terms);
         }
 
         try (BlockTimer ignored = BlockTimer.create(LOG_TIMINGS, name + ": finish > fillTermCharData")) {
@@ -167,90 +129,130 @@ public abstract class TermsReaderAbstract implements Terms {
         }
     }
 
-    // OPT: optimize by removing the 1 at groupId < terms.length
-    //   Since we know it's always there (no collisions in this section - length is always 1)
+    private TIntObjectHashMap<IntList> findTermIdsForSortPositions(int[] termIdToSortPosition) {
+        // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
+        TIntObjectHashMap<IntList> sortPosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
+        IntArrayList newList = new IntArrayList(1); // we'll use this later, if there's no entry yet
+        for (int termId = 0; termId < termIdToSortPosition.length; ++termId) {
+            int sortPosition = termIdToSortPosition[termId];
+            IntList termIdsForSortPosition = sortPosition2TermIds.putIfAbsent(sortPosition, newList);
+            if (termIdsForSortPosition == null) {
+                // There was no list associated with this sortPosition yet, so our new list was used.
+                termIdsForSortPosition = newList;
+                newList = new IntArrayList(1); // prepare a new list for next time this happens
+            }
+            // Note that termId always increases, and we always add at the end of the list, so we know that
+            // these lists are sorted. This will be important later when we try to re-use groups.
+            termIdsForSortPosition.add(termId);
+        }
+        return sortPosition2TermIds;
+    }
+
     /**
      * Initializes the following members:
      * - {@link #termId2SensitivePosition}
      * - {@link #termId2InsensitivePosition}
-     * - {@link #groupId2TermIds}
-     * - {@link #sensitivePosition2GroupId}
-     * - {@link #insensitivePosition2GroupId}
-     *
-     * @param numGroupsThatAreNotSizeOne in the insensitive hashmap - used to initialize the groupId2termIds map at the right length.
+     * - {@link #groupTermIds}
+     * - {@link #sensitivePosition2GroupOffset}
+     * - {@link #insensitivePosition2GroupOffset}
      */
-    protected void fillTermDataGroups(TIntObjectHashMap<IntList> insensitivePosition2TermIds,
-            int numGroupsThatAreNotSizeOne) {
+    private void fillTermDataGroups(
+            TIntObjectHashMap<IntList> sensitivePosition2TermIds,
+            TIntObjectHashMap<IntList> insensitivePosition2TermIds) {
+        // Allocate groupTermIds to the maximum size needed first; we'll compact it later.
+        // Max size:
+        // - each term occurs twice (once for sensitive, once for insensitive)
+        // - for each (sensitive and insensitive) sort position, we get one integer specifying the group size
+        int maxEntries = numberOfTerms * 2 + sensitivePosition2TermIds.size() + insensitivePosition2TermIds.size();
+        groupTermIds = new int[maxEntries];
 
-        // This is a safe upper bound: one group per sensitive (with one entry) = 2*numberOfTerms.
-        // Then for the insensitive side, one group per entry in insensitiveSortPosition2TermIds + 1 int for each term
-        // in reality this is the maximum upper bound.
-        // Because we know how many insensitive groups are size 1 (and can therefore re-use the sensitive group),
-        // we can lower it a bit.
-        int numberOfIntsForSensitiveEntries = numberOfTerms * 2;
-        int numInsensitiveGroupsOfSizeOne = insensitivePosition2TermIds.size() - numGroupsThatAreNotSizeOne;
-        int numTermsInGroupsAboveSizeOne = numberOfTerms - numInsensitiveGroupsOfSizeOne;
-        int numberOfIntsForInsensitiveEntries = numGroupsThatAreNotSizeOne + numTermsInGroupsAboveSizeOne;
-        int maxNumberOfGroups = numberOfIntsForSensitiveEntries + numberOfIntsForInsensitiveEntries;
+        // Create the cache we'll use to help us detect duplicate groups
+        cacheFirstTermIdInGroup2GroupOffset = new int[numberOfTerms];
+        Arrays.fill(cacheFirstTermIdInGroup2GroupOffset, -1);
 
-        this.groupId2TermIds = new int[maxNumberOfGroups];
+        // Create groups for sort positions
+        sensitivePosition2GroupOffset = createTermIdGroups(sensitivePosition2TermIds);
+        insensitivePosition2GroupOffset = createTermIdGroups(insensitivePosition2TermIds);
 
-        this.insensitivePosition2GroupId = new int[numberOfTerms]; // NOTE: since not every insensitive sort position exists, this will have empty spots
-        Arrays.fill(this.insensitivePosition2GroupId, -1);
+        // Free up some memory
+        cacheFirstTermIdInGroup2GroupOffset = null; // don't need this anymore
+        groupTermIds = Arrays.copyOf(groupTermIds, groupTermIdsOffset); // trim to actual size
+    }
 
-        this.sensitivePosition2GroupId = new int[numberOfTerms];
-        Arrays.fill(this.sensitivePosition2GroupId, -1);
-
-        // First create all sensitive entries
-        int offset = 0;
-        for (int termId = 0; termId < numberOfTerms; ++termId) {
-            final int positionSensitive = termId2SensitivePosition[termId];
-
-            this.sensitivePosition2GroupId[positionSensitive] = offset;
-            this.groupId2TermIds[offset++] = 1; // sensitive positions are unique (1 per term) - so group is size always 1
-            this.groupId2TermIds[offset++] = termId; // and contains this term.
-        }
-
-        // now place all insensitives
-        TIntObjectIterator<IntList> it = insensitivePosition2TermIds.iterator();
+    private int[] createTermIdGroups(TIntObjectHashMap<IntList> sortPosition2TermIds) {
+        // NOTE: the sortPosition2GroupOffset array we create here may have empty spots
+        //       (not every sort position exists), but we'll fill those in at the end
+        int[] sortPosition2GroupOffset = new int[numberOfTerms];
+        Arrays.fill(sortPosition2GroupOffset, -1);
+        TIntObjectIterator<IntList> it = sortPosition2TermIds.iterator();
         while (it.hasNext()) {
             it.advance();
-
-            final int insensitivePosition = it.key();
+            final int sortPosition = it.key();
             final IntList termIds = it.value();
-            final int numTermIds = termIds.size();
 
-            // reuse sensitive group when it contains the same data
-            if (numTermIds == 1) {
-                final int termId = termIds.getInt(0);
-                final int sensitivePosition = this.termId2SensitivePosition[termId];
-                final int groupId = this.sensitivePosition2GroupId[sensitivePosition];
-
-                this.insensitivePosition2GroupId[insensitivePosition] = groupId;
-                continue;
+            // See if we can re-use an existing group.
+            int groupOffset = findGroup(termIds);
+            if (groupOffset < 0) {
+                // This group doesn't exist yet; create new group
+                groupOffset = groupTermIdsOffset;
+                groupTermIds[groupTermIdsOffset] = termIds.size();
+                groupTermIdsOffset++;
+                IntListIterator termIdIt = termIds.iterator();
+                boolean first = true;
+                while (termIdIt.hasNext()) {
+                    int termId = termIdIt.nextInt();
+                    if (first) {
+                        // Remember mapping from this first term id to the group offset,
+                        // so we can quickly check if we have a duplicate group later.
+                        cacheFirstTermIdInGroup2GroupOffset[termId] = groupTermIdsOffset;
+                    }
+                    first = false;
+                    groupTermIds[groupTermIdsOffset] = termId;
+                    groupTermIdsOffset++;
+                }
             }
-
-            // cannot share group - not the same members. Create a new one
-            this.insensitivePosition2GroupId[insensitivePosition] = offset;
-            this.groupId2TermIds[offset++] = numTermIds;
-            for (int i = 0; i < numTermIds; ++i) {
-                groupId2TermIds[offset++] = termIds.getInt(i);
-            }
+            sortPosition2GroupOffset[sortPosition] = groupOffset;
         }
 
+        fixSortPosition2GroupOffsetArray(sortPosition2GroupOffset);
+        return sortPosition2GroupOffset;
+    }
+
+    private int findGroup(IntList termIds) {
+        // Because we know that termIds are sorted (see above), and we keep track of a map from
+        // "first term id in group" to the group offset, we can quickly check if the other group starting
+        // with the same term id is identical to this one, and if so, re-use it to save memory.
+
+        // Is there a group starting with the same term id?
+        if (cacheFirstTermIdInGroup2GroupOffset[termIds.get(0)] != -1) {
+            // Yes, does it have the same size?
+            int groupOffset = cacheFirstTermIdInGroup2GroupOffset[termIds.get(0)];
+            int groupSize = groupTermIds[groupOffset];
+            if (groupSize == termIds.size()) {
+                // Yes, are all the term ids the same?
+                for (int i = 0; i < groupSize; ++i) {
+                    if (groupTermIds[groupOffset + 1 + i] != termIds.get(i)) {
+                        return -1; // no, not identical
+                    }
+                }
+                // Yes, we have a match!
+                return groupOffset;
+            }
+            return -1; // not the same size
+        }
+        return -1; // no group starting with same term id
+    }
+
+    private static void fixSortPosition2GroupOffsetArray(int[] sortPosition2GroupOffset) {
         // fill empty spots using the last good entry
         // if we don't do this binary searching over this array won't work (as it contains random uninitialized values
         // and if we land on one of them we'd compare wrong)
         int last = 0;
-        for (int i = 0; i < this.insensitivePosition2GroupId.length; ++i) {
-            if (this.insensitivePosition2GroupId[i] != -1)
-                last = this.insensitivePosition2GroupId[i];
+        for (int i = 0; i < sortPosition2GroupOffset.length; ++i) {
+            if (sortPosition2GroupOffset[i] != -1)
+                last = sortPosition2GroupOffset[i];
             else
-                this.insensitivePosition2GroupId[i] = last;
-        }
-
-        if (offset < groupId2TermIds.length) {
-            throw new RuntimeException("what is going on here");
+                sortPosition2GroupOffset[i] = last;
         }
     }
 
@@ -261,42 +263,41 @@ public abstract class TermsReaderAbstract implements Terms {
      * - {@link #termCharData}
      * - {@link #termId2CharDataOffset}
      */
-    protected void fillTermCharData(String[] terms) {
+    private void fillTermCharData(String[] terms) {
         // convert all to byte[] and tally total number of bytes
         // free the String instances while doing this so memory usage doesn't spike so much
-        this.termCharData = new ByteBigArrayBigList();
+        termCharData = new ByteBigArrayBigList();
         long bytesWritten = 0;
-        this.termId2CharDataOffset = new long[numberOfTerms];
+        termId2CharDataOffset = new long[numberOfTerms];
         for (int i = 0; i < numberOfTerms; ++i) {
-            this.termId2CharDataOffset[i] = bytesWritten;
+            termId2CharDataOffset[i] = bytesWritten;
             byte[] bytes = terms[i].getBytes(TERMS_CHARSET);
             byte[][] bb = BigArrays.wrap(bytes);
             termCharData.addElements(bytesWritten, bb);
             bytesWritten += bytes.length;
         }
-        this.termCharData.trim(); // clear extra space.
+        termCharData.trim(); // clear extra space.
     }
 
     @Override
     public int indexOf(String term) {
-        final int groupId = getGroupId(term, MatchSensitivity.SENSITIVE);
-        if (groupId == -1)
+        int groupOffset = getGroupOffset(term, sensitivePosition2GroupOffset, collatorSensitive);
+        if (groupOffset == -1)
             return -1;
         // Return the first term in this group
-        return this.groupId2TermIds[groupId + 1];
+        return groupTermIds[groupOffset + 1];
     }
 
     @Override
     public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-        final int groupId = getGroupId(term, sensitivity);
-        if (groupId == -1) {
+        int groupOffset = getGroupOffset(term, sensitivity);
+        if (groupOffset == -1) {
             results.add(-1);
             return;
         }
-
-        final int groupSize = this.groupId2TermIds[groupId];
+        int groupSize = groupTermIds[groupOffset];
         for (int i = 0; i < groupSize; ++i) {
-            results.add(this.groupId2TermIds[groupId + 1 + i]);
+            results.add(groupTermIds[groupOffset + 1 + i]);
         }
     }
 
@@ -307,35 +308,34 @@ public abstract class TermsReaderAbstract implements Terms {
 
     @Override
     public int idToSortPosition(int id, MatchSensitivity sensitivity) {
-        return sensitivity.isCaseSensitive() ? this.getSortPositionSensitive(id) : this.getSortPositionInsensitive(id);
+        return sensitivity.isCaseSensitive() ?
+                idToSortPositionSensitive(id) :
+                idToSortPositionInsensitive(id);
     }
 
-    private int getSortPositionSensitive(int termId) {
-        if (termId < 0 || termId >= numberOfTerms) {
+    private int idToSortPositionSensitive(int termId) {
+        if (termId < 0 || termId >= numberOfTerms)
             return -1;
-        }
-        return this.termId2SensitivePosition[termId];
+        return termId2SensitivePosition[termId];
     }
 
-    private int getSortPositionInsensitive(int termId) {
-        if (termId < 0 || termId >= numberOfTerms) {
+    private int idToSortPositionInsensitive(int termId) {
+        if (termId < 0 || termId >= numberOfTerms)
             return -1;
-        }
-        return this.termId2InsensitivePosition[termId];
+        return termId2InsensitivePosition[termId];
     }
 
     @Override
     public String get(int id) {
-        if (id >= numberOfTerms || id < 0) {
+        if (id >= numberOfTerms || id < 0)
             return "";
-        }
-        boolean isLastId = id == (this.termId2CharDataOffset.length - 1);
-        long startOffsetBytes = this.termId2CharDataOffset[id];
-        long endOffsetBytes = (isLastId ? this.termCharData.size64() : this.termId2CharDataOffset[id+1]);
+        long startOffsetBytes = termId2CharDataOffset[id];
+        boolean isLastId = id == (termId2CharDataOffset.length - 1);
+        long endOffsetBytes = (isLastId ? termCharData.size64() : termId2CharDataOffset[id+1]);
         int termLengthBytes = (int) (endOffsetBytes - startOffsetBytes);
 
         byte[] termBytes = new byte[termLengthBytes];
-        this.termCharData.getElements(startOffsetBytes, termBytes, 0, termLengthBytes);
+        termCharData.getElements(startOffsetBytes, termBytes, 0, termLengthBytes);
         return new String(termBytes, TERMS_CHARSET);
     }
 
@@ -343,50 +343,40 @@ public abstract class TermsReaderAbstract implements Terms {
     public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
         if (termId.length < 2)
             return true;
-
-        // sensitive compare - just get the sort index
-        if (sensitivity.isCaseSensitive()) {
-            int expected = getSortPositionSensitive(termId[0]);
-            for (int termIdIndex = 1; termIdIndex < termId.length; ++termIdIndex) {
-                int cur = getSortPositionSensitive(termId[termIdIndex]);
-                if (cur != expected)
-                    return false;
-            }
-            return true;
-        }
-
-        // insensitive compare - get the insensitive sort index
-        int expected = getSortPositionInsensitive(termId[0]);
+        int expected = idToSortPosition(termId[0], sensitivity);
         for (int termIdIndex = 1; termIdIndex < termId.length; ++termIdIndex) {
-            int cur = getSortPositionInsensitive(termId[termIdIndex]);
+            int cur = idToSortPosition(termId[termIdIndex], sensitivity);
             if (cur != expected)
                 return false;
         }
         return true;
     }
 
-    private int getGroupId(String term, MatchSensitivity sensitivity) {
-        final Collator coll = sensitivity.isCaseSensitive() ? this.collator : this.collatorInsensitive;
-        final int[] sortPosition2GroupId = sensitivity.isCaseSensitive() ?
-                this.sensitivePosition2GroupId :
-                this.insensitivePosition2GroupId;
+    private int getGroupOffset(String term, MatchSensitivity sensitivity) {
+        final Collator collator = sensitivity.isCaseSensitive() ? collatorSensitive : collatorInsensitive;
+        final int[] sortPosition2GroupOffset = sensitivity.isCaseSensitive() ?
+                sensitivePosition2GroupOffset :
+                insensitivePosition2GroupOffset;
+        return getGroupOffset(term, sortPosition2GroupOffset, collator);
+    }
 
-        // binary search
+    private int getGroupOffset(String term, int[] sortPosition2GroupOffset, Collator collator) {
+        // Binary search to find the matching group offset
         int l = 0;
-        int r = sortPosition2GroupId.length - 1;
+        int r = sortPosition2GroupOffset.length - 1;
 
-        int matchingGroupId = -1;
+        int matchingGroupOffset = -1;
         while (l <= r) {
 
             final int sortPositionToCheck = l + (r - l) / 2;
-            final int groupId = sortPosition2GroupId[sortPositionToCheck];
-            final int termIdToCompareTo = this.groupId2TermIds[groupId + 1]; // OPT: < numterms optimization
+            final int groupOffset = sortPosition2GroupOffset[sortPositionToCheck];
+            final int termIdToCompareTo = groupTermIds[groupOffset + 1]; // OPT: < numterms optimization
             final String termToCompareTo = get(termIdToCompareTo);
 
-            final int result = coll.compare(term, termToCompareTo);
+            final int result = collator.compare(term, termToCompareTo);
 
             if (result == 0) {
-                matchingGroupId = groupId;
+                matchingGroupOffset = groupOffset;
                 break;
             }
 
@@ -399,34 +389,36 @@ public abstract class TermsReaderAbstract implements Terms {
             }
         }
 
-        return matchingGroupId;
+        return matchingGroupOffset;
     }
 
-    private void printSensitivityInformation(MatchSensitivity sens) {
-        int[] groupMapping = sens.equals(MatchSensitivity.SENSITIVE) ? this.sensitivePosition2GroupId : this.insensitivePosition2GroupId;
-        System.out.println("----- " + sens + " -----");
-        for (int i = 0; i < groupMapping.length; ++i) {
-            int groupID = this.sensitivePosition2GroupId[i];
-            int groupSize = this.groupId2TermIds[groupID];
-            int[] groupContents = new int[groupSize];
-            System.arraycopy(this.groupId2TermIds, groupID + 1, groupContents, 0, groupSize);
-
-            String[] terms = new String[groupSize];
-            for (int j = 0; j < groupContents.length; ++j) terms[j] = this.get(groupContents[j]);
-            System.out.println(i + "\t" + Arrays.toString(terms));
+    private void debugVerifySorts(String[] terms) {
+        // Verify sorts
+        String prev = null;
+        for (int i = 0; i < sensitivePosition2GroupOffset.length; i++) {
+            int groupOffset = sensitivePosition2GroupOffset[i];
+            assert groupOffset >= 0;
+            assert groupTermIds[groupOffset] == 1;
+            int termId = groupTermIds[groupOffset + 1];
+            assert termId >= 0 && termId < terms.length;
+            String term = terms[termId];
+            if (prev != null)
+                assert collatorSensitive.compare(prev, term) == -1;
+            prev = term;
         }
-    }
-
-    public void printDebugInformation() {
-        System.out.println("---- debug information for Terms -----");
-        System.out.println("----- Per ID -----");
-        for (int i = 0; i < this.numberOfTerms; ++i) {
-            String term = this.get(i);
-            int sensitive = this.termId2SensitivePosition[i];
-            int insensitive = this.termId2InsensitivePosition[i];
-            System.out.println(i + "\t" + term + "\t" + sensitive + "\t" + insensitive);
+        prev = null;
+        int prevTermId = -1;
+        for (int i = 0; i < insensitivePosition2GroupOffset.length; i++) {
+            int groupOffset = insensitivePosition2GroupOffset[i];
+            assert groupOffset >= 0;
+            int termId = groupTermIds[groupOffset + 1];
+            if (prevTermId != -1 && termId != prevTermId) {
+                String firstTerm = terms[termId];
+                if (prev != null)
+                    assert collatorInsensitive.compare(prev, firstTerm) <= 0;
+                prev = firstTerm;
+            }
+            prevTermId = termId;
         }
-        this.printSensitivityInformation(MatchSensitivity.SENSITIVE);
-        this.printSensitivityInformation(MatchSensitivity.INSENSITIVE);
     }
 }
