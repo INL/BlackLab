@@ -16,9 +16,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.UtilsForTesting;
 
 public class TestTerms {
-    private static TermsReader t;
+    public static final String[] TEST_SENTENCE = { "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog" };
 
-    final static String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
+    private static TermsReader t;
 
     private static UtilsForTesting.TestDir testDir;
 
@@ -33,7 +33,7 @@ public class TestTerms {
         Collators colls = new Collators(coll, CollatorVersion.V2);
         TermsWriter tw = TermsExternalUtil.openForWriting(colls, null);
         tw.setMaxBlockSize(18);
-        for (String s: str) {
+        for (String s: TEST_SENTENCE) {
             tw.indexOf(s);
         }
         File f = new File(testDir.file(), "terms.dat");
@@ -54,9 +54,8 @@ public class TestTerms {
      */
     @Test
     public void testRetrieve() {
-        String[] expected = { "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog" };
-        for (int i = 0; i < expected.length; i++) {
-            Assert.assertEquals(expected[i], t.get(i));
+        for (int i = 0; i < TEST_SENTENCE.length; i++) {
+            Assert.assertEquals(TEST_SENTENCE[i], t.get(i));
         }
     }
 
@@ -93,24 +92,18 @@ public class TestTerms {
 
     @Test
     public void testIndexOf() {
-        String[] input = {
-                "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog"
-        };
         int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7 };
         for (int i = 0; i < expected.length; i++) {
-            Assert.assertEquals(expected[i], t.indexOf(input[i]));
+            Assert.assertEquals(expected[i], t.indexOf(TEST_SENTENCE[i]));
         }
     }
 
     @Test
     public void testIndexOfInsensitive() {
-        String[] input = {
-                "the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog"
-        };
         int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7 };
         for (int i = 0; i < expected.length; i++) {
             MutableIntSet results = new IntHashSet();
-            t.indexOf(results, input[i], MatchSensitivity.INSENSITIVE);
+            t.indexOf(results, TEST_SENTENCE[i], MatchSensitivity.INSENSITIVE);
             Assert.assertEquals(expected[i], results.intIterator().next());
         }
     }

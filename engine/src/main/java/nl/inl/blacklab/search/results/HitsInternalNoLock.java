@@ -15,10 +15,10 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that does no locking and can handle huge result sets.
- *
+ * <p>
  * This means it is safe to fill this object in one thread, then
  * use it from many threads as long as it is not modified anymore.
- *
+ * <p>
  * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about 11% faster than
  * {@link HitsInternalLock}. That is not representative of real-world usage of course, but on huge
  * resultsets this will likely save a few seconds.
@@ -27,7 +27,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
 
     /**
      * Class to iterate over hits.
-     *
+     * <p>
      * NOTE: contrary to expectation, implementing this class using iterators
      * over docs, starts and ends makes it slower.
      */
@@ -54,20 +54,6 @@ class HitsInternalNoLock implements HitsInternalMutable {
             ++this.pos;
             return hit;
         }
-
-        public int doc() {
-            return hit.doc;
-        }
-
-        public int start() {
-            return hit.start;
-        }
-
-        public int end() {
-            return hit.end;
-        }
-
-        public MatchInfo[] matchInfo() { return hit.matchInfo; }
     }
 
     protected final IntBigList docs;
@@ -91,6 +77,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     }
 
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
+        assert start <= end;
         docs.add(doc);
         starts.add(start);
         ends.add(end);
@@ -102,6 +89,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
     public void add(EphemeralHit hit) {
+        assert hit.start <= hit.end;
         docs.add(hit.doc);
         starts.add(hit.start);
         ends.add(hit.end);
@@ -113,6 +101,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
     public void add(Hit hit) {
+        assert hit.start() <= hit.end();
         docs.add(hit.doc());
         starts.add(hit.start());
         ends.add(hit.end());
@@ -121,15 +110,24 @@ class HitsInternalNoLock implements HitsInternalMutable {
     }
 
     public void addAll(HitsInternalNoLock hits) {
+        assert allValid(hits);
         docs.addAll(hits.docs);
         starts.addAll(hits.starts);
         ends.addAll(hits.ends);
         matchInfos.addAll(hits.matchInfos);
     }
 
+    private boolean allValid(HitsInternal hits) {
+        for (EphemeralHit h: hits) {
+            assert h.start <= h.end;
+        }
+        return true;
+    }
+
     public void addAll(HitsInternal hits) {
         hits.withReadLock(hr -> {
             for (EphemeralHit h : hits) {
+                assert h.start <= h.end;
                 docs.add(h.doc);
                 starts.add(h.start);
                 ends.add(h.end);

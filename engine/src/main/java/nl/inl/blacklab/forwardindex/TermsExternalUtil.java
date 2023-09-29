@@ -71,7 +71,7 @@ public abstract class TermsExternalUtil {
             for (; currentTerm < firstTermInBlock + numTermsThisBlock; currentTerm++) {
                 int offset = termStringOffsets[currentTerm];
                 int length = termStringOffsets[currentTerm + 1] - offset;
-                String str = new String(termStringsThisBlock, offset, length, Terms.DEFAULT_CHARSET);
+                String str = new String(termStringsThisBlock, offset, length, Terms.TERMS_CHARSET);
 
                 // We need to find term for id while searching
                 terms[currentTerm] = str;

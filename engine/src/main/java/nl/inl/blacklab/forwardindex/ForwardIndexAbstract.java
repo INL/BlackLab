@@ -34,7 +34,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
             throw new IllegalArgumentException("Value(s) out of range, start = " + snippetStart
                     + ", end = " + snippetEnd + ", content length = " + docLength);
         }
-        if (snippetEnd < snippetStart) {
+        if (snippetStart > snippetEnd) {
             throw new IllegalArgumentException(
                     "Tried to read negative length snippet (from " + snippetStart
                             + " to " + snippetEnd + ")");

@@ -35,6 +35,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
 
     @Override
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
+        assert start <= end;
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -51,6 +52,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(EphemeralHit hit) {
+        assert hit.start <= hit.end;
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -67,6 +69,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(Hit hit) {
+        assert hit.start() <= hit.end();
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -126,7 +129,10 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         try {
             // Don't call super method, this is faster (hot code)
             MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
-            return new HitImpl(docs.getInt((int)index), starts.getInt((int)index), ends.getInt((int)index), matchInfo);
+            HitImpl hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index),
+                    matchInfo);
+            assert hit.start() <= hit.end();
+            return hit;
         } finally {
             lock.readLock().unlock();
         }
@@ -155,6 +161,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
             h.start = starts.getInt((int)index);
             h.end = ends.getInt((int)index);
             h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
+            assert h.start <= h.end;
         } finally {
             lock.readLock().unlock();
         }
