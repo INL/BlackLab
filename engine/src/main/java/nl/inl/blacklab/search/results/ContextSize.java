@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results;
 import java.util.List;
 import java.util.Objects;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -14,6 +15,8 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  * The other functionality will be added in the future.
  */
 public class ContextSize {
+
+    public static final int SAFE_MAX_CONTEXT_SIZE = (Constants.JAVA_MAX_ARRAY_SIZE - 100) / 2;
 
     /**
      * Context based on am inline tag containing the hit instead of the hit.
@@ -129,6 +132,10 @@ public class ContextSize {
 
     private ContextSize(int before, int after, boolean includeHit, String matchInfoName, int maxSnippetLength) {
         super();
+        assert before >= 0;
+        assert after >= 0;
+        assert matchInfoName == null || !matchInfoName.isEmpty();
+        assert maxSnippetLength >= 0;
         this.before = before;
         this.after = after;
         this.includeHit = includeHit;
@@ -137,6 +144,8 @@ public class ContextSize {
     }
 
     public static int maxSnippetLengthFromMaxContextSize(int maxContextSize) {
+        if (maxContextSize > SAFE_MAX_CONTEXT_SIZE)
+            maxContextSize = SAFE_MAX_CONTEXT_SIZE;
         return maxContextSize * 2 + 10; // 10 seems a reasonable maximum hit length
     }
 

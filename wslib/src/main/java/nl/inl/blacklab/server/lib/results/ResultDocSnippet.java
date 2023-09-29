@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -59,8 +58,6 @@ public class ResultDocSnippet {
 
         // Make sure snippet plus surrounding context don't exceed configured allowable snippet size
         int maxContextSize = params.getSearchManager().config().getParameters().getContextSize().getMaxInt();
-        if (maxContextSize >= Constants.JAVA_MAX_ARRAY_SIZE)
-            maxContextSize = (Constants.JAVA_MAX_ARRAY_SIZE - 100) / 2; // safe maximum
         int maxSnippetSize = ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize);
 
         int start, end;
