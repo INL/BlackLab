@@ -64,11 +64,25 @@ public class TermSerialization {
         int n = 0;
         for (int termId = 0; termId < terms.numberOfTerms(); termId++) {
             String term = terms.get(termId);
-            int termId2 = terms.indexOf(term);
-            String term2 = terms.get(termId2);
-            if (collator.compare(term, term2) != 0) {
-                System.out.println("term != term2: '" + term + "' != '" + term2 + "'");
+            if (term == null) {
+                System.out.println("term == null! id = " + termId);
                 System.out.flush();
+            }
+            else if (term.isEmpty()) {
+                System.out.println("term is empty! id = " + termId);
+                System.out.flush();
+            } else {
+                int termId2 = terms.indexOf(term);
+                if (termId2 == -1) {
+                    System.out.println("termId2 == -1: '" + term + "'");
+                    System.out.flush();
+                } else {
+                    String term2 = terms.get(termId2);
+                    if (collator.compare(term, term2) != 0) {
+                        System.out.println("term != term2: '" + term + "' != '" + term2 + "'");
+                        System.out.flush();
+                    }
+                }
             }
             n++;
             if (n % 100000 == 0) {
