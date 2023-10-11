@@ -106,6 +106,7 @@ public class ResponseStreamer {
     public static final String KEY_DOC_LENGTH_TOKENS = "lengthInTokens";
     public static final String KEY_DOC_MAY_VIEW = "mayView";
     public static final String KEY_DOC_PID = "docPid";
+    public static final String KEY_DOC_SNIPPET = "snippet";
 
     // Spans
     public static final String KEY_SPAN_START = "start";
@@ -624,7 +625,7 @@ public class ResponseStreamer {
                         .startEntry(keyAfter).contextList(c.annotations(), annotationsToList, c.right()).endEntry();
             } else {
                 if (isSnippet) {
-                    ds.startEntry("snippet").contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
+                    ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
                 } else {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
                 }
@@ -1122,7 +1123,7 @@ public class ResponseStreamer {
                 if (!result.hasConcordances()) {
                     // KWICs
                     for (Kwic k: result.getKwicsToShow()) {
-                        ds.startItem("snippet").startMap();
+                        ds.startItem(KEY_DOC_SNIPPET).startMap();
                         {
                             // Add KWIC info
                             ds.startEntry(keyBefore).contextList(k.annotations(), annotationsToList, k.left())
@@ -1137,7 +1138,7 @@ public class ResponseStreamer {
                 } else {
                     // Concordances from original content
                     for (Concordance c: result.getConcordancesToShow()) {
-                        ds.startItem("snippet").startMap();
+                        ds.startItem(KEY_DOC_SNIPPET).startMap();
                         {
                             // Add concordance from original XML
                             ds.startEntry(keyBefore).xmlFragment(c.left()).endEntry()
