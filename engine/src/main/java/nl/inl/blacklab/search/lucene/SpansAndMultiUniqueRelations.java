@@ -156,19 +156,19 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
     @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         // at doc with all subSpans
         relationsReturnedAtThisPosition.clear(); // don't return the same combination of relations twice
         spanWindow.startDocument();
         while (true) {
             if (spanWindow.atMatch()) {
-                atFirstInCurrentDoc = true;
                 oneExhaustedInCurrentDoc = false;
                 for (int i = 0; i < subSpans.length; i++) {
                     indexInBucket[i] = 0;
                 }
                 // Is this really a match (i.e. the same relation wasn't matched multiple times)?
                 if (nextMatchAtThisPosition(false) != NO_MORE_POSITIONS) {
+                    atFirstInCurrentDoc = true;
                     return true;
                 }
             }

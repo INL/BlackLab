@@ -228,7 +228,9 @@ class SpansReader implements Runnable {
             boolean actualMatch = twoPhaseIt == null || twoPhaseIt.matches();
             if (actualMatch && (liveDocs == null || liveDocs.get(doc1))) {
                 // Document matches. Put us at the first match.
-                spans.nextStartPosition();
+                int startPos = spans.nextStartPosition();
+                assert startPos >= 0;
+                assert startPos != Spans.NO_MORE_POSITIONS;
                 return true;
             }
         }
@@ -268,6 +270,9 @@ class SpansReader implements Runnable {
 
             while (hasPrefetchedHit) {
                 // Find all the hit information
+                assert spans.docID() != DocIdSetIterator.NO_MORE_DOCS;
+                assert spans.startPosition() != Spans.NO_MORE_POSITIONS;
+                assert spans.endPosition() != Spans.NO_MORE_POSITIONS;
                 final int doc = spans.docID() + docBase;
                 int start = spans.startPosition();
                 int end = spans.endPosition();
@@ -333,8 +338,13 @@ class SpansReader implements Runnable {
                 threadAborter.checkAbort();
             }
         } catch (InterruptedException e) {
+            e.printStackTrace();
             throw new InterruptedSearch(e);
         } catch (IOException e) {
+            e.printStackTrace();
+            throw BlackLabRuntimeException.wrap(e);
+        } catch (Exception e) {
+            e.printStackTrace();
             throw BlackLabRuntimeException.wrap(e);
         } finally {
             // write out leftover hits in last document/aborted document

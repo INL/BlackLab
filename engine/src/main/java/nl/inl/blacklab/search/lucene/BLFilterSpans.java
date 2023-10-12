@@ -101,6 +101,10 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
     }
 
     protected int goToNextMatch(boolean nextImmediately) throws IOException {
+        if (in.startPosition() == NO_MORE_POSITIONS)
+            return NO_MORE_POSITIONS;
+        if (!nextImmediately)
+            assert in.startPosition() >= 0;
         boolean next = nextImmediately;
         for (;;) {
             if (next)
@@ -124,9 +128,10 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
     @Override
     public int advanceStartPosition(int target) throws IOException {
         assert target > startPosition();
-        if (atFirstInCurrentDoc && startPos >= target) {
-            // Our cached hit is the one we want.
-            return nextStartPosition();
+        if (atFirstInCurrentDoc) {
+            nextStartPosition();
+            if (startPos >= target)
+                return startPos;
         }
         if (in.startPosition() >= target) {
             // we always advance at least 1 hit, as per contract
@@ -158,7 +163,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
      */
     @SuppressWarnings("fallthrough")
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         atFirstInCurrentDoc = false;
         startPos = -1;
         assert docID() != -1 && docID() != NO_MORE_DOCS;

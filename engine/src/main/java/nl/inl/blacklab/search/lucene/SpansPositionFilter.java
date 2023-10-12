@@ -47,6 +47,13 @@ class SpansPositionFilter extends BLSpans {
     private boolean atFirstInCurrentDoc = false;
 
     /**
+     * Do we have a positive (non-inverted) filter query that has no
+     * more matches? If so, we can't have any more matches regardless
+     * of the status of producerDoc.
+     */
+    private boolean positiveFilterRanOut = false;
+
+    /**
      * If true, produce hits that DON'T match the filter instead.
      */
     private final boolean invert;
@@ -91,13 +98,14 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int docID() {
-        return producer.docID();
+        return positiveFilterRanOut ? NO_MORE_DOCS : producer.docID();
     }
 
     @Override
     public int endPosition() {
         if (atFirstInCurrentDoc)
             return -1; // nextStartPosition() hasn't been called yet
+        assert positionedInDoc();
         return producer.endPosition();
     }
 
@@ -117,6 +125,7 @@ class SpansPositionFilter extends BLSpans {
 
     @Override
     public int advance(int target) throws IOException {
+        assert docID() != NO_MORE_DOCS;
         assert target >= 0 && target > docID();
         atFirstInCurrentDoc = false;
 
@@ -137,6 +146,7 @@ class SpansPositionFilter extends BLSpans {
      *         we're done)
      */
     private int findDocWithMatch() throws IOException {
+        assert positionedInDoc();
         // Find the next "valid" container, if there is one.
         int producerDoc = producer.docID();
         int filterDoc = filter.docID();
@@ -150,10 +160,13 @@ class SpansPositionFilter extends BLSpans {
                     if (filterDoc == NO_MORE_DOCS) {
                         if (!invert) {
                             // Positive filter, but no more filter hits. We're done.
+                            positiveFilterRanOut = true;
                             return NO_MORE_DOCS;
                         }
-                    } else
-                        filter.nextBucket();
+                    } /*
+                    // Don't get a bucket yet; twoPhaseCurrentDocMatches() below will take care of this
+                    else
+                        filter.nextBucket();*/
                 } else {
                     if (invert) {
                         // For negative filters, lagging producer spans is ok. This just means
@@ -180,7 +193,7 @@ class SpansPositionFilter extends BLSpans {
     }
 
     private boolean twoPhaseCurrentDocMatches(int docID) throws IOException {
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         atFirstInCurrentDoc = false;
         assert producer.startPosition() < 0;
 
@@ -197,6 +210,9 @@ class SpansPositionFilter extends BLSpans {
         if (filter.docID() < producer.docID()) {
             // Filter lagging behind producer (because conjunction only advanced producer - inverted filter, see above)
             filter.advance(producer.docID());
+            if (filter.docID() == DocIdSetIterator.NO_MORE_DOCS) {
+                ;
+            }
         }
         if (filter.docID() == producer.docID())
             filter.nextBucket(); // ensure we have a filter bucket
@@ -241,6 +257,7 @@ class SpansPositionFilter extends BLSpans {
         if (atFirstInCurrentDoc) {
             // We're already at the first match in the doc. Return it.
             atFirstInCurrentDoc = false;
+            assert positionedAtHit();
             return producerStart;
         }
 
@@ -258,8 +275,10 @@ class SpansPositionFilter extends BLSpans {
         assert target > startPosition();
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
-            if (producerStart >= target)
+            if (producerStart >= target) {
+                assert positionedAtHit();
                 return producerStart;
+            }
         }
 
         // Are we done yet?
@@ -285,9 +304,17 @@ class SpansPositionFilter extends BLSpans {
     private int synchronizePos() throws IOException {
         // Find the next "valid" producer spans, if there is one.
         while (producerStart != NO_MORE_POSITIONS) {
-            if (invert && filter.docID() != producer.docID()) {
-                // No filter hits in this doc, so this is definitely a hit.
-                return producerStart;
+
+            // Are producer and filter in the same doc?
+            if (filter.docID() != producer.docID()) {
+                // No
+                if (invert) {
+                    // Negated filter and no filter hits in this doc, so this is definitely a hit.
+                    assert positionedAtHit();
+                    return producerStart;
+                }
+                // No filter matches, therefore no matches
+                return NO_MORE_POSITIONS;
             }
 
             // We're at the first unchecked producer spans. Does it match our filter?
@@ -366,7 +393,8 @@ class SpansPositionFilter extends BLSpans {
                     if (filter.startPosition(i) > producerStart + leftAdjust) {
                         // Filter start position to the right of producer hit start position.
                         max = i - 1;
-                    } else if (filterFixedLength && filter.endPosition(i) < producer.endPosition() + rightAdjust) {
+                    } else if (filterFixedLength &&
+                            filter.endPosition(i) < producer.endPosition() + rightAdjust) {
                         // Filter end position to the left of producer hit end position.
                         min = i + 1;
                     } else {

@@ -559,7 +559,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 int lastDocTwoPhaseMatched = -1;
 
                 boolean twoPhaseCurrentDocMatches() throws IOException {
-                    assert docID() >= 0 && docID() != NO_MORE_DOCS;
+                    assert positionedInDoc();
                     DisiWrapper listAtCurrentDoc = byDocQueue.topList();
                     // remove the head of the list as long as it does not match
                     final int currentDoc = listAtCurrentDoc.doc;

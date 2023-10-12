@@ -113,8 +113,8 @@ class SpansSequenceSimple extends BLConjunctionSpans {
     }
 
     @Override
-    boolean twoPhaseCurrentDocMatches() throws IOException {
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert positionedInDoc();
         atFirstInCurrentDoc = false;
         oneExhaustedInCurrentDoc = false;
 

@@ -60,7 +60,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         startAdjusted = endAdjusted = -1;
         return super.twoPhaseCurrentDocMatches();
     }
@@ -155,9 +155,10 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     @Override
     public int advanceStartPosition(int target) throws IOException {
         assert target > startPosition();
-        if (atFirstInCurrentDoc && startPos >= target) {
-            // Our cached hit is the one we want.
-            return nextStartPosition();
+        if (atFirstInCurrentDoc) {
+            int startPos = nextStartPosition();
+            if (startPos >= target)
+                return startPos;
         }
         if (mode != RelationInfo.SpanMode.FULL_SPAN) {
             // We can't skip because the spans we produce are not guaranteed to be sorted by start position.

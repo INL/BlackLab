@@ -168,7 +168,7 @@ public class ContextSize {
      * @param endIndex index in endArr to write end position to
      */
     public void getSnippetStartEnd(Hit hit, List<String> matchInfoNames, boolean lastWordInclusive, int[] startArr, int startIndex, int[] endArr, int endIndex) {
-        assert hit.start() <= hit.end();
+        assert HitsInternal.debugCheckReasonableHit(hit);
         int start, end;
         if (!isInlineTag()) {
             // Use the hit to determine snippet

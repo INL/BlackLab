@@ -98,19 +98,12 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         this.starts = starts;
         this.ends = ends;
         this.matchInfos = matchInfos == null ? new ObjectArrayList<>() : matchInfos;
-        assert allValid(this);
-    }
-
-    private boolean allValid(HitsInternal hits) {
-        for (EphemeralHit h: hits) {
-            assert h.start <= h.end;
-        }
-        return true;
+        assert HitsInternal.debugCheckAllReasonable(this);
     }
 
     @Override
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
-        assert start <= end;
+        assert HitsInternal.debugCheckReasonableHit(doc, start, end);
         docs.add(doc);
         starts.add(start);
         ends.add(end);
@@ -121,7 +114,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(EphemeralHit hit) {
-        assert hit.start <= hit.end;
+        assert HitsInternal.debugCheckReasonableHit(hit);
         docs.add(hit.doc);
         starts.add(hit.start);
         ends.add(hit.end);
@@ -132,7 +125,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(Hit hit) {
-        assert hit.start() <= hit.end();
+        assert HitsInternal.debugCheckReasonableHit(hit);
         docs.add(hit.doc());
         starts.add(hit.start());
         ends.add(hit.end());
@@ -141,7 +134,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     }
 
     public void addAll(HitsInternalNoLock32 hits) {
-        assert allValid(hits);
+        assert HitsInternal.debugCheckAllReasonable(hits);
         docs.addAll(hits.docs);
         starts.addAll(hits.starts);
         ends.addAll(hits.ends);
@@ -151,7 +144,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     public void addAll(HitsInternal hits) {
         hits.withReadLock(hr -> {
             for (EphemeralHit h: hr) {
-                assert h.start <= h.end;
+                assert HitsInternal.debugCheckReasonableHit(h);
                 docs.add(h.doc);
                 starts.add(h.start);
                 ends.add(h.end);
@@ -181,7 +174,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
         HitImpl hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index),
                 matchInfo);
-        assert hit.start() <= hit.end();
+        assert HitsInternal.debugCheckReasonableHit(hit);
         return hit;
     }
 
@@ -205,7 +198,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         h.start = starts.getInt((int)index);
         h.end = ends.getInt((int)index);
         h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
-        assert h.start <= h.end;
+        assert HitsInternal.debugCheckReasonableHit(h);
     }
 
     @Override

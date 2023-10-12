@@ -198,7 +198,7 @@ class SpansAnd extends BLSpans {
     }
 
     boolean twoPhaseCurrentDocMatches() throws IOException {
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         // Note that we DON't use our nextStartPosition() here because atFirstInCurrentDoc
         // is not properly set yet at this point in time (we do that below).
         atFirstInCurrentDoc = false;

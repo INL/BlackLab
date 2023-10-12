@@ -152,13 +152,14 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
 
                     @Override
                     public int nextStartPosition() throws IOException {
-                        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+                        assert positionedInDoc();
                         assert !docExhausted;
-                        if (atFirstInCurrentDoc)
+                        if (atFirstInCurrentDoc) {
                             atFirstInCurrentDoc = false;
-                        else
-                            docExhausted = true;
-                        return startPosition();
+                            return startPosition();
+                        }
+                        docExhausted = true;
+                        return NO_MORE_POSITIONS;
                     }
 
                     @Override

@@ -66,10 +66,15 @@ class SpansAndSimple extends BLConjunctionSpans {
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
-        assert target > startPosition();
         if (oneExhaustedInCurrentDoc)
             return NO_MORE_POSITIONS;
         int startPos = startPosition();
+        assert target > startPos;
+        if (atFirstInCurrentDoc) {
+            startPos = nextStartPosition();
+            if (startPos >= target)
+                return startPos;
+        }
         if (startPos >= target)
             return nextStartPosition(); // already at or beyond target. per contract, return next match
         for (BLSpans subSpan: subSpans) {
@@ -132,8 +137,8 @@ class SpansAndSimple extends BLConjunctionSpans {
     }
 
     @Override
-    boolean twoPhaseCurrentDocMatches() throws IOException {
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert positionedInDoc();
         // Note that we DON't use our nextStartPosition() here because atFirstInCurrentDoc
         // is not properly set yet at this point in time (we do that below).
         atFirstInCurrentDoc = false;

@@ -76,7 +76,7 @@ abstract class BLConjunctionSpans extends BLSpans {
                 : toMatchDoc();
     }
 
-    int toMatchDoc() throws IOException {
+    private int toMatchDoc() throws IOException {
         oneExhaustedInCurrentDoc = false;
         while (true) {
             if (twoPhaseCurrentDocMatches()) {
@@ -89,7 +89,7 @@ abstract class BLConjunctionSpans extends BLSpans {
     }
 
 
-    abstract boolean twoPhaseCurrentDocMatches() throws IOException;
+    protected abstract boolean twoPhaseCurrentDocMatches() throws IOException;
 
     /**
      * Return a {@link TwoPhaseIterator} view of this ConjunctionSpans.
@@ -137,6 +137,7 @@ abstract class BLConjunctionSpans extends BLSpans {
      */
     @Override
     public void collect(SpanCollector collector) throws IOException {
+        assert positionedAtHit();
         for (BLSpans subSpan : subSpans) {
             subSpan.collect(collector);
         }
@@ -151,6 +152,7 @@ abstract class BLConjunctionSpans extends BLSpans {
 
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
+        assert positionedAtHit();
         for (BLSpans subSpan : subSpans) {
             subSpan.getMatchInfo(matchInfo);
         }

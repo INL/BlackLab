@@ -89,7 +89,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
     }
 
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         // Does this document have any clause matches?
         matchStartIndex = -1;
         atFirstInCurrentDoc = false;

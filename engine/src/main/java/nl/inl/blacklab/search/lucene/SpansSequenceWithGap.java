@@ -211,7 +211,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     private boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         // Does this doc have any matches?
         assert first.startPosition() == -1;
         firstStart = first.nextStartPosition();

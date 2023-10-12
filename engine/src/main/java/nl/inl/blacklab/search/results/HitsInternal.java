@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.results;
 
 import java.util.function.Consumer;
 
+import org.apache.lucene.search.spans.Spans;
+
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -161,5 +163,27 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
      */
     interface Iterator extends java.util.Iterator<EphemeralHit> {
 
+    }
+
+    public static boolean debugCheckAllReasonable(HitsInternal hits) {
+        for (EphemeralHit h: hits) {
+            assert debugCheckReasonableHit(h);
+        }
+        return true;
+    }
+
+    public static boolean debugCheckReasonableHit(Hit h) {
+        return debugCheckReasonableHit(h.doc(), h.start(), h.end());
+    }
+
+    public static boolean debugCheckReasonableHit(int doc, int start, int end) {
+        assert doc >= 0 : "Hit doc id must be non-negative, is " + doc;
+        assert doc != Spans.NO_MORE_DOCS : "Hit doc id must not equal NO_MORE_DOCS";
+        assert start >= 0 : "Hit start must be non-negative, is " + start;
+        assert end >= 0 : "Hit end must be non-negative, is " + start;
+        assert start <= end : "Hit start " + start + " > end " + end;
+        assert start != Spans.NO_MORE_POSITIONS : "Hit start must not equal NO_MORE_POSITIONS";
+        assert end != Spans.NO_MORE_POSITIONS : "Hit end must not equal NO_MORE_POSITIONS";
+        return true;
     }
 }

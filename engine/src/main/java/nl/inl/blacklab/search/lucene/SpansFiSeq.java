@@ -115,9 +115,9 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
             return NO_MORE_POSITIONS;
 
         if (atFirstInCurrentDoc) {
-            atFirstInCurrentDoc = false;
-            if (anchorStart >= target)
-                return anchorStart;
+            int startPos = nextStartPosition();
+            if (startPos >= target)
+                return startPos;
         }
 
         // Are we done yet?
@@ -132,7 +132,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         // Are there search results in this document?
         atFirstInCurrentDoc = false;
         matchEndPointIt = null;

@@ -215,4 +215,38 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
         // (Eventually guarantees may live in a separate object)
         return guarantees;
     }
+
+    /**
+     * Assert that we're currently positioned in a document.
+     *
+     * Does not imply that we're at a hit; we may not have started hit iteration,
+     * or it may have already been exhausted.
+     *
+     * Call this from an assert statement so it will be optimized away in a release build.
+     *
+     * @return true
+     */
+    protected boolean positionedInDoc() {
+        int docID = docID();
+        return docID >= 0 && docID != NO_MORE_DOCS;
+    }
+
+    /**
+     * Assert that we're currently positioned at a hit.
+     *
+     * Also implies we're position in a doc, of course.
+     *
+     * Also checks that the hit is valid, that is, start position is not greater than end position.
+     *
+     * Call this from an assert statement so it will be optimized away in a release build.
+     *
+     * @return true
+     */
+    protected boolean positionedAtHit() {
+        if (!positionedInDoc())
+            return false;
+        int startPos = startPosition();
+        assert startPosition() <= endPosition();
+        return startPos >= 0 && startPos != NO_MORE_POSITIONS;
+    }
 }

@@ -33,7 +33,7 @@ public class MockSpansInBuckets extends SpansInBuckets {
 
     private int currentBucket = -1;
 
-    private boolean alreadyAtFirstBucket = false;
+    private boolean atFirstInCurrentDoc = false;
 
     public MockSpansInBuckets(int[] bucketDoc, int[] bucketStart, int[] start, int[] end) {
         this.bucketDoc = bucketDoc;
@@ -53,7 +53,7 @@ public class MockSpansInBuckets extends SpansInBuckets {
     public int endPosition(int i) {
         if (currentBucket >= bucketDoc.length)
             return Spans.NO_MORE_POSITIONS;
-        if (alreadyAtFirstBucket)
+        if (atFirstInCurrentDoc)
             return -1;
         return end[bucketStart[currentBucket] + i];
     }
@@ -62,15 +62,15 @@ public class MockSpansInBuckets extends SpansInBuckets {
     public int startPosition(int i) {
         if (currentBucket >= bucketDoc.length)
             return Spans.NO_MORE_POSITIONS;
-        if (alreadyAtFirstBucket)
+        if (atFirstInCurrentDoc)
             return -1;
         return start[bucketStart[currentBucket] + i];
     }
 
     @Override
     public int nextBucket() {
-        if (alreadyAtFirstBucket) {
-            alreadyAtFirstBucket = false;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             return docID();
         }
         if (currentBucket >= bucketDoc.length - 1) {
@@ -92,33 +92,33 @@ public class MockSpansInBuckets extends SpansInBuckets {
     public int nextDoc() {
         if (currentBucket >= bucketDoc.length)
             return DocIdSetIterator.NO_MORE_DOCS;
-        alreadyAtFirstBucket = false;
+        atFirstInCurrentDoc = false;
         int curDoc = currentBucket == -1 ? -1 : bucketDoc[currentBucket];
         while (currentBucket < bucketDoc.length && (currentBucket == -1 || bucketDoc[currentBucket] == curDoc)) {
             currentBucket++;
         }
         if (currentBucket == bucketDoc.length)
             return DocIdSetIterator.NO_MORE_DOCS;
-        alreadyAtFirstBucket = true;
+        atFirstInCurrentDoc = true;
         return docID();
     }
 
     @Override
     public int advance(int target) {
         assert target >= 0 && target > docID();
-        alreadyAtFirstBucket = false;
+        atFirstInCurrentDoc = false;
         int doc;
         do {
             doc = nextDoc();
         } while (doc != DocIdSetIterator.NO_MORE_DOCS && doc < target);
         if (doc != DocIdSetIterator.NO_MORE_DOCS)
-            alreadyAtFirstBucket = true;
+            atFirstInCurrentDoc = true;
         return doc;
     }
 
     @Override
     public int bucketSize() {
-        if (alreadyAtFirstBucket)
+        if (atFirstInCurrentDoc)
             return -1;
         if (currentBucket >= bucketDoc.length)
             return -1;

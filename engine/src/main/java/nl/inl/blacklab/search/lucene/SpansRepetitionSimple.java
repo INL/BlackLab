@@ -62,7 +62,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
 
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;
-        assert docID() >= 0 && docID() != NO_MORE_DOCS;
+        assert positionedInDoc();
         // See if there's a bucket of matches in this doc
         moreBuckets = nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
         if (moreBuckets) {

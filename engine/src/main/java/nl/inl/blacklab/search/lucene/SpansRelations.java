@@ -86,6 +86,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
+        assert positionedAtHit();
         if (!captureAs.isEmpty())
             matchInfo[groupIndex] = getRelationInfo().copy();
     }
@@ -161,9 +162,10 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     @Override
     public int advanceStartPosition(int target) throws IOException {
         assert target > startPosition();
-        if (atFirstInCurrentDoc && startPos >= target) {
-            // Our cached hit is the one we want.
-            return nextStartPosition();
+        if (atFirstInCurrentDoc) {
+            int startPos = nextStartPosition();
+            if (startPos >= target)
+                return startPos;
         }
         if (direction == Direction.FORWARD && spanMode == RelationInfo.SpanMode.FULL_SPAN || spanMode == RelationInfo.SpanMode.SOURCE) {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
