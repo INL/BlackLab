@@ -95,17 +95,12 @@ public class WebserviceOperations {
         BlackLabIndex index = params.blIndex();
         MetadataFields fields = index.metadataFields();
         Collection<String> requestedFields = params.getListMetadataValuesFor();
+        boolean includeAllFields = requestedFields.isEmpty();
         Set<MetadataField> ret = new HashSet<>();
-        ret.add(optCustomField(index.metadata(), "authorField"));
-        ret.add(optCustomField(index.metadata(), "dateField"));
-        ret.add(optCustomField(index.metadata(), "titleField"));
-        ret.add(fields.pidField());
-        for (MetadataField field  : fields) {
-            if (requestedFields.isEmpty() || requestedFields.contains(field.name())) {
+        for (MetadataField field: fields) {
+            if (includeAllFields || requestedFields.contains(field.name()))
                 ret.add(field);
-            }
         }
-        ret.remove(null); // for missing special fields.
         return ret;
     }
 
