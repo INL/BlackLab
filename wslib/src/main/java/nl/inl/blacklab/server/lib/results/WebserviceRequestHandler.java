@@ -264,11 +264,11 @@ public class WebserviceRequestHandler {
         if (result.getGroups() == null || result.isViewGroup()) {
             // No grouping applied, or viewing a single group
             csv = WriteCsv.docs(params, result.getDocs(), result.getGroups(),
-                    result.getSubcorpusResults());
+                    result.getSubcorpusResults(), rs);
         } else {
             // Grouped results
             csv = WriteCsv.docGroups(params, result.getDocs(), result.getGroups(),
-                    result.getSubcorpusResults());
+                    result.getSubcorpusResults(), rs);
         }
         rs.getDataStream().csv(csv);
     }
@@ -277,9 +277,9 @@ public class WebserviceRequestHandler {
         ResultHitsCsv result = WebserviceOperations.hitsCsv(params);
         String csv;
         if (result.getGroups() != null && !result.isViewGroup()) {
-            csv = WriteCsv.hitsGroupsResponse(result);
+            csv = WriteCsv.hitsGroupsResponse(result, rs);
         } else {
-            csv = WriteCsv.hitsResponse(result);
+            csv = WriteCsv.hitsResponse(result, rs);
         }
         rs.getDataStream().csv(csv);
     }

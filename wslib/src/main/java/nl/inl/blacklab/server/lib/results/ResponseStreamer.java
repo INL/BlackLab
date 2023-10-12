@@ -88,8 +88,13 @@ public class ResponseStreamer {
     private static final String KEY_BLACKLAB_VERSION = "blacklabVersion";
 
     public static final String KEY_SUMMARY = "summary";
+    public static final String KEY_NUMBER_OF_HITS = "numberOfHits";
+    public static final String KEY_NUMBER_OF_DOCS = "numberOfDocs";
+    public static final String KEY_NUMBER_OF_GROUPS = "numberOfGroups";
+    public static final String KEY_LARGEST_GROUP_SIZE = "largestGroupSize";
     public static final String KEY_SUMMARY_RESULTS_STATS = "resultsStats";
     public static final String KEY_TOKENS_IN_MATCHING_DOCUMENTS = "tokensInMatchingDocuments";
+    public static final String KEY_SUBCORPUS_SIZE = "subcorpusSize";
 
     // resultsStats section
     public static final String KEY_STATS_STATUS = "status";
@@ -119,23 +124,33 @@ public class ResponseStreamer {
     public static final String KEY_FIELD_IS_ANNOTATED = "isAnnotatedField";
     public static final String KEY_VALUE_LIST_COMPLETE = "valueListComplete";
 
+    // Sampling
+    public static final String KEY_SAMPLE_SEED = "sampleSeed";
+    public static final String KEY_SAMPLE_PERCENTAGE = "samplePercentage";
+    public static final String KEY_SAMPLE_SIZE = "sampleSize";
+    public static final String KEY_GROUP_SIZE = "size";
+
     /** Key to use for corpus name (indexName/corpusName) */
-    public String keyCorpusName;
+    public String KEY_CORPUS_NAME;
 
     /** Key to use for context before hit (left/before) */
-    private final String keyBefore;
+    public final String KEY_BEFORE;
 
     /** Key to use for context after hit (right/after) */
-    private final String keyAfter;
+    public final String KEY_AFTER;
 
-    /** Key to use for subcorpus size #docs (documents/docs) */
-    private final String keySubcorpusSizeDocs;
+    /** Key to use for subcorpus size #docs (documents/numberOfDocs) */
+    public final String KEY_SUBCORPUS_SIZE_DOCUMENTS;
 
-    private final String keyHitGroup;
+    public final String KEY_SUBCORPUS_SIZE_TOKENS;
 
-    private final String keyDocGroup;
+    public final String KEY_NUMBER_OF_TOKENS;
 
-    private final String keyNumberOfTokens;
+    public final String KEY_PARAMS;
+
+    private final String KEY_HIT_GROUP;
+
+    private final String KEY_DOC_GROUP;
 
     /** What version of responses to write. */
     private ApiVersion apiVersion;
@@ -143,6 +158,10 @@ public class ResponseStreamer {
     /** Include new API elements to help with the transition?
      *  Will be true for API v4 and higher. */
     private final boolean modernizeApi;
+
+    public boolean isNewApi() {
+        return isNewApi;
+    }
 
     /** Is this the new, incompatible API? (API v5+) */
     private final boolean isNewApi;
@@ -162,21 +181,23 @@ public class ResponseStreamer {
 
         // Some keys are changed in API v5.
         if (isNewApi) {
-            keyBefore ="before";
-            keyAfter = "after";
-            keyCorpusName = "corpusName";
-            keySubcorpusSizeDocs = KEY_STATS_NUMBER_OF_DOCS;
-            keyHitGroup = "hitGroup";
-            keyDocGroup = "docGroup";
-            keyNumberOfTokens = "tokens";
+            KEY_BEFORE ="before";
+            KEY_AFTER = "after";
+            KEY_CORPUS_NAME = "corpusName";
+            KEY_SUBCORPUS_SIZE_DOCUMENTS = KEY_STATS_NUMBER_OF_DOCS;
+            KEY_HIT_GROUP = "hitGroup";
+            KEY_DOC_GROUP = "docGroup";
+            KEY_NUMBER_OF_TOKENS = KEY_SUBCORPUS_SIZE_TOKENS = "tokens";
+            KEY_PARAMS = "params";
         } else {
-            keyBefore = "left";
-            keyAfter = "right";
-            keyCorpusName = "indexName";
-            keySubcorpusSizeDocs = "documents";
-            keyHitGroup = "hitgroup";
-            keyDocGroup = "docgroup";
-            keyNumberOfTokens = "numberOfTokens";
+            KEY_BEFORE = "left";
+            KEY_AFTER = "right";
+            KEY_CORPUS_NAME = "indexName";
+            KEY_SUBCORPUS_SIZE_DOCUMENTS = "documents";
+            KEY_HIT_GROUP = "hitgroup";
+            KEY_DOC_GROUP = "docgroup";
+            KEY_NUMBER_OF_TOKENS = KEY_SUBCORPUS_SIZE_TOKENS = "numberOfTokens";
+            KEY_PARAMS = "searchParam";
         }
     }
 
@@ -284,7 +305,7 @@ public class ResponseStreamer {
             for (Pair<String, Long> count : facetCounts) {
                 ds.startItem("item").startMap()
                         .entry("value", count.getLeft())
-                        .entry("size", count.getRight())
+                        .entry(KEY_GROUP_SIZE, count.getRight())
                         .endMap().endItem();
             }
             ds.endList().endAttrEntry();
@@ -303,8 +324,7 @@ public class ResponseStreamer {
         WindowStats window = summaryFields.getWindow();
 
         // Include parameters
-        String paramKey = isNewApi ? "params" : "searchParam";
-        ds.startEntry(paramKey).startMap();
+        ds.startEntry(KEY_PARAMS).startMap();
         for (Map.Entry<WebserviceParameter, String> e: params.getParameters().entrySet()) {
             ds.dynEntry(e.getKey().value(), e.getValue());
         }
@@ -330,11 +350,11 @@ public class ResponseStreamer {
         // Information about hit sampling
         SampleParameters sample = params.sampleSettings();
         if (sample != null) {
-            ds.entry("sampleSeed", sample.seed());
+            ds.entry(KEY_SAMPLE_SEED, sample.seed());
             if (sample.isPercentage())
-                ds.entry("samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
+                ds.entry(KEY_SAMPLE_PERCENTAGE, Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
             else
-                ds.entry("sampleSize", sample.numberOfHitsSet());
+                ds.entry(KEY_SAMPLE_SIZE, sample.numberOfHitsSet());
         }
 
         if (!isNewApi) {
@@ -356,8 +376,8 @@ public class ResponseStreamer {
 
     private void summaryGroupStats(ResultGroups<?> groups) {
         if (groups != null) {
-            ds.entry("numberOfGroups", groups.size());
-            ds.entry("largestGroupSize", groups.largestGroupSize());
+            ds.entry(KEY_NUMBER_OF_GROUPS, groups.size());
+            ds.entry(KEY_LARGEST_GROUP_SIZE, groups.largestGroupSize());
         }
     }
 
@@ -432,11 +452,11 @@ public class ResponseStreamer {
         } else {
             // Legacy API
             ds.entry("stillCounting", !hitsStats.done());
-            ds.entry("numberOfHits", hitsCounted)
+            ds.entry(KEY_NUMBER_OF_HITS, hitsCounted)
                     .entry("numberOfHitsRetrieved", hitsProcessed)
                     .entry("stoppedCountingHits", hitsStats.maxStats().hitsCountedExceededMaximum())
                     .entry("stoppedRetrievingHits", hitsStats.maxStats().hitsProcessedExceededMaximum());
-            ds.entry("numberOfDocs", docsCounted)
+            ds.entry(KEY_NUMBER_OF_DOCS, docsCounted)
                     .entry("numberOfDocsRetrieved", docsProcessed);
             subcorpusSizeStats(subcorpusSize);
         }
@@ -477,7 +497,7 @@ public class ResponseStreamer {
                 // group.getResults().getOriginalHits() returns null in this case,
                 // so we have to iterate over the DocResults and sum up the hits ourselves.
                 long numberOfHits = docResults.getNumberOfHits();
-                ds.entry("numberOfHits", numberOfHits)
+                ds.entry(KEY_NUMBER_OF_HITS, numberOfHits)
                         .entry("numberOfHitsRetrieved", numberOfHits);
 
             }
@@ -485,7 +505,7 @@ public class ResponseStreamer {
             long numberOfDocsCounted = numberOfDocsRetrieved;
             if (result.isCountFailed())
                 numberOfDocsCounted = -1;
-            ds.entry("numberOfDocs", numberOfDocsCounted);
+            ds.entry(KEY_NUMBER_OF_DOCS, numberOfDocsCounted);
             ds.entry("numberOfDocsRetrieved", numberOfDocsRetrieved);
         }
         subcorpusSizeStats(result.getSubcorpusSize());
@@ -493,8 +513,8 @@ public class ResponseStreamer {
 
     public void subcorpusSizeStats(CorpusSize subcorpusSize) {
         if (subcorpusSize != null) {
-            ds.startEntry("subcorpusSize").startMap()
-                    .entry(keySubcorpusSizeDocs, subcorpusSize.getDocuments());
+            ds.startEntry(KEY_SUBCORPUS_SIZE).startMap()
+                    .entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, subcorpusSize.getDocuments());
             if (subcorpusSize.hasTokenCount())
                 ds.entry("tokens", subcorpusSize.getTokens());
             ds.endMap().endEntry();
@@ -606,9 +626,9 @@ public class ResponseStreamer {
             // Add concordance from original XML
             Concordance c = concordanceContext.getConcordance(hit);
             if (includeContext) {
-                ds.startEntry(keyBefore).xmlFragment(c.left()).endEntry()
+                ds.startEntry(KEY_BEFORE).xmlFragment(c.left()).endEntry()
                         .startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry()
-                        .startEntry(keyAfter).xmlFragment(c.right()).endEntry();
+                        .startEntry(KEY_AFTER).xmlFragment(c.right()).endEntry();
             } else {
                 if (isSnippet) {
                     ds.xmlFragment(c.match());
@@ -620,9 +640,9 @@ public class ResponseStreamer {
             // Add KWIC info
             Kwic c = concordanceContext.getKwic(hit);
             if (includeContext) {
-                ds.startEntry(keyBefore).contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                ds.startEntry(KEY_BEFORE).contextList(c.annotations(), annotationsToList, c.left()).endEntry()
                         .startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry()
-                        .startEntry(keyAfter).contextList(c.annotations(), annotationsToList, c.right()).endEntry();
+                        .startEntry(KEY_AFTER).contextList(c.annotations(), annotationsToList, c.right()).endEntry();
             } else {
                 if (isSnippet) {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
@@ -768,7 +788,7 @@ public class ResponseStreamer {
 
         // Assemble response
         if (indexName != null)
-            ds.entry(keyCorpusName, indexName);
+            ds.entry(KEY_CORPUS_NAME, indexName);
         ds.entry(KEY_FIELD_NAME, fd.name());
         ds.entry(KEY_FIELD_IS_ANNOTATED, false);
         ds.entry("type", fd.type().toString());
@@ -818,7 +838,7 @@ public class ResponseStreamer {
 
         ds.startMap();
         if (indexName != null)
-            ds.entry(keyCorpusName, indexName);
+            ds.entry(KEY_CORPUS_NAME, indexName);
         Annotations annotations = fieldDesc.annotations();
         ds
                 .entry(KEY_FIELD_NAME, fieldDesc.name())
@@ -977,10 +997,10 @@ public class ResponseStreamer {
             {
                 List<ResultHitGroup> groupInfos = hitsGrouped.getGroupInfos();
                 for (ResultHitGroup groupInfo: groupInfos) {
-                    ds.startItem(keyHitGroup).startMap();
+                    ds.startItem(KEY_HIT_GROUP).startMap();
                     {
                         groupStats(groupInfo.getGroup(), groupInfo.getProperties());
-                        ds.entry("numberOfDocs", groupInfo.getNumberOfDocsInGroup());
+                        ds.entry(KEY_NUMBER_OF_DOCS, groupInfo.getNumberOfDocsInGroup());
                         if (hitsGrouped.getMetadataGroupProperties() != null)
                             subcorpusSizeStats(groupInfo.getSubcorpusSize());
                         if (groupInfo.getListOfHits() != null)
@@ -1002,7 +1022,7 @@ public class ResponseStreamer {
         ds
                 .entry("identity", group.identity().serialize())
                 .entry("identityDisplay", group.identity().toString())
-                .entry("size", group.size());
+                .entry(KEY_GROUP_SIZE, group.size());
 
         ds.startEntry("properties").startList();
         for (Map.Entry<ResultProperty, PropertyValue> p: properties.entrySet()) {
@@ -1042,9 +1062,9 @@ public class ResponseStreamer {
                 WindowStats ourWindow = result.getOurWindow();
                 for (long i = ourWindow.first(); i <= ourWindow.last(); ++i) {
                     DocGroup group = groups.get(i);
-                    ds.startItem(keyDocGroup).startMap();
+                    ds.startItem(KEY_DOC_GROUP).startMap();
                     groupStats(group, group.getGroupProperties(prop));
-                    ds.entry(keyNumberOfTokens, group.totalTokens());
+                    ds.entry(KEY_NUMBER_OF_TOKENS, group.totalTokens());
                     if (result.getParams().hasPattern()) {
                         subcorpusSizeStats(it.next());
                     }
@@ -1107,7 +1127,7 @@ public class ResponseStreamer {
             // Combine all
             ds.entry(KEY_DOC_PID, result.getPid());
             if (result.numberOfHits() > 0)
-                ds.entry("numberOfHits", result.numberOfHits());
+                ds.entry(KEY_NUMBER_OF_HITS, result.numberOfHits());
 
             // Doc info (metadata, etc.)
             ds.startEntry(KEY_DOC_INFO);
@@ -1126,11 +1146,11 @@ public class ResponseStreamer {
                         ds.startItem(KEY_DOC_SNIPPET).startMap();
                         {
                             // Add KWIC info
-                            ds.startEntry(keyBefore).contextList(k.annotations(), annotationsToList, k.left())
+                            ds.startEntry(KEY_BEFORE).contextList(k.annotations(), annotationsToList, k.left())
                                     .endEntry();
                             ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(k.annotations(), annotationsToList, k.match())
                                     .endEntry();
-                            ds.startEntry(keyAfter).contextList(k.annotations(), annotationsToList, k.right())
+                            ds.startEntry(KEY_AFTER).contextList(k.annotations(), annotationsToList, k.right())
                                     .endEntry();
                         }
                         ds.endMap().endItem();
@@ -1141,9 +1161,9 @@ public class ResponseStreamer {
                         ds.startItem(KEY_DOC_SNIPPET).startMap();
                         {
                             // Add concordance from original XML
-                            ds.startEntry(keyBefore).xmlFragment(c.left()).endEntry()
+                            ds.startEntry(KEY_BEFORE).xmlFragment(c.left()).endEntry()
                                     .startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry()
-                                    .startEntry(keyAfter).xmlFragment(c.right()).endEntry();
+                                    .startEntry(KEY_AFTER).xmlFragment(c.right()).endEntry();
                         }
                         ds.endMap().endItem();
                     }
@@ -1250,7 +1270,7 @@ public class ResponseStreamer {
         IndexMetadata metadata = result.getMetadata();
         ds.startMap();
         {
-            ds.entry(keyCorpusName, result.getProgress().getIndex().getId());
+            ds.entry(KEY_CORPUS_NAME, result.getProgress().getIndex().getId());
 
             if (isNewApi) {
                 if (includeCustom)
@@ -1374,7 +1394,7 @@ public class ResponseStreamer {
         IndexMetadata metadata = progress.getMetadata();
         ds.startMap();
         {
-            ds.entry(keyCorpusName, progress.getIndex().getId());
+            ds.entry(KEY_CORPUS_NAME, progress.getIndex().getId());
             if (isNewApi) {
                 if (includeCustom)
                     customInfoEntry(metadata.custom(), List.of("displayName", "description"));
