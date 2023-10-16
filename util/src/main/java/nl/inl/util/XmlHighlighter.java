@@ -2,7 +2,9 @@ package nl.inl.util;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -182,10 +184,9 @@ public class XmlHighlighter {
     private UnbalancedTagsStrategy unbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
 
     /**
-     * The outer (usually, only) highlight tag we're inside of, or null if we're not
-     * highlighting.
+     * The highlight tags we're inside of, indexed by their start position.
      */
-    private TagLocation outerHighlightTag = null;
+    Map<Integer, TagLocation> openHighlightTags = new HashMap<>();
 
     /**
      * Given XML content and a sorted list of existing tags and highlight tags to be
@@ -257,7 +258,7 @@ public class XmlHighlighter {
             existingTag(tag, xmlContent.substring(tag.start, tag.end));
             break;
         case HIGHLIGHT_END:
-            endHighlight();
+            endHighlight(tag);
             break;
         case FIX_START:
             existingTag(tag, "<" + tag.name + ">");
@@ -279,17 +280,19 @@ public class XmlHighlighter {
     private void startHighlight(TagLocation tag) {
         if (inHighlightTag == 0) {
             b.append(startHighlightTag);
-            outerHighlightTag = tag;
         }
+        openHighlightTags.put(tag.start, tag);
         inHighlightTag++;
+        assert openHighlightTags.size() == inHighlightTag;
     }
 
     /** Decrement depth; End highlight if we're at level 0 */
-    private void endHighlight() {
+    private void endHighlight(TagLocation tag) {
         inHighlightTag--;
+        openHighlightTags.remove(tag.matchingTagStart);
+        assert openHighlightTags.size() == inHighlightTag;
         if (inHighlightTag == 0) {
             b.append(endHighlightTag);
-            outerHighlightTag = null;
         }
     }
 
@@ -305,10 +308,11 @@ public class XmlHighlighter {
 
         if (inHighlightTag > 0) {
             // We should possibly suspend highlighting for this tag to maintain well-formedness.
-            // Check the current (outer) highlighting span and see if our matching tag is inside or outside this highlighting span.
-            if (outerHighlightTag.start > tag.matchingTagStart
-                    || outerHighlightTag.matchingTagStart <= tag.matchingTagStart) {
-                // Matching tag is outside the highlighting span; highlighting must be suspended to maintain well-formedness.
+            // Check the current (outer) highlighting span and see if our matching tag is inside or outside the highlighting spans.
+            boolean matchingTagOutsideHighlight = openHighlightTags.values().stream()
+                    .allMatch(hl -> hl.start > tag.matchingTagStart || hl.matchingTagStart <= tag.matchingTagStart);
+            if (matchingTagOutsideHighlight) {
+                // Matching tag is outside this highlighting span; highlighting must be suspended to maintain well-formedness.
                 suspendHighlighting = true;
             }
         }
