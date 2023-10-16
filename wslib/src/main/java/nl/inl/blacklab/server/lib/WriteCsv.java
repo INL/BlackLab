@@ -220,35 +220,20 @@ public class WriteCsv {
     }
 
     /*
-     * We must support multiple values in a single csv cell.
-     * We must also support values containing quotes/whitespace/commas.
+     * Create a single string value from (potentially) multiple input values.
      *
-     * This mean we must delimit individual values, we do this by surrounding them by quotes and separating them with a single space
-     *
-     * Existing quotes will be escaped by doubling them as per the csv escaping conventions
-     * Essentially transform
-     *      a value containing "quotes"
-     *      a "value" containing , as well as "quotes"
-     * into
-     *      "a value containing ""quotes"""
-     *      "a ""value"" containing , as well as ""quotes"""
-     *
-     * Decoders must split the value on whitespace outside quotes, then strip outside quotes, then replace the doubled quotes with singular quotes
-    */
-    private static String escape(String[] strings) {
-        StringBuilder sb = new StringBuilder();
-        boolean firstValue = true;
-        for (String value : strings) {
-            if (!firstValue) {
-                sb.append(" ");
-            }
-            sb.append('"');
-            sb.append(value.replace("\n", "").replace("\r", "").replace("\"", "\"\""));
-            sb.append('"');
-            firstValue = false;
-        }
-
-        return sb.toString();
+     * Multiple values are concatenated by a pipe symbol.
+     * Pipe symbols, newlines and carriage returns in the input values are
+     * escaped with a backslash.
+     * Any other required escaping should be taken care of by Commons CSV.
+     */
+    static String escape(String[] strings) {
+        return Arrays.stream(strings)
+                .map(value -> value
+                        .replaceAll("\n", "\\\\n")
+                        .replaceAll("\r", "\\\\r")
+                        .replaceAll("\\|", "\\\\|"))
+                .collect(Collectors.joining("|"));
     }
 
     static synchronized void writeRow(CSVPrinter printer, int numColumns, Object... values) {
