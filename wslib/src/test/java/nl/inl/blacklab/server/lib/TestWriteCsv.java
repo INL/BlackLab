@@ -32,5 +32,6 @@ public class TestWriteCsv {
         assertEscapesTo("A;C|B", "A;C", "B");
         assertEscapesTo("A\\nC|B", "A\nC", "B");
         assertEscapesTo("A\\rC|B", "A\rC", "B");
+        assertEscapesTo("A\\\\C|B", "A\\C", "B");
     }
 }

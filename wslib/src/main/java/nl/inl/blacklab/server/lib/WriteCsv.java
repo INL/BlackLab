@@ -230,6 +230,7 @@ public class WriteCsv {
     static String escape(String[] strings) {
         return Arrays.stream(strings)
                 .map(value -> value
+                        .replaceAll("\\\\", "\\\\\\\\")
                         .replaceAll("\n", "\\\\n")
                         .replaceAll("\r", "\\\\r")
                         .replaceAll("\\|", "\\\\|"))
