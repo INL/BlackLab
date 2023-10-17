@@ -154,7 +154,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             regex = StringUtil.wildcardToRegex(pattern);
         } else if (wrapped instanceof PrefixQuery) {
             // NOTE: we'd like to use Pattern.quote() here instead, but not sure if Lucene's regex engine supports \Q and \E.
-            regex = "^" + StringUtil.escapeRegexCharacters(pattern) + ".*$";
+            regex = "^" + StringUtil.escapeLuceneRegexCharacters(pattern) + ".*$";
         } else {
             throw new UnsupportedOperationException("Cannot make regex from " + wrapped);
         }

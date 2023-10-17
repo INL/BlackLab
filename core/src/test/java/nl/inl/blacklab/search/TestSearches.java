@@ -29,6 +29,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -38,6 +39,7 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
+import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.testutil.TestIndex;
 
 @RunWith(Parameterized.class)
@@ -665,6 +667,26 @@ public class TestSearches {
         BLSpanQuery query = patt.translate(new QueryExecutionContext(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test(expected=InvalidQuery.class)
+    public void testEscapedQuote() throws InvalidQuery {
+        // In Lucene regex, double quote must be escaped, so this is invalid
+        TextPattern tp = CorpusQueryLanguageParser.parse("[word=\"\\\"\"]");
+        tp.translate(new QueryExecutionContext(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+    }
+
+    @Test
+    public void testEscapedQuote2() throws InvalidQuery {
+        // In Lucene regex, double quote must be escaped; this is correct
+        TextPattern tp = CorpusQueryLanguageParser.parse("[word=\"\\\\\\\"\"]");
+        Assert.assertTrue(tp instanceof TextPatternRegex);
+        Assert.assertEquals("\\\"", ((TextPatternRegex) tp).getValue());
+        BLSpanQuery q = tp.translate(new QueryExecutionContext(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
+        Assert.assertEquals("contents%word@i:/\\\"/", q.toString());
     }
 
 }

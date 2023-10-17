@@ -71,7 +71,7 @@ public class TextPatternSerializerCql {
         String value = tp.getValue();
         if (!isRegexPattern) {
             // We're looking for an exact value, which may include regex characters.
-            value = StringUtil.escapeRegexCharacters(value);
+            value = StringUtil.escapeLuceneRegexCharacters(value);
         }
         serializeQuotedString(b, value);
         if (annotation != null)

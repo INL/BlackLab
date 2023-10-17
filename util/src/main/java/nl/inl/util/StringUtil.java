@@ -31,8 +31,12 @@ public final class StringUtil {
     private StringUtil() {
     }
 
-    /** Any characters that should be escaped when constructing a regular expression matching a value */
-    private static final Pattern PATT_REGEX_CHARACTERS = Pattern.compile("([|\\\\?*+()\\[\\]\\-^${}.])");
+    /** Any characters that should be escaped when constructing a Java regular expression matching a value */
+    private static final Pattern PATT_REGEX_CHARACTERS_JAVA = Pattern.compile("([|\\\\?!*+()<>\\[\\]\\-=^${}.])");
+
+    /** Any characters that should be escaped when constructing a Lucene regular expression matching a value.
+        (compared to Java, doesn't escape &lt;&gt;-=!^$) but does escape &quot;) */
+    private static final Pattern PATT_REGEX_CHARACTERS_LUCENE = Pattern.compile("([|\\\\?*+()\\[\\]\\{}.\"])");
 
     /**
      * Escape regex special characters
@@ -43,8 +47,21 @@ public final class StringUtil {
      * @param termStr the string to escape characters in
      * @return the escaped string
      */
-    public static String escapeRegexCharacters(String termStr) {
-        return PATT_REGEX_CHARACTERS.matcher(termStr).replaceAll("\\\\$1");
+    public static String escapeLuceneRegexCharacters(String termStr) {
+        return PATT_REGEX_CHARACTERS_LUCENE.matcher(termStr).replaceAll("\\\\$1");
+    }
+
+    /**
+     * Escape regex special characters
+     *
+     * (Pattern.quote() also does this, but this method is needed if you use a different regex
+     *  engine from Java's, such as with Lucene)
+     *
+     * @param termStr the string to escape characters in
+     * @return the escaped string
+     */
+    public static String escapeJavaRegexCharacters(String termStr) {
+        return PATT_REGEX_CHARACTERS_JAVA.matcher(termStr).replaceAll("\\\\$1");
     }
 
     public static final Pattern PATT_LEADING_OR_TRAILING_WHITESPACE = Pattern.compile("^\\p{javaSpaceChar}+|\\p{javaSpaceChar}+$");
