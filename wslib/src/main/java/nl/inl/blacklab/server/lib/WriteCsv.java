@@ -153,8 +153,7 @@ public class WriteCsv {
                 }
                 String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), doc);
                 writeHit(kwics.get(hit), doc, mainTokenProperty,
-                        resultHitsCsv.getAnnotationsToWrite(), docPid, metadataFieldsToWrite, row);
-                printer.printRecord(row);
+                        resultHitsCsv.getAnnotationsToWrite(), docPid, metadataFieldsToWrite, printer);
             }
             printer.flush();
             return printer.getOut().toString();
@@ -176,9 +175,8 @@ public class WriteCsv {
             List<Annotation> otherTokenProperties,
             String docPid,
             List<MetadataField> metadataFieldsToWrite,
-            List<String> row
-    ) {
-        row.clear();
+            CSVPrinter printer
+    ) throws IOException {
 
 
         /*
@@ -189,34 +187,35 @@ public class WriteCsv {
          */
         // Only kwic supported, original document output not supported in csv currently.
         Annotation punct = mainTokenProperty.field().annotations().punct();
-        row.add(docPid);
-        row.add(StringUtils.join(interleave(kwic.left(punct), kwic.left(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(interleave(kwic.match(punct), kwic.match(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(interleave(kwic.right(punct), kwic.right(mainTokenProperty)).toArray()));
+        printer.print(docPid);
+        printer.print(interleave(kwic.left(punct), kwic.left(mainTokenProperty)));
+        printer.print(interleave(kwic.match(punct), kwic.match(mainTokenProperty)));
+        printer.print(interleave(kwic.right(punct), kwic.right(mainTokenProperty)));
 
         // Add all other properties in this word
         for (Annotation otherProp : otherTokenProperties)
-            row.add(StringUtils.join(kwic.match(otherProp), " "));
+            printer.print(StringUtils.join(kwic.match(otherProp), " "));
 
         // other fields in order of appearance
         for (MetadataField field : metadataFieldsToWrite)
-            row.add(escape(doc.getValues(field.name())));
+            printer.print(escape(doc.getValues(field.name())));
+        printer.println();
     }
 
-    private static List<String> interleave(List<String> a, List<String> b) {
-        List<String> out = new ArrayList<>();
+    private static String interleave(List<String> a, List<String> b) {
+        StringBuilder result = new StringBuilder();
 
         List<String> smallest = a.size() < b.size() ? a : b;
         List<String> largest = a.size() > b.size() ? a : b;
         for (int i = 0; i < smallest.size(); ++i) {
-            out.add(a.get(i));
-            out.add(b.get(i));
+            result.append(a.get(i));
+            result.append(b.get(i));
         }
 
         for (int i = largest.size() - 1; i >= smallest.size(); --i)
-            out.add(largest.get(i));
+            result.append(largest.get(i));
 
-        return out;
+        return result.toString();
     }
 
     /*
