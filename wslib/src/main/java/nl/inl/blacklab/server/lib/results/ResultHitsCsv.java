@@ -97,11 +97,13 @@ public class ResultHitsCsv {
                 first = 0;
 
             long number = params.getSearchManager().config().getSearch().getMaxHitsToRetrieve();
+            if (number < 0)
+                number = Long.MAX_VALUE;
             if (params.optNumberOfResultsToShow().isPresent()) {
                 long requested = params.optNumberOfResultsToShow().get();
-                if (number >= 0 || requested >= 0) { // clamp
-                    number = Math.min(requested, number);
-                }
+                if (requested < 0)
+                    requested = Long.MAX_VALUE;
+                number = Math.min(requested, number);
             }
 
             if (number >= 0)
