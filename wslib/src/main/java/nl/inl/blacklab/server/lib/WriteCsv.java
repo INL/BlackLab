@@ -153,8 +153,7 @@ public class WriteCsv {
                 }
                 String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), doc);
                 writeHit(kwics.get(hit), doc, mainTokenProperty,
-                        resultHitsCsv.getAnnotationsToWrite(), docPid, metadataFieldsToWrite, row);
-                printer.printRecord(row);
+                        resultHitsCsv.getAnnotationsToWrite(), docPid, metadataFieldsToWrite, printer);
             }
             printer.flush();
             return printer.getOut().toString();
@@ -176,9 +175,8 @@ public class WriteCsv {
             List<Annotation> otherTokenProperties,
             String docPid,
             List<MetadataField> metadataFieldsToWrite,
-            List<String> row
-    ) {
-        row.clear();
+            CSVPrinter printer
+    ) throws IOException {
 
 
         /*
@@ -189,66 +187,53 @@ public class WriteCsv {
          */
         // Only kwic supported, original document output not supported in csv currently.
         Annotation punct = mainTokenProperty.field().annotations().punct();
-        row.add(docPid);
-        row.add(StringUtils.join(interleave(kwic.left(punct), kwic.left(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(interleave(kwic.match(punct), kwic.match(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(interleave(kwic.right(punct), kwic.right(mainTokenProperty)).toArray()));
+        printer.print(docPid);
+        printer.print(interleave(kwic.left(punct), kwic.left(mainTokenProperty)));
+        printer.print(interleave(kwic.match(punct), kwic.match(mainTokenProperty)));
+        printer.print(interleave(kwic.right(punct), kwic.right(mainTokenProperty)));
 
         // Add all other properties in this word
         for (Annotation otherProp : otherTokenProperties)
-            row.add(StringUtils.join(kwic.match(otherProp), " "));
+            printer.print(StringUtils.join(kwic.match(otherProp), " "));
 
         // other fields in order of appearance
         for (MetadataField field : metadataFieldsToWrite)
-            row.add(escape(doc.getValues(field.name())));
+            printer.print(escape(doc.getValues(field.name())));
+        printer.println();
     }
 
-    private static List<String> interleave(List<String> a, List<String> b) {
-        List<String> out = new ArrayList<>();
+    private static String interleave(List<String> a, List<String> b) {
+        StringBuilder result = new StringBuilder();
 
         List<String> smallest = a.size() < b.size() ? a : b;
         List<String> largest = a.size() > b.size() ? a : b;
         for (int i = 0; i < smallest.size(); ++i) {
-            out.add(a.get(i));
-            out.add(b.get(i));
+            result.append(a.get(i));
+            result.append(b.get(i));
         }
 
         for (int i = largest.size() - 1; i >= smallest.size(); --i)
-            out.add(largest.get(i));
+            result.append(largest.get(i));
 
-        return out;
+        return result.toString();
     }
 
     /*
-     * We must support multiple values in a single csv cell.
-     * We must also support values containing quotes/whitespace/commas.
+     * Create a single string value from (potentially) multiple input values.
      *
-     * This mean we must delimit individual values, we do this by surrounding them by quotes and separating them with a single space
-     *
-     * Existing quotes will be escaped by doubling them as per the csv escaping conventions
-     * Essentially transform
-     *      a value containing "quotes"
-     *      a "value" containing , as well as "quotes"
-     * into
-     *      "a value containing ""quotes"""
-     *      "a ""value"" containing , as well as ""quotes"""
-     *
-     * Decoders must split the value on whitespace outside quotes, then strip outside quotes, then replace the doubled quotes with singular quotes
-    */
-    private static String escape(String[] strings) {
-        StringBuilder sb = new StringBuilder();
-        boolean firstValue = true;
-        for (String value : strings) {
-            if (!firstValue) {
-                sb.append(" ");
-            }
-            sb.append('"');
-            sb.append(value.replace("\n", "").replace("\r", "").replace("\"", "\"\""));
-            sb.append('"');
-            firstValue = false;
-        }
-
-        return sb.toString();
+     * Multiple values are concatenated by a pipe symbol.
+     * Pipe symbols, newlines and carriage returns in the input values are
+     * escaped with a backslash.
+     * Any other required escaping should be taken care of by Commons CSV.
+     */
+    static String escape(String[] strings) {
+        return Arrays.stream(strings)
+                .map(value -> value
+                        .replaceAll("\\\\", "\\\\\\\\")
+                        .replaceAll("\n", "\\\\n")
+                        .replaceAll("\r", "\\\\r")
+                        .replaceAll("\\|", "\\\\|"))
+                .collect(Collectors.joining("|"));
     }
 
     static synchronized void writeRow(CSVPrinter printer, int numColumns, Object... values) {
