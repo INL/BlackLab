@@ -17,14 +17,6 @@ If both are specified, the parameter has precedence.
 
 We'll usually use JSON in our examples.
 
-::: info Extra parameters for CSV
-
-(for CSV hits/docs results, the parameters `csvsummary` determines whether to include a summary of 
-the search parameters in the output `[no]` and `csvsepline` determines whether to include a separator declaration 
-that will help Microsoft Excel read the file `[no]`)
-
-:::
-
 ### Running results count
 
 BlackLab Server is mostly stateless: a particular URL will always result in the same response. An exception to this is the running result count. When you're requesting a page of results, and there are more results to the query, BlackLab Server will retrieve these results in the background. It will report how many results it has retrieved and whether it has finished or is still retrieving.
