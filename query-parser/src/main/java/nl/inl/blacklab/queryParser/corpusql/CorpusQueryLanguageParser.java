@@ -107,6 +107,10 @@ public class CorpusQueryLanguageParser {
                 str += "$";
         }
 
+        // Lucene's regex engine requires double quotes to be escaped, unlike most others.
+        // Escape double quotes not already preceded by backslash
+        str = str.replaceAll("(?<!\\\\)\"", "\\\\\"");
+
         // Treat everything like regex now; will be simplified later if possible
         return new TextPatternRegex(str);
     }

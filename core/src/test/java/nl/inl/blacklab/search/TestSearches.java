@@ -669,24 +669,19 @@ public class TestSearches {
         Assert.assertEquals(expected, testIndex.findConc(query));
     }
 
-    @Test(expected=InvalidQuery.class)
-    public void testEscapedQuote() throws InvalidQuery {
-        // In Lucene regex, double quote must be escaped, so this is invalid
-        TextPattern tp = CorpusQueryLanguageParser.parse("[word=\"\\\"\"]");
-        tp.translate(new QueryExecutionContext(testIndex.index(),
-                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
-    }
-
     @Test
     public void testEscapedQuote2() throws InvalidQuery {
+        String[] patts = { "[word=\"\\\"\"]", "[word=\"\\\\\\\"\"]" };
         // In Lucene regex, double quote must be escaped; this is correct
-        TextPattern tp = CorpusQueryLanguageParser.parse("[word=\"\\\\\\\"\"]");
-        Assert.assertTrue(tp instanceof TextPatternRegex);
-        Assert.assertEquals("\\\"", ((TextPatternRegex) tp).getValue());
-        BLSpanQuery q = tp.translate(new QueryExecutionContext(testIndex.index(),
-                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
-        Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
-        Assert.assertEquals("contents%word@i:/\\\"/", q.toString());
+        for (String patt: patts) {
+            TextPattern tp = CorpusQueryLanguageParser.parse(patt);
+            Assert.assertTrue(tp instanceof TextPatternRegex);
+            Assert.assertEquals("\\\"", ((TextPatternRegex) tp).getValue());
+            BLSpanQuery q = tp.translate(new QueryExecutionContext(testIndex.index(),
+                    testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+            Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
+            Assert.assertEquals("contents%word@i:/\\\"/", q.toString());
+        }
     }
 
 }
