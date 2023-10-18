@@ -390,6 +390,34 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         endDocument();
     }
 
+    @Override
+    public void indexSpecificDocument(String documentXPath) {
+        super.indexSpecificDocument(documentXPath);
+
+        final AtomicBoolean docDone = new AtomicBoolean(false);
+        try {
+            if (documentXPath != null) {
+                indexParsedFile(documentXPath, true);
+                // Find our specific document in the file
+                xpathForEach(documentXPath, contextNodeWholeDocument(), (doc) -> {
+                    if (docDone.get())
+                        throw new BlackLabRuntimeException(
+                                "Document link " + documentXPath + " matched multiple documents in "
+                                        + documentName);
+                    indexDocument(doc);
+                    docDone.set(true);
+                });
+            } else {
+                // Process whole file; must be 1 document
+                docDone.set(indexParsedFile(config.getDocumentPath(), true));
+            }
+        } catch (Exception e1) {
+            throw BlackLabRuntimeException.wrap(e1);
+        }
+        if (!docDone.get())
+            throw new BlackLabRuntimeException("Linked document not found in " + documentName);
+    }
+
     protected void processMetadataBlock(T doc, ConfigMetadataBlock metaBlock) {
         // For each instance of this metadata block...
         xpathForEach(metaBlock.getContainerPath(), doc, (block) -> {

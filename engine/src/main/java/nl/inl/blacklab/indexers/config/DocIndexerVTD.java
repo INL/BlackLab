@@ -15,7 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -433,33 +432,10 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     @Override
     public void indexSpecificDocument(String documentXPath) {
-        super.indexSpecificDocument(documentXPath);
-
-        final AtomicBoolean docDone = new AtomicBoolean(false);
         if (inputDocument.length > 0) { // VTD doesn't like empty documents
             parseFile();
-            try {
-                if (documentXPath != null) {
-                    indexParsedFile(documentXPath, true);
-                    // Find our specific document in the file
-                    xpathForEach(documentXPath, contextNodeWholeDocument(), (doc) -> {
-                        if (docDone.get())
-                            throw new BlackLabRuntimeException(
-                                    "Document link " + documentXPath + " matched multiple documents in "
-                                            + documentName);
-                        indexDocument(doc);
-                        docDone.set(true);
-                    });
-                } else {
-                    // Process whole file; must be 1 document
-                    docDone.set(indexParsedFile(config.getDocumentPath(), true));
-                }
-            } catch (Exception e1) {
-                throw BlackLabRuntimeException.wrap(e1);
-            }
+            super.indexSpecificDocument(documentXPath);
         }
-        if (!docDone.get())
-            throw new BlackLabRuntimeException("Linked document not found in " + documentName);
     }
 
     @Override
