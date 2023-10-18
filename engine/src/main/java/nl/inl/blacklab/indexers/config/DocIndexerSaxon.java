@@ -232,7 +232,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             beginWord();
 
             // For each configured annotation...
-            for (ConfigAnnotation annotation: annotatedField.getAnnotationsFlattened().values()) {
+            for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
                 processAnnotation(annotation, word, wordNumber, -1);
             }
 
