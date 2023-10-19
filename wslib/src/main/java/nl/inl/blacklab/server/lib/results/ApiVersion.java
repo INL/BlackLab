@@ -26,7 +26,7 @@ public enum ApiVersion {
      *  have a v4 equivalent.
      *  A stricter, cleaner version of the v4 API.
      */
-    V5_0_exp(5, 0, "exp"),
+    V5_0(5, 0),
 
     /** (this is NOT a supported API version; used for testing that "v0" indicates the latest minor in 0 series) */
     TEST_V0_0(0,0),
@@ -44,7 +44,7 @@ public enum ApiVersion {
     public static final ApiVersion CURRENT = V4_0;
 
     /** An experimental future version of the API, if there is one; the current one, otherwise */
-    public static final ApiVersion EXPERIMENTAL = V5_0_exp;
+    public static final ApiVersion EXPERIMENTAL = V5_0;
 
     /** Latest in the version 3 series */
     public static final ApiVersion V3_LATEST = V3_0;
