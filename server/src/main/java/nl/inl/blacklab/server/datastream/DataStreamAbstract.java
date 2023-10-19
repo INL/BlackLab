@@ -24,6 +24,8 @@ public abstract class DataStreamAbstract implements DataStream {
 
     private int indent = 0;
 
+    private int compactLevel = 0;
+
     private boolean prettyPrint;
 
     private final boolean prettyPrintPref;
@@ -93,13 +95,18 @@ public abstract class DataStreamAbstract implements DataStream {
 
     @Override
     public DataStreamAbstract endCompact() {
-        prettyPrint = prettyPrintPref;
+        compactLevel--;
+        assert compactLevel >= 0;
+        if (compactLevel == 0)
+            prettyPrint = prettyPrintPref;
         return this;
     }
 
     @Override
     public DataStream startCompact() {
+        assert compactLevel >= 0;
         prettyPrint = false;
+        compactLevel++;
         return this;
     }
 

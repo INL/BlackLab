@@ -316,7 +316,7 @@ public class DataStreamXml extends DataStreamAbstract {
     @Override
     public DataStream startElEntry(String key) {
         openEl("entry");
-        openEl("key").value(key).closeEl();
+        indent().startCompact().startEntry("key").value(key).endEntry().endCompact().newline();
         openEl("value");
         return this;
     }
