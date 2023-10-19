@@ -719,6 +719,15 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
+    public String getRelClasses() { return params.getRelClasses(); }
+
+    @Override
+    public boolean getRelOnlySpans() { return params.getRelOnlySpans(); }
+
+    @Override
+    public boolean getRelSeparateSpans() { return params.getRelSeparateSpans(); }
+
+    @Override
     public boolean isCalculateCollocations() {
         return params.isCalculateCollocations();
     }

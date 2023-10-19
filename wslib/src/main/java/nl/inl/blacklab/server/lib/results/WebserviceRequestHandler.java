@@ -1,11 +1,16 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -13,6 +18,7 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
@@ -320,6 +326,67 @@ public class WebserviceRequestHandler {
                 }
             }
             ds.endMap().endEntry();
+        }
+        ds.endMap();
+    }
+
+    public static void opRelations(WebserviceParamsImpl params, ResponseStreamer rs) {
+        String fieldName = params.getFieldName();
+        BlackLabIndex index = params.blIndex();
+        AnnotatedField field = StringUtils.isEmpty(fieldName) ?
+                index.mainAnnotatedField() :
+                index.annotatedField(fieldName);
+        Map<String, Map<String, Long>> relations = index.getRelationsMap(field);
+        Set<String> relClasses = params.getRelClasses().isEmpty() ? relations.keySet() :
+                new HashSet<>(Arrays.asList(params.getRelClasses().split(",")));
+        String spansClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
+        if (params.getRelOnlySpans()) {
+            relClasses = Set.of(spansClass);
+        }
+        boolean separateSpans = params.getRelSeparateSpans();
+        boolean onlySpans = separateSpans && relClasses.size() == 1 && relClasses.iterator().next().equals(spansClass);
+
+        // Write response
+        DataStream ds = rs.getDataStream();
+        ds.startMap();
+        {
+            boolean separateSpansResponse = separateSpans && relations.containsKey(spansClass) &&
+                    relClasses.contains(spansClass);
+            if (separateSpansResponse) {
+                ds.startEntry("spans").startMap();
+                {
+                    Map<String, Long> values = relations.get(spansClass);
+                    for (Map.Entry<String, Long> e: values.entrySet()) {
+                        ds.dynEntry(e.getKey(), e.getValue());
+                    }
+                }
+                ds.endMap().endEntry();
+            }
+            if (!onlySpans) {
+                ds.startEntry("relations").startMap();
+                {
+                    for (Map.Entry<String, Map<String, Long>> rc: relations.entrySet()) {
+                        String relClass = rc.getKey();
+                        if (!relClasses.isEmpty() && !relClasses.contains(relClass)) {
+                            // Not a relation class we're interested in
+                            continue;
+                        }
+                        if (relClass.equals(spansClass) && separateSpansResponse) {
+                            // Already handled above
+                            continue;
+                        }
+                        ds.startDynEntry(relClass).startMap();
+                        {
+                            Map<String, Long> relTypes = rc.getValue();
+                            for (Map.Entry<String, Long> rt: relTypes.entrySet()) {
+                                ds.dynEntry(rt.getKey(), rt.getValue());
+                            }
+                        }
+                        ds.endMap().endDynEntry();
+                    }
+                }
+                ds.endMap().endEntry();
+            }
         }
         ds.endMap();
     }

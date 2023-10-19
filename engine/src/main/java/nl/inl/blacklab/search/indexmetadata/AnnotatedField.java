@@ -1,5 +1,9 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Map;
+
+import nl.inl.blacklab.search.BlackLabIndex;
+
 /** An annotated field */
 public interface AnnotatedField extends Field {
 
@@ -25,6 +29,8 @@ public interface AnnotatedField extends Field {
 	default boolean hasXmlTags() { return hasRelationAnnotation(); }
 
     boolean hasRelationAnnotation();
+
+    Map<String, Map<String, Long>> getRelationsMap(BlackLabIndex index);
 
     String tokenLengthField();
 

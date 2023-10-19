@@ -65,6 +65,7 @@ public abstract class RequestHandler {
     public static final String ENDPOINT_HITS_GROUPED_CSV = "hits-grouped-csv";
     public static final String ENDPOINT_INPUT_FORMATS    = "input-formats";
     public static final String ENDPOINT_PARSE_PATTERN    = "parse-pattern";
+    public static final String ENDPOINT_RELATIONS        = "relations";
     public static final String ENDPOINT_SHARING          = "sharing";
     public static final String ENDPOINT_STATUS           = "status";
     public static final String ENDPOINT_TERMFREQ         = "termfreq";
@@ -96,6 +97,7 @@ public abstract class RequestHandler {
         availableHandlers.put(ENDPOINT_HITS_GROUPED,     RequestHandlerHitsGrouped.class);
         availableHandlers.put(ENDPOINT_HITS_GROUPED_CSV, RequestHandlerHitsCsv.class);
         availableHandlers.put(ENDPOINT_PARSE_PATTERN,    RequestHandlerParsePattern.class);
+        availableHandlers.put(ENDPOINT_RELATIONS,        RequestHandlerRelations.class);
         availableHandlers.put(ENDPOINT_SHARING,          RequestHandlerSharing.class);
         availableHandlers.put(ENDPOINT_STATUS,           RequestHandlerIndexStatus.class);
         availableHandlers.put(ENDPOINT_TERMFREQ,         RequestHandlerTermFreq.class);
@@ -153,13 +155,13 @@ public abstract class RequestHandler {
         String urlResource = userRequest.getUrlResource();
         String urlPathInfo = userRequest.getUrlPathInfo();
         boolean resourceOrPathGiven = !urlResource.isEmpty() || !urlPathInfo.isEmpty();
-        boolean corporaApi = userRequest.isCorporaRequest(); // /corpora/... in API v4+
+        boolean isNewEndpoint = userRequest.isNewEndpoint(); // /corpora/... in API v4+
         boolean isNewApi = userRequest.apiVersion().getMajor() >= 5; // Enforce using only the new API?
-        if (!corporaApi && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi)
+        if (!isNewEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi)
             throw new UnsupportedOperationException("Old API not supported with current settings. Migrate to " +
                     "new /corpora/... endpoints, or use api=4 for backward compat.");
         String method = request.getMethod();
-        boolean isInputFormatsRequest = !corporaApi && indexName.equals(ENDPOINT_INPUT_FORMATS);
+        boolean isInputFormatsRequest = !isNewEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);
         if (method.equals("DELETE")) {
             // Index given and nothing else?
             if (isInputFormatsRequest) {
@@ -182,7 +184,7 @@ public abstract class RequestHandler {
                 if (indexName.length() == 0 && !resourceOrPathGiven) {
                     // POST to /blacklab-server/ : create private index
                     requestHandler = new RequestHandlerCreateIndex(userRequest);
-                } else if (!corporaApi && indexName.equals(ENDPOINT_CACHE_CLEAR)) {
+                } else if (!isNewEndpoint && indexName.equals(ENDPOINT_CACHE_CLEAR)) {
                     // Clear the cache
                     if (resourceOrPathGiven) {
                         return errorObj.unknownOperation(indexName);
@@ -221,7 +223,7 @@ public abstract class RequestHandler {
                 }
             }
             if (method.equals("GET") || (method.equals("POST") && postAsGet)) {
-                if (!corporaApi && indexName.equals(ENDPOINT_CACHE_INFO)) {
+                if (!isNewEndpoint && indexName.equals(ENDPOINT_CACHE_INFO)) {
                     if (resourceOrPathGiven) {
                         return errorObj.unknownOperation(indexName);
                     }
@@ -252,7 +254,7 @@ public abstract class RequestHandler {
                                 && !Arrays.asList(
                                 ENDPOINT_HITS, ENDPOINT_HITS_CSV, ENDPOINT_HITS_GROUPED_CSV,
                                 ENDPOINT_DOCS, ENDPOINT_DOCS_CSV, ENDPOINT_DOCS_GROUPED_CSV,
-                                ENDPOINT_PARSE_PATTERN, ENDPOINT_FIELDS, ENDPOINT_TERMFREQ,
+                                ENDPOINT_PARSE_PATTERN, ENDPOINT_RELATIONS, ENDPOINT_FIELDS, ENDPOINT_TERMFREQ,
                                 ENDPOINT_STATUS, ENDPOINT_AUTOCOMPLETE, ENDPOINT_SHARING).contains(handlerName)) {
                             handlerName = "debug";
                         }
@@ -316,7 +318,7 @@ public abstract class RequestHandler {
             return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
                     "INTERR_WRONG_HTTP_METHOD");
         }
-        requestHandler.setCorporaApi(corporaApi);
+        requestHandler.setIsNewEndpoint(isNewEndpoint);
         return requestHandler;
     }
 
@@ -325,8 +327,8 @@ public abstract class RequestHandler {
      *
      * @param b true if this is a /corpora/... request
      */
-    private void setCorporaApi(boolean b) {
-        this.corporaApi = b;
+    private void setIsNewEndpoint(boolean b) {
+        this.newEndpoint = b;
     }
 
     /**
@@ -338,8 +340,8 @@ public abstract class RequestHandler {
      *
      * @return true if this is a /corpora/... request
      */
-    private boolean isCorporaApi() {
-        return this.corporaApi;
+    private boolean isNewEndpoint() {
+        return this.newEndpoint;
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {
@@ -368,7 +370,7 @@ public abstract class RequestHandler {
      * They replace the old index-related endpoints in API v5.
      * You can test this already, using api=exp (or set in config file)
      */
-    private boolean corporaApi = false;
+    private boolean newEndpoint = false;
 
     /** The servlet object */
     protected BlackLabServer servlet;
@@ -524,7 +526,7 @@ public abstract class RequestHandler {
 
     public ApiVersion apiCompatibility() {
         ApiVersion api = params.apiCompatibility();
-        if (isCorporaApi() && api.getMajor() <= 4) {
+        if (isNewEndpoint() && api.getMajor() <= 4) {
             // The new /corpora/... endpoints always use the new version of the API.
             return ApiVersion.EXPERIMENTAL;
         }

@@ -248,13 +248,18 @@ public final class LuceneUtil {
     	/** Handle a term.
     	 * 
     	 * @param term term to handle
+         * @param freq total term frequency
     	 * @return whether or not to continue iterating over terms.
     	 */
-    	boolean term(String term);
+    	boolean term(String term, long freq);
     }
     
     /**
      * Find terms in the index based on a prefix. Useful for autocomplete.
+     *
+     * Note that this method iterates over parts of the index sequentially, so a
+     * term may be reported multiple times. The frequencies should be summed if you
+     * want the total frequency.
      *
      * @param index the index
      * @param fieldName the field to find terms for
@@ -284,7 +289,7 @@ public final class LuceneUtil {
                 }
                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
                     String termText = term.utf8ToString();
-                    if (!handler.term(termText))
+                    if (!handler.term(termText, termsEnum.totalTermFreq()))
                     	break outerLoop;
                 }
             }

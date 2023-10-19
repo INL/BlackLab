@@ -24,6 +24,7 @@ import org.ivdnt.blacklab.proxy.representation.InputFormats;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.MetadataField;
 import org.ivdnt.blacklab.proxy.representation.ParsePatternResponse;
+import org.ivdnt.blacklab.proxy.representation.RelationsResponse;
 import org.ivdnt.blacklab.proxy.representation.Server;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
 import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
@@ -55,6 +56,12 @@ public class ProxyRequest {
             String method) {
         Map<WebserviceParameter, String> params = ParamsUtil.get(parameters, corpusName, WebserviceOperation.PARSE_PATTERN);
         return ProxyResponse.success(Requests.request(client, params, method, ParsePatternResponse.class));
+    }
+
+    static Response relations(Client client, String corpusName, MultivaluedMap<String, String> parameters,
+            String method) {
+        Map<WebserviceParameter, String> params = ParamsUtil.get(parameters, corpusName, WebserviceOperation.RELATIONS);
+        return ProxyResponse.success(Requests.request(client, params, method, RelationsResponse.class));
     }
 
     static Response docInfo(Client client, String corpusName, String docPid, MultivaluedMap<String, String> parameters,

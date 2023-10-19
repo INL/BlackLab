@@ -137,6 +137,12 @@ public interface QueryParams {
 
     String getAutocompleteTerm();
 
+    String getRelClasses();
+
+    boolean getRelOnlySpans();
+
+    boolean getRelSeparateSpans();
+
     boolean isCalculateCollocations();
 
     String getAnnotationName();

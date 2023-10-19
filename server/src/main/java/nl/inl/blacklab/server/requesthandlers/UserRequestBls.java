@@ -34,7 +34,8 @@ public class UserRequestBls implements UserRequest {
 
     private final HttpServletResponse response;
 
-    private boolean newApi = false;
+    /** Newly added encdpoint that always uses v5 conventions for response, etc.? */
+    private boolean newEndpoint = false;
 
     /** Corpus name from the URL path */
     private String corpusName;
@@ -61,9 +62,12 @@ public class UserRequestBls implements UserRequest {
         if (servletPath.startsWith("corpora/")) {
             // Strip "corpora/" prefix, but remember it (new API)
             servletPath = servletPath.substring("corpora/".length());
-            this.newApi = true;
+            this.newEndpoint = true;
         }
         String[] parts = servletPath.split("/", 3);
+        if (parts.length > 1 && parts[1].equals("relations")) {
+            this.newEndpoint = true;
+        }
         corpusName = parts.length >= 1 ? parts[0] : "";
         if (corpusName.startsWith(":")) {
             // Private index. Prefix with user id.
@@ -73,8 +77,8 @@ public class UserRequestBls implements UserRequest {
         urlPathInfo = parts.length >= 3 ? parts[2] : "";
     }
 
-    public boolean isCorporaRequest() {
-        return newApi;
+    public boolean isNewEndpoint() {
+        return newEndpoint;
     }
 
     @Override

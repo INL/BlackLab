@@ -92,6 +92,26 @@ public class CorpusResource {
         return ProxyRequest.parsePattern(client, corpusName, formParams, HttpMethod.POST);
     }
 
+    @Path("/relations")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getRelations(
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo) {
+        Response hits = ProxyRequest.relations(client, corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        return hits;
+    }
+
+    @Path("/relations")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response postRelations(
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo) {
+        Response hits = ProxyRequest.relations(client, corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        return hits;
+    }
+
     @Path("/hits")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })

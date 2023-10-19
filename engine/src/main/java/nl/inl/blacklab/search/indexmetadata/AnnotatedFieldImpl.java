@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
+import nl.inl.util.LuceneUtil;
 
 /** An annotated field */
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -95,6 +97,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     @XmlTransient
     private final AnnotationsImpl annotations = new AnnotationsImpl();
+
+    /** The map of available relation classes and types and their frequencies. */
+    private final Map<String, Map<String, Long>> relations = new HashMap<>();
+
+    private boolean relationsInitialized = false;
 
     // For JAXB deserialization
     @SuppressWarnings("unused")
@@ -298,6 +305,41 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         super.fixAfterDeserialization(index, fieldName);
         for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
             entry.getValue().fixAfterDeserialization(index, this, entry.getKey());
+        }
+    }
+
+    public Map<String, Map<String, Long>> getRelationsMap(BlackLabIndex index) {
+        synchronized (relations) {
+            if (!relationsInitialized) {
+                boolean oldStyleStarttag = index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
+                String annotName = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
+                String luceneField = annotation(annotName).sensitivity(MatchSensitivity.SENSITIVE)
+                        .luceneField();
+                LuceneUtil.getFieldTerms(index.reader(), luceneField,
+                        null, (term, freq) -> {
+                    if (term.isEmpty())
+                        return true; // empty terms are added if no relations are found at a position (?)
+                    if (oldStyleStarttag && term.startsWith("@"))
+                        return true; // attribute value
+                    String relationClass, relationType;
+                    if (oldStyleStarttag) {
+                        // Old external index. No relations, only tags. Make sure the response is the same as for new.
+                        relationClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
+                        relationType = term;
+                    } else {
+                        // New integrated index with spans indexed as relations as well.
+                        String fullType = RelationUtil.fullTypeFromIndexedTerm(term);
+                        String[] classAndType = RelationUtil.classAndType(fullType);
+                        relationClass = classAndType[0];  // e.g. dep for dependency relations
+                        relationType = classAndType[1];   // e.g. nobj for nominal object
+                    }
+                    relations.computeIfAbsent(relationClass, k -> new HashMap<>())
+                            .merge(relationType, freq, Long::sum);
+                    return true;
+                });
+                relationsInitialized = true;
+            }
+            return relations;
         }
     }
 

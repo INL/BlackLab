@@ -385,6 +385,15 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public String getAutocompleteTerm() { return get(WebserviceParameter.TERM); }
 
     @Override
+    public String getRelClasses() { return get(WebserviceParameter.REL_CLASSES); }
+
+    @Override
+    public boolean getRelOnlySpans() { return getBool(WebserviceParameter.REL_ONLY_SPANS); }
+
+    @Override
+    public boolean getRelSeparateSpans() { return getBool(WebserviceParameter.REL_SEPARATE_SPANS); }
+
+    @Override
     public boolean isCalculateCollocations() { return get(WebserviceParameter.CALCULATE_STATS).equals("colloc"); }
 
     @Override

@@ -752,4 +752,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public ContentStore contentStore(Field field) {
         return contentAccessor(field).getContentStore();
     }
+
+    public Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field) {
+        return field.getRelationsMap(this);
+    }
 }

@@ -426,7 +426,7 @@ public class WebserviceOperations {
             //    not a special case in getAnnotationValues(); this method should do what it says
             //    and return all the annotation values)
             // Tags. Skip attribute values, only show elements.
-            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, (term, freq) -> {
                 if (!term.startsWith("@") && !terms.contains(term)) {
                     if (terms.size() >= MAX_FIELD_VALUES_TO_RETURN) {
                         valueListComplete[0] = false;
@@ -438,7 +438,7 @@ public class WebserviceOperations {
             });
         } else {
             // Regular annotated field.
-            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, (term, freq) -> {
                 if (!terms.contains(term)) {
                     if (terms.size() >= MAX_FIELD_VALUES_TO_RETURN) {
                         valueListComplete[0] = false;

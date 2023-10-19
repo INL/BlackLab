@@ -282,4 +282,9 @@ public class MockBlackLabIndex implements BlackLabIndex {
     public String name() { 
         return "MockBlackLabIndex";
     }
+
+    @Override
+    public Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field) {
+        throw new UnsupportedOperationException();
+    }
 }

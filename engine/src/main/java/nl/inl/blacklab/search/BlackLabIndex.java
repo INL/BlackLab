@@ -507,4 +507,6 @@ public interface BlackLabIndex extends AutoCloseable {
     }
     
     String name();
+
+    Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field);
 }

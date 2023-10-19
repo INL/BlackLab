@@ -9,15 +9,15 @@ import nl.inl.blacklab.webservice.WebserviceOperation;
  * Autocompletion for metadata and annotated fields. Annotations must be
  * prefixed by the annotated field in which they exist.
  */
-public class RequestHandlerParsePattern extends RequestHandler {
+public class RequestHandlerRelations extends RequestHandler {
 
-    public RequestHandlerParsePattern(UserRequestBls userRequest) {
-        super(userRequest, WebserviceOperation.PARSE_PATTERN);
+    public RequestHandlerRelations(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.RELATIONS);
     }
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
-        WebserviceRequestHandler.opParsePattern(params, rs);
+        WebserviceRequestHandler.opRelations(params, rs);
         return HTTP_OK;
     }
 

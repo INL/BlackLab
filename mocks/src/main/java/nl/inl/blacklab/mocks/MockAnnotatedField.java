@@ -2,8 +2,10 @@ package nl.inl.blacklab.mocks;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
@@ -102,4 +104,8 @@ public class MockAnnotatedField implements AnnotatedField {
         return CustomProps.NONE;
     }
 
+    @Override
+    public Map<String, Map<String, Long>> getRelationsMap(BlackLabIndex index) {
+        throw new UnsupportedOperationException();
+    }
 }

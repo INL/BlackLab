@@ -92,6 +92,11 @@ public enum WebserviceParameter {
     CSV_INCLUDE_SUMMARY("csvsummary"), // include summary of search in the CSV output? [no]
     CSV_DECLARE_SEPARATOR("csvsepline"), // include separator declaration for Excel? [no]
 
+    // list relations options
+    REL_CLASSES("classes"),               // what relation classes to report (default all)
+    REL_ONLY_SPANS("only-spans"),         // only report spans, not other relations [no]
+    REL_SEPARATE_SPANS("separate-spans"), // report spans separately from other relations [yes]
+
     DEBUG("debug"), // include debug info (cache)
 
     OPERATION("op"),
@@ -117,6 +122,7 @@ public enum WebserviceParameter {
         // Default values for the parameters. Note that if no default is set, the default will be the empty string.
         // (which for booleans will translate to false, etc.)
         defaultValues = new HashMap<>();
+        defaultValues.put(CONTEXT, "5"); // previously "wordsaroundhit"
         defaultValues.put(CREATE_CONCORDANCES_FROM, "fi");
         defaultValues.put(CSV_DECLARE_SEPARATOR, "yes");
         defaultValues.put(CSV_INCLUDE_SUMMARY, "yes");
@@ -136,10 +142,10 @@ public enum WebserviceParameter {
         defaultValues.put(OMIT_EMPTY_CAPTURES, "no");
         defaultValues.put(PATTERN_LANGUAGE, "default");
         defaultValues.put(PROPERTY, Constants.DEFAULT_MAIN_ANNOT_NAME); // deprecated, use "annotation" now
+        defaultValues.put(REL_SEPARATE_SPANS, "yes");
         defaultValues.put(SENSITIVE, "no");
         defaultValues.put(USE_CACHE, "yes");
         defaultValues.put(WAIT_FOR_TOTAL_COUNT, "no");
-        defaultValues.put(CONTEXT, "5"); // previously "wordsaroundhit"
         defaultValues.put(WORD_END, "-1");
         defaultValues.put(WORD_START, "-1");
     }
