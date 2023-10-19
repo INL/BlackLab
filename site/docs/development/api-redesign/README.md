@@ -7,6 +7,24 @@ We intend to evolve the API over time, with new versions that gradually move awa
 For (older) ideas for example requests and responses, see [New API examples](API.md).
 
 
+## API support roadmap
+
+- [ ] **BlackLab v4.0**
+  - [x] add API v4 (adds endpoints, transitional; default API)
+  - [ ] add API v5 (enforces exclusive use of new endpoints)
+- [ ] **Frontend v4.0**: start using API v4: use new endpoints if available, fall back to v3 endpoints if not (for now). So _if_ your BLS supports v4:
+  - [ ] use /relations to get list of tags
+  - [ ] from server info page, use `corpora` key instead of deprecated `indices` key.
+  - [ ] use /corpora/CORPUSNAME/... endpoints
+- [ ] **BlackLab v5.0**:
+  - [ ] switch default to API v5.
+  - [ ] deprecate API v4.
+  - [ ] remove deprecated API v3.
+- [ ] **Frontend v5.0**: drop support for API v3 and v4 (use new endpoints exclusively). Test this by passing `api=5` to BLS (enforces only new endpoints). Frontend should still work with BlackLab 4.0 at this point (because that already supported API v5).
+- [ ] BlackLab v6.0:
+  - [ ] remove deprecated API v4
+
+
 ## API evolution TODO
 
 General guidelines:
