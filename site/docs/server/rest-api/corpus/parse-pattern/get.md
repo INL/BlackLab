@@ -12,6 +12,8 @@ If you don't specify `pattlang`, the pattern type passed in `patt` will be autod
 
 **Method** : `GET`
 
+#### Parameters
+
 The `patt` parameter is required.
 
 | Parameter  | Description                                                                                                                                                                                                                                |

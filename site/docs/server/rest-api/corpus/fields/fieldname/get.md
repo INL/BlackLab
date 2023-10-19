@@ -6,6 +6,12 @@ Metadata about a field, including indexing settings, field values and more.
 
 **Method** : `GET`
 
+#### Parameters
+
+| Parameter    | Description                                                         |
+|--------------|---------------------------------------------------------------------|
+| `listvalues` | Comma-separated list of annotations we want to list the values for. |
+
 ## Success Response
 
 **Code** : `200 OK`
