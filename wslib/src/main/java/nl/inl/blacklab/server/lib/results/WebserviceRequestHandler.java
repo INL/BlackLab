@@ -316,7 +316,7 @@ public class WebserviceRequestHandler {
                 try {
                     TextPattern tp = params.pattern().orElse(null);
                     try {
-                        ds.entry("corpusql", TextPatternSerializerCql.serialize(tp));
+                        ds.entry("bcql", TextPatternSerializerCql.serialize(tp));
                     } catch (Exception e) {
                         ds.entry("corpusql-error", e.getMessage());
                     }

@@ -371,7 +371,7 @@
     "numberOfHits": 766,
     "numberOfHitsRetrieved": 766,
     "pattern": {
-      "corpusql": "[]",
+      "bcql": "[]",
       "json": {
         "max": 1,
         "min": 1,

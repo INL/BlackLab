@@ -69,7 +69,7 @@ Create a configuration file `/etc/blacklab/blacklab-server.yaml`.
 
 If `/etc/blacklab` is not practical for you, you can also place `blacklab-server.yaml` here:
 
-- the directory specified in `$BLACKLAB_CONFIG_DIR`, if Tomcat is started with this environment variable set (create or edit `setenv.sh` in the Tomcat `bin` directory to set environment variables)
+- the directory specified in `$BLACKLAB_CONFIG_DIR`, if Tomcat is started with this environment variable set (create or edit `setenv.sh` in the Tomcat `bin` directory to set environment variables, or e.g. put it in `/etc/sysconfig/tomcat` on a system using systemd)
 - somewhere on Tomcat's Java classpath, e.g. in its `lib` directory
 - `$HOME/.blacklab/` (if you're running Tomcat under your own user account, e.g. on a development machine; `$HOME` refers to your home directory)  
 

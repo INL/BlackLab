@@ -1,21 +1,30 @@
 # Blacklab webservice API evolution
 
+::: warning OLDER CONTENT
+This page contains ideas that are partially obsolete.
+See [API versions](../../server/rest-api/api-versions.md) for the current state of the API.
+:::
+
 The BLS API has quite a few quirks that can make it confusing and annoying to work with.
 
 We intend to evolve the API over time, with new versions that gradually move away from the bad parts of the old API. This can be done using the `api` parameter to switch between versions, or by adding endpoints or response keys, while supporting the old ones for a allow time to transition.
 
-For (older) ideas for example requests and responses, see [New API examples](API.md).
+For a comparison between the different API versions currently available, see [API versions](../../server/rest-api/api-versions.md).
+
+For some older ideas for example requests and responses, see [here](API.md).
 
 
 ## API support roadmap
 
-- [ ] **BlackLab v4.0**
+- [ ] **BlackLab v4.0 alpha**
   - [x] add API v4 (adds endpoints, transitional; default API)
-  - [ ] add API v5 (enforces exclusive use of new endpoints)
+  - [x] add API v5 experimental (enforces exclusive use of new endpoints)
 - [ ] **Frontend v4.0**: start using API v4: use new endpoints if available, fall back to v3 endpoints if not (for now). So _if_ your BLS supports v4:
   - [ ] use /relations to get list of tags
   - [ ] from server info page, use `corpora` key instead of deprecated `indices` key.
   - [ ] use /corpora/CORPUSNAME/... endpoints
+- [ ] **BlackLab v4.0 release**
+    - [ ] API v4/5 finalized
 - [ ] **BlackLab v5.0**:
   - [ ] switch default to API v5.
   - [ ] deprecate API v4.

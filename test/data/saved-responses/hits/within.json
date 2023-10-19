@@ -84,7 +84,7 @@
     "numberOfHits": 1,
     "numberOfHitsRetrieved": 1,
     "pattern": {
-      "corpusql": "('very' 'good') within <u/>",
+      "bcql": "('very' 'good') within <u/>",
       "json": {
         "filter": {
           "name": "u",

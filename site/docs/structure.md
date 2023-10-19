@@ -72,7 +72,7 @@ This is the intended structure of the new BlackLab documentation:
     - Tomcat
   - Test Index
   - Search your corpus
-  - Advanced: Corpus Query Language
+  - Advanced: BlackLab Corpus Query Language
 
 - BlackLab Server, a webservice
   
@@ -108,7 +108,7 @@ This is the intended structure of the new BlackLab documentation:
   - Tutorials / howtos
     - Customizing functionality
 
-- Corpus Query Language
+- BlackLab Corpus Query Language
 
 - Developers
  

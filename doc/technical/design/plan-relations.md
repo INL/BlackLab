@@ -58,7 +58,7 @@ We could index these in the same annotation spans are already indexed in (histor
 Better yet, we should generalize the notion of an "inline tag" such as `<s/>` we have right now to be indexed as a relation as well, i.e.:
 
       X -starts_sentence_ending_at-> Y
-    Small     man    bites    large    dog.
+    Small    man    bites   large   dog.
 
 > **NOTE:** should there be a mechanism to exclude certain inline tag attributes (e.g. id) from being indexed in the term string? See below.
 
@@ -108,7 +108,7 @@ If we generalize the above to sources/targets that are groups of words, the oper
 
 ### Looking for different words with the same relation
 
-If we want to find e.g. two different adjectives applied to a word, we'll need a way to ensure that two matches are different. We could use "global constraints" for this. One issue is that CQL generally only allows these at the top-level of the query (hence the word _global_), but it seems that this is not a fundamental limitation. A query such as `(A:[] "que" B:[] :: A.lemma = B.lemma) [lemma="willen"]` should be valid, as long as the constraint only references groups captured within the parentheses.
+If we want to find e.g. two different adjectives applied to a word, we'll need a way to ensure that two matches are different. We could use "global capture constraints" for this. One issue is that CQL generally only allows these at the top-level of the query (hence the word _global_), but it seems that this is not a fundamental limitation. A query such as `(A:[] "que" B:[] :: A.lemma = B.lemma) [lemma="willen"]` should be valid, as long as the constraint only references groups captured within the parentheses.
 
 These "local constraints" combined with the ability to check if two groups are (not) equal, e.g. something like `A@start > B@start` to ensure `A` occurs after `B`, should be enough to implement this.
 
@@ -205,7 +205,7 @@ Examples:
 
     # Match a series of descendants of certain types, starting with a root
     # (i.e. vertical paths in dependency trees)
-    ^-> _ -nmod-> _ -case-> _
+    ^--> _ -nmod-> _ -case-> _
 
 ### Generic syntax for relations
 
@@ -266,7 +266,7 @@ We can match a tree fragment of a tree (a parent and some of its children) using
 
 Often this will be used with the target of the parent relation as `clause1` and the source of child relations as `clause2`, `clause3`, etc. (some of them negated to indicate such children must not be present).
 
-This operation is the same as a regular AND (NOT) operation with these clauses, but with the added requirement that a given relation may not be matched by more than one clause. (without the `rmatch` operation, you might need many global constraints to enforce this).
+This operation is the same as a regular AND (NOT) operation with these clauses, but with the added requirement that a given relation may not be matched by more than one clause. (without the `rmatch` operation, you might need many capture constraints to enforce this).
 
 #### rcapture: capture all relations occurring inside a span
 

@@ -339,7 +339,7 @@ public class ResponseStreamer {
             ds.startEntry("pattern").startMap();
             ds.entry("json", textPattern);
             try {
-                ds.entry("corpusql", TextPatternSerializerCql.serialize(textPattern));
+                ds.entry("bcql", TextPatternSerializerCql.serialize(textPattern));
             } catch (Exception e) {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out

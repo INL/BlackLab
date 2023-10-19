@@ -2,7 +2,7 @@
 
 Parse a text pattern, returning the JSON query structure without actually executing the search.
 
-This operation can be useful when e.g. building a query parser, especially if you want to be able to switch back and forth between the query parser and an input field where the user can manually enter Corpus Query Language.
+This operation can be useful when e.g. building a query parser, especially if you want to be able to switch back and forth between the query parser and an input field where the user can manually enter BlackLab Corpus Query Language.
 
 If you don't specify `pattlang`, the pattern type passed in `patt` will be autodetected (CorpusQL or JSON query structure). But if you know you're passing in JSON, it's best to set `pattlang` to `json`. This will give a relevant error message if parsing fails.
 
@@ -16,10 +16,10 @@ If you don't specify `pattlang`, the pattern type passed in `patt` will be autod
 
 The `patt` parameter is required.
 
-| Parameter  | Description                                                                                                                                                                                                                                |
-|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `patt`     | [Corpus Query Language](/guide/corpus-query-language.md) pattern to search for                                                                                                                                                             |
-| `pattlang` | pattern language to use for `patt`. Defaults to `corpusql` (Corpus Query Language). The other values (`contextql` and `luceneql`) have very limited support at the moment.  Other, more useful query languages may be added in the future. |
+| Parameter  | Description                                                                                                                                                                                                                                     |
+|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `patt`     | [BlackLab Corpus Query Language](/guide/corpus-query-language.md) (BCQL) pattern to search for                                                                                                                                                  |
+| `pattlang` | pattern language to use for `patt`. Defaults to `bcql` (BlackLab Corpus Query Language). The other values (`contextql` and `luceneql`) have very limited support at the moment.  Other, more useful query languages may be added in the future. |
 
 **NOTE:** `pattgapdata` is not supported for this endpoint! (this is a rarely-used feature that might be removed in the future)
 
@@ -44,7 +44,7 @@ Result for `/parse-pattern?patt=%27de%27`:
         "pattlang": "default"
     },
     "parsed": {
-        "corpusql": "[word='de']",
+        "bcql": "[word='de']",
         "json": {
             "type": "regex",
             "value": "de",
@@ -63,7 +63,7 @@ Result for `/parse-pattern?outputformat=json&patt=%7B"type"%3A"posfilter"%2C"pro
     "pattlang": "default"
   },
   "parsed": {
-    "corpusql": "'de' within <s/>",
+    "bcql": "'de' within <s/>",
     "json": {
       "type": "posfilter",
       "producer": {
@@ -82,7 +82,7 @@ Result for `/parse-pattern?outputformat=json&patt=%7B"type"%3A"posfilter"%2C"pro
 
 ## Notes
 
-- it is in theory possible to create a JSON query structure that cannot be (re-)serialized to Corpus Query Language, although structures from parsing CorpusQL can always be reserialized of course. Should serialization fail, the `corpusql` key will be missing from the response and the `corpusql-error` key will indicate why the pattern couldn't be serialized.
+- it is in theory possible to create a JSON query structure that cannot be (re-)serialized to BlackLab Corpus Query Language, although structures from parsing CorpusQL can always be reserialized of course. Should serialization fail, the `corpusql` key will be missing from the response and the `corpusql-error` key will indicate why the pattern couldn't be serialized.
 
 ## JSON query structure
 

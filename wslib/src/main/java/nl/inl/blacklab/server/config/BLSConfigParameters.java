@@ -8,8 +8,8 @@ import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 public class BLSConfigParameters {
-    /** What pattern language to use? */
-    String patternLanguage = "corpusql";
+    /** What pattern language to use? (defaults to BlackLab Corpus Query Language (BCQL)) */
+    String patternLanguage = "bcql";
 
     /** What document filter language to use? */
     String filterLanguage = "luceneql";

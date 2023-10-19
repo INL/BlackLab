@@ -1,47 +1,41 @@
 ## What is BlackLab?
 
-BlackLab is a corpus search engine built on top of [Apache Lucene](http://lucene.apache.org/).
+BlackLab is a corpus search engine built on top of [Apache Lucene](http://lucene.apache.org/). It supports token-based querying and querying (dependency) relations.
 
 ::: details <b>What is a corpus search engine?</b>
-A corpus search engine allows you to search through large bodies of annotated text. Each word can have a number of annotations such as headword, part of speech, etc. You can search for all of these annotations and look for specific patterns.
+A corpus search engine allows you to search through large bodies of annotated text. Each word can have a number of annotations such as headword, part of speech, etc. Spans of text may be annotated, and there may be (dependency) relations between (groups of) words. You can search all of these, looking for specific patterns.
 
 For example, the word *chickens* would be tagged with the headword *chicken* and the part of speech *(plural) noun*.
 
 An example of a query could be: find adjectives occurring before the headword *chicken*. This might find matches like "small chicken" or "black spotted chickens". Of course, much more complex queries can be crafted as well.
  
-You may also have annotations on groups of words; for example, named entities like *Albert Einstein* or *The Eiffel Tower*. Also, paragraphs and sentences may be tagged. You can incorporate all these annotations in your queries as well.
+You may also have annotations on spans (groups of words); for example, named entities like *Albert Einstein* or *The Eiffel Tower*. Other tags could include paragraphs and sentences. You can incorporate all these annotations in your queries as well.
  
 Even if your corpus does not include annotations, you can still benefit from other features that a corpus engine provides, such as sorting hits by the word before the hit, or grouping on the matched text.
 :::
 
+BlackLab was designed primarily for linguists, but is also used for other purposes, like historical research and knowledge extraction.
 
-
-BlackLab was designed primarily for linguists, but it is also being used for other purposes, including historical research and artifical intelligence.
-
-BlackLab is available as a web service (BlackLab Server), making it easy to use it from any programming language, as well as a Java library (BlackLab Core).
+It is available as a REST API (web service), so you can use it from any programming language.
 
 BlackLab was developed at the [Dutch Language Institute](https://ivdnt.org). It is free and open source software (Apache License 2.0).
 
-<!--
-
-> **OLD SITE?**: for now, the old site is still [available](https://inl.github.io/BlackLab/old-site/) for reference (but contains mostly the same information).
-
--->
 
 ## Features
 
-BlackLab features include:
+BlackLab's features include:
 
-- **Index annotated text**, so you can search for specific lemmas or parts of speech. For example, you could search for all verb forms starting with “re” to find "researching", "replies", etc.
-- **Easy to use**: both the REST API and the Java library were designed to be easy to use, and we do our best to provide good documentation.
-- **Fast and scalable**: find complex patterns in large corpora (a billion words or more) in seconds.
-- **Flexible data ingestion**: if your data is not in one of the built-in formats, getting them into BlackLab is a matter of writing a configuration file.
-- **Search for regular-expression-like patterns**. Like being able to search for one or more adjectives followed by the word “cow”. (see [Corpus Query Language](corpus-query-language.md) to learn more)
-- **Search within XML tags** to find named entities that contain the word "tower" (Eiffel Tower, Tower Bridge, etc.), or words at the beginning or end of a sentence.
-- **Capture groups** so you can capture specific parts of matches.
-- **Fast grouping and sorting** of large result sets on several criteria. For example, you can group results by the word occurring to the right of the matched word(s).
-- **Accurate highlighting** of hits in a document and fast KWIC (keyword in context) view of hits.
-- **Active open source project** in development since 2010, with many [plans for the future](future-plans.md).
+- **Index annotated text**, so you can search for specific headwords or parts of speech.
+- **Easy to use**, well-documented REST API.
+- **Fast and scalable**: find complex patterns in large corpora in seconds.
+- **Index your data** using a built-in format or by writing a configuration file.
+- **Search for complex patterns** using the powerful [BlackLab Corpus Query Language](corpus-query-language.md)
+- **Search within spans** to e.g. find named entities containing _tower_ at the end of a sentence.
+- **Search (dependency) relations**, to find specific (tree) structures in your text. **(NEW in v4)**
+- **Capture** parts of matches.
+- **Group and sort** result sets on many criteria, such as the text preceding the match.
+- **Highlight** hits in a document and keyword-in-context (KWIC) view of hits.
+- **Actively developed** since 2010, with many [plans for the future](future-plans.md).
 
 
 ## Try it online

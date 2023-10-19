@@ -265,7 +265,7 @@
     "numberOfHits": 3,
     "numberOfHitsRetrieved": 3,
     "pattern": {
-      "corpusql": "'they'",
+      "bcql": "'they'",
       "json": {
         "type": "regex",
         "value": "they"

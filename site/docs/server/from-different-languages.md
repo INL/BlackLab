@@ -1,116 +1,8 @@
 # Using from different languages
 
-Below are examples of using BlackLab Server to fetch hits for a simple Corpus Query Language query from different programming languages.
+Below are examples of using the REST API to fetch hits for a simple BlackLab Corpus Query Language query from different programming languages.
 
-## Java
-
-Perform a CQL query and show matches in KWIC (keyword in context) format:
-
-```java
-import org.json.simple.*;
-import java.io.*;
-import java.net.*;
-
-class BlackLabServerTest {
-
-	/** The BlackLab Server url for searching "mycorpus" (not a real URL) */
-	final static String BASE_URL = "http://example.com/blacklab/mycorpus/";
-	
-	/** Fetch the specified URL and decode the returned JSON.
-		* @param url the url to fetch
-		* @return the page fetched
-		*/
-	public static JsonNode fetch(String url) throws Exception {
-		// Read from the specified URL.
-		InputStream is = new URL(url).openStream();
-		try {
-			String line;
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-			StringBuilder b = new StringBuilder();
-			while ((line = br.readLine()) != null) {
-				b.append(line);
-			}
-			return new JsonNode(b.toString());
-		} finally {
-			is.close();
-		}
-	}
-	
-	/** Context of the hit is passed in arrays, per annotation
-		* (word/lemma/PoS). Right now we only want to display the 
-		* words. This is how we join the word array to a string.
-		* @param context context structure containing word, lemma, PoS.
-		* @return the words joined together with spaces.
-		*/
-	static String words(JsonNode context) {
-		JsonNode words = (JsonNode)context.get("word");
-		StringBuilder b = new StringBuilder();
-		for (int i = 0; i < words.size(); i++) {
-			if (b.length() > 0)
-				b.append(" ");
-			b.append((String)words.get(i));
-		}
-		return b.toString();
-	}
-	
-	/** Show an array of hits in an HTML table.
-		* @param hits the hits structure from the JSON response
-		* @param docs the docInfos structure from the JSON response
-		*/
-	public static void showHits(JsonNode hits, JsonNode docs) {
-		
-		// Iterate over the hits.
-		// We'll add elements to the html array and join it later to produce our
-		// final HTML.
-		StringBuilder html = new StringBuilder();
-		html.append("<table><tr><th>Title</th><th>Keyword in context</th></tr>\n");
-		for (int i = 0; i < hits.length(); i++) {
-			JsonNode hit = (JsonNode)hits.get(i);
-			
-			// Add the document title and the hit information
-			JsonNode doc = (JsonNode)docs.get((String)hit.get("docPid"));
-			
-			// Context of the hit is passed in arrays, per annotation
-			// (word/lemma/PoS). Right now we only want to display the 
-			// words. This is how we join the word array to a string.
-			String left = words((JsonNode)hit.get("left"));
-			String match = words((JsonNode)hit.get("match"));
-			String right = words((JsonNode)hit.get("right"));
-			
-			html.append("<tr><td>" + (String)doc.get("title").get(0) + "</td><td>" + left +
-				" <b>" + match + "</b> " + right + "</td></tr>\n");
-		}
-		html.append("</table>\n");
-		System.out.println(html.toString()); // Join lines and output
-	}
-	
-	
-	/** Performs a search and shows the results.
-		* @param patt the pattern to search for
-		*/
-	public static void performSearch(String patt) throws Exception {
-		
-		// Carry out the request and call the showHits function
-		String url = BASE_URL + "hits?patt=" + URLEncoder.encode(patt, "utf-8") + "&outputformat=json";
-		JsonNode response = fetch(url);
-		
-		// Got results. Show the hits, along with the document titles.
-		JsonNode hits = (JsonNode)response.get("hits");
-		JsonNode docs = (JsonNode)response.get("docInfos");
-		showHits(hits, docs);
-	}
-	
-	/** Main method.
-		* @param argv command-line arguments
-		*/
-	public static void main(String[] argv) throws Exception {
-		performSearch("[pos=\"a.*\"] \"fox\"");
-	}
-	
-}
-```
-
-## Javascript / jQuery
+## JavaScript / TypeScript
 
 Perform a CQL query and show matches in KWIC (keyword in context) format:
 
@@ -234,6 +126,114 @@ def search(cqlQuery):
 
 # "Main program"
 search('[pos="a.*"] "fox"')
+```
+
+## Java
+
+Perform a CQL query and show matches in KWIC (keyword in context) format:
+
+```java
+import org.json.simple.*;
+import java.io.*;
+import java.net.*;
+
+class BlackLabServerTest {
+
+	/** The BlackLab Server url for searching "mycorpus" (not a real URL) */
+	final static String BASE_URL = "http://example.com/blacklab/mycorpus/";
+	
+	/** Fetch the specified URL and decode the returned JSON.
+		* @param url the url to fetch
+		* @return the page fetched
+		*/
+	public static JsonNode fetch(String url) throws Exception {
+		// Read from the specified URL.
+		InputStream is = new URL(url).openStream();
+		try {
+			String line;
+			BufferedReader br = new BufferedReader(new InputStreamReader(is));
+			StringBuilder b = new StringBuilder();
+			while ((line = br.readLine()) != null) {
+				b.append(line);
+			}
+			return new JsonNode(b.toString());
+		} finally {
+			is.close();
+		}
+	}
+	
+	/** Context of the hit is passed in arrays, per annotation
+		* (word/lemma/PoS). Right now we only want to display the 
+		* words. This is how we join the word array to a string.
+		* @param context context structure containing word, lemma, PoS.
+		* @return the words joined together with spaces.
+		*/
+	static String words(JsonNode context) {
+		JsonNode words = (JsonNode)context.get("word");
+		StringBuilder b = new StringBuilder();
+		for (int i = 0; i < words.size(); i++) {
+			if (b.length() > 0)
+				b.append(" ");
+			b.append((String)words.get(i));
+		}
+		return b.toString();
+	}
+	
+	/** Show an array of hits in an HTML table.
+		* @param hits the hits structure from the JSON response
+		* @param docs the docInfos structure from the JSON response
+		*/
+	public static void showHits(JsonNode hits, JsonNode docs) {
+		
+		// Iterate over the hits.
+		// We'll add elements to the html array and join it later to produce our
+		// final HTML.
+		StringBuilder html = new StringBuilder();
+		html.append("<table><tr><th>Title</th><th>Keyword in context</th></tr>\n");
+		for (int i = 0; i < hits.length(); i++) {
+			JsonNode hit = (JsonNode)hits.get(i);
+			
+			// Add the document title and the hit information
+			JsonNode doc = (JsonNode)docs.get((String)hit.get("docPid"));
+			
+			// Context of the hit is passed in arrays, per annotation
+			// (word/lemma/PoS). Right now we only want to display the 
+			// words. This is how we join the word array to a string.
+			String left = words((JsonNode)hit.get("left"));
+			String match = words((JsonNode)hit.get("match"));
+			String right = words((JsonNode)hit.get("right"));
+			
+			html.append("<tr><td>" + (String)doc.get("title").get(0) + "</td><td>" + left +
+				" <b>" + match + "</b> " + right + "</td></tr>\n");
+		}
+		html.append("</table>\n");
+		System.out.println(html.toString()); // Join lines and output
+	}
+	
+	
+	/** Performs a search and shows the results.
+		* @param patt the pattern to search for
+		*/
+	public static void performSearch(String patt) throws Exception {
+		
+		// Carry out the request and call the showHits function
+		String url = BASE_URL + "hits?patt=" + URLEncoder.encode(patt, "utf-8") + "&outputformat=json";
+		JsonNode response = fetch(url);
+		
+		// Got results. Show the hits, along with the document titles.
+		JsonNode hits = (JsonNode)response.get("hits");
+		JsonNode docs = (JsonNode)response.get("docInfos");
+		showHits(hits, docs);
+	}
+	
+	/** Main method.
+		* @param argv command-line arguments
+		*/
+	public static void main(String[] argv) throws Exception {
+		performSearch("[pos=\"a.*\"] \"fox\"");
+	}
+	
+}
 ```
 
 ## R

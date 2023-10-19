@@ -84,7 +84,7 @@
     "numberOfHits": 1,
     "numberOfHitsRetrieved": 1,
     "pattern": {
-      "corpusql": "_FI1('a', [lemma='successful'])",
+      "bcql": "_FI1('a', [lemma='successful'])",
       "json": {
         "args": [
           {

@@ -12,14 +12,15 @@ Before you can search your data using BlackLab, you'll need to:
 
 Let's go over these one by one.
 
-## Server or Core?
+## Install BlackLab
 
-The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Kotlin, etc.).
+The web service, BlackLab Server, can be used from any programming language and offers a simple REST API (also called a web service).
 
-For now, this guide will focus on BlackLab Server. If you're interested in the Java library, see the [Developers](/development/) section.
+::: details Using BlackLab as a (JVM) library
+BlackLab is also available in library form. It is written in Java, so it can be used from any JVM language (Java, Kotlin, Scala, etc.).
 
-
-## Install BlackLab Server
+This guide will look at BlackLab Server. If you're interested in the JVM library, see the [Developers](/development/) section.
+:::
 
 You will need a JVM version of 11 or higher to use the latest BlackLab versions. Also install Apache Tomcat 9. For example, on Ubuntu:
 
@@ -87,7 +88,7 @@ BlackLab supports a number of input formats, but the most well-known are [TEI](h
 ::: warning PLEASE NOTE
 BlackLab needs *tokenized* data files as input. That means the word boundaries have already been determined and BlackLab can just index each word as it parses the input file.
 
-It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/server/#convert-tag-plugins).
+It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/development/customization/plugins.md).
 :::
 
 One way to convert your data is using our tool [OpenConvert](https://github.com/INL/OpenConvert), which can generate TEI or FoLiA from txt, doc(x) or html files, among others. After conversion, you can tag the files using a tool such as [Frog](http://ilk.uvt.nl/frog/).
@@ -174,7 +175,7 @@ Type "help" to see a list of commands.
 See also:
 
 - [Using the query tool](/development/query-tool.md)
-- [Corpus Query Language](/guide/corpus-query-language.md)
+- [BlackLab Corpus Query Language](/guide/corpus-query-language.md)
 
 ## Corpus search application
 

@@ -41,7 +41,7 @@ public class TestBlsUtils {
     @Test
     public void testParsePatt() throws BlsException {
         TextPattern pattThe = new TextPatternRegex("^the$");
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "corpusql"));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "bcql"));
     }
 
     @Test
@@ -57,7 +57,7 @@ public class TestBlsUtils {
 
     @Test(expected = BadRequest.class)
     public void testParsePattNoPattern() throws BlsException {
-        BlsUtils.parsePatt(index, "word", "", "corpusql");
+        BlsUtils.parsePatt(index, "word", "", "bcql");
     }
 
     @Test
@@ -75,7 +75,7 @@ public class TestBlsUtils {
 
     @Test(expected = BadRequest.class)
     public void testParseFilterWrongLanguage() throws BlsException {
-        BlsUtils.parseFilter(index, "author:me", "corpusql");
+        BlsUtils.parseFilter(index, "author:me", "bcql");
     }
 
     @Test(expected = BadRequest.class)

@@ -163,7 +163,7 @@
     "numberOfHits": 2,
     "numberOfHitsRetrieved": 2,
     "pattern": {
-      "corpusql": "'one' (A:[])",
+      "bcql": "'one' (A:[])",
       "json": {
         "clauses": [
           {

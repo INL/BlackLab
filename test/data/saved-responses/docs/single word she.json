@@ -417,7 +417,7 @@
     "numberOfHits": 5,
     "numberOfHitsRetrieved": 5,
     "pattern": {
-      "corpusql": "'she'",
+      "bcql": "'she'",
       "json": {
         "type": "regex",
         "value": "she"

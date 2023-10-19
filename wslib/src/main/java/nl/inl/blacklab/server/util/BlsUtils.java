@@ -131,7 +131,7 @@ public class BlsUtils {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
                         "Unable to parse JSON pattern: " + e.getMessage());
             }
-        } else if (language.equals("corpusql")) {
+        } else if (language.matches("bcql|corpusql")) {
             try {
                 return CorpusQueryLanguageParser.parse(pattern, defaultAnnotation);
             } catch (InvalidQuery e) {

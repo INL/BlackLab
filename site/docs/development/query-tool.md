@@ -4,11 +4,11 @@
 
 QueryTool is a simple command-driven search tool that provides a demonstration of the querying features of BlackLab. It allows you to search an index using different query languages:
 
-- [Corpus Query Language](/guide/corpus-query-language.html), aimed at finding linguistic patterns in large text corpora. This was developed at the University of Stuttgard for the IMS Corpus Workbench (CWB) and is used in other corpus search systems as well, notably the Lexicom Sketch Engine.
+- [BlackLab Corpus Query Language](/guide/corpus-query-language.html) (BCQL), aimed at finding linguistic patterns in large text corpora. A dialect of the query language developed at the University of Stuttgard for the IMS Corpus Workbench (CWB) and is used in other corpus search systems as well, notably the Lexicom Sketch Engine.
 - [Lucene Query Language](https://lucene.apache.org/core/8_0_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#Overview), the query parser supplied with Lucene. A familiar syntax for including/excluding terms, similar to how many search engines operate.
 - Rudimentary support for [SRU CQL](http://zing.z3950.org/cql/intro.html) (Contextual Query Language), a query language used by libraries around the world.
 
-Note that Corpus Query Language is by far the best-supported query language.
+Note that BCQL is by far the best-supported query language.
 
 ## Starting the QueryTool
 
@@ -26,9 +26,9 @@ Once you group hits, you enter group mode. The groups are displayed in columns: 
 
 To examine the hits in a group, enter “group n”, where n is the group number displayed at the beginning of the line (the second number is the group size). To leave group mode and go back to showing all hits, enter “hits”. To get back to group mode, enter “groups”.
 
-## Corpus Query Language
+## BlackLab Corpus Query Language (BCQL)
 
-The demo starts out in Corpus Query Language mode, which is the most powerful of the supported languages. The Corpus Query Language expresses queries as sequences of token queries. It is therefore mainly useful to find specific types of phrases in a larger text.
+The demo starts out in BlackLab Corpus Query Language (BCQL) mode, which is the most powerful of the supported languages. This query language expresses queries as sequences of token queries. It is therefore mainly useful to find specific types of phrases in a larger text.
 
 An example of a simple query (note that the quotes are required):
 

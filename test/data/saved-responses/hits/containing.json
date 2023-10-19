@@ -436,7 +436,7 @@
     "numberOfHits": 5,
     "numberOfHitsRetrieved": 5,
     "pattern": {
-      "corpusql": "<u/> containing 'good'",
+      "bcql": "<u/> containing 'good'",
       "json": {
         "filter": {
           "type": "regex",

@@ -121,7 +121,7 @@ parameters:
 
     #  Default pattern language to use.
     #  The pattlang URL parameter override this value.
-    patternLanguage: corpusql
+    patternLanguage: bcql
 
     #  Default filter language to use.
     #  The filterlang URL parameter override this value.

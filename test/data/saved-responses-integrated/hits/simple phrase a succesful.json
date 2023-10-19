@@ -84,7 +84,7 @@
     "numberOfHits": 1,
     "numberOfHitsRetrieved": 1,
     "pattern": {
-      "corpusql": "'a' [lemma='successful']",
+      "bcql": "'a' [lemma='successful']",
       "json": {
         "clauses": [
           {

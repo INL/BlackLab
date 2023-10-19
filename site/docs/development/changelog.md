@@ -6,8 +6,8 @@
 
 - annotation setting allowDuplicateValues defaults to false, which is usually what you want.
 - various performance improvements, e.g. when opening huge indexes. Also Lucene's two-phase iterators are used where possible.
-- Corpus Query Language queries now allow dashes in names. Integrated index type allows dash in forEach names.
-- Corpus Query Language now allows the not-operator (`!`) to be used at the top level, and "global" constraints (`::`) to be used within parentheses as well.
+- BlackLab Corpus Query Language (BCQL) queries now allow dashes in names. Integrated index type allows dash in forEach names.
+- BCQL now allows the not-operator (`!`) to be used at the top level, and "global" constraints (`::`) to be used within parentheses as well.
 - Unicode normalization is applied to documents while indexing.
 
 ### Fixed
@@ -20,7 +20,7 @@
 - integrated index
 - ability to run BlackLab as a Solr plugin (work in progress), and a proxy so Solr with plugin behaves the same as BLS.
 - Evolving the BLS API
-- indexing and searching (dependency) relations. Support for the CoNLL-U format, and (to some extent) configuring your own XML-based format.
+- indexing and searching (dependency) relations. Support for the CoNLL-U format, and configuring your own XML-based format using special standoff annotations.
 - hit uniqueness now considers match info (capture groups etc.) as well, so multiple hits with the same doc, start and end may be reported (with each having different match info)
 - match info includes captures, inline tags and relations.
 - you can request all relations in a sentence now.
@@ -30,7 +30,7 @@
 - new DocIndexerExample gives a better example of low-level custom indexing
 - you can now index spans and relations using standoff annotations as well
 - support for Docker
-- a JSON form of each query is returned by the API. You can also pass this JSON form to BLS as an alternative to Corpus Query Language. This is useful for e.g. implementing a query builder. There is also an operation (/parse-pattern) that just returns the JSON form of a query.
+- a JSON form of each query is returned by the API. You can also pass this JSON form to the REST API as an alternative to BCQL. This is useful for e.g. implementing a query builder. There is also an operation (/parse-pattern) that just returns the JSON form of a query.
 - more warnings are logged if something is wrong, e.g. indexing without a persistent document identifier (pidField) configured.
 - QueryTool can now be used for performance and correctness testing
 

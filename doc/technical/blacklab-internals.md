@@ -46,8 +46,8 @@ hits by their "lemma" annotation, or grouping them by their "pos" (part of speec
 the forward index, we would have to retrieve the original input file, get XML snippet corresponding with
 our match, and parse it to get the annotation values. Needless to say this would be way too slow.
 
-The forward index is also used to resolve "global constraints", such as in a Corpus Query like
-`A:[] "and" B:[] :: A.word = B.word`. The global constraint is the part after `::`, and it is used
+The forward index is also used to resolve "capture constraints", such as in a Corpus Query like
+`A:[] "and" B:[] :: A.word = B.word`. The capture constraint is the part after `::`, and it is used
 to filter hits found using the part before `::`.
 
 Finally, the forward index can be used to speed up certain searches that would be slow using Lucene's
@@ -56,7 +56,7 @@ very slow. A query like `".*e" "ship"` (a word ending in _e_ followed by the wor
 a very long time finding all terms that end in _e_ and then finding all matches for those terms. Instead
 we use Lucene's reverse index to find all occurrences of _ship_, then use the forward index to check if
 the preceding word ends in `".e"`. Another way of putting it is to say we rewrite the query to convert
-the problematic clause to a global constraint, so the query becomes
+the problematic clause to a capture constraint, so the query becomes
 `A:[] "ship" :: A.word = ".*e""` (even though this is not what happens internally).
 
 Forward index matching is also called NFA matching in the code, because it uses a nondeterministic finite

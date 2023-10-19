@@ -371,7 +371,7 @@
     "numberOfHits": 766,
     "numberOfHitsRetrieved": 766,
     "pattern": {
-      "corpusql": "[word!='abcdefg']",
+      "bcql": "[word!='abcdefg']",
       "json": {
         "clause": {
           "annotation": "word",

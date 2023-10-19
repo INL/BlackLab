@@ -5,7 +5,7 @@ We're evolving the BlackLab web service API over time, using versioning.
 There's currently three major versions:
 - `3.0`: legacy API version, used by BlackLab up to 3.x
 - `4.0`: newer, mostly compatible API version, used by BlackLab 4.x. Adds some keys and endpoints and makes slight changes, mostly to improve consistency and reduce redundancy. The additions are still experimental, just like v5 of the API.
-- `5.0-exp`: STILL EXPERIMENTAL. stricter, cleaner version of the `4.0` API, removing parameters and response keys from `3.0`. Because this is still experimental, we may make breaking changes. Useful for testing.
+- `5.0`: STILL EXPERIMENTAL. stricter, cleaner version of the `4.0` API, removing parameters and response keys from `3.0`. Because this is still experimental, we may make breaking changes. Useful for testing.
 
 On any BLS request, include the `api` parameter to specify which API version to use. So if you want to keep using the older API for now, add `api=3`. If you don't specify an API version, the default version will be used. 
 
@@ -15,7 +15,7 @@ Valid values for API version include:
 - Exact version, e.g. `4.0`
 - Major version, e.g. `4` (most recent "regular" release in the 4.x series, i.e. without a `-..` suffix)
 - `cur` or `current`, the current stable version (currently `4.0`)
-- `exp` or `experimental`, always points to the highest version available (currently `5.0-exp`)
+- `exp` or `experimental`, always points to the highest version available (currently `5.0`)
 
 New versions may be added in the future, and support for older versions will eventually be dropped.
 
@@ -26,7 +26,7 @@ Note that the additions to API v4 are currently considered experimental, until t
 
 ## API changes from 3.0 to 4.0
 
-This version is the current default API (unless configured otherwise).
+API v4.0 is the default API on the development branch and starting from BlackLab 4.0.
 
 Below are all the differences between API version 3.0 and 4.0.
 
@@ -48,12 +48,14 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
   - In addition to being reported under `fieldInfo`, `pidField` is now also a top-level key. You should use this version of the key for future compatibility. (the other special fields in `fieldInfo` will be moved to `custom` in v5)
 - Search (hits) operations:
   - The `patt` parameter may also be specified as a JSON query structure. This will be detected automatically, or you can set `pattlang` to `json` to make it explicit.
-  - In the JSON response, `summary` will now include a `pattern` object containing a `json` key that giving the JSON query structure and a `corpusql` key giving the (re-)serialized pattern in Corpus Query Language. You can use this and `patt` to convert between the two representations, e.g. for query builders. The XML response does not contain `pattern`.
+  - In the JSON response, `summary` will now include a `pattern` object containing a `json` key that giving the JSON query structure and a `corpusql` key giving the (re-)serialized pattern in BlackLab Corpus Query Language. You can use this and `patt` to convert between the two representations, e.g. for query builders. The XML response does not contain `pattern`.
   - In addition to `captureGroups`, `matchInfos` will be reported that includes the same information as well as any inline tags and relations matched. You should use this instead of `captureGroups` for future compatibility.
-  - `before`/`after` are the new, preferred alternatives to `left`/`right` for sorting/grouping on context. Not all languages are LTR, so this makes more sense. Response structures in API v4 still use `left`/`right` for compatibility, but will eventually be updated as well. These properties can now get a number of tokens as an extra parameter, e.g. `before:lemma:i:2`.
+  - `before`/`after` are the new, preferred alternatives to `left`/`right`,e.g. when sorting/grouping on context. Not all languages are LTR, so this makes more sense. Existing endpoints still use `left`/`right` in the response for compatibility, but new endpoints have been updated as well. These properties can now get a number of tokens as an extra parameter, e.g. `before:lemma:i:2`.
   - For grouping on context, `wordleft`/`wordright` have been deprecated. Use `before`/`after` with 1 token instead.
+  - `context` is the new name for the `wordsaroundhit` parameter and supports more options (separate before/after, whole sentence, etc.)
 - New endpoints were added for all operations on corpora, at `/corpora/CORPUSNAME/...` (for now alongside existing endpoints `/CORPUSNAME`). These endpoints are available in API v4 but only "speak" API v5 (see below). You should move to these endpoints for future compatibility.
 - A new endpoint `/parse-pattern` was added that allows you to parse a CorpusQL or JSON query structure pattern without actually executing the search.
+- A new endpoint `.../CORPUSNAME/relations` that will return all the spans ("inline tags") and relations indexed in the corpus.
 
 ### Deprecated
 
@@ -63,31 +65,33 @@ These features still work for now, but will be removed in the future.
   - The `indices` object. Use `corpora` instead.
   - The top-level `fieldInfo` object. Instead, use the top-level `pidField` to find the persistent identifier field. For other special fields, you still have to use `fieldInfo`, but that will move to `custom` in API v5.
 - Document info page (`/docs/DOC_PID`) and results pages: `metadataFieldDisplayNames`, `metadataFieldGroups` and `docFields` are deprecated. This information can be found on the corpus info page, so it should be retrieved from there once.
-- Results:
-  - The `captureGroups` key. Use `matchInfos` instead.
+- Search operations:
+  - the `wordsaroundhit` parameter (use `context` instead)
   - sort/group properties `wordleft`,`wordright`. Use `before`/`after` instead with `1` as the number of tokens, e.g. `before:lemma:i:1` instead of `wordleft:lemma:i`.
+  - The `captureGroups` response key. Use `matchInfos` instead.
 - The old `/CORPUSNAME/...` endpoints. Use the new `/corpora/CORPUSNAME/...` endpoints (that respond with API v5 responses) instead.
 
-## API changes from 4.0 to 5.0-exp
+## API changes from 4.0 to 5.0
 
-This will likely become the default in BlackLab 5.0. Right now it's experimental and can be used for testing. Use `api=exp` to test that your client works with this API version.
+API v5.0 will become the default in BlackLab 5.0. Right now it's experimental and can be used for testing. Use `api=exp` to test that your client works with this API version.
+
+Note that the new endpoints (like /corpora/CORPUSNAME/...`) in BlackLab 4.0 always "speak" API v5, so those won't change when going from API v4 to v5. So where we say "changed" or "removed" below, we usually mean that compared to the equivalent old endpoints.
 
 ### Removed
 
-All these were deprecated in v4.0.
+All these were deprecated in v4.0, and v5.0 removes them:
 
 - Old endpoints related to corpora have been removed. Use the new `/corpora/...` endpoints introduced in API v4 instead.
 - Server info page removed `indices`. Use `corpora` instead.
 - Document info page (`/docs/DOC_PID`) and results pages no longer include `metadataFieldDisplayNames`, `metadataFieldGroups` or `docFields`. This information can be found on the corpus info page and need not be sent with each document info request.
-- Results pages:
-    - Dropped `captureGroups`. Use `matchInfos` instead.
+- Results pages don't include `captureGroups` anymore. Use `matchInfos` instead.
 
 ### Changed
 
 These are breaking changes compared to v4.0. Make sure you update your client accordingly.
 
 - All XML responses:
-    - XML responses don't use dynamic values as element names anymore, but instead adopt a `<entry><key>...</key><value>...</value></entry>` structure. This avoids problems with and simplifies maintaining the (less-used) XML format. Affects: `summary/searchParams`, `docInfos`, `users[]` in `/sharing` response.
+    - XML responses don't use dynamic values as element names anymore, but instead adopt a `<entry><key>...</key><value>...</value></entry>` structure. This avoids problems with and simplifies maintaining the (less-used) XML format. Mainly affects `summary/searchParams`, `docInfos`, `users[]` in `/sharing` response.
     - Wherever the XML used attributes for map entries, e.g. `<entry key="key">value</entry>`, this was changed to `<entry><key>...</key><value>...</value></entry>` as well.
 - server, corpus, field info:
     - `indexName` in responses has been replaced with `corpusName`.

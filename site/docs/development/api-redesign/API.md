@@ -1,5 +1,10 @@
 # New API examples
 
+::: warning OLDER CONTENT
+This page contains ideas that are partially obsolete.
+See [API versions](../../server/rest-api/api-versions.md) for the current state of the API.
+:::
+
 Here's some requests and (commented) JSON responses to illustrate 
 a possible new REST API for Blacklab.
 
