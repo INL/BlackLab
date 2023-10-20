@@ -50,6 +50,18 @@
           "good"
         ]
       },
+      "matchInfos": {
+        "u": {
+          "attributes": {
+            "who": "#PRint602_S3",
+            "xml:id": "PRint602_u_36"
+          },
+          "end": 246,
+          "start": 226,
+          "tagName": "u",
+          "type": "tag"
+        }
+      },
       "right": {
         "lemma": [
           ""

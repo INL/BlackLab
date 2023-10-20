@@ -16,6 +16,13 @@
   },
   "hits": [
     {
+      "captureGroups": [
+        {
+          "end": 246,
+          "name": "u",
+          "start": 226
+        }
+      ],
       "docPid": "PRint602",
       "end": 234,
       "left": {
@@ -49,6 +56,13 @@
           "very",
           "good"
         ]
+      },
+      "matchInfos": {
+        "u": {
+          "end": 246,
+          "start": 226,
+          "type": "span"
+        }
       },
       "right": {
         "lemma": [

@@ -16,6 +16,13 @@
   },
   "hits": [
     {
+      "captureGroups": [
+        {
+          "end": 158,
+          "name": "u",
+          "start": 153
+        }
+      ],
       "docPid": "PRint602",
       "end": 158,
       "left": {
@@ -62,6 +69,13 @@
           "yeah"
         ]
       },
+      "matchInfos": {
+        "u": {
+          "end": 158,
+          "start": 153,
+          "type": "span"
+        }
+      },
       "right": {
         "lemma": [
           "yes"
@@ -79,6 +93,13 @@
       "start": 153
     },
     {
+      "captureGroups": [
+        {
+          "end": 164,
+          "name": "u",
+          "start": 159
+        }
+      ],
       "docPid": "PRint602",
       "end": 164,
       "left": {
@@ -125,6 +146,13 @@
           "atmosphere"
         ]
       },
+      "matchInfos": {
+        "u": {
+          "end": 164,
+          "start": 159,
+          "type": "span"
+        }
+      },
       "right": {
         "lemma": [
           "there"
@@ -142,6 +170,13 @@
       "start": 159
     },
     {
+      "captureGroups": [
+        {
+          "end": 246,
+          "name": "u",
+          "start": 226
+        }
+      ],
       "docPid": "PRint602",
       "end": 246,
       "left": {
@@ -248,6 +283,13 @@
           "_0"
         ]
       },
+      "matchInfos": {
+        "u": {
+          "end": 246,
+          "start": 226,
+          "type": "span"
+        }
+      },
       "right": {
         "lemma": [
           "mhm"
@@ -265,6 +307,13 @@
       "start": 226
     },
     {
+      "captureGroups": [
+        {
+          "end": 253,
+          "name": "u",
+          "start": 247
+        }
+      ],
       "docPid": "PRint602",
       "end": 253,
       "left": {
@@ -315,6 +364,13 @@
           "@@@@"
         ]
       },
+      "matchInfos": {
+        "u": {
+          "end": 253,
+          "start": 247,
+          "type": "span"
+        }
+      },
       "right": {
         "lemma": [
           "good"
@@ -332,6 +388,13 @@
       "start": 247
     },
     {
+      "captureGroups": [
+        {
+          "end": 264,
+          "name": "u",
+          "start": 253
+        }
+      ],
       "docPid": "PRint602",
       "end": 264,
       "left": {
@@ -401,6 +464,13 @@
           "very",
           "much"
         ]
+      },
+      "matchInfos": {
+        "u": {
+          "end": 264,
+          "start": 253,
+          "type": "span"
+        }
       },
       "right": {
         "lemma": [
