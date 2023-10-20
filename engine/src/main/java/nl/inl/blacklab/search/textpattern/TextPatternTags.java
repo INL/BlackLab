@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
@@ -65,16 +67,24 @@ public class TextPatternTags extends TextPattern {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
         // Desensitize tag name and attribute values if required
-        context = context.withRelationAnnotation();
-        String elementName1 = optInsensitive(context, elementName);
+        QueryExecutionContext contextWithRel = context.withRelationAnnotation();
+        String optInsensitiveElName = optInsensitive(contextWithRel, elementName);
         Map<String, String> attrOptIns = new HashMap<>();
         for (Map.Entry<String, String> e : attributes.entrySet()) {
-            attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue()));
+            attrOptIns.put(e.getKey(), optInsensitive(contextWithRel, e.getValue()));
+        }
+
+        // Use element name if no explicit name given. Keep only characters and add unique number if needed.
+        String captureAsOrAuto = captureAs;
+        if (StringUtils.isEmpty(captureAsOrAuto)) {
+            String name = elementName.isEmpty() ? "span" : elementName;
+            name = name.replaceAll("[^\\p{L}]", "");
+            captureAsOrAuto = context.ensureUniqueCapture(name);
         }
 
         // Return the proper SpanQuery depending on index version
-        return context.index().tagQuery(context.queryInfo(), context.luceneField(), elementName1,
-                attrOptIns, adjust, captureAs);
+        return contextWithRel.index().tagQuery(contextWithRel.queryInfo(), contextWithRel.luceneField(),
+                optInsensitiveElName, attrOptIns, adjust, captureAsOrAuto);
     }
 
     @Override

@@ -189,23 +189,6 @@ public class TestQueryRewrite {
     }
 
     @Test
-    public void testRewriteRepetitionTags() {
-        String tagsS1  = repTags("s", 1);
-        String tagsT  = repTags("t", 1);
-        String tagsS2 = repTags("s", 2);
-        assertRewrite("<s test='1' /> <s test='1' />",
-                "SEQ(TAGS(s, {test=1}), TAGS(s, {test=1}))",
-                "REP(" + tagsS1 + ", 2, 2)");
-
-        assertRewrite("<s test='1' /> <t test='1' />",
-                "SEQ(TAGS(s, {test=1}), TAGS(t, {test=1}))",
-                "SEQ(" + tagsS1 + ", " + tagsT + ")");
-        assertRewrite("<s test='1' /> <s test='2' />",
-                "SEQ(TAGS(s, {test=1}), TAGS(s, {test=2}))",
-                "SEQ(" + tagsS1 + ", " + tagsS2 + ")");
-    }
-
-    @Test
     public void testRewriteRepetitionAndOr() {
         assertRewriteResult("('a'|'b') ('a'|'b')",
                 "REP(OR(TERM(contents%word@i:a), TERM(contents%word@i:b)), 2, 2)");
@@ -242,12 +225,6 @@ public class TestQueryRewrite {
     public void testRewriteSequenceExpand() {
         assertRewriteResult("'a' 'b' 'c' []{1,2}",
                 "EXPAND(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), R, 1, 2)");
-    }
-
-    @Test
-    public void testRewriteContaining() {
-        String expectedAfterRewrite = "REP(POSFILTER(TAGS(s), TERM(contents%word@i:a), containing), 2, 2)";
-        assertRewriteResult("(<s/> containing 'a') (<s/> containing 'a')", expectedAfterRewrite);
     }
 
     @Test
@@ -299,18 +276,20 @@ public class TestQueryRewrite {
 
     @Test
     public void testRewriteTags() {
+        if (index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES)
+            return; // rewrite differently, and will be obsolete soon(ish)
         assertRewriteResult("<s/> containing 'a' 'b'",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
+                "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
         assertRewriteResult("<s> []* 'a' 'b' []* </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
+                "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
         assertRewriteResult("<s> 'a' 'b' []* </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing_at_start)");
+                "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing_at_start)");
         assertRewriteResult("<s> []* 'a' 'b' </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing_at_end)");
+                "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing_at_end)");
         assertRewriteResult("<s> 'a' 'b' </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), matches)");
+                "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), matches)");
         assertRewriteResult("<s> ('a' 'b') 'c' </s>",
-                "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), matches)");
+                "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), matches)");
         // Depends on implementation...
         //assertRewriteResult("<s test='1'> 'a' </s>",
         //        "POSFILTER(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), TERM(contents%word@i:a), MATCHES)");

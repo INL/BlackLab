@@ -130,21 +130,36 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (pattern == null) {
             pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData());
         }
-        String tagName = getContext().inlineTagName();
-        if (tagName != null) {
-            if (!isWithinTag(tagName)) {
-                // add "within <TAGNAME/>" to the pattern, so we can produce the requested context later
-                pattern = new TextPatternPositionFilter(pattern,
-                        new TextPatternTags(tagName, null, TextPatternTags.Adjust.FULL_TAG, tagName),
-                        SpanQueryPositionFilter.Operation.WITHIN);
-            }
-        }
         return pattern == null ? Optional.empty() : Optional.of(pattern);
     }
 
-    private boolean isWithinTag(String tagName) {
-        return pattern instanceof TextPatternPositionFilter && ((TextPatternPositionFilter) pattern).isWithinTag(
-                tagName);
+    /** Pattern, optionally within s if context=s was specified. */
+    TextPattern patternWithin;
+
+    @Override
+    public Optional<TextPattern> patternWithinContextTag() throws BlsException {
+        if (patternWithin == null) {
+            if (!pattern().isPresent())
+                return Optional.empty();
+            patternWithin = pattern;
+            String tagName = getContext().inlineTagName();
+            if (tagName != null) {
+                patternWithin = ensureWithinTag(patternWithin, tagName);
+            }
+        }
+        return patternWithin == null ? Optional.empty() : Optional.of(patternWithin);
+    }
+
+    private static TextPattern ensureWithinTag(TextPattern pattern, String tagName) {
+        boolean withinTag = pattern instanceof TextPatternPositionFilter &&
+                ((TextPatternPositionFilter) pattern).isWithinTag(tagName);
+        if (!withinTag) {
+            // add "within <TAGNAME/>" to the pattern, so we can produce the requested context later
+            return new TextPatternPositionFilter(pattern,
+                    new TextPatternTags(tagName, null, TextPatternTags.Adjust.FULL_TAG, null),
+                    SpanQueryPositionFilter.Operation.WITHIN);
+        }
+        return pattern;
     }
 
     public void setDocPid(String pid) {
@@ -418,7 +433,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         SearchEmpty search = blIndex().search(null, useCache());
         try {
             Query filter = filterQuery();
-            Optional<TextPattern> pattern = pattern();
+            Optional<TextPattern> pattern = patternWithinContextTag();
             if (pattern.isEmpty())
                 throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
 
@@ -447,15 +462,14 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     @Override
     public SearchCount docsCount() throws BlsException {
-        if (pattern().isPresent())
+        if (hasPattern())
             return hitsSample().docCount();
         return docs().count();
     }
 
     @Override
     public SearchDocs docs() throws BlsException {
-        Optional<TextPattern> pattern = pattern();
-        if (pattern.isPresent())
+        if (hasPattern())
             return hitsSample().docs(-1);
         Query docFilterQuery = filterQuery();
         if (docFilterQuery == null) {

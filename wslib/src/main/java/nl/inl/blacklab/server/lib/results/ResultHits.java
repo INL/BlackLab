@@ -177,7 +177,7 @@ public class ResultHits {
 
         // see if this query matches only singular tokens
         // (we can't enhance multi-token queries such as ngrams yet)
-        TextPattern tp = params.pattern().orElseThrow();
+        TextPattern tp = params.patternWithinContextTag().orElseThrow();
         BlackLabIndex index = params.blIndex();
         if (!tp.toQuery(QueryInfo.create(index)).guarantees().producesSingleTokens())
             return null;

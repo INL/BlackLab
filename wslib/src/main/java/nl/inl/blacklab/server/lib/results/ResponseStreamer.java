@@ -951,7 +951,7 @@ public class ResponseStreamer {
 
             // Include explanation of how the query was executed?
             if (params.getExplain()) {
-                TextPattern tp = params.pattern().orElseThrow();
+                TextPattern tp = params.patternWithinContextTag().orElseThrow();
                 try {
                     BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
                     QueryExplanation explanation = index.explain(q);
