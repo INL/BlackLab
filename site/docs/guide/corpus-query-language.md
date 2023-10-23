@@ -195,8 +195,14 @@ The capture name can also just be a number:
 
 	'an?|the' 1:[pos='ADJ']+ 'man'
 
-::: details compare to other corpus engines
-CWB and Sketch Engine offer similar functionality, but instead of capturing part of the match, they label a single token. BlackLab's functionality can capture a number of tokens as well.
+::: details Compared to other corpus engines
+CWB and Sketch Engine offer similar functionality, but instead of capturing part of the match, they label a single token.
+
+BlackLab can capture a span of tokens of any length, capture relations and spans with all their details, and even capture lists of relations, such as all relations in a sentence (relations are described later in this document).
+:::
+
+::: tip Spans are captured automatically
+If your query involves spans like `<s/>`, it will automatically be captured under the span name (`s` in this case). You can override the capture name by specifying it in the query, e.g. `A:<s/>`.
 :::
 
 ### Capture constraints
@@ -356,7 +362,7 @@ Note that when matching multiple relations with the same source this way, BlackL
 
 ### Negative child constraints
 
-What if want to make sure _dog_ is not the object of the sentence? You can negate child relation clauses by prefixing the relation operator with `!`:
+You may want to have negative constraints, such as making sure that _dog_ is not the object of the sentence. This can be done by prefixing the relation operator with `!`:
 
     _  -subj-> _ ;
       !-obj-> 'dog'
@@ -432,13 +438,19 @@ Note that BlackLab already adds this by default if your query matches any relati
 
 If you want to capture all relations in the sentence containing your match, use:
 
-    rcapture('elephant' within A:<s/>, 'A', 'rels')
+    rcapture('elephant' within <s/>, 's')
 
-As you can see, this works by capturing a span (here named `A`) that you want to capture all relations in, then giving a name (`rels`) for the captured list of relations.
+What actually happens here is that all relations in a captured span are returned as _rels_ in the match info. In this case, the sentence span in our query is automatically captured as _s_, but you can use any capture. So if you wanted to capture the relations in the preceding and following sentences as well, you could useuse:
 
-If you only want to capture certain relations, you can add another parameter that is a regular expression filter on the relation type:
+    rcapture(A:(<s/> (<s/> containing 'elephant') <s/>), 'A')
 
-    rcapture('elephant' within A:<s/>, 'A', 'rels', 'subj|obj')
+You can pass a third parameter with the match info name for the list of captured relations (defaults to _rels_):
+
+    rcapture('elephant' within <s/>, 's', 'relations')
+
+If you only want to capture certain relations, you specify a fourth parameter that is a regular expression filter on the relation type. For example, to only capture relations in the `fam` class, use:
+
+    rcapture('elephant' within <s/>, 's', 'rels', 'fam::.*')
 
 
 ## Advanced subjects
