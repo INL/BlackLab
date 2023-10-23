@@ -174,7 +174,7 @@ public class XFRelations implements ExtensionFunctionClass {
             throw new IllegalArgumentException("rcapture() requires at least three arguments: query, toCapture, and captureAs");
         BLSpanQuery query = (BLSpanQuery)args.get(0);
         String toCapture = (String)args.get(1);
-        String captureAs = (String)args.get(2);
+        String captureAs = context.ensureUniqueCapture((String)args.get(2));
         String relationType = optPrependDefaultType((String) args.get(3));
         String field = context.withRelationAnnotation().luceneField();
         return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, toCapture, captureAs, relationType);
@@ -189,7 +189,7 @@ public class XFRelations implements ExtensionFunctionClass {
         QueryExtensions.register(FUNC_RSPAN, XFRelations::rspan, QueryExtensions.ARGS_QS,
                 Arrays.asList(null, "full"));
         QueryExtensions.register(FUNC_RCAPTURE, XFRelations::rcapture, QueryExtensions.ARGS_QSSS,
-                Arrays.asList(null, null, null, ".*"), true);
+                Arrays.asList(null, null, "rels", ".*"), true);
     }
 
 }
