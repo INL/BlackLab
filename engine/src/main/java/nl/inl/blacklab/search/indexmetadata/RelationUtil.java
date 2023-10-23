@@ -20,14 +20,14 @@ public class RelationUtil {
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
     public static final String RELATION_CLASS_TYPE_SEPARATOR = "::";
 
-    /** Separator before attribute name in _relation annotation. */
-    private static final String CH_NAME_START = "\u0001";
+    /** Separator after relation type and attribute value in _relation annotation. */
+    private static final String ATTR_SEPARATOR = "\u0001";
 
-    /** Separator between attribyte name and value in _relation annotation. */
-    private static final String CH_VALUE_START = "\u0002";
+    /** Separator between attr and value in _relation annotation. */
+    private static final String KEY_VALUE_SEPARATOR = "\u0002";
 
-    /** Separator between after relation type and attribute value in _relation annotation. */
-    private static final String CH_VALUE_END = "\u0003";
+    /** Character before attribute name in _relation annotation. */
+    private static final String CH_NAME_START = "\u0003";
 
     /**
      * Determine the term to index in Lucene for a relation.
@@ -38,7 +38,7 @@ public class RelationUtil {
      */
     public static String indexTerm(String fullRelationType, Map<String, String> attributes) {
         if (attributes == null || attributes.isEmpty())
-            return fullRelationType + CH_VALUE_END;
+            return fullRelationType + ATTR_SEPARATOR;
 
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
@@ -48,7 +48,7 @@ public class RelationUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return fullRelationType + CH_VALUE_END + attrPart;
+        return fullRelationType + ATTR_SEPARATOR + attrPart;
     }
 
     /**
@@ -63,7 +63,7 @@ public class RelationUtil {
      */
     public static String indexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes) {
         if (attributes == null)
-            return fullRelationType + CH_VALUE_END;
+            return fullRelationType + ATTR_SEPARATOR;
 
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
@@ -75,21 +75,20 @@ public class RelationUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return fullRelationType + CH_VALUE_END + attrPart;
+        return fullRelationType + ATTR_SEPARATOR + attrPart;
     }
 
     public static Map<String, String> attributesFromIndexedTerm(String indexedTerm) {
-        int i = indexedTerm.indexOf(CH_NAME_START);
+        int i = indexedTerm.indexOf(ATTR_SEPARATOR);
         if (i < 0 || i == indexedTerm.length() - 1)
             return Collections.emptyMap();
         Map<String, String> attributes = new HashMap<>();
-        for (String attrPart: indexedTerm.substring(i + 1).split(CH_NAME_START)) {
-            String[] keyVal = attrPart.split(CH_VALUE_START, 2);
-            assert keyVal[1].endsWith(CH_VALUE_END);
-            if (!attributes.containsKey(keyVal[0])) { // only the first value if there's multiple!
-                String value = keyVal[1].substring(0, keyVal[1].length() - 1); // strip closing char
-                attributes.put(keyVal[0], value);
-            }
+        for (String attrPart: indexedTerm.substring(i + 1).split(ATTR_SEPARATOR)) {
+            String[] keyVal = attrPart.split(KEY_VALUE_SEPARATOR, 2);
+            // older index doesn't have CH_NAME_START; strip it if it's there
+            String key = keyVal[0].startsWith(CH_NAME_START) ? keyVal[0].substring(1) : keyVal[0];
+            if (!attributes.containsKey(key)) // only the first value if there's multiple!
+                attributes.put(key, keyVal[1]);
         }
         return attributes;
     }
@@ -135,7 +134,7 @@ public class RelationUtil {
             // (In the integrated index format, we include all attributes in the term)
             return "@" + name.toLowerCase() + "__" + value.toLowerCase();
         }
-        return CH_NAME_START + name + CH_VALUE_START + value + CH_VALUE_END;
+        return CH_NAME_START + name + KEY_VALUE_SEPARATOR + value + ATTR_SEPARATOR;
     }
 
     /**
@@ -147,7 +146,7 @@ public class RelationUtil {
      * @return the full relation type
      */
     public static String fullTypeFromIndexedTerm(String indexedTerm) {
-        int sep = indexedTerm.indexOf(CH_VALUE_END);
+        int sep = indexedTerm.indexOf(ATTR_SEPARATOR);
         if (sep < 0)
             return indexedTerm;
         return indexedTerm.substring(0, sep);
@@ -191,6 +190,6 @@ public class RelationUtil {
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
         // The regex consists of the type part followed by the (sorted) attributes part.
-        return fullRelationType + CH_VALUE_END + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
+        return fullRelationType + ATTR_SEPARATOR + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
     }
 }

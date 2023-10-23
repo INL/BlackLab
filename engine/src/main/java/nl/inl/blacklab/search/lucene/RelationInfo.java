@@ -30,6 +30,19 @@ public class RelationInfo implements MatchInfo {
     }
 
     /**
+     * Check that this relation has a target set.
+     *
+     * E.g. when indexing a span ("inline tag"), we don't know the target until we encounter the closing tag,
+     * so we can't store the payload until then.
+     *
+     * @return whether we have a target or not
+     */
+    public boolean hasTarget() {
+        assert targetStart >= 0 && targetEnd >= 0 || targetStart < 0 && targetEnd < 0 : "targetStart and targetEnd inconsistent";
+        return targetStart >= 0;
+    }
+
+    /**
      * Different spans we can return for a relation
      */
     public enum SpanMode {
@@ -117,10 +130,11 @@ public class RelationInfo implements MatchInfo {
     private boolean onlyHasTarget;
 
     /** Where does the source of the relation start?
-        (the source is called 'head' in dependency relations) */
+     *  NOTE: if the relation has no source, set this to the targetStart as a convention. Invalid if < 0! */
     private int sourceStart;
 
-    /** Where does the source of the relation end? */
+    /** Where does the source of the relation end?
+     *  NOTE: if the relation has no source, set this to the targetEnd as a convention. Invalid if < 0! */
     private int sourceEnd;
 
     /** Where does the target of the relation start?
@@ -193,6 +207,7 @@ public class RelationInfo implements MatchInfo {
         this.sourceEnd = currentTokenPosition + thisLength;
         this.targetStart = currentTokenPosition + relOtherStart;
         this.targetEnd = this.targetStart + otherLength;
+        assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
     }
 
     /**
@@ -201,6 +216,7 @@ public class RelationInfo implements MatchInfo {
      * @return the serialized data
      */
     public BytesRef serialize() {
+        assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
         // Determine values to write from our source and target, and the position we're being indexed at
         int thisLength = sourceEnd - sourceStart;
         int relOtherStart = targetStart - sourceStart;

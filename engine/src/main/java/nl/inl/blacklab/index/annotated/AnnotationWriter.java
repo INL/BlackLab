@@ -460,8 +460,12 @@ public class AnnotationWriter {
         } else {
             // integrated index; everything is indexed as a single term
             String value = RelationUtil.indexTerm(fullRelationType, attributes);
-            payload = relationInfo.serialize();
+            // We only add the payload if we know the complete relation info;
+            // for inline tags, we'll only know it when we encounter the closing tag,
+            // and we'll add the payload then.
+            payload = relationInfo.hasTarget() ? relationInfo.serialize() : null;
             addValueAtPosition(value, relationInfo.getSourceStart(), payload);
+
             tagIndexInAnnotation = lastValueIndex();
         }
         return tagIndexInAnnotation;
