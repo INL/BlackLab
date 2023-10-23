@@ -26,5 +26,10 @@ public class TestRelationUtil {
         Map<String, String> attrSearch = Map.of("attr1", "v1", "attr3", "v3", "attr2", "v2");
         String regex = RelationUtil.searchRegex(rt, attrSearch);
         Assert.assertTrue(term.matches(regex));
+
+        Map<String, String> attrDecoded = RelationUtil.attributesFromIndexedTerm(term);
+        Assert.assertEquals(attr, attrDecoded);
+
+        Assert.assertEquals(rt, RelationUtil.fullTypeFromIndexedTerm(term));
     }
 }

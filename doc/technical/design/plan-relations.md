@@ -345,7 +345,7 @@ Find sentences with happy sentiment:
 
     <s sentiment='happy' confidence='10' />
     rel(rtype('__tag', 's', list('sentiment', 'happy', 'confidence', '10')), _, 'full')
-    rel('__tag::s\u0001confidence\u000210\u0001sentiment\u0002happy\u0001'), _, 'full')
+    rel('__tag::s\u0003\u0001confidence\u000210\u0003\u0001sentiment\u0002happy\u0003'), _, 'full')
 
 #### Extract source or target
 
@@ -435,15 +435,22 @@ We will encode the tag name and all attribute values into a single indexed term,
 
 A potential downside of is that this could greatly increase the number of unique terms in the index, if there's multiple attributes and many different combinations of attribute values. This would consume more disk space and could slow down queries. While this doesn't seem to be a huge problem for most typical datasets, perhaps we could offer the option to exclude certain attributes from indexing.
 
+Similarly, such attributes with many different values will slow down searching, even if we don't filter on any of the attributes. For this (common) case, we should index tags/relations with attributes twice: once with attributes and once without. We should take care to be able to distinguish between the two, e.g. using a prefix that indicates whether or not attributes are included. This also works for tags that have no attributes, as those can only ever be found by queries that don't filter on attributes.
+
 #### Example encoding
 
-For example, to encode a tag `<s sentiment="happy" confidence="10" />` into a single term we can index this term in the `_relation` attribute:
+For example, to encode a tag `<s sentiment="happy" confidence="10" />` into a single term we can index these two terms in the `_relation` attribute:
 
-    __tag::s\u0001confidence\u000210\u0001sentiment\u0002happy\u0001
+    __tag::s\u0003
+    __tag::s\u0003\u0001confidence\u000210\u0003\u0001sentiment\u0002happy\u0003
 
-So the "full relation type" here is `__tag::s` (consisting of relation class `__tag` and relation type `s`), from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a fast prefix query. The full relation type is always followed by a separator character `\u0001`.
+For a tag where no attributes are indexed, e.g. `<b>blabla</b>`, the only term we index would be:
 
-After that, the attributes follow, in alphabetical order, with each attribute name followed by `\u0002` and each attribute value followed by `\u0001` again. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
+    __tag::b\u0003
+
+So the "full relation type" in the first example is `__tag::s` (consisting of relation class `__tag` and relation type `s`), from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a fast prefix query. The full relation type is always followed by `\u0003` ("value end"). Note that the relation type does not need a prefix character because it is always the first part of the term.
+
+If attributes are included in this term, they follow now, in alphabetical order. The alphabetical order is so we can construct an efficient regex to find multiple of them. Each attribute name is prefixed with `\u0001` ("name prefix"), and each attribute value prefixed with `\u0002` ("value prefix"). The term always ends with `\u0003` ("value end").
 
 #### Source and target
 
@@ -459,7 +466,11 @@ Because we have XML-style syntax for spans, we likely won't need it, but just in
 
 would return the regex:
 
-    __tag::s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*\u0001
+    __tag::s\u0003.*\u0001confidence\u000210\u0003.*\u0001sentiment\u0002happy\u0003.*
+
+Similarly, `rtype('__tag', 's')` would return the regex:
+
+    __tag::s.*\u0003
 
 
 ### Better keep track of spans hierarchy?
@@ -488,15 +499,16 @@ We'll start with the second option, which has the advantage that the associated 
 
 ### Term
 
-The term indexed is a string of the form:
+The term indexed is a string of one of these forms:
 
-    relClass::relType\u0001attr1\u0002value1\u0001attr2\u0002value2\u0001...
+    relClass::relType\u0003
+    relClass::relType\u0003\u0001attr1\u0002value1\u0003\u0001attr2\u0002value2\u0003...
 
 We call `relClass::relType` the _full relation type_. It consists of the relation class and the relation type. The relation class distinguishes between different types of relations, e.g. `__tag` for inline tags, `dep` for dependency relations, etc. The relation type is used to distinguish between different relations of the same class, e.g. `dep::subject` for subject relations, `dep::object` for object relations, `dep::nsubj` for nominal subject relations, etc.
 
-There is always a `\u0001` after the full relation type (such a closing character is useful to avoid unwanted prefix matches when using regexes).
+There is always a `\u0003` ("value end") after the full relation type (such a closing character is useful to avoid unwanted prefix matches when using regexes).
 
-Attributes are sorted alphabetically by name. Each attribute name is followed by `\u0002`, then the value, and finally `\u0001`.
+If there are any attributes, they follow next. These are sorted alphabetically by name. An attribute is encoded as follows: a `\u0001`, the attribute name, a `\u0002`, the attribute value, and a `\u0003`. The surrounding special characters ensure we can match any part of the attribute's name or value without unwanted matches.
 
 ### Payload
 
