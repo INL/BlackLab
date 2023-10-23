@@ -396,7 +396,7 @@ of support for finding descendants that are not direct children.
 
 For example, if we want to look for sentences with the verb _have_ and the word _fluffy_ somewhere as an adjectival modifier in that sentence, we can't query something like this:
 
-    ^--> 'have' (--> _)* -amod-> 'fluffy'   # DOES NOT WORK
+    ^--> 'have' -->> -amod-> 'fluffy'   # DOES NOT WORK
 
 Instead, we have to know how many nodes are between _have_ and _fluffy_, e.g. this does work:
 
