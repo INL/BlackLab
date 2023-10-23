@@ -183,6 +183,11 @@ public class RelationUtil {
      * @return regex to find this relation
      */
     public static String searchRegex(String fullRelationType, Map<String, String> attributes) {
+        if (attributes == null || attributes.isEmpty()) {
+            // No attribute filters, so find the faster term that only has the relation type.
+            return fullRelationType + ATTR_SEPARATOR;
+        }
+
         // Sort and concatenate the attribute names and values
         String attrPart = attributes == null ? "" : attributes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())

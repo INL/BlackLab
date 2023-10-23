@@ -332,7 +332,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             try (AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber())) {
                 while ((next = attributes.next()) != null) {
                     if (currentInline.indexAttribute(next.getDisplayName())) {
-                        atts.put(next.getDisplayName(), next.getStringValue());
+                        atts.put(next.getLocalPart(), next.getStringValue());
                     }
                 }
             }

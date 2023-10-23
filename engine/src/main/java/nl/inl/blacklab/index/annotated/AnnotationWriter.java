@@ -415,7 +415,9 @@ public class AnnotationWriter {
      * @param endPos the end position of the tag, or -1 if we don't know it yet
      * @param attributes the tag attributes
      * @param indexType index type (external files or integrated)
-     * @return index the tag was stored at (so we can add payload later if needed)
+     * @return index the tag was stored at (so we can add payload later if needed).
+     *         Note that if this is a negative value, it is the index of the second
+     *         term indexed for this tag. We should update the payloads of both later.
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
@@ -424,7 +426,7 @@ public class AnnotationWriter {
         return indexRelation(fullRelationType, attributes, indexType, matchInfo);
     }
 
-    public int indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
+    public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
 
@@ -433,7 +435,7 @@ public class AnnotationWriter {
         // for the target or full span (because target position can be before source).
         // (we also might not even need to decode the payload if we ONLY need the source
         //  start position)
-        return indexRelation(fullRelationType, attributes, indexType, matchInfo);
+        indexRelation(fullRelationType, attributes, indexType, matchInfo);
     }
 
     private int indexRelation(String fullRelationType, Map<String, String> attributes,
@@ -459,14 +461,27 @@ public class AnnotationWriter {
             }
         } else {
             // integrated index; everything is indexed as a single term
-            String value = RelationUtil.indexTerm(fullRelationType, attributes);
             // We only add the payload if we know the complete relation info;
             // for inline tags, we'll only know it when we encounter the closing tag,
             // and we'll add the payload then.
             payload = relationInfo.hasTarget() ? relationInfo.serialize() : null;
-            addValueAtPosition(value, relationInfo.getSourceStart(), payload);
+            addValueAtPosition(RelationUtil.indexTerm(fullRelationType, attributes),
+                    relationInfo.getSourceStart(), payload);
+            boolean indexedTwice = false;
+            if (attributes != null && !attributes.isEmpty()) {
+                // Also index a version without attributes. We'll use this for faster search if we don't filter on
+                // attributes.
+                addValueAtPosition(RelationUtil.indexTerm(fullRelationType, null),
+                        relationInfo.getSourceStart(), payload);
+                indexedTwice = true;
+            }
 
             tagIndexInAnnotation = lastValueIndex();
+            if (indexedTwice) {
+                // HACK so we will be able to update both payloads if this is an open tag and we have yet to
+                // encounter the close tag
+                tagIndexInAnnotation = -tagIndexInAnnotation;
+            }
         }
         return tagIndexInAnnotation;
     }

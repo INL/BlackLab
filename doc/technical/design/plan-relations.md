@@ -501,8 +501,8 @@ We'll start with the second option, which has the advantage that the associated 
 
 The term indexed is a string of one of these forms:
 
-    relClass::relType\u0003
-    relClass::relType\u0003\u0001attr1\u0002value1\u0003\u0001attr2\u0002value2\u0003...
+    relClass::relType\u0001
+    relClass::relType\u0001\u0003attr1\u0002value1\u0001\u0003attr2\u0002value2\u0001...
 
 We call `relClass::relType` the _full relation type_. It consists of the relation class and the relation type. The relation class distinguishes between different types of relations, e.g. `__tag` for inline tags, `dep` for dependency relations, etc. The relation type is used to distinguish between different relations of the same class, e.g. `dep::subject` for subject relations, `dep::object` for object relations, `dep::nsubj` for nominal subject relations, etc.
 

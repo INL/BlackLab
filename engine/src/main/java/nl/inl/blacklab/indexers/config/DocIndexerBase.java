@@ -494,7 +494,14 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
             BytesRef payload = PayloadUtils.tagEndPositionPayload(openTag.position, currentPos, getIndexType());
-            tagsAnnotation().setPayloadAtIndex(openTag.index, payload);
+            int index = openTag.index;
+            if (index < 0) {
+                // Negative value means two terms were indexed (one with, one without attributes, for search performance)
+                // and this is the index of the last term. Make sure we update both payloads.
+                index = -index;
+                tagsAnnotation().setPayloadAtIndex(index - 1, payload);
+            }
+            tagsAnnotation().setPayloadAtIndex(index, payload);
         }
     }
 
