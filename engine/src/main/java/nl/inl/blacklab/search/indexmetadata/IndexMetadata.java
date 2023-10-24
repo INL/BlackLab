@@ -23,6 +23,8 @@ public interface IndexMetadata extends Freezable {
         return name;
     }
 
+    String indexFlag(String name);
+
     AnnotatedFields annotatedFields();
 	
 	default AnnotatedField mainAnnotatedField() {

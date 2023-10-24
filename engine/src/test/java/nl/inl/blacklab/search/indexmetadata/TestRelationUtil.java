@@ -24,7 +24,7 @@ public class TestRelationUtil {
 
         // Now search with attributes in a different order - should again be sorted so the regex matches
         Map<String, String> attrSearch = Map.of("attr1", "v1", "attr3", "v3", "attr2", "v2");
-        String regex = RelationUtil.searchRegex(rt, attrSearch);
+        String regex = RelationUtil.searchRegex(null, rt, attrSearch);
         Assert.assertTrue(term.matches(regex));
 
         Map<String, String> attrDecoded = RelationUtil.attributesFromIndexedTerm(term);

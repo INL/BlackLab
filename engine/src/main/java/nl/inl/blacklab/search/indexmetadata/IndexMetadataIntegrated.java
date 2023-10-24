@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,10 +57,19 @@ import nl.inl.util.TimeUtil;
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({
     "custom", "contentViewable", "documentFormat", "versionInfo",
-    "metadataFields", "annotatedFields"
+    "metadataFields", "annotatedFields", "documentFormatConfig", "indexFlags"
 })
 public class IndexMetadataIntegrated implements IndexMetadataWriter {
+
+    /** What is the current index format? */
     public static final String LATEST_INDEX_FORMAT = "4";
+
+    /** Index flag indicating whether we index relations twice, once with and once without attributes,
+     *  and also if attribute names are preceded by RelationUtil.CH_NAME_START.
+     *  ("true" if yes, "" if no)
+     *  (no is for older pre-release versions of relations indexes; this flag will be removed in the future)
+     */
+    public static final String IFL_INDEX_RELATIONS_TWICE = "index_relations_twice";
 
     //private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
 
@@ -272,6 +282,17 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @XmlTransient
     private FreezeStatus frozen = new FreezeStatus();
 
+    /** Free-form flags that indicate how indexing was done.
+     *
+     * This can be used to deal with slight differences in index format,
+     * e.g. whether inline tags are indexed once or twice (once with, once
+     * without attributes) without having to change the index format version.
+     *
+     * Use sparingly, and flags should generally be temporary, to be removed
+     * when it is no longer needed.
+     */
+    private Map<String, String> indexFlags = new HashMap<>();
+
     // For JAXB deserialization
     @SuppressWarnings("unused")
     IndexMetadataIntegrated() {}
@@ -295,6 +316,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             populateWithDefaults(index);
         else
             populateFromConfig(config, dir);
+
+        // Indicate that we're indexing relations twice now, once with and once without attributes
+        setIndexFlag(IFL_INDEX_RELATIONS_TWICE, Boolean.TRUE.toString());
 
         documentFormatConfigFileContents = config == null ? "(no config)" : config.getOriginalFileContents();
         if (index.indexMode())
@@ -403,6 +427,16 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         metadataFields.clearSpecialFields();
         custom.put("annotationGroups", new LinkedHashMap<>());
         custom.put("metadataFieldGroups", new LinkedHashMap<>());
+    }
+
+    @Override
+    public void setIndexFlag(String name, String value) {
+        indexFlags.put(name, value);
+    }
+
+    @Override
+    public String indexFlag(String name) {
+        return indexFlags.getOrDefault(name, "");
     }
 
     @Override
