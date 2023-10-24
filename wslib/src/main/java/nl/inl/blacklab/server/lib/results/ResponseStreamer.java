@@ -75,7 +75,7 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * For serializing BlackLab response objects.
- *
+ * <p>
  * Takes a DataStream and an API version to attempt compatibility with.
  */
 public class ResponseStreamer {
@@ -153,21 +153,17 @@ public class ResponseStreamer {
     private final String KEY_DOC_GROUP;
 
     /** What version of responses to write. */
-    private ApiVersion apiVersion;
+    private final ApiVersion apiVersion;
 
     /** Include new API elements to help with the transition?
      *  Will be true for API v4 and higher. */
     private final boolean modernizeApi;
 
-    public boolean isNewApi() {
-        return isNewApi;
-    }
-
     /** Is this the new, incompatible API? (API v5+) */
     private final boolean isNewApi;
 
     /** DataStream to write to. */
-    private DataStream ds;
+    private final DataStream ds;
 
     public static ResponseStreamer get(DataStream ds, ApiVersion v) {
         return new ResponseStreamer(ds, v);
@@ -721,17 +717,23 @@ public class ResponseStreamer {
             String tagName = RelationUtil.classAndType(fullRelationType)[1];
             ds.entry(KEY_MATCH_INFO_TYPE, "tag");
             ds.entry("tagName", tagName);
+            optAttributes(ds, inlineTag);
+            ds.entry(KEY_SPAN_START, inlineTag.getSourceStart());
+            ds.entry(KEY_SPAN_END, inlineTag.getTargetStart());
+        }
+        ds.endMap();
+    }
+
+    private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
+        if (RelationInfo.INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
             if (!inlineTag.getAttributes().isEmpty()) {
                 ds.startEntry("attributes").startMap();
                 for (Map.Entry<String, String> attr: inlineTag.getAttributes().entrySet()) {
                     ds.elEntry(attr.getKey(), attr.getValue());
                 }
+                ds.endMap().endEntry();
             }
-            ds.endMap().endEntry();
-            ds.entry(KEY_SPAN_START, inlineTag.getSourceStart());
-            ds.entry(KEY_SPAN_END, inlineTag.getTargetStart());
         }
-        ds.endMap();
     }
 
     private static void matchInfoRelation(DataStream ds, RelationInfo relationInfo) {
@@ -739,12 +741,7 @@ public class ResponseStreamer {
         {
             ds.entry(KEY_MATCH_INFO_TYPE, "relation");
             ds.entry("relType", relationInfo.getFullRelationType());
-            if (!relationInfo.getAttributes().isEmpty()) {
-                ds.startEntry("attributes").startMap();
-                for (Map.Entry<String, String> attr: relationInfo.getAttributes().entrySet()) {
-                    ds.elEntry(attr.getKey(), attr.getValue());
-                }
-            }
+            optAttributes(ds, relationInfo);
             if (!relationInfo.isRoot()) {
                 ds.entry("sourceStart", relationInfo.getSourceStart());
                 ds.entry("sourceEnd", relationInfo.getSourceEnd());
@@ -758,11 +755,10 @@ public class ResponseStreamer {
     }
 
     private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, MatchInfo.Type type) {
-        Set<Map.Entry<String, MatchInfo>> capturedGroups = matchInfo == null ? Collections.emptySet() :
+        return matchInfo == null ? Collections.emptySet() :
                 matchInfo.entrySet().stream()
                         .filter(e -> e.getValue() != null && e.getValue().getType() == type)
                         .collect(Collectors.toSet());
-        return capturedGroups;
     }
 
     public void indexProgress(ResultIndexStatus progress)
@@ -1217,7 +1213,7 @@ public class ResponseStreamer {
                 customInfoEntry(indexMetadata.custom(), List.of("displayName", "description"));
             ds.entry(KEY_STATS_STATUS, index.getStatus());
             String formatIdentifier = indexMetadata.documentFormat();
-            if (formatIdentifier != null && formatIdentifier.length() > 0)
+            if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("timeModified", indexMetadata.timeModified());
             ds.entry("tokenCount", indexMetadata.tokenCount());
@@ -1255,7 +1251,7 @@ public class ResponseStreamer {
                 ds.entry("description", indexMetadata.custom().get("description", ""));
                 ds.entry(KEY_STATS_STATUS, index.getStatus());
                 String formatIdentifier = indexMetadata.documentFormat();
-                if (formatIdentifier != null && formatIdentifier.length() > 0)
+                if (formatIdentifier != null && !formatIdentifier.isEmpty())
                     ds.entry("documentFormat", formatIdentifier);
                 ds.entry("timeModified", indexMetadata.timeModified());
                 ds.entry("tokenCount", indexMetadata.tokenCount());
@@ -1285,7 +1281,7 @@ public class ResponseStreamer {
             ds.entry("contentViewable", metadata.contentViewable());
 
             String formatIdentifier = metadata.documentFormat();
-            if (formatIdentifier != null && formatIdentifier.length() > 0)
+            if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("tokenCount", metadata.tokenCount());
             ds.entry("documentCount", metadata.documentCount());
