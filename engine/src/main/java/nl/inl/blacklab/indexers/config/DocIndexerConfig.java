@@ -696,7 +696,17 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     @Override
     public List<String> getMetadataField(String name) {
         List<String> v = super.getMetadataField(name);
-        return v == null ? collectionToList(sortedMetadataValues.get(name)) : v;
+        if (v != null)
+            return v;
+        v = collectionToList(sortedMetadataValues.get(name));
+        if (v != null)
+            return v;
+        if (linkingIndexer != null) {
+            // Get the value from the indexer that linked to us
+            // (because it may already contain metadata values that have not been added to the Lucene doc yet)
+            v = linkingIndexer.getMetadataField(name);
+        }
+        return v;
     }
 
     @Override
@@ -709,5 +719,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         }
         sortedMetadataValues.clear();
         super.endDocument();
+        linkingIndexer = null; // help GC
     }
 }

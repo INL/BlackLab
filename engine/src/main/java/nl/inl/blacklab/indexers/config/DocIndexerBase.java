@@ -142,6 +142,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      */
     final Set<String> skippedAnnotations = new HashSet<>();
 
+    /** Indexer that linked to us (linkedDocument), or null if not applicable. */
+    protected DocIndexerBase linkingIndexer;
+
     protected String getContentStoreName() {
         return contentStoreName;
     }
@@ -266,6 +269,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingDoc = true;
                 ldi.currentDoc = currentDoc;
+                ldi.linkingIndexer = this;
                 ldi.metadataFieldValues = metadataFieldValues;
                 if (storeWithName != null) {
                     // If specified, store in this content store and under this name instead of the default
