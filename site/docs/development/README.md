@@ -20,7 +20,7 @@ BlackLab is in the Maven Central Repository, so you should be able to simply add
 ```xml
 <dependency>
     <groupId>nl.inl.blacklab</groupId>
-    <artifactId>blacklab-core</artifactId>
+    <artifactId>blacklab</artifactId>
     <version>3.0.1</version>
 </dependency>
 ```
