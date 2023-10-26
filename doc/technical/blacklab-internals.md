@@ -1,94 +1,63 @@
 # BlackLab internals
 
-Here we want to document how BlackLab works internally. At the moment it is still very much incomplete, but we intend to add and update information as time goes on.
+Here we want to document how BlackLab works internally. It is not complete, but we intend to add and update information as time goes on.
 
 
 ## BlackLab technical overview
 
-The basis of a BlackLab index is the Lucene index. The Lucene files are all found in the main
-index directory. Lucene provides the reverse index part of BlackLab, that is, it can quickly
-locate in what documents and at what positions certain word(s) or constructs appear.
+The basis of a BlackLab index is the Lucene index. The Lucene files are all found in the main index directory. Lucene provides the reverse index part of BlackLab, that is, it can quickly locate in what documents and at what positions certain word(s) or constructs appear.
 
-You can identify a BlackLab index by the `version.dat` file in the main index directory. This
-file should always contain the text `blacklab||2`.
+You can identify a BlackLab index by the `version.dat` file in the main index directory. This file should always contain the text `blacklab||2`. (**NOTE:** newer integrated indexes do not have this file; they are simply Lucene indexes that can be opened as a BlackLab corpus)
 
 What BlackLab adds to the Lucene index are a _content store_ and _forward indexes_.
 
 ### content store
 
-The content store is the simplest to explain: it stores the original (e.g. XML) documents you
-added to BlackLab. The documents can be retrieved from the content store if you want to display
-them (e.g. using XSLT). Matches may be highlighted in the document.
+The content store is the simplest to explain: it stores the original (e.g. XML) documents you added to BlackLab. The documents can be retrieved from the content store if you want to display them (e.g. using XSLT). Matches may be highlighted in the document.
 
-It is also possible to retrieve snippets from the original document (XML is carefully kept
-wellformed), and even to generate the keyword-in-context (KWIC) view using the original
-content (normally the KWIC view is generated using the forward index, which is faster but doesn't
-preserve the original tag structure, e.g. sentence tags, named entity tags, etc.)
+It is also possible to retrieve snippets from the original document (XML is carefully kept wellformed), and even to generate the keyword-in-context (KWIC) view using the original content (normally the KWIC view is generated using the forward index, which is faster but doesn't preserve the original tag structure, e.g. sentence tags, named entity tags, etc.)
 
-In the future, we may want to make the content store optional, because users often have these
-documents available from another source, such as a webservice. The challenge in this case is
-to keep highlighting efficient (BlackLab stores its content such that the position information
-it gets from Lucene can be used directly to highlight the document).
+In the future, we may want to make the content store optional, because users often have these documents available from another source, such as a webservice. The challenge in this case is to keep highlighting efficient (BlackLab stores its content such that the position information it gets from Lucene can be used directly to highlight the document).
 
-The content store is found in the subdirectory `cs_contents` (at least, if your annotated
-field is named `contents`; you could even have multiple annotated fields).
-The content store subdirectory has its own `version.dat`, which should contain `fixedblock||1`.
+In older external indexes, the content store is found in the subdirectory `cs_contents` (at least, if your annotated field is named `contents`; you could even have multiple annotated fields). The content store subdirectory has its own `version.dat`, which should contain `fixedblock||1`.
+
+In the newer, integrated index, the content store is (as the name implies) integrated into the Lucene index.
 
 ### forward index
 
-Each of your annotations can have a forward index. A forward index is a structure that can quickly
-answer questions of the form "what annotation values occur in document 123 at positions 20 ... 24?"
+Each of your annotations can have a forward index. A forward index is a structure that can quickly answer questions of the form "what annotation values occur in document 123 at positions 20 ... 24?"
 
 #### How the forward index is used
 
-The forward index is used to speed up sorting and grouping hits by context. For example, sorting
-hits by their "lemma" annotation, or grouping them by their "pos" (part of speech) annotation. Without
-the forward index, we would have to retrieve the original input file, get XML snippet corresponding with
-our match, and parse it to get the annotation values. Needless to say this would be way too slow.
+The forward index is used to speed up sorting and grouping hits by context. For example, sorting hits by their "lemma" annotation, or grouping them by their "pos" (part of speech) annotation. Without the forward index, we would have to retrieve the original input file, get XML snippet corresponding with our match, and parse it to get the annotation values. Needless to say this would be way too slow.
 
-The forward index is also used to resolve "capture constraints", such as in a Corpus Query like
-`A:[] "and" B:[] :: A.word = B.word`. The capture constraint is the part after `::`, and it is used
-to filter hits found using the part before `::`.
+The forward index is also used to resolve "capture constraints", such as in a Corpus Query like `A:[] "and" B:[] :: A.word = B.word`. The capture constraint is the part after `::`, and it is used to filter hits found using the part before `::`.
 
-Finally, the forward index can be used to speed up certain searches that would be slow using Lucene's
-index. For example, in a very large index (say more than a 1G (billion) words), regex clauses can be
-very slow. A query like `".*e" "ship"` (a word ending in _e_ followed by the word _ship_) would take
-a very long time finding all terms that end in _e_ and then finding all matches for those terms. Instead
-we use Lucene's reverse index to find all occurrences of _ship_, then use the forward index to check if
-the preceding word ends in `".e"`. Another way of putting it is to say we rewrite the query to convert
-the problematic clause to a capture constraint, so the query becomes
-`A:[] "ship" :: A.word = ".*e""` (even though this is not what happens internally).
+Finally, the forward index can be used to speed up certain searches that would be slow using Lucene's index. For example, in a very large index (say more than a 1G (billion) words), regex clauses can be very slow. A query like `".*e" "ship"` (a word ending in _e_ followed by the word _ship_) would take a very long time finding all terms that end in _e_ and then finding all matches for those terms. Instead we use Lucene's reverse index to find all occurrences of _ship_, then use the forward index to check if the preceding word ends in `".e"`. Another way of putting it is to say we rewrite the query to convert the problematic clause to a capture constraint, so the query becomes `A:[] "ship" :: A.word = ".*e""` (even though this is not what happens internally).
 
-Forward index matching is also called NFA matching in the code, because it uses a nondeterministic finite
-automaton to evaluate queries against the forward index.
+Forward index matching is also called NFA matching in the code, because it uses a nondeterministic finite automaton to evaluate queries against the forward index.
 
-While it can make certain queries faster, deciding whether or not to use the forward index does take
-a bit of time (many possibilities are tried and term frequencies are looked up; see `ClauseCombinerNfa`). For scenarios with
-small indexes and many queries per second, this functionality may hurt rather than help.
-If you want to disable forward-index matching , you can set `search.fiMatchFactor` to `0` in
-`blacklab-server.yml`.
+While it can make certain queries faster, deciding whether or not to use the forward index does take a bit of time (many possibilities are tried and term frequencies are looked up; see `ClauseCombinerNfa`). For scenarios with small indexes and many queries per second, this functionality may hurt rather than help. If you want to disable forward-index matching , you can set `search.fiMatchFactor` to `0` in `blacklab-server.yml`.
 
 #### Structure of the forward index
 
-The combined forward indexes also contain most of the contents of the documents, but missing are
-the tags around an in between the words (bold and italic tags, paragraph and sentence tags,
-header and body tags, metadata tags, etc.).
+The combined forward indexes also contain most of the contents of the documents, but missing are the tags around an in between the words (bold and italic tags, paragraph and sentence tags, header and body tags, metadata tags, etc.).
 
-All annotations get a forward index by default, but you
-can [disable this if you want](how-to-configure-indexing.md#disable-fi).
+All annotations get a forward index by default, but you can [disable this if you want](http://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#reducing-index-size).
 
-Each annotation has its own forward index directory. These directories are
-named `fi_contents%word`, `fi_contents%word`, etc. (again, assuming your annotated field is
-`contents`). The `version.dat` file in each forward index directory should contain either
-`fi||4` or `fi||5`. (these versions differ only in the collators used for sorting terms)
+In the older external indexes, each annotation has its own forward index directory. These directories are named `fi_contents%word`, `fi_contents%word`, etc. (again, assuming your annotated field is `contents`). The `version.dat` file in each forward index directory should contain either `fi||4` or `fi||5`. (these versions differ only in the collators used for sorting terms)
 
-For more in-depth information about the layout of the non-Lucene files in a BlackLab index,
-see [File formats for the forward index and content store](index-formats/external.md).
+The newer indexed integrate the forward index into the Lucene index.
+
+For more in-depth information about the layout of the non-Lucene files in a BlackLab index, see [External index file formats](index-formats/external.md) and [Integrated index file formats](index-formats/integrated.md).
 
 ### index metadata file
 
-Each index has a file called `indexmetadata.yaml`. This file contains information that
-BlackLab needs, such as:
+Each index has index metadata, containing information about the structure of the index.
+
+Older external indexes store this in a file called `indexmetadata.yaml`. The newer integrated index format has a special Lucene document containing this metadata. You shouldn't normally need to access it, but if you do, run the IndexTool with `--help` to learn more.
+
+The index metadata contains information that BlackLab needs, such as:
 
 - total number of tokens
 - pid field
@@ -108,12 +77,7 @@ It also contains extra information that may be useful for applications using Bla
 - display order for metadata and annotated fields
 - how metadata fields should logically be grouped
 
-It could be argued that the second group of properties don't really belong in BlackLab and
-should perhaps be moved to the application using BlackLab. This might be the direction we take
-in the future. We estimate that beside our own corpus-frontend, not many other applications use
-these properties.
-
-A complete, documented example of `indexmetadata.yaml` can be found [here](indexing-with-blacklab.md#edit-index-metadata).
+It could be argued that the second group of properties don't really belong in BlackLab and should perhaps be moved to the application using BlackLab. This might be the direction we take in the future. We estimate that beside our own corpus-frontend, not many other applications use these properties.
 
 
 ### Files needed for indexing
@@ -123,16 +87,11 @@ TODO
 index configuration file (`.blf.yaml`) / DocIndexer
 
 A complete, documented example of an input format configuration file can be
-found [here](how-to-configure-indexing.md#annotated-input-format-configuration-file).
+found [here](http://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#full-example-of-a-configuration-file).
 
 ### Performance optimizations
 
-BlackLab tries to find the most efficient way to execute a query. This is done when a `BLSpanQuery` is
-about to be executed. Lucene's `SpanQuery` class has a `rewrite` method that rewrites the query if needed
-(e.g. SpanRegexQuery will rewrite to SpanBooleanQuery+SpanTermQuery, effectively OR'ing SpanTermQueries
-for all matching terms). `BLSpanQuery` adds an `optimize` method that is run first. `optimize()` is
-only implemented by `SpanQuerySequence` for now. Here we look at high-level optimizations that
-should be tried before the "normal" rewrite process.
+BlackLab tries to find the most efficient way to execute a query. This is done when a `BLSpanQuery` is about to be executed. Lucene's `SpanQuery` class has a `rewrite` method that rewrites the query if needed (e.g. SpanRegexQuery will rewrite to SpanBooleanQuery+SpanTermQuery, effectively OR'ing SpanTermQueries for all matching terms). `BLSpanQuery` adds an `optimize` method that is run first. `optimize()` is only implemented by `SpanQuerySequence` for now. Here we look at high-level optimizations that should be tried before the "normal" rewrite process.
 
 These include:
 
@@ -160,19 +119,13 @@ To help choose the best possible optimizations, `BLSpanQuery` contains a number 
 - `hitsAllSameLength`: does this query produce hits that are all the same length?
 - ...etc.
 
-Besides deciding what optimization to apply, these methods also help us decide if a query can produce
-duplicate matches (which should be filtered out later) and if a query can produce matches that are not
-sorted by match starting position (which should be re-sorted later).
-For example (e.g. `[]{1,3} "ship"` will produce a SpanQueryExpansion to expand hits
-for _ship_ to the left by 1-3 tokens, but the resulting matches are not guaranteed to be sorted by starting
-position, so the hits could be something like 0-3, 1-3, 2-3, 1-4, 2-4, 3-4, etc.
+Besides deciding what optimization to apply, these methods also help us decide if a query can produce duplicate matches (which should be filtered out later) and if a query can produce matches that are not sorted by match starting position (which should be re-sorted later). For example (e.g. `[]{1,3} "ship"` will produce a SpanQueryExpansion to expand hits for _ship_ to the left by 1-3 tokens, but the resulting matches are not guaranteed to be sorted by starting position, so the hits could be something like 0-3, 1-3, 2-3, 1-4, 2-4, 3-4, etc.
 
 
 ## Module structure
 
 BlackLab has been divided up into modules that serve specific functions.
-This is intended to make the structure and dependencies clearer, to make BlackLab
-easier to understand and make future improvements easier.
+This is intended to make the structure and dependencies clearer, to make BlackLab easier to understand and make future improvements easier.
 
 This the current list of modules:
 
