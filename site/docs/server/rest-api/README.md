@@ -54,6 +54,7 @@ Information about the corpus such as size, documentFormat, fields, and status.
 * [Corpus information](corpus/get.md) : `GET /`
 * [Corpus status](corpus/status/get.md) : `GET /status`
 * [Field information](corpus/fields/fieldname/get.md) : `GET /fields/<fieldname>`
+* [Span and relation types](corpus/relations/get.md) : `GET /relations`
 
 ### Find hits or documents
 

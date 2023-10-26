@@ -7,7 +7,9 @@ There's currently three major versions:
 - `4.0`: newer, mostly compatible API version, used by BlackLab 4.x. Adds some keys and endpoints and makes slight changes, mostly to improve consistency and reduce redundancy. The additions are still experimental, just like v5 of the API.
 - `5.0`: STILL EXPERIMENTAL. stricter, cleaner version of the `4.0` API, removing parameters and response keys from `3.0`. Because this is still experimental, we may make breaking changes. Useful for testing.
 
-On any BLS request, include the `api` parameter to specify which API version to use. So if you want to keep using the older API for now, add `api=3`. If you don't specify an API version, the default version will be used. 
+To know which API version your BLS defaults to, check the server info page (`/`). Look for the key `blacklabResponse.apiVersion`. If this doesn't exist, BLS is using API v3 or lower. If it exists and has the value `4.0` or `5.0`, BLS is using that API version.
+
+On any BLS request, include the `api` parameter to specify which API version to use. So if you want to keep using the older API for now, add `api=3`. If you don't specify an API version, the default version will be used. If you specify an unsupported API version, e.g. `api=2`, you will get an error.
 
 To set the default API version, configure `parameters.api` in your `blacklab-server.yaml` (or `blacklab-webservice.yaml` for Solr).
 
@@ -17,11 +19,11 @@ Valid values for API version include:
 - `cur` or `current`, the current stable version (currently `4.0`)
 - `exp` or `experimental`, always points to the highest version available (currently `5.0`)
 
-New versions may be added in the future, and support for older versions will eventually be dropped.
+New versions may be added in the future, and support for older versions will eventually be dropped (see the [API support roadmap](#api-support-roadmap) below).
 
 API version numbers roughly match the BlackLab version where they became (or will become) the default API version.
 
-Note that the additions to API v4 are currently considered experimental, until the release of BlackLab 4.0. So where it states "you should use this for future compatibility", know that right now, there may still be breaking changes in the newly added stuff before the 4.0 release.
+Note that until BlackLab 4.0 is released, any additions to API v4 should be considered experimental. So where it states "you should use this for future compatibility", that really only applies after 4.0 is released.
 
 
 ## API changes from 3.0 to 4.0
@@ -43,7 +45,7 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
 ### Added
 
 - Server info page:
-  - New key added (`/`): `apiVersion` (valid values: `3.0` and `4.0`; assume `3.0` if missing)
+  - New key added (`/`): `apiVersion` (valid values: `3.0`, `4.0`, `5.0`; assume `3.0` if missing)
   - In addition to `indices`, the new `corpora` key was added that provides the same information in a slightly different format. You should use `corpora` instead of `indices` for future compatibility.
   - In addition to being reported under `fieldInfo`, `pidField` is now also a top-level key. You should use this version of the key for future compatibility. (the other special fields in `fieldInfo` will be moved to `custom` in v5)
 - Search (hits) operations:
@@ -100,3 +102,27 @@ These are breaking changes compared to v4.0. Make sure you update your client ac
     - `summary` has been restructured to group related values together. Keys have been renamed for clarity.
     - response keys `left`/`right` have been replaced with `before`/`after` in the `/hits` response.
     - `docInfos` now have a `metadata` subobject instead of mixing metadata with `mayView` and `lengthInTokens`.
+
+## API support roadmap
+
+This is how we intend to evolve BlackLab Server and Frontend with respect to API version support:
+
+- [x] **BlackLab v4.0 alpha/beta**
+    - [ ] deprecate API v3 (responses include a "deprecation warning key")
+    - [x] add API v4 (adds endpoints, transitional; default API)
+    - [x] add API v5 experimental (enforces exclusive use of new endpoints)
+- [ ] **Frontend v4.0**: start using API v4: use new endpoints if available, fall back to v3 endpoints if not (for now). So _if_ the BLS you're talking to supports v4 (check server info page if blacklabResponse.apiVersion exists and is >= 4):
+    - [ ] use `/relations` to get list of tags
+    - [ ] from server info page, use `corpora` key instead of deprecated `indices` key.
+    - [ ] use `/corpora/CORPUSNAME/...` endpoints
+- [ ] **BlackLab v4.0 release**
+    - [ ] API v4/5 finalized
+- [ ] **BlackLab v5.0**:
+    - [ ] switch default to API v5.
+    - [ ] deprecate API v4.
+    - [ ] remove deprecated API v3.
+- [ ] **Frontend v5.0**: drop support for API v3 and v4 (use new endpoints exclusively). Test this by passing `api=5` to BLS (enforces only new endpoints). Frontend should still work with BlackLab 4.0 at this point (because that already supported API v5).
+- [ ] BlackLab v6.0:
+    - [ ] remove deprecated API v4
+
+

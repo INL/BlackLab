@@ -10,9 +10,115 @@ The integrated index has a codec name `BlackLab40Codec` and version of 1. (Addit
 
 The index metadata (the equivalent to the `indexmetadata.yaml` file from the classic index format) is not written to a segment file (like information related to a document), but instead it is written to a special document in the Lucene index.
 
-The document can be found by searching for a field with the name and value `__index_metadata_marker__`. The metadata is stored, in JSON form, in the field `__index_metadata__`.
+The document can be found by searching for a field with the name and value `__index_metadata_marker__`. The metadata is stored, in JSON form, in the field `__index_metadata__`. The JSON structure corresponds to the JAXB annotations in the `IndexMetadataIntegrated` class.
 
-For now, we also write the contents to a file called `debug-indexmetadata.json`. This file is only written, never read. The JSON structure corresponds to the JAXB annotations in the `IndexMetadataIntegrated` class.
+You can export the index metadata to a file using `IndexTool`. Use the `--help` option to learn more. It is even possible to change and re-import the file, although this can be risky.
+
+## Annotated fields
+
+Annotated fields are stored as a number of Lucene fields. For example, the `contents` field with annotations `word`, `lemma` and `pos` may have these fields:
+
+- `contents%word@s`, the sensitive version of the `word` annotation
+- `contents%word@i`, the insensitive version of the `word` annotation
+- `contents%punct@s`, the punctuation annotation (any space and/or punctuation between token positions)
+- `contents%lemma@s`, the sensitive version of the `lemma` annotation
+- `contents%lemma@i`, the insensitive version of the `lemma` annotation
+- `contents%pos@i`, the insensitive version of the `pos` annotation
+- `contents%_relation@s`, any spans and relations in this field; see [spans and relations](#spans-and-relations)
+- `contents%length_tokens`, the length of the document in number of tokens (numeric field).
+- `contents%cs`, the original content of the document; see [content store](#content-store) 
+
+Most annotation fields will have a [forward index](#forward-index) associated with them, unless specifically disabled in the index format configuration.
+
+
+### Spans and relations
+
+The special `_relation` annotation contains information about spans ("inline tags" such as `<p/>`, `<s/>`, etc.) and relations (e.g. dependency relations), provided these were configured to be indexed in the index format configuration.
+
+Relations have:
+- a source and a target, both of which may be a single token or a number of consecutive tokens (exception: root relations have no source, only a target)
+- a class (e.g. `dep` for dependency relations)
+- a type (e.g. `nsubj` for nominal subject)
+- optionally, attributes (a map of key-value pairs)
+
+Spans are indexed as special relations with class `__tag`, with the start of the span as the source of the relation and the end of the span (exclusive, so the first word after the span) as the target. Both source and target have a length of 0; that is source start and source end have the same value, and the same goes for target start and target end.
+
+Relations are always indexed at the start of the source of the relation. Therefore, spans are always indexed at the first token in the span.
+
+A relation is indexed once or twice: relations without attributes are indexed only once, but relations with attributes are indexed once with those attributes and once without. This makes searching without attribute filters faster in the case that there are many different attribute values (e.g. `<s/>` tags where each tag has a unique `id` attribute).
+
+A relation is indexed as a term containing the relation class and type (which together we call the _full relation type_) and (optionally) attributes, with a payload containing the source and target information.
+
+
+### Term
+
+The term indexed is a string of one of these forms.
+
+Without attributes:
+
+    relClass::relType\u0001
+
+With attributes:
+
+    relClass::relType\u0001\u0003attrName1\u0002value1\u0001\u0003attrName2\u0002value2\u0001...
+
+Again, we call `relClass::relType`, the relation class and the relation type, the _full relation type_. The relation class distinguishes between different types of relations, e.g. `__tag` for inline tags, `dep` for dependency relations, etc. The relation type is used to distinguish between different relations of the same class, e.g. `dep::subject` for subject relations, `dep::object` for object relations, `dep::nsubj` for nominal subject relations, etc.
+
+If there are any attributes, they follow next. These are sorted alphabetically by name (so we can generate an efficient regular expression).
+
+Three special characters delineate the separate parts of the term:
+
+- `\u0001` ("value suffix") follows the full relation type and all attribute values.
+- `\u0002` ("value separator") separates attribute names from their values.
+- `\u0003` ("name prefix") precedes each attribute name.
+
+These delineation characters make sure we can generate a regular expressions that avoid any unwanted matches (e.g. prefix or suffix matches).
+
+
+### Payload
+
+The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)).
+
+Below we use "this" and "other" to refer to the source and target of the relation. This structure allows for storing relations either at the source or target. However, we've decided to only ever store relations at the source, so "this" is always the source and "other" is always the target.
+
+The payload for a relation consists of the following fields:
+
+* `relOtherStart: ZInt`: relative position of the (start of the) other end (target end). Default: `1`.
+* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source (this flag will always be `0`). If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. If `0x08` is set, `targetField` will follow the flags field. The other bits are reserved for future use and must not be set. Default: `0`.
+* `targetField: VInt`: (only present if flag `0x08` set) annotated field the target points to. Uses the forward index field numbering. Default: `0`
+* `thisLength: VInt`: length of this end of the relation (source). For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
+* `otherLength: VInt`: length of the other end of the relation (target). For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
+
+The purpose of `targetField` is to enable having alignment relations between languages in parallel corpora. Each language would be stored in its own annotated field, e.g. `contents_en` might contain English, `contents_nl` Dutch, etc. Relations could be stored in one of the fields, or all of the fields.
+
+Fields omitted from the end automatically get the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 0, otherLength: 0 }`.
+
+As another example, the payload `0x81; 0x04` would mean `{ relOtherStart: 1, flags: 4, thisLength: 1, otherLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`.
+
+In the future, we might want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
+
+### Calculate Lucene span from relation term
+
+When found using BlackLab, a relation has a source and target (which may be word groups or single words) as well as a "regular" span.
+
+The span normally runs between source and target, but operations combining relations may enlarge the span so this no longer holds.
+
+To calculate the Lucene span from a matched relation term's payload, first a few helper values:
+
+    thisStart = position the relation was indexed at
+    thisEnd = thisStart + thisLength
+    otherStart = thisStart + relOtherStart
+    otherEnd = otherStart + otherLength
+
+So the Lucene span for a relation is:
+
+    [thisStart, max(thisEnd, otherEnd) )
+
+(although it seems unlikely that we want the source and target to overlap)
+
+(note that Lucene spans are half-open, i.e. the end position is not included in the span)
+
+
 
 ## Forward index
 
