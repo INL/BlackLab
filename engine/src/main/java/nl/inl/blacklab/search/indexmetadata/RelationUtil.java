@@ -20,11 +20,14 @@ public class RelationUtil {
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
     public static final String RELATION_CLASS_TYPE_SEPARATOR = "::";
 
-    /** Separator before attribute name+value in _relation annotation. */
+    /** Separator after relation type and attribute value in _relation annotation. */
     private static final String ATTR_SEPARATOR = "\u0001";
 
     /** Separator between attr and value in _relation annotation. */
     private static final String KEY_VALUE_SEPARATOR = "\u0002";
+
+    /** Character before attribute name in _relation annotation. */
+    private static final String CH_NAME_START = "\u0003";
 
     /**
      * Determine the term to index in Lucene for a relation.
@@ -34,7 +37,7 @@ public class RelationUtil {
      * @return term to index in Lucene
      */
     public static String indexTerm(String fullRelationType, Map<String, String> attributes) {
-        if (attributes == null)
+        if (attributes == null || attributes.isEmpty())
             return fullRelationType + ATTR_SEPARATOR;
 
         // Sort and concatenate the attribute names and values
@@ -50,7 +53,7 @@ public class RelationUtil {
 
     /**
      * Determine the term to index in Lucene for a relation.
-     *
+     * <p>
      * This version can handle relations with multiple values for the same attribute,
      * which can happen as a result of processing steps during indexing.
      *
@@ -82,8 +85,10 @@ public class RelationUtil {
         Map<String, String> attributes = new HashMap<>();
         for (String attrPart: indexedTerm.substring(i + 1).split(ATTR_SEPARATOR)) {
             String[] keyVal = attrPart.split(KEY_VALUE_SEPARATOR, 2);
-            if (!attributes.containsKey(keyVal[0])) // only the first value if there's multiple!
-                attributes.put(keyVal[0], keyVal[1]);
+            // older index doesn't have CH_NAME_START; strip it if it's there
+            String key = keyVal[0].startsWith(CH_NAME_START) ? keyVal[0].substring(1) : keyVal[0];
+            if (!attributes.containsKey(key)) // only the first value if there's multiple!
+                attributes.put(key, keyVal[1]);
         }
         return attributes;
     }
@@ -111,10 +116,10 @@ public class RelationUtil {
 
     /**
      * What value do we index for attributes to tags (spans)?
-     *
+     * <p>
      * (integrated index) A tag <s id="123"> ... </s> would be indexed in annotation "_relation"
-     * with a single tokens: "__tag\u0002s\u0001id\u0002123\u0001".
-     *
+     * with a single tokens: "__tag::s\u0001\u0003id\u0002123\u0001".
+     * <p>
      * (classic external index) A tag <s id="123"> ... </s> would be indexed in annotation "starttag"
      * with two tokens at the same position: "s" and "@id__123".
      *
@@ -123,18 +128,36 @@ public class RelationUtil {
      * @return value to index for this attribute
      */
     public static String tagAttributeIndexValue(String name, String value, BlackLabIndex.IndexType indexType) {
+        return tagAttributeIndexValue(false, name, value, indexType);
+    }
+
+    /**
+     * What value do we index for attributes to tags (spans)?
+     * <p>
+     * (integrated index) A tag <s id="123"> ... </s> would be indexed in annotation "_relation"
+     * with a single tokens: "__tag::s\u0001\u0003id\u0002123\u0001".
+     * <p>
+     * (classic external index) A tag <s id="123"> ... </s> would be indexed in annotation "starttag"
+     * with two tokens at the same position: "s" and "@id__123".
+     *
+     * @param useOldEncoding use the older encoding without CH_NAME_START?
+     * @param name attribute name
+     * @param value attribute value
+     * @return value to index for this attribute
+     */
+    public static String tagAttributeIndexValue(boolean useOldEncoding, String name, String value, BlackLabIndex.IndexType indexType) {
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             // NOTE: this means that we cannot distinguish between attributes for
             // different start tags occurring at the same token position!
             // (In the integrated index format, we include all attributes in the term)
             return "@" + name.toLowerCase() + "__" + value.toLowerCase();
         }
-        return name + KEY_VALUE_SEPARATOR + value + ATTR_SEPARATOR;
+        return (useOldEncoding ? "" : CH_NAME_START) + name + KEY_VALUE_SEPARATOR + value + ATTR_SEPARATOR;
     }
 
     /**
      * Given the indexed term, return the full relation type.
-     *
+     * <p>
      * This leaves out any attributes indexed with the relation.
      *
      * @param indexedTerm the term indexed in Lucene
@@ -149,7 +172,7 @@ public class RelationUtil {
 
     /**
      * Split a full relation type into relation class and relation type.
-     *
+     * <p>
      * Relations are indexed with a full type, consisting of a relation class and a relation type.
      * The class is used to distinguish between different groups of relations, e.g. inline tags
      * and dependency relations.
@@ -169,22 +192,36 @@ public class RelationUtil {
 
     /**
      * Determine the search regex for a relation.
-     *
+     * <p>
      * NOTE: both fullRelationType and attribute names/values are interpreted as regexes,
      * so any regex special characters you wish to find should be escaped!
      *
+     * @param index index we're using (to check index flag IFL_INDEX_RELATIONS_TWICE)
      * @param fullRelationType full relation type
      * @param attributes any attribute criteria for this relation
      * @return regex to find this relation
      */
-    public static String searchRegex(String fullRelationType, Map<String, String> attributes) {
+    public static String searchRegex(BlackLabIndex index, String fullRelationType, Map<String, String> attributes) {
+
+        // Check if this is an older index that uses the attribute encoding without CH_NAME_START
+        // (will be removed eventually)
+        boolean useOldRelationsEncoding = index != null && index.metadata()
+                .indexFlag(IndexMetadataIntegrated.IFL_INDEX_RELATIONS_TWICE).isEmpty();
+
+        if (attributes == null || attributes.isEmpty()) {
+            // No attribute filters, so find the faster term that only has the relation type.
+            // (for older encoding, just do a prefix query on the slower terms)
+            return fullRelationType + ATTR_SEPARATOR + (useOldRelationsEncoding ? ".*" : "");
+        }
+
         // Sort and concatenate the attribute names and values
-        String attrPart = attributes == null ? "" : attributes.entrySet().stream()
+        String attrPart = attributes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(), BlackLabIndex.IndexType.INTEGRATED))
+                .map(e -> tagAttributeIndexValue(useOldRelationsEncoding,
+                        e.getKey(), e.getValue(), BlackLabIndex.IndexType.INTEGRATED))
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
         // The regex consists of the type part followed by the (sorted) attributes part.
-        return fullRelationType + ATTR_SEPARATOR + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
+        return fullRelationType + ATTR_SEPARATOR + ".*" + attrPart + ".*";
     }
 }

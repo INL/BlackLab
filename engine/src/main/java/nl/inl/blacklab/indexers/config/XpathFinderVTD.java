@@ -238,6 +238,7 @@ class XpathFinderVTD {
         try {
             while ((i = apAttr.iterateAttr()) != -1) {
                 String name = nav.toString(i);
+                name = name.replaceAll("^\\w+:", ""); // remove namespace prefix
                 String value = nav.toString(i + 1);
                 attr.put(name, value);
             }

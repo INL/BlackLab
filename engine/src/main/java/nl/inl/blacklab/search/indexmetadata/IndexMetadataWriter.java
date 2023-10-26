@@ -109,6 +109,10 @@ public interface IndexMetadataWriter extends IndexMetadata {
 	 */
 	void freezeBeforeIndexing();
 
+    default void setIndexFlag(String name, String value) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
     @Override
     AnnotatedFieldsImpl annotatedFields();
 

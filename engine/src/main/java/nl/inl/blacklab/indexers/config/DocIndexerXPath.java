@@ -156,6 +156,13 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             }
             String valueToIndex = RelationUtil.indexTermMulti(fullType, attributes);
             annotationValue(name, valueToIndex, position, endOrTarget, isRelation);
+            if (attributes != null && !attributes.isEmpty()) {
+                // Also index a version without attributes. We'll use this for faster search if we don't filter on
+                // attributes.
+                // OPT: find a way to only create the payload once, because it is identical for both.
+                valueToIndex = RelationUtil.indexTermMulti(fullType, null);
+                annotationValue(name, valueToIndex, position, endOrTarget, isRelation);
+            }
         }
     }
 

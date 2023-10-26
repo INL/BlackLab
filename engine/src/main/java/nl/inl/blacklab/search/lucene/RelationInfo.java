@@ -17,16 +17,36 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 /**
  * Information about a relation's source and target,
  * and optionally the relation type.
- *
+ * <p>
  * Note that this is not named MatchInfoRelation, as it is
  * used while indexing as well as matching.
  */
 public class RelationInfo implements MatchInfo {
 
+    /** Include attributes in relation info? We wanted to do this but can't anymore
+     *  because they're only available in the version indexed with attributes. We also index
+     *  relations without attributes to speed up searches that don't filter on relations,
+     *  and this would make responses inconsistent. The alternative is storing attribute info
+     *  in the payload, but this will take more space and it's not clear if this is worth it. */
+    public static final boolean INCLUDE_ATTRIBUTES_IN_RELATION_INFO = false;
+
     public static void serializeInlineTag(int start, int end, DataOutput dataOutput) throws IOException {
         int relativePositionOfLastToken = end - start;
         dataOutput.writeZInt(relativePositionOfLastToken);
         // (rest of RelationInfo members have the default value so we skip them)
+    }
+
+    /**
+     * Check that this relation has a target set.
+     * <p>
+     * E.g. when indexing a span ("inline tag"), we don't know the target until we encounter the closing tag,
+     * so we can't store the payload until then.
+     *
+     * @return whether we have a target or not
+     */
+    public boolean hasTarget() {
+        assert targetStart >= 0 && targetEnd >= 0 || targetStart < 0 && targetEnd < 0 : "targetStart and targetEnd inconsistent";
+        return targetStart >= 0;
     }
 
     /**
@@ -93,21 +113,17 @@ public class RelationInfo implements MatchInfo {
 
     /**
      * Default length for the source and target if {@link #FLAG_DEFAULT_LENGTH_ALT} is set.
-     *
+     * <p>
      * See there for details.
      */
     private static final int DEFAULT_LENGTH_ALT = 1;
-
-    /** (UNUSED; always indexed at source now)
-     *  Was the relationship indexed at the target instead of the source? */
-    public static final byte FLAG_INDEXED_AT_TARGET = 0x01;
 
     /** Is it a root relationship, that only has a target, no source? */
     public static final byte FLAG_ONLY_HAS_TARGET = 0x02;
 
     /** If set, use DEFAULT_LENGTH_ALT (1) as the default length
      * (dependency relations) instead of 0 (tags).
-     *
+     * <p>
      * Doing it this way saves us a byte in the payload for dependency relations, as
      * we don't have to store two 1s, just one flags value.
      */
@@ -117,10 +133,11 @@ public class RelationInfo implements MatchInfo {
     private boolean onlyHasTarget;
 
     /** Where does the source of the relation start?
-        (the source is called 'head' in dependency relations) */
+     *  NOTE: if the relation has no source, set this to the targetStart as a convention. Invalid if < 0! */
     private int sourceStart;
 
-    /** Where does the source of the relation end? */
+    /** Where does the source of the relation end?
+     *  NOTE: if the relation has no source, set this to the targetEnd as a convention. Invalid if < 0! */
     private int sourceEnd;
 
     /** Where does the target of the relation start?
@@ -161,9 +178,9 @@ public class RelationInfo implements MatchInfo {
     /**
      * Deserialize relation info from the payload.
      *
-     * @param currentTokenPosition
-     * @param dataInput
-     * @throws IOException
+     * @param currentTokenPosition the position we're currently at
+     * @param dataInput data to deserialize
+     * @throws IOException on corrupted payload
      */
     public void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput) throws IOException {
         // Read values from payload (or use defaults for missing values)
@@ -193,6 +210,7 @@ public class RelationInfo implements MatchInfo {
         this.sourceEnd = currentTokenPosition + thisLength;
         this.targetStart = currentTokenPosition + relOtherStart;
         this.targetEnd = this.targetStart + otherLength;
+        assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
     }
 
     /**
@@ -201,6 +219,7 @@ public class RelationInfo implements MatchInfo {
      * @return the serialized data
      */
     public BytesRef serialize() {
+        assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
         // Determine values to write from our source and target, and the position we're being indexed at
         int thisLength = sourceEnd - sourceStart;
         int relOtherStart = targetStart - sourceStart;
@@ -299,10 +318,10 @@ public class RelationInfo implements MatchInfo {
 
     /**
      * Does this relation info represent an inline tag?
-     *
+     * <p>
      * Inline tags are indexed as relations with zero-length source and target.
      * Unlike other relations, source always occurs before target for tag relations.
-     *
+     * <p>
      * The reason this method exists is that the classic external index doesn't support
      * "regular" relations but does support inline tags. When we eventually drop support
      * for the classic external index format, this method can be removed.
@@ -324,7 +343,7 @@ public class RelationInfo implements MatchInfo {
 
     /**
      * Pass the indexed term for this relation, so we can decode it.
-     *
+     * <p>
      * We decode the relation class and type and any attributes from the indexed term.
      * Note that if multiple values were indexed for a single attribute, only the first
      * value is extracted.
@@ -333,7 +352,8 @@ public class RelationInfo implements MatchInfo {
      */
     public void setIndexedTerm(String term) {
         this.fullRelationType = RelationUtil.fullTypeFromIndexedTerm(term);
-        this.attributes = RelationUtil.attributesFromIndexedTerm(term);
+        if (INCLUDE_ATTRIBUTES_IN_RELATION_INFO)
+            this.attributes = RelationUtil.attributesFromIndexedTerm(term);
     }
 
     /**
@@ -398,6 +418,17 @@ public class RelationInfo implements MatchInfo {
         if (n != 0)
             return n;
         n = fullRelationType.compareTo(o.fullRelationType);
+        if (n != 0)
+            return n;
+        if (attributes == null) {
+            if (o.attributes != null)
+                return -1;
+            return 0;
+        } else {
+            if (o.attributes == null)
+                return 1;
+            n = Integer.compare(attributes.hashCode(), o.attributes.hashCode());
+        }
         return n;
     }
 
@@ -408,11 +439,11 @@ public class RelationInfo implements MatchInfo {
         if (o == null || getClass() != o.getClass())
             return false;
         RelationInfo relationInfo = (RelationInfo) o;
-        return onlyHasTarget == relationInfo.onlyHasTarget
-                && sourceStart == relationInfo.sourceStart
-                && sourceEnd == relationInfo.sourceEnd && targetStart == relationInfo.targetStart
-                && targetEnd == relationInfo.targetEnd && Objects.equals(fullRelationType,
-                relationInfo.fullRelationType) && attributes.equals(relationInfo.attributes);
+        return onlyHasTarget == relationInfo.onlyHasTarget &&
+                sourceStart == relationInfo.sourceStart && sourceEnd == relationInfo.sourceEnd &&
+                targetStart == relationInfo.targetStart && targetEnd == relationInfo.targetEnd &&
+                Objects.equals(fullRelationType,relationInfo.fullRelationType) &&
+                Objects.equals(attributes, relationInfo.attributes);
     }
 
     @Override

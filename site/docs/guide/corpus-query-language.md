@@ -508,7 +508,7 @@ For those who already know CQL, here's a quick overview of the extent of BlackLa
 
 BlackLab currently supports (arguably) most of the important features of Corpus Query Language:
 
-* Matching on token annotations (also called properties or attributes), using regular expressions and `=`, `!=`, `!`. Example: `[word='bank']` (or just `'bank'`)
+* Matching on token annotations, using regular expressions and `=`, `!=`, `!`. Example: `[word='bank']` (or just `'bank'`)
 * Case/accent sensitive matching. Note that, unlike in CWB, case-INsensitive matching is currently the default. To explicitly match case-/accent-insensitively, use `'(?i)...'`. Example: `'(?-i)Mr\.' '(?-i)Banks'`
 * Combining criteria using `&`, `|` and `!`. Parentheses can also be used for grouping. Example: `[lemma='bank' & pos='V']`
 * Matchall pattern `[]` matches any token. Example: `'a' [] 'day'`

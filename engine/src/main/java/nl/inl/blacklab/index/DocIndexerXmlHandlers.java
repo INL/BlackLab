@@ -256,14 +256,19 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         public void endElement(String uri, String localName, String qName) {
             // Add payload to start tag annotation indicating end position
             int lastIndex = openTagIndexes.size() - 1;
-            Integer openTagIndex = openTagIndexes.remove(lastIndex);
             int openTagPosition = openTagPositions.remove(lastIndex);
             int closeTagPosition = propMain.lastValuePosition() + 1;
             BytesRef payload = PayloadUtils.tagEndPositionPayload(openTagPosition,
                     closeTagPosition, getIndexType());
+            Integer openTagIndex = openTagIndexes.remove(lastIndex);
+            if (openTagIndex < 0) {
+                // Negative value means two terms were indexed (one with, one without attributes, for search performance)
+                // and this is the index of the last term. Make sure we update both payloads.
+                openTagIndex = -openTagIndex;
+                propTags.setPayloadAtIndex(openTagIndex - 1, payload);
+            }
             propTags.setPayloadAtIndex(openTagIndex, payload);
         }
-
     }
 
     /**
