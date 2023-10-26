@@ -1,8 +1,10 @@
 # List spans and relations
 
-Return an overview of spans ("inline tags") and relations classes and types in the corpus.
+Return an overview of spans ("inline tags") and relations classes and types in the corpus, and their approximate frequencies.
 
 **NOTE:** as a technical detail, spans are a special relation type with the builtin relation class `__tag`, but by default, we report them separately for convenience.
+
+**NOTE2:** the reported frequencies don't take deleted documents into account. Therefore, if you've deleted documents, the frequencies may not be accurate.
 
 **URL** : `/blacklab-server/<corpus-name>/relations`
 
