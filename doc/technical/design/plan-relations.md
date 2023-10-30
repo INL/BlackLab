@@ -1,6 +1,6 @@
 # Relations between words and word groups
 
-(see GitHub issue [#405](https://github.com/INL/BlackLab/issues/405))
+(largely completed; see GitHub issue [#405](https://github.com/INL/BlackLab/issues/405))
 
 ## Goal
 
