@@ -604,7 +604,7 @@ public class IndexManager {
      * (4.0 or higher). User corpora missed here will still be loaded on demand.
      */
     private synchronized void loadAllUserCorpora() {
-        if (allUserCorporaLoaded)
+        if (allUserCorporaLoaded || userCollectionsDir == null)
             return;
         allUserCorporaLoaded = true;
         for (File userDir: userCollectionsDir.listFiles(BlsUtils.readableDirFilter)) {
