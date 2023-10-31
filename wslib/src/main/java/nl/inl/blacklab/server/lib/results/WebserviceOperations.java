@@ -562,6 +562,22 @@ public class WebserviceOperations {
         return index.getShareWithUsers();
     }
 
+    public static List<String> getCorporaSharedWithMe(WebserviceParams params) {
+        IndexManager indexMan = params.getIndexManager();
+        User user = params.getUser();
+        List<String> results = new ArrayList<>();
+        // BUG: because private user indices aren't all loaded by default, we may
+        //      miss unloaded corpora shared with you. To fix this, we should probably
+        //      find all corpora and which users they're shared with on startup,
+        //      but not open them until they're actually used.
+        for (Index index: indexMan.getAllLoadedCorpora()) {
+            if (index.sharedWith(user)) {
+                results.add(index.getId());
+            }
+        }
+        return results;
+    }
+
     public static void setUsersToShareWith(WebserviceParams params, String[] users) {
         User user = params.getUser();
         IndexManager indexMan = params.getIndexManager();

@@ -409,6 +409,11 @@ public class Index {
         return m.group(1);
     }
 
+    public boolean sharedWith(User user) {
+        // Any user the index is explicitly shared with can read it too
+        return shareWithUsers.contains(user.getUserId());
+    }
+
     public boolean userMayRead(User user) {
         // Superuser can read anything
         if (user.isSuperuser())
@@ -423,7 +428,7 @@ public class Index {
             return true;
 
         // Any user the index is explicitly shared with can read it too
-        return shareWithUsers.contains(user.getUserId());
+        return sharedWith(user);
     }
 
     private boolean authorizedForIndex(User user) {

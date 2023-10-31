@@ -388,6 +388,20 @@ public class IndexManager {
     }
 
     /**
+     * Return all loaded corpora, regardless of whether we can access them or not.
+     *
+     * Note that this will not return corpora shared with you if they haven't been
+     * loaded yet. To fix this, we should probably find all corpora and which users
+     * they're shared with on startup, but not open them until they're actually used.
+     *
+     * @return list of loaded corpora
+     */
+    public Collection<Index> getAllLoadedCorpora() {
+        // Note that
+        return indices.values();
+    }
+
+    /**
      * Get all public indices plus all indices owned by this user. Attempts to load
      * any new public indices and indices owned by this user.
      *
