@@ -570,6 +570,7 @@ public class WebserviceOperations {
         //      miss unloaded corpora shared with you. To fix this, we should probably
         //      find all corpora and which users they're shared with on startup,
         //      but not open them until they're actually used.
+        indexMan.getAvailablePublicIndices(); // trigger loading of all user corpora (kinda hacky)
         for (Index index: indexMan.getAllLoadedCorpora()) {
             if (index.sharedWith(user)) {
                 results.add(index.getId());

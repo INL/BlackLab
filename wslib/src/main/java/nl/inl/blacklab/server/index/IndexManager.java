@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -64,6 +65,9 @@ public class IndexManager {
      */
     private static final int REMOVED_INDICES_MONITOR_CHECK_IN_MS = 1000;
 
+    /** File in user dir containing the original user id */
+    public static final String USER_ID_FILE_NAME = ".userId";
+
     private final SearchManager searchMan;
 
     /** Configured index collections directories */
@@ -82,6 +86,9 @@ public class IndexManager {
     private FinderInputFormatUserFormats userFormatManager;
 
     private final Map<String, Index> indices = new HashMap<>();
+
+    /** Did we (attempt to) load all user corpora? */
+    private boolean allUserCorporaLoaded;
 
     public IndexManager(SearchManager searchMan, BLSConfig blsConfig) throws ConfigurationException {
         this.searchMan = searchMan;
@@ -138,7 +145,7 @@ public class IndexManager {
         try {
             startRemovedIndicesMonitor(allDirs, REMOVED_INDICES_MONITOR_CHECK_IN_MS);
         } catch (Exception ex) {
-            throw  BlackLabRuntimeException.wrap(ex);
+            throw BlackLabRuntimeException.wrap(ex);
         }
     }
 
@@ -168,6 +175,21 @@ public class IndexManager {
             logger.error("(userCollectionsDir = " + userCollectionsDir);
             return null;
         }
+
+        // Make sure the user id is saved in the user directory.
+        // (the directory name cannot be used because it is mangled to be safe and unique)
+        File userIdFile = new File(dir, USER_ID_FILE_NAME);
+        try {
+            if (userIdFile.exists()) {
+                String readUserId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8);
+                assert userId.equals(readUserId);
+            } else {
+                FileUtils.writeStringToFile(userIdFile, userId, StandardCharsets.UTF_8);
+            }
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+
         return dir;
     }
 
@@ -396,7 +418,7 @@ public class IndexManager {
      *
      * @return list of loaded corpora
      */
-    public Collection<Index> getAllLoadedCorpora() {
+    public synchronized Collection<Index> getAllLoadedCorpora() {
         // Note that
         return indices.values();
     }
@@ -449,7 +471,7 @@ public class IndexManager {
         Set<Index> availableIndices = new HashSet<>();
 
         loadPublicIndices();
-        for (Index i : indices.values()) {
+        for (Index i: indices.values()) {
             if (!i.isUserIndex())
                 availableIndices.add(i);
         }
@@ -468,93 +490,93 @@ public class IndexManager {
 
         synchronized (indices) {
             logger.debug("Looking for indices in collectionsDirs...");
-            for (File collection : collectionsDirs) {
-                logger.debug("Scanning collectionsDir: " + collection);
-                // A file filter that accepts all directories (and files) except the userCollectionsDir,
-                // so if the userCollectionsDir is inside a collectionsDir, it is not suddenly made public
-                IOFileFilter notUserDirFilter = new IOFileFilter() {
-                    @Override
-                    public boolean accept(File pathName) {
-                        try {
-                            if (userCollectionsDir == null)
-                                return true;
-                            return !pathName.getCanonicalPath().equals(userCollectionsDir.getCanonicalPath());
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
+            for (File dir : collectionsDirs) {
+                logger.debug("Scanning collectionsDir: " + dir);
+                loadIndexesInDir(dir);
+            }
 
-                    @Override
-                    public boolean accept(File pathName, String fileName) {
-                        return accept(new File(pathName, fileName));
-                    }
-                };
-                IOFileFilter symlinkToDirFilter = new IOFileFilter() {
-                    @Override
-                    public boolean accept(File pathName) {
-                        try {
-                            Path indexPath = pathName.toPath().toRealPath();
-                            return Files.isDirectory(indexPath);
-                        } catch (IOException e) {
-                            throw BlackLabRuntimeException.wrap(e);
-                        }
-                    }
+            // Find all user corpora and keep track of them, so we can figure out ones shared with you.
+            loadAllUserCorpora();
+        }
+    }
 
-                    @Override
-                    public boolean accept(File pathName, String fileName) {
-                        return accept(new File(pathName, fileName));
-                    }
-                };
-                for (File subDir : FileUtils.listFilesAndDirs(collection, symlinkToDirFilter,
-                        notUserDirFilter /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
+    /** A file filter that accepts all directories (and files) except the userCollectionsDir,
+     *  so if the userCollectionsDir is inside a collectionsDir, it is not suddenly made public
+     */
+    IOFileFilter notUserDirFilter = new IOFileFilter() {
+        @Override
+        public boolean accept(File pathName) {
+            try {
+                if (userCollectionsDir == null)
+                    return true;
+                return !pathName.getCanonicalPath().equals(userCollectionsDir.getCanonicalPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-                    Path indexPath; // follow symlinks
-                    try {
-                        indexPath = subDir.toPath().toRealPath();
-                    } catch (IOException e) {
-                        throw BlackLabRuntimeException.wrap(e);
-                    }
-                    if (/*!subDir.getName().equals("index") ||*/ !Files.isReadable(indexPath) || !BlackLabIndex.isIndex(indexPath)) {
-                        // Not readable or not an index.
-                        // Warn about this only if this directory is a direct subdir of a collection dir.
-                        // (otherwise we get warnings about all forward index directories)
-                        if (indexPath.toFile().getParentFile().equals(collection)) {
-                            if (!Files.isReadable(indexPath))
-                                logger.debug("  Cannot read direct subdir of collection dir: " + indexPath);
-                            else
-                                logger.debug("  Direct subdir of collection dir not recognized as an index: " + indexPath);
-                        }
-                        continue;
-                    }
+        @Override
+        public boolean accept(File pathName, String fileName) {
+            return accept(new File(pathName, fileName));
+        }
+    };
 
-                    String indexName = subDir.getName();
-                    if (indexName.equals("index")) {
-                        // Not a very useful name; the parent directory usually contains the index name in this case
-                        indexName = subDir.getAbsoluteFile().getParentFile().getName();
-                        if (indices.containsKey(indexName))
-                            continue;
+    /** Accepts both directories and symlinks to directories */
+    IOFileFilter symlinkToDirFilter = new IOFileFilter() {
+        @Override
+        public boolean accept(File pathName) {
+            try {
+                Path indexPath = pathName.toPath().toRealPath();
+                return Files.isDirectory(indexPath);
+            } catch (IOException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+        }
 
-                        logger.warn("Found index directory named 'index': " + subDir);
-                        logger.warn("Replacing this with the parent directory name (" + indexName
-                                + "), but note that this behaviour is deprecated.");
-                    }
-                    if (indices.containsKey(indexName)) {
-                        // Index was already loaded, or name collision
-                        File otherDir = indices.get(indexName).getDir();
-                        if (!otherDir.equals(subDir)) {
-                            logger.warn("  Skipping subdir " + subDir + " because another index (" + otherDir + ") is named '" + indexName + "' as well.");
-                        }
-                        continue;
-                    }
+        @Override
+        public boolean accept(File pathName, String fileName) {
+            return accept(new File(pathName, fileName));
+        }
+    };
 
-                    try {
-                        logger.debug("Index found: " + indexName + " (" + subDir + ")");
-                        indices.put(indexName, new Index(indexName, subDir, searchMan));
-                    } catch (Exception e) {
-                        logger.info("Error while loading index " + indexName + " at location " + subDir + "; "
-                                + e.getMessage());
-                    }
+    private synchronized void loadIndexesInDir(File dir) {
+        for (File subDir: FileUtils.listFilesAndDirs(dir, symlinkToDirFilter, notUserDirFilter)) {
+            // Follow symlinks
+            Path indexPath;
+            try {
+                indexPath = subDir.toPath().toRealPath();
+            } catch (IOException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+            if (!Files.isReadable(indexPath) || !BlackLabIndex.isIndex(indexPath)) {
+                // Not readable or not an index.
+                // Warn about this only if this directory is a direct subdir of a collection dir.
+                // (otherwise we get warnings about all forward index directories)
+                if (indexPath.toFile().getParentFile().equals(dir)) {
+                    if (!Files.isReadable(indexPath))
+                        logger.debug("  Cannot read dir: " + indexPath);
+                    else
+                        logger.debug("  No index found in dir: " + indexPath);
                 }
+                continue;
+            }
+
+            String indexName = subDir.getName();
+            if (indices.containsKey(indexName)) {
+                // Index was already loaded, or name collision
+                File otherDir = indices.get(indexName).getDir();
+                if (!otherDir.equals(subDir)) {
+                    logger.warn("  Skipping subdir " + subDir + " because another index (" + otherDir + ") is named '" + indexName + "' as well.");
+                }
+                continue;
+            }
+
+            try {
+                logger.debug("  Index found: " + indexName + " (" + subDir + ")");
+                indices.put(indexName, new Index(indexName, subDir, searchMan));
+            } catch (Exception e) {
+                logger.info("Error while loading index " + indexName + " at location " + subDir + "; "
+                        + e.getMessage());
             }
         }
     }
@@ -571,6 +593,34 @@ public class IndexManager {
         if (userDir == null)
             return;
 
+        loadUserCorporaInDir(userId, userDir);
+    }
+
+    /**
+     * Load all user corpora.
+     *
+     * Actually loads corpora for all users with a .userId file in the user directory,
+     * but that should be all of them if they were created with a modern BlackLab version
+     * (4.0 or higher). User corpora missed here will still be loaded on demand.
+     */
+    private synchronized void loadAllUserCorpora() {
+        if (allUserCorporaLoaded)
+            return;
+        allUserCorporaLoaded = true;
+        for (File userDir: userCollectionsDir.listFiles(BlsUtils.readableDirFilter)) {
+            File userIdFile = new File(userDir, USER_ID_FILE_NAME);
+            if (userIdFile.exists() && userIdFile.canRead()) {
+                try {
+                    String userId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
+                    loadUserCorporaInDir(userId, userDir);
+                } catch (IOException e) {
+                    throw new BlackLabRuntimeException(e);
+                }
+            }
+        }
+    }
+
+    private void loadUserCorporaInDir(String userId, File userDir) {
         /*
          * User indices are stored as a flat list of directories inside the user's private directory like so:
          * 	userDir
