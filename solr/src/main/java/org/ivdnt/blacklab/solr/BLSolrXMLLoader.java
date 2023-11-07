@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.ContentStream;

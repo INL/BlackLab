@@ -31,9 +31,9 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
-import org.apache.lucene.search.spans.TermSpans;
+import org.apache.lucene.queries.spans.SpanTermQuery;
+import org.apache.lucene.queries.spans.SpanTermQuery.SpanTermWeight;
+import org.apache.lucene.queries.spans.TermSpans;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -129,11 +129,6 @@ public class BLSpanTermQuery extends BLSpanQuery {
             public BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException {
                 TermSpans spans = (TermSpans)weight.getSpans(ctx, requiredPostings);
                 return spans == null ? null : BLSpans.wrapTermSpans(spans);
-            }
-
-            @Override
-            public void extractTerms(Set<Term> terms) {
-                weight.extractTerms(terms);
             }
 
             @Override

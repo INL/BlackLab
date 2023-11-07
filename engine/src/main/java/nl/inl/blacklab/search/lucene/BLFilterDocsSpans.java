@@ -17,13 +17,15 @@
 
 package nl.inl.blacklab.search.lucene;
 
+import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
+
 import java.io.IOException;
 import java.util.Objects;
 
+import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * A {@link Spans} implementation wrapping another spans instance (or any doc iterator, such as SpansInBuckets),
