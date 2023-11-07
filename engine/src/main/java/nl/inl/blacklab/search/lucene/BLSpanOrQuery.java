@@ -28,6 +28,14 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanDisiWrapper;
+import org.apache.lucene.queries.spans.SpanOrQuery;
+import org.apache.lucene.queries.spans.SpanQuery;
+import org.apache.lucene.queries.spans.SpanTermQuery;
+import org.apache.lucene.queries.spans.SpanWeight;
+import org.apache.lucene.queries.spans.Spans;
+import org.apache.lucene.queries.spans.TermSpans;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.DisiPriorityQueue;
 import org.apache.lucene.search.DisiWrapper;
@@ -37,13 +45,6 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.SpanOrQuery;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
 import org.apache.lucene.util.PriorityQueue;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -396,13 +397,6 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            for (final BLSpanWeight w : subWeights) {
-                w.extractTerms(terms);
-            }
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             for (final SegmentCacheable w : subWeights) {
                 if (w.isCacheable(ctx) == false)
@@ -427,7 +421,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             protected boolean lessThan(Spans s1, Spans s2) {
                 int start1 = s1.startPosition();
                 int start2 = s2.startPosition();
-                return (start1 < start2) ? true : (start1 == start2) ? s1.endPosition() < s2.endPosition() : false;
+                return start1 < start2 || (start1 == start2 && s1.endPosition() < s2.endPosition());
             }
         }
 
@@ -458,9 +452,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 //return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
             }
 
+            // disi priority queue is now SpanDisiPriorityQueue, but is now lucene internal.
             final DisiPriorityQueue byDocQueue = new DisiPriorityQueue(subSpans.size());
             for (Spans spans : subSpans) {
-                byDocQueue.add(new DisiWrapper(spans));
+                byDocQueue.add(new SpanDisiWrapper(spans));
             }
 
             final SpanPositionQueue byPositionQueue = new SpanPositionQueue(subSpans.size()); // when
@@ -703,6 +698,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         }
     }
 
+    // BL from here on out.
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         // See if this is really just an expanded wildcard/regex query, and if so,
@@ -727,6 +723,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         return new Nfa(orAcyclic, List.of(orAcyclic));
     }
 
+    // BL
     /**
      * Checks if this OR node could be converted into a single NFA token state with
      * a list of terms, and collects the terms.
@@ -771,6 +768,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         return canBeTokenState;
     }
 
+    // BL
     @Override
     public boolean canMakeNfa() {
         if (clausesAreSimpleTermsInSameAnnotation)

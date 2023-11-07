@@ -53,10 +53,16 @@
         <blacklab.version>${project.version}</blacklab.version>
 
         <!-- Library versions -->
-        <blacklab.luceneVersion>8.11.1</blacklab.luceneVersion>
-        <log4j.version>2.17.2</log4j.version>
-        <jackson.version>2.13.4</jackson.version>
-        <eclipse.collections.version>7.1.0</eclipse.collections.version>
+        <servlet.version>4.0.1</servlet.version>
+        <lucene.version>9.8.0</lucene.version>
+        <solr.version>9.4.0</solr.version>
+        <log4j.version>2.20.0</log4j.version>
+        <eclipse.collections.version>11.1.0</eclipse.collections.version>
+
+        <!-- servlet, rest, json, xml, yaml -->
+        <jackson.version>2.15.3</jackson.version>
+        <jersey.version>3.1.3</jersey.version>
+        <jaxb.version>4.0.4</jaxb.version>
 
         <!-- Java versions -->
         <maven.compiler.source>11</maven.compiler.source>
@@ -480,7 +486,6 @@
                             <execution>
                                 <id>attach-sources</id>
                                 <goals>
-
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
@@ -526,7 +531,99 @@
         </profile>
     </profiles>
 
+    <dependencyManagement>
+        <dependencies>
+            <!--
+                a special BOM (Bill of Materials) file that contains compatible versions of all Java EE (Jakarta) API libraries
+                See https://reflectoring.io/maven-bom/
+
+                NOTE: these are NOT implementations. Just the empty interfaces, annotations, etc.
+
+                To find the library:
+                Start at the list of modules part of the Jakarta 10 specification:
+                There's a nice list here: https://tomee.apache.org/comparison.html
+
+                - Find the spec version for the module (ex. Jakarta RESTful Web Services 3.1)
+                  You can find this from the BOM
+                - Find an implementation for that specific version (so "jakarta restful web services 3.1 implementation")
+                  This returns jersey 3.1.1 for example.
+                  Now you can add that dependency to your project.
+            -->
+            <!-- https://mvnrepository.com/artifact/jakarta.platform/jakarta.jakartaee-bom -->
+            <dependency>
+                <groupId>jakarta.platform</groupId>
+                <artifactId>jakarta.jakartaee-bom</artifactId>
+                <version>10.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- jersey (rest) -->
+            <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-server -->
+            <dependency>
+                <groupId>org.glassfish.jersey.core</groupId>
+                <artifactId>jersey-server</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.jersey.containers</groupId>
+                <artifactId>jersey-container-servlet</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <!-- xml -->
+            <dependency>
+                <groupId>org.glassfish.jersey.media</groupId>
+                <artifactId>jersey-media-jaxb</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <!-- json -->
+            <dependency>
+                <groupId>org.glassfish.jersey.media</groupId>
+                <artifactId>jersey-media-json-jackson</artifactId>
+                <version>3.1.3</version>
+            </dependency>
+
+            <!-- jersey injection framework -->
+            <dependency>
+                <groupId>org.glassfish.jersey.inject</groupId>
+                <artifactId>jersey-hk2</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
+
+<!--        <dependency>-->
+<!--            <groupId>jakarta.platform</groupId>-->
+<!--            <artifactId>jakarta.jakartaee-api</artifactId>-->
+<!--            <version>10.0.0</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
+
+        <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+            <version>12.3</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>xml-apis</artifactId>
+                    <groupId>xml-apis</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- Testing (JUnit and Mockito) -->
         <dependency>
@@ -538,7 +635,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.8.0</version>
+            <version>5.2.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -557,16 +654,16 @@
                     <artifactId>jmxtools</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.jms</groupId>
-                    <artifactId>jms</artifactId>
+                    <groupId>jakarta.jms</groupId>
+                    <artifactId>jakarta.jms-api</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.mail</groupId>
-                    <artifactId>mail</artifactId>
+                    <groupId>jakarta.mail</groupId>
+                    <artifactId>jakarta.mail-api</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.activation</groupId>
-                    <artifactId>activation</artifactId>
+                    <groupId>jakarta.activation</groupId>
+                    <artifactId>jakarta.activation-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -596,10 +693,8 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.9.0</version>
+            <version>1.10.0</version>
         </dependency>
-
-
     </dependencies>
 
     <reporting>

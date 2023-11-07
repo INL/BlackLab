@@ -165,10 +165,13 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         }
     }
 
+    // TODO: check if we have already implemented this mentioned optimization
+    // https://lucene.apache.org/core/9_0_0/changes/Changes.html
+    // LUCENE-6898: In the default codec, the last stored field value will not be fully read from disk if the supplied StoredFieldVisitor doesn't want it. So put your largest text field value last to benefit.
     @Override
-    public void visitDocument(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
+    public void document(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
         // Visit each regular stored field.
-        delegate.visitDocument(docId, storedFieldVisitor);
+        delegate.document(docId, storedFieldVisitor);
 
         // Visit each content store field.
         for (FieldInfo fieldInfo: fieldInfos) {
@@ -200,8 +203,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
         byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
-        if (contents != null)
-            storedFieldVisitor.stringField(fieldInfo, contents);
+        if (contents != null) // FIXME: getValue always returns "", while contents can be null.
+            storedFieldVisitor.stringField(fieldInfo, contentStore().getValue(docId, fieldInfo.name));
     }
 
     @Override
@@ -231,24 +234,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
         // Let the delegate close its files.
         delegate.close();
-    }
-
-    @Override
-    public long ramBytesUsed() {
-        return delegate.ramBytesUsed() /* +
-                RamUsageEstimator.sizeOfObject(fieldsFile) +
-                RamUsageEstimator.sizeOfObject(docIndexFile) +
-                RamUsageEstimator.sizeOfObject(valueIndexFile) +
-                RamUsageEstimator.sizeOfObject(blockIndexFile) +
-                RamUsageEstimator.sizeOfObject(blocksFile) +
-                Integer.BYTES * 2 + // blockSizeChars, numberOfFieldsWritten
-                RamUsageEstimator.sizeOfMap(fields)
-                */ ;
-    }
-
-    @Override
-    public Collection<Accountable> getChildResources() {
-        return List.of(Accountables.namedAccountable("delegate", delegate));
     }
 
     @Override

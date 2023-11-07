@@ -6,6 +6,7 @@ import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.CompoundFormat;
 import org.apache.lucene.codecs.DocValuesFormat;
 import org.apache.lucene.codecs.FieldInfosFormat;
+import org.apache.lucene.codecs.KnnVectorsFormat;
 import org.apache.lucene.codecs.LiveDocsFormat;
 import org.apache.lucene.codecs.NormsFormat;
 import org.apache.lucene.codecs.PointsFormat;
@@ -183,5 +184,10 @@ public class BlackLab40Codec extends Codec {
     @Override
     public PointsFormat pointsFormat() {
         return delegate().pointsFormat();
+    }
+
+    @Override
+    public KnnVectorsFormat knnVectorsFormat() {
+        return delegate().knnVectorsFormat();
     }
 }

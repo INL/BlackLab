@@ -19,6 +19,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Accountables;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.RamUsageEstimator;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -107,6 +108,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         delegate.startDocument();
     }
 
+
     /**
      * Write a single stored field or content store value.
      *
@@ -114,16 +116,51 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
      * or will store the value in the content store.
      *
      * @param fieldInfo field to write
-     * @param indexableField value to write
+     * @param v value to write
      */
     @Override
-    public void writeField(FieldInfo fieldInfo, IndexableField indexableField) throws IOException {
+    public void writeField(FieldInfo fieldInfo, float v) throws IOException {
+        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        delegate.writeField(fieldInfo, v);
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, int v) throws IOException {
+        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        delegate.writeField(fieldInfo, v);
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, long v) throws IOException {
+        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        delegate.writeField(fieldInfo, v);
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, double v) throws IOException {
+        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        delegate.writeField(fieldInfo, v);
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, String v) throws IOException {
         if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
             // This is a content store field.
-            writeContentStoreField(fieldInfo, indexableField.stringValue());
+            writeContentStoreField(fieldInfo, v);
         } else {
             // This is a regular stored field. Delegate.
-            delegate.writeField(fieldInfo, indexableField);
+            delegate.writeField(fieldInfo, v);
+        }
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, BytesRef v) throws IOException {
+        if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
+            // This is a content store field.
+            writeContentStoreField(fieldInfo, v.utf8ToString());
+        } else {
+            // This is a regular stored field. Delegate.
+            delegate.writeField(fieldInfo, v);
         }
     }
 
@@ -202,8 +239,8 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     }
 
     @Override
-    public void finish(FieldInfos fieldInfos, int i) throws IOException {
-        delegate.finish(fieldInfos, i);
+    public void finish(int i) throws IOException {
+        delegate.finish(i);
     }
 
     @Override

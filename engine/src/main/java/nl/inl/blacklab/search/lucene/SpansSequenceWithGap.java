@@ -3,11 +3,11 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.lucene.search.ConjunctionDISI;
+import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.queries.spans.Spans;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the
@@ -172,7 +172,7 @@ class SpansSequenceWithGap extends BLSpans {
         this.first = BLSpans.ensureSorted(first);
         this.gap = gap;
         this.second = SpansInBucketsPerDocument.sorted(second);
-        this.conjunction = ConjunctionDISI.intersectIterators(List.of(this.first, this.second));
+        this.conjunction = ConjunctionUtils.intersectIterators(List.of(this.first, this.second));
     }
 
     @Override

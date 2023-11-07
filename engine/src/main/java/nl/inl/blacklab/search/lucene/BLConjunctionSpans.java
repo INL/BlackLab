@@ -22,10 +22,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.lucene.search.ConjunctionDISI;
+import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 
 /**
  * Common super class for multiple sub spans required in a document.
@@ -44,7 +44,10 @@ abstract class BLConjunctionSpans extends BLSpans {
             throw new IllegalArgumentException("Less than 2 subSpans.size():" + subSpans.size());
         }
         this.subSpans = subSpans.toArray(new BLSpans[0]);
-        this.conjunction = ConjunctionDISI.intersectSpans(Collections.unmodifiableList(subSpans));
+        // intersectSpans op ConjuctionDISI is verplaatst naar ConjunctionSpans#intersectSpans - maar die class is package-private
+        // https://github.com/apache/lucene/commit/4b55ae5de42d20324ab2a44b5ff115242a6dbfee
+        // https://github.com/apache/lucene/commit/5e0e7a5479bca798ccfe385629a0ca2ba5870bc0
+        this.conjunction = ConjunctionUtils.intersectIterators(subSpans);
         this.atFirstInCurrentDoc = true; // ensure for doc -1 that start/end positions are -1
     }
 

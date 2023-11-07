@@ -31,7 +31,7 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>${blacklab.luceneVersion}</version>
+            <version>${lucene.version}</version>
         </dependency>
 
     </dependencies>
