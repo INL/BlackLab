@@ -18,7 +18,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
-import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.queries.spans.SpanWeight;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -465,14 +465,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 throws IOException {
             super(SpanQueryAndNot.this, searcher, terms, boost);
             this.weights = weights;
-        }
-
-        @Override
-        @Deprecated
-        public void extractTerms(Set<Term> terms) {
-            for (BLSpanWeight weight : weights) {
-                weight.extractTerms(terms);
-            }
         }
 
         @Override

@@ -174,11 +174,6 @@ public class SpanQueryAnyToken extends BLSpanQuery {
         final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
         return new BLSpanWeight(this, searcher, null, boost) {
             @Override
-            public void extractTerms(Set<Term> terms) {
-                // No terms
-            }
-
-            @Override
             public boolean isCacheable(LeafReaderContext ctx) {
                 return true;
             }

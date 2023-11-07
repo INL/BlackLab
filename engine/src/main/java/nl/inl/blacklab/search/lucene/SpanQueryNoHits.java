@@ -42,11 +42,6 @@ public class SpanQueryNoHits extends BLSpanQuery {
     public BLSpanWeight createWeight(final IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new BLSpanWeight(this, searcher, null, boost) {
             @Override
-            public void extractTerms(Set<Term> terms) {
-                // No terms
-            }
-
-            @Override
             public boolean isCacheable(LeafReaderContext ctx) {
                 return true;
             }
