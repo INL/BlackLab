@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.function.Consumer;
 
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.Spans;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
