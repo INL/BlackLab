@@ -12,6 +12,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 
+import net.sf.saxon.om.NamespaceUri;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
@@ -74,7 +75,7 @@ public class XPathFinder {
             context.add("xml", "http://www.w3.org/XML/1998/namespace");
             for (Map.Entry<String, String> e: namespaces.entrySet()) {
                 if (e.getKey().isEmpty())
-                    ((XPathEvaluator)xPath).getStaticContext().setDefaultElementNamespace(namespaces.get(""));
+                    ((XPathEvaluator)xPath).getStaticContext().setDefaultElementNamespace(NamespaceUri.of(namespaces.get("")));
                 else
                     context.add(e.getKey(), e.getValue());
             }
