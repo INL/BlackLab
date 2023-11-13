@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import org.apache.lucene.queries.spans.SpanOrQuery;
 import org.apache.lucene.queries.spans.SpanQuery;
 import org.apache.lucene.queries.spans.SpanTermQuery;
@@ -86,11 +87,11 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         return a + b;
     }
 
-    static <T extends SpanQuery> String clausesToString(String field, List<T> clauses) {
+    protected static <T extends SpanQuery> String clausesToString(String field, List<T> clauses) {
         return clausesToString(field, clauses, "");
     }
 
-    static <T extends SpanQuery> String clausesToString(String field, List<T> clauses, String prefix) {
+    protected static <T extends SpanQuery> String clausesToString(String field, List<T> clauses, String prefix) {
         StringBuilder b = new StringBuilder();
         int n = 0;
         for (T clause : clauses) {
@@ -108,7 +109,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     }
 
     @SafeVarargs
-    static <T extends SpanQuery> String clausesToString(String field, T... clauses) {
+    protected static <T extends SpanQuery> String clausesToString(String field, T... clauses) {
         return clausesToString(field, Arrays.asList(clauses));
     }
 
@@ -173,7 +174,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      * 
      * @return a version that doesn't match the empty sequence
      */
-    BLSpanQuery noEmpty() {
+    public BLSpanQuery noEmpty() {
         if (!matchesEmptySequence())
             return this;
         throw new UnsupportedOperationException("noEmpty() must be implemented!");
@@ -278,6 +279,10 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      */
     public void setQueryInfo(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
+    }
+
+    public QueryInfo queryInfo() {
+        return queryInfo;
     }
 
     @Override
