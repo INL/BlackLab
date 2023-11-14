@@ -19,18 +19,49 @@ This page focuses on the basics to help users get up and running quickly. If you
 
 ### Basic installation, configuration
 
+#### Prepare your test corpus
+
+To properly test drive the frontend application, you should have at least one corpus with some data in it. See [Indexing with BlackLab](/guide/indexing-with-blacklab.html) to learn how.
+
+In this example, we'll assume your corpus lives here: `/home/my-user/my-corpora/<CORPUSNAME>`; update this path to fit your situation.
+
+
 #### Using Docker
 
-First, create a BlackLab Server instance using the main BlackLab repository (see [here](/server/#using-docker)).
+Ensure Docker version 23 or higher is installed (older versions should work as well, as long as they support BuildKit).
 
-Then, to add a Frontend instance, run the following commands from this repository:
+::: details Using an older Docker version
 
+If you're using an older version, ensure that BuildKit is enabled (see [here](https://docs.docker.com/build/buildkit/); for Docker v23+, it's the default).
+
+You may also need to use `docker-compose` (the standalone version of Docker Compose) instead of `docker compose` (the plugin version).
+
+:::
+
+Create a Docker Compose file that describes a container using the `blacklab-frontend` image (that combines BlackLab Server and Frontend running under Tomcat):
+
+```yaml
+# Run a container with both BlackLab Frontend and Server
+version: '3.9'
+
+services:
+
+  frontend:
+    image: instituutnederlandsetaal/blacklab-frontend:latest
+    ports:
+      - "8080:8080" # frontend and BLS will both be available on 8080
+    volumes:
+      - /home/my-user/my-corpora:/data/index
+    restart: unless-stopped
 ```
-DOCKER_BUILDKIT=1 docker-compose build
-docker-compose up 
-```
 
-The config file `./docker/config/corpus-frontend.properties` is mounted inside the container. See below for the configuration details.
+As you can see, a local directory `/home/my-user/my-corpora` is mounted as the `/data/index` directory inside the container. As stated above, index your test corpus here. Make sure it is readable from the container.
+
+Now, to create and start the container:
+
+    docker compose up -d
+
+Navigate to [http://localhost:8080/corpus-frontend](http://localhost:8080/corpus-frontend) to see the available corpora and [http://localhost:8080/corpus-frontend/&lt;CORPUSNAME&gt;/search](http://localhost:8080/corpus-frontend/CORPUSNAME/search) search your corpus.
 
 
 #### Using Tomcat
