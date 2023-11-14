@@ -17,16 +17,16 @@ It can also be configured to allow individual users to upload corpora to be inde
 
 This page focuses on the basics to help users get up and running quickly. If you need more detailed information about features, configuration and customization, see the [GitHub repo](https://github.com/INL/corpus-frontend/#readme). 
 
-### Basic installation, configuration
-
-#### Prepare your test corpus
+### Prepare your test corpus
 
 To properly test drive the frontend application, you should have at least one corpus with some data in it. See [Indexing with BlackLab](/guide/indexing-with-blacklab.html) to learn how.
 
 In this example, we'll assume your corpus lives here: `/home/my-user/my-corpora/<CORPUSNAME>`; update this path to fit your situation.
 
 
-#### Using Docker
+### Run the application
+
+#### using Docker
 
 Ensure Docker version 23 or higher is installed (older versions should work as well, as long as they support BuildKit).
 
@@ -55,7 +55,7 @@ services:
     restart: unless-stopped
 ```
 
-As you can see, a local directory `/home/my-user/my-corpora` is mounted as the `/data/index` directory inside the container. As stated above, index your test corpus here. Make sure it is readable from the container.
+As you can see, a local directory `/home/my-user/my-corpora` is mounted as the `/data/index` directory inside the container. As stated above, index your test corpus as a subdirectory of this one. Make sure it is readable from the container.
 
 Now, to create and start the container:
 
@@ -64,9 +64,9 @@ Now, to create and start the container:
 Navigate to [http://localhost:8080/corpus-frontend](http://localhost:8080/corpus-frontend) to see the available corpora and [http://localhost:8080/corpus-frontend/&lt;CORPUSNAME&gt;/search](http://localhost:8080/corpus-frontend/CORPUSNAME/search) search your corpus.
 
 
-#### Using Tomcat
+#### without Docker
 
-BlackLab Frontend requires Java 8 or higher and Tomcat 7, 8 or 9. Recommended are Java 11+ and Tomcat 9. (Tomcat 10 is not yet supported by BlackLab Server and Frontend)
+Use Java 11+ and Tomcat 9 to run BlackLab Server and Frontend. (Tomcat 10 is not yet supported by BlackLab Server and Frontend)
 
 BlackLab Frontend needs an instance of BlackLab Server to talk to; see [here](/server). For best compatibilty, ensure that the (major) version number of both applications matches. The latest releases or latest development versions of both applications should always work together.
 
