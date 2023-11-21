@@ -54,8 +54,15 @@
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-oidc</artifactId>
-            <version>5.7.0</version>
+            <version>5.7.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-http</artifactId>
+            <version>5.7.1</version>
+        </dependency>
+
 
         <!-- naming is a bit confusing, see https://www.pac4j.org/blog/jee_pac4j_vs_pac -->
         <dependency>

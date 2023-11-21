@@ -2,10 +2,15 @@ package nl.inl.blacklab.server.auth;
 
 import java.net.URI;
 import java.net.URL;
+import java.security.PrivateKey;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
+import com.nimbusds.oauth2.sdk.pkce.CodeChallengeMethod;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.pac4j.core.authorization.authorizer.RequireAnyRoleAuthorizer;
@@ -21,9 +26,11 @@ import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.matching.matcher.Matcher;
 import org.pac4j.core.profile.UserProfile;
+import org.pac4j.http.client.direct.HeaderClient;
 import org.pac4j.oidc.client.KeycloakOidcClient;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
+import org.pac4j.oidc.config.PrivateKeyJWTClientAuthnMethodConfig;
 import org.pac4j.oidc.credentials.OidcCredentials;
 
 import com.nimbusds.oauth2.sdk.ParseException;
@@ -38,22 +45,39 @@ import nl.inl.blacklab.server.search.UserRequest;
 
 public class AuthOIDC implements AuthMethod {
 
-    final OidcConfiguration oidcConfiguration;
-    final OidcClient client;
+    final HeaderClient client;
 
     public AuthOIDC(Map<String, String> params) {
-        oidcConfiguration = new OidcConfiguration();
-        oidcConfiguration.setDiscoveryURI(params.get("discoveryURI"));
-        oidcConfiguration.setClientId(params.get("clientId"));
-        oidcConfiguration.setSecret(params.get("secret"));
-        oidcConfiguration.setUseNonce(true);
-        //oidcClient.setPreferredJwsAlgorithm(JWSAlgorithm.RS256);
-//        oidcConfiguration.addCustomParam("prompt", "consent");
+//        oidcConfiguration = new OidcConfiguration();
+//        oidcConfiguration.setDiscoveryURI(params.get("discoveryURI"));
+//        oidcConfiguration.setClientId(params.get("clientId"));
+//        oidcConfiguration.setSecret(params.get("secret"));
+//        oidcConfiguration.setUseNonce(true);
+//        //oidcClient.setPreferredJwsAlgorithm(JWSAlgorithm.RS256);
+////        oidcConfiguration.addCustomParam("prompt", "consent");
+//
+//        // hmmm.
+////        KeycloakOidcClient oidcClient = new KeycloakOidcClient(oidcConfiguration);
+//        client = new OidcClient(oidcConfiguration);
 
-        // hmmm.
-//        KeycloakOidcClient oidcClient = new KeycloakOidcClient(oidcConfiguration);
-        client = new OidcClient(oidcConfiguration);
+        OidcConfiguration config = new OidcConfiguration();
+        config.setDiscoveryURI(params.get("discoveryURI"));
+        config.setClientId(params.get("clientId"));
+        config.setSecret(params.get("secret"));
 
+        config.setClientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+
+        // unused, but needs to be set or pac4j becomes unhappy
+//        PrivateKeyJWTClientAuthnMethodConfig c = new PrivateKeyJWTClientAuthnMethodConfig();
+//        c.setJwsAlgorithm(JWSAlgorithm.RS256);
+//        c.setKeyID("notused");
+//        c.setPrivateKey(new PrivateKey);
+//        config.setPrivateKeyJWTClientAuthnMethodConfig(c);
+        OidcClient oidcClient = new OidcClient(config);
+
+        oidcClient.setCallbackUrl("notused");
+        oidcClient.init();
+        client = new HeaderClient("Authorization", "Bearer ", oidcClient.getProfileCreator());
 
 
 
@@ -242,6 +266,9 @@ public class AuthOIDC implements AuthMethod {
 
             OidcCredentials creds = new OidcCredentials();
             creds.setAccessToken(BearerAccessToken.parse(header));
+            client.getCredentials(new BlackLabUserRequestWebContext(request), JEESessionStore.INSTANCE);
+
+            // would like to use JEEContext(httpservletrequest, -response) here, but can't. :(
             Optional<UserProfile> profile = client.getUserProfile(creds, new BlackLabUserRequestWebContext(request), JEESessionStore.INSTANCE);
             return profile.map(p -> {
                 if (p.getRoles().contains("admin")) return User.superuser(request.getSessionId());
@@ -249,7 +276,7 @@ public class AuthOIDC implements AuthMethod {
             })
             .orElse(User.anonymous(request.getSessionId()));
         } catch (ParseException e) {
-            throw new RuntimeException("Invalid Authorization header");
+            throw new RuntimeException("Invalid Authorization header", e);
         }
     }
 }
