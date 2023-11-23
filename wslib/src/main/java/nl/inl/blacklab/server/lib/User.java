@@ -9,6 +9,15 @@ import java.security.NoSuchAlgorithmException;
  * logged in).
  */
 public class User {
+    /** Will be used in character class in regexes below */
+    private static final String USER_ID_CHARS_FOR_REGEXES = "a-zA-Z0-9\\-._!$&'()*+,;=@";
+
+    /** Matches a valid user id */
+    private static final String REGEX_VALID_USER_ID = "^[" + USER_ID_CHARS_FOR_REGEXES + "]+$";
+
+    /** Matches an invalid character in a user id */
+    private static final String REGEX_NON_USERID_CHAR = "[^" + USER_ID_CHARS_FOR_REGEXES + "]";
+
     /** The user id if logged in; null otherwise */
     private String userId;
 
@@ -16,7 +25,7 @@ public class User {
     private final String sessionId;
     
     /** Is this the superuser? */
-    private boolean superuser = false;
+    private final boolean superuser;
 
     /**
      * Create a new logged-in user.
@@ -37,10 +46,6 @@ public class User {
      */
     public static User anonymous(String sessionId) {
         return new User(null, sessionId, false);
-    }
-    
-    public static User superuser(String sessionId) {
-        return new User("_superuser_", sessionId, true);
     }
 
     private User(String userId, String sessionId, boolean superuser) {
@@ -81,10 +86,6 @@ public class User {
         return getUserDirNameFromId(userId);
     }
 
-    public String getSessionId() {
-        return sessionId;
-    }
-
     public static String getUserDirNameFromId(String id) {
         // NOTE: we want a safe directory name, so instead of trying to
         // get rid of non-safe characters, we just strip everything that
@@ -98,26 +99,22 @@ public class User {
             byte[] hashBytes = md5.digest();
             BigInteger hashInt = new BigInteger(1, hashBytes);
             String hashHex = hashInt.toString(16);
-            StringBuilder zeroes = new StringBuilder();
-            for (int i = 0; i < 32 - hashHex.length(); i++) {
-                zeroes.append("0");
-            }
+            String zeroes = "0".repeat(Math.max(0, 32 - hashHex.length()));
             return stripped + "_" + zeroes + hashHex;
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        //return FileUtil.sanitizeFilename(userId);
     }
 
     public static boolean isValidUserId(String userId) {
-        return userId.matches("^[a-zA-Z0-9\\-._!$&'()*+,;=@]+$");
+        return userId.matches(REGEX_VALID_USER_ID);
     }
 
     public static String sanitize(String originalUserId) {
         if (originalUserId == null || originalUserId.isEmpty())
             return null;
 
-        return originalUserId.replaceAll("[^a-zA-Z0-9\\-._!$&'()*+,;=@]", "_");
+        return originalUserId.replaceAll(REGEX_NON_USERID_CHAR, "_");
     }
 
     public boolean isSuperuser() {

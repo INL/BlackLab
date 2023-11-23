@@ -66,6 +66,7 @@ public abstract class RequestHandler {
     public static final String ENDPOINT_INPUT_FORMATS    = "input-formats";
     public static final String ENDPOINT_PARSE_PATTERN    = "parse-pattern";
     public static final String ENDPOINT_RELATIONS        = "relations";
+    public static final String ENDPOINT_SHARED_WITH_ME   = "shared-with-me";
     public static final String ENDPOINT_SHARING          = "sharing";
     public static final String ENDPOINT_STATUS           = "status";
     public static final String ENDPOINT_TERMFREQ         = "termfreq";
@@ -234,6 +235,10 @@ public abstract class RequestHandler {
                     requestHandler = new RequestHandlerCacheInfo(userRequest);
                 } else if (isInputFormatsRequest) {
                     requestHandler = new RequestHandlerListInputFormats(userRequest);
+                } else if (!isNewEndpoint && indexName.equals(ENDPOINT_SHARED_WITH_ME)) {
+                    if (!user.isLoggedIn())
+                        return errorObj.unauthorized("You must be logged in to see corpora shared with you.");
+                    requestHandler = new RequestHandlerSharedWithMe(userRequest);
                 } else if (indexName.length() == 0) {
                     // No index or operation given; server info
                     requestHandler = new RequestHandlerServerInfo(userRequest);
