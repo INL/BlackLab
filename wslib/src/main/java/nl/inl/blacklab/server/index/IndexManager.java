@@ -488,16 +488,14 @@ public class IndexManager {
         if (collectionsDirs == null)
             return;
 
-        synchronized (indices) {
-            logger.debug("Looking for indices in collectionsDirs...");
-            for (File dir : collectionsDirs) {
-                logger.debug("Scanning collectionsDir: " + dir);
-                loadIndexesInDir(dir);
-            }
-
-            // Find all user corpora and keep track of them, so we can figure out ones shared with you.
-            loadAllUserCorpora();
+        logger.debug("Looking for indices in collectionsDirs...");
+        for (File dir : collectionsDirs) {
+            logger.debug("Scanning collectionsDir: " + dir);
+            loadIndexesInDir(dir);
         }
+
+        // Find all user corpora and keep track of them, so we can figure out ones shared with you.
+        loadAllUserCorpora();
     }
 
     /** A file filter that accepts all directories (and files) except the userCollectionsDir,
@@ -620,7 +618,7 @@ public class IndexManager {
         }
     }
 
-    private void loadUserCorporaInDir(String userId, File userDir) {
+    private synchronized void loadUserCorporaInDir(String userId, File userDir) {
         /*
          * User indices are stored as a flat list of directories inside the user's private directory like so:
          * 	userDir
