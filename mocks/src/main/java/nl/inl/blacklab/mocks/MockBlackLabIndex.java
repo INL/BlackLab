@@ -157,7 +157,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
+    public Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 

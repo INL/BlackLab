@@ -44,6 +44,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyAfterHit;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -166,6 +167,9 @@ public class QueryTool {
     /** The filter query, if any. */
     private Query filterQuery = null;
 
+    /** We record the timings of different parts of the operation here. */
+    private QueryTimings timings = new QueryTimings();
+
     /** What results view do we want to see? */
     enum ShowSetting {
         HITS,
@@ -214,12 +218,12 @@ public class QueryTool {
 
         @Override
         public String getPrompt() {
-            return "CorpusQL";
+            return "BCQL";
         }
 
         @Override
         public String getName() {
-            return "Corpus Query Language";
+            return "BlackLab Corpus Query Language";
         }
 
         /**
@@ -312,9 +316,6 @@ public class QueryTool {
 
     /** Size of larger snippet */
     private ContextSize snippetSize = ContextSize.get(50, Integer.MAX_VALUE);
-
-    /** Don't allow file operations in web mode */
-    private boolean webSafeOperationOnly = false;
 
     /** Strip XML tags when displaying concordances? */
     private boolean stripXML = true;
@@ -489,35 +490,6 @@ public class QueryTool {
     /**
      * Construct the query tool object.
      *
-     * @param index the index object (our index)
-     * @param in where to read commands from
-     * @param out where to write output to
-     * @param err where to write errors to
-     */
-    public QueryTool(BlackLabIndex index, BufferedReader in, PrintWriter out, PrintWriter err) {
-        this.index = index;
-        this.contentsField = index.mainAnnotatedField();
-        shouldCloseIndex = false; // caller is responsible
-
-        this.in = in;
-        this.out = out;
-        this.err = err;
-
-        if (in == null) {
-            webSafeOperationOnly = true; // don't allow file operations in web mode
-            this.err = out; // send errors to the same output writer in web mode
-        } else {
-            printProgramHead();
-        }
-
-        contextSize = index.defaultContextSize();
-
-        wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
-    }
-
-    /**
-     * Construct the query tool object.
-     *
      * @param indexDir directory our index is in
      * @param in where to read commands from
      * @param out where to write output to
@@ -529,39 +501,23 @@ public class QueryTool {
         this.out = out;
         this.err = err;
 
-        if (in != null) {
-            printProgramHead();
-            try {
-                outprintln("Opening index " + indexDir.getCanonicalPath() + "...");
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
+        assert in != null;
+        printProgramHead();
+        try {
+            out.println("Opening index " + indexDir.getCanonicalPath() + "...");
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
 
         // Create the BlackLab index object
+        Timer t = new Timer();
         index = BlackLab.open(indexDir);
+        out.println("Opening index took " + t.elapsedDescription());
         contentsField = index.mainAnnotatedField();
-
-        if (in == null) {
-            webSafeOperationOnly = true; // don't allow file operations in web mode
-            this.err = out; // send errors to the same output writer in web mode
-        }
 
         contextSize = index.defaultContextSize();
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
-    }
-
-    /**
-     * Construct the query tool object.
-     *
-     * @param indexDir directory our index is in
-     * @param out the output writer to use
-     * @param err where to write errors to
-     * @throws ErrorOpeningIndex if index could not be opened
-     */
-    public QueryTool(File indexDir, PrintWriter out, PrintWriter err) throws ErrorOpeningIndex {
-        this(indexDir, null, out, err);
     }
 
     /**
@@ -624,12 +580,13 @@ public class QueryTool {
 
             // Comment after command? Strip.
             cmd = cmd.replaceAll("\\s#.+$", "").trim();
-            if (cmd.length() == 0) {
+            if (cmd.isEmpty()) {
                 statprintln(""); // output empty lines in stats
                 continue; // no actual command on line, skip
             }
 
             Timer t = new Timer();
+            timings.clear();
             statInfo = "";
             commandWasQuery = false;
             try {
@@ -659,11 +616,11 @@ public class QueryTool {
 
     public void processCommand(String fullCmd) {
         fullCmd = fullCmd.trim();
-        if (fullCmd.length() > 0 && fullCmd.charAt(0) == '#') // comment (batch mode)
+        if (!fullCmd.isEmpty() && fullCmd.charAt(0) == '#') // comment (batch mode)
             return;
 
         // See if we want to loop a command
-        if (!webSafeOperationOnly && fullCmd.startsWith("repeat ")) {
+        if (fullCmd.startsWith("repeat ")) {
             fullCmd = fullCmd.substring(7);
             Pattern p = Pattern.compile("^\\d+\\s");
             Matcher m = p.matcher(fullCmd);
@@ -694,7 +651,7 @@ public class QueryTool {
         }
 
         String lcased = cmd.toLowerCase();
-        if (lcased.length() > 0) {
+        if (!lcased.isEmpty()) {
             if (lcased.equals("clear") || lcased.equals("reset")) {
                 hits = null;
                 docs = null;
@@ -833,7 +790,7 @@ public class QueryTool {
                 printQueryHelp();
             } else if (lcased.equals("help") || lcased.equals("?")) {
                 printHelp();
-            } else if (!webSafeOperationOnly && lcased.startsWith("sleep")) {
+            } else if (lcased.startsWith("sleep")) {
                 try {
                     Thread.sleep((int) (Float.parseFloat(lcased.substring(6)) * 1000));
                 } catch (NumberFormatException e1) {
@@ -841,7 +798,7 @@ public class QueryTool {
                 } catch (InterruptedException e) {
                     // OK
                 }
-            } else if (!webSafeOperationOnly && lcased.startsWith("wordlist")) {
+            } else if (lcased.startsWith("wordlist")) {
                 if (cmd.length() == 8) {
                     // Show loaded wordlists
                     outprintln("Available word lists:");
@@ -871,8 +828,6 @@ public class QueryTool {
                         }
                     }
                 }
-            } else if (lcased.equals("warmup")) {
-                errprintln("Warming up the forward indices is deprecated (done automatically at startup)");
             } else if (lcased.startsWith("showconc ")) {
                 String v = lcased.substring(9);
                 showConc = v.equals("on") || v.equals("yes") || v.equals("true");
@@ -965,7 +920,6 @@ public class QueryTool {
                 out.println("  * Annotation: " + describeAnnotation(annot));
             }
             out.println("  * " + (cf.hasContentStore() ? "Includes" : "No") + " content store");
-            out.println("  * " + (cf.hasXmlTags() ? "Includes" : "No") + " XML tag index");
         }
 
         out.println("\nMETADATA FIELDS");
@@ -980,7 +934,7 @@ public class QueryTool {
                 special = "DATEFIELD";
             else if (mf.pidField() != null && field.name().equals(mf.pidField().name()))
                 special = "PIDFIELD";
-            if (special.length() > 0)
+            if (!special.isEmpty())
                 special = " (" + special + ")";
             FieldType type = field.type();
             out.println("- " + field.name() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
@@ -1039,15 +993,14 @@ public class QueryTool {
     private void printHelp() {
         if (batchMode)
             return;
-        String langAvail = "CorpusQL, Lucene, ContextQL (EXPERIMENTAL)";
+        String langAvail = "BCQL, Lucene, ContextQL (EXPERIMENTAL)";
 
         outprintln("Control commands:");
-        //outprintln("  sw(itch)                           # Switch languages");
-        //outprintln("                                     # (" + langAvail + ")");
         outprintln("  p(rev) / n(ext) / page <n>         # Page through results");
-        outprintln("  sort {match|left|right} [annot]    # Sort query results  (left = left context, etc.)");
-        outprintln("  group {match|left|right} [annot]   # Group query results (annot = e.g. 'word', 'lemma', 'pos')");
-        outprintln("  group <groupspec>                  # Group by BLS group spec, e.g. hit:lemma:i or capture:pos:i:A");
+        outprintln("  sort {match|before|after} [annot]  # Sort query results  (before = context before match, etc.)");
+        outprintln("  sort <property>                    #   (like BLS, e.g. before:lemma:s)");
+        outprintln("  group {match|before|after} [annot] # Group query results (annot = e.g. 'word', 'lemma', 'pos')");
+        outprintln("  group <property>                   #   (like BLS, e.g. hit:lemma:i or capture:pos:i:A)");
         outprintln("  hits / groups / group <n> / colloc # Switch between results modes");
         outprintln("  context <n>                        # Set number of words to show around hits");
         outprintln("  pagesize <n>                       # Set number of hits to show per page");
@@ -1060,16 +1013,16 @@ public class QueryTool {
         outprintln("  doctitle {on|off}                  # Show document titles between hits?");
         outprintln("  struct                             # Show index structure");
         outprintln("  help                               # This message");
+        outprintln("  sw(itch)                           # Switch languages");
+        outprintln("                                     # (" + langAvail + ")");
 
-        if (!webSafeOperationOnly) {
-            outprintln("  exit                               # Exit program");
+        outprintln("  exit                               # Exit program");
 
-            outprintln("\nBatch testing commands (start in batch mode with -f <commandfile>):");
-            outprintln("  wordlist <file> <listname>         # Load a list of words");
-            outprintln("  @@<listname>                       # Substitute a random word from list (use in query)");
-            outprintln("  repeat <n> <query>                 # Repeat a query n times (with different random words)");
-            outprintln("  sleep <f>                          # Sleep a number of seconds");
-        }
+        outprintln("\nBatch testing commands (start in batch mode with -f <commandfile>):");
+        outprintln("  wordlist <file> <listname>         # Load a list of words");
+        outprintln("  @@<listname>                       # Substitute a random word from list (use in query)");
+        outprintln("  repeat <n> <query>                 # Repeat a query n times (with different random words)");
+        outprintln("  sleep <f>                          # Sleep a number of seconds");
         outprintln("");
 
         printQueryHelp();
@@ -1146,6 +1099,7 @@ public class QueryTool {
                 }
             }
             SearchHits search = index.search().find(spanQuery);
+            timings = search.queryInfo().timings();
 
             if (alwaysSortBy != null) {
                 search = search.sort(HitProperty.deserialize(index, index.mainAnnotatedField(), alwaysSortBy));
@@ -1160,7 +1114,6 @@ public class QueryTool {
             showSetting = ShowSetting.HITS;
             firstResult = 0;
             showResultsPage();
-            reportTime(t.elapsed());
             if (determineTotalNumberOfHits)
                 statInfo = Long.toString(hits.size());
             else
@@ -1270,37 +1223,19 @@ public class QueryTool {
      */
     private void sortHits(String sortBy, String annotationName) {
         Timer t = new Timer();
+        timings.start();
 
         Hits hitsToSort = getCurrentHitSet();
 
-        Annotation annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
-        HitProperty crit = null;
-        if (sortBy.equalsIgnoreCase("doc"))
-            crit = new HitPropertyDocumentId();
-        else {
-            if (sortBy.equalsIgnoreCase("match") || sortBy.equalsIgnoreCase("word"))
-                crit = new HitPropertyHitText(index, annotation);
-            else if (sortBy.equalsIgnoreCase("left"))
-                crit = new HitPropertyBeforeHit(index, annotation, null, -1);
-            else if (sortBy.equalsIgnoreCase("right"))
-                crit = new HitPropertyAfterHit(index, annotation, null, -1);
-            else if (sortBy.equalsIgnoreCase("lempos")) {
-                HitProperty p1 = new HitPropertyHitText(index, contentsField.annotation("lemma"));
-                HitProperty p2 = new HitPropertyHitText(index, contentsField.annotation("pos"));
-                crit = new HitPropertyMultiple(p1, p2);
-            } else if (index.metadataFields().exists(sortBy)) {
-                crit = new HitPropertyDocumentStoredField(index, sortBy);
-            }
-
-        }
+        HitProperty crit = getCrit(sortBy, annotationName, -1);
         if (crit == null) {
             errprintln("Invalid hit sort criterium: " + sortBy
-                    + " (valid are: match, left, right, doc, <metadatafield>)");
+                    + " (valid are: match, before, after, doc, <metadatafield>)");
         } else {
             sortedHits = hitsToSort.sort(crit);
             firstResult = 0;
+            timings.record("sort");
             showResultsPage();
-            reportTime(t.elapsed());
         }
     }
 
@@ -1340,41 +1275,62 @@ public class QueryTool {
 
         Timer t = new Timer();
 
-        if (StringUtils.isEmpty(annotationName) && contentsField.annotation(groupBy) != null) {
-            // Assume we want to group by matched text if we don't specify it explicitly.
-            annotationName = groupBy;
-            groupBy = "match";
-        }
-
         // Group results
-        HitProperty crit;
-        try {
-            Annotation annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
-            switch (groupBy) {
-            case "word":
-            case "match":
-            case "hit":
-                crit = new HitPropertyHitText(index, annotation);
-                break;
-            case "left":
-                crit = new HitPropertyBeforeHit(index, annotation, null, 1);
-                break;
-            case "right":
-                crit = new HitPropertyAfterHit(index, annotation, null, 1);
-                break;
-            default:
-                // Regular BLS serialized hit property
-                crit = HitProperty.deserialize(hits, groupBy);
-                break;
-            }
-        } catch (Exception e) {
-            errprintln("Unknown annotation: " + annotationName);
-            return;
-        }
+        HitProperty crit = getCrit(groupBy, annotationName, 1);
         groups = hits.group(crit, -1);
         showSetting = ShowSetting.GROUPS;
         sortGroups("size");
-        reportTime(t.elapsed());
+        timings.record("group");
+        reportTime();
+    }
+
+    private HitProperty getCrit(String critType, String annotationName, int numberOfContextTokens) {
+        HitProperty crit;
+        if (StringUtils.isEmpty(annotationName) && contentsField.annotation(critType) != null) {
+            // Assume we want to group by matched text if we don't specify it explicitly.
+            annotationName = critType;
+            critType = "match";
+        }
+        Annotation annotation;
+        try {
+            annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
+        } catch (Exception e) {
+            errprintln("Unknown annotation: " + annotationName);
+            return null;
+        }
+        switch (critType) {
+        case "word":
+        case "match":
+        case "hit":
+            crit = new HitPropertyHitText(index, annotation);
+            break;
+        case "before":
+        case "left":
+            crit = new HitPropertyBeforeHit(index, annotation, null, numberOfContextTokens);
+            break;
+        case "after":
+        case "right":
+            crit = new HitPropertyAfterHit(index, annotation, null, numberOfContextTokens);
+            break;
+        case "doc":
+            crit = new HitPropertyDocumentId();
+            break;
+        case "lempos": // special case for testing
+            HitProperty p1 = new HitPropertyHitText(index, contentsField.annotation("lemma"));
+            HitProperty p2 = new HitPropertyHitText(index, contentsField.annotation("pos"));
+            crit = new HitPropertyMultiple(p1, p2);
+            break;
+        default:
+            if (index.metadataFields().exists(critType)) {
+                // name of a metadata field. Group/sort on that.
+                crit = new HitPropertyDocumentStoredField(index, critType);
+            } else {
+                // Regular BLS serialized hit property. Decode it.
+                crit = HitProperty.deserialize(hits, critType);
+            }
+            break;
+        }
+        return crit;
     }
 
     /**
@@ -1413,12 +1369,16 @@ public class QueryTool {
 
     /**
      * Report how long an operation took
-     *
-     * @param time time to report
      */
-    private void reportTime(long time) {
-        if (showStats)
-            outprintln(describeInterval(time) + " elapsed");
+    private void reportTime() {
+        if (showStats) {
+            //outprintln(describeInterval(time) + " elapsed");
+            if (!timings.isEmpty()) {
+                outprintln("Query timings:\n" + timings.summarize());
+            } else {
+                outprintln("Query took <1ms (no timings recorded)");
+            }
+        }
     }
 
     private String describeInterval(long time1) {
@@ -1452,8 +1412,8 @@ public class QueryTool {
         default:
             showHitsPage();
             break;
-
         }
+        reportTime();
     }
 
     /**
@@ -1540,7 +1500,7 @@ public class QueryTool {
 
     /**
      * A hit we're about to show.
-     *
+     * <p>
      * We need a separate structure because we filter out XML tags and need to know
      * the longest left context before displaying.
      */
@@ -1567,6 +1527,7 @@ public class QueryTool {
      * Show the current page of hits.
      */
     private void showHitsPage() {
+        timings.start();
 
         Hits hitsToShow = getCurrentSortedHitSet();
         if (!showConc) {
@@ -1640,6 +1601,7 @@ public class QueryTool {
                 outprintln("MATCH INFO: " + matchInfoToString(hit.matchInfos));
             }
         }
+        timings.record("kwics");
 
         // Summarize
         String msg;
@@ -1661,12 +1623,13 @@ public class QueryTool {
             } else {
                 msg = hitsInDocs;
             }
+            timings.record("count");
         }
         outprintln(msg);
     }
 
     private static String matchInfoToString(Map<String, MatchInfo> matchInfos) {
-        String matchInfo = matchInfos.entrySet().stream()
+        return matchInfos.entrySet().stream()
                 .sorted( (a, b) -> {
                     MatchInfo ma = a.getValue();
                     MatchInfo mb = b.getValue();
@@ -1697,14 +1660,13 @@ public class QueryTool {
                     return e.getKey() + "=" + e.getValue();
                 })
                 .collect(Collectors.joining(", "));
-        return matchInfo;
     }
 
     /**
      * Returns the hit set we're currently looking at.
-     *
+     * <p>
      * This is either all hits or the hits in one group.
-     *
+     * <p>
      * If a sort has been applied, returns the sorted hits.
      *
      * @return the hit set
@@ -1717,7 +1679,7 @@ public class QueryTool {
 
     /**
      * Returns the hit set we're currently looking at.
-     *
+     * <p>
      * This is either all hits or the hits in one group.
      *
      * @return the hit set

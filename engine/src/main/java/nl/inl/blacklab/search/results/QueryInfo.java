@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
@@ -30,6 +28,9 @@ public final class QueryInfo {
     /** Should we use the cache for this query, or bypass it? */
     private final boolean useCache;
 
+    /** How long executing certain parts of the operation took. */
+    private final QueryTimings timings = new QueryTimings();
+
     private QueryInfo(BlackLabIndex index, AnnotatedField field, boolean useCache) {
         super();
         this.index = index;
@@ -50,6 +51,10 @@ public final class QueryInfo {
     /** @return should we use the cache for this query, or bypass it? */
     public boolean useCache() {
         return useCache;
+    }
+
+    public QueryTimings timings() {
+        return timings;
     }
 
     @Override

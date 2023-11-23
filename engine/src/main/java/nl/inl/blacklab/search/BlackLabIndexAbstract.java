@@ -325,13 +325,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         }
     }
 
-    protected AnnotatedField fieldFromQuery(BLSpanQuery q) {
-        return annotatedField(q.getField());
-    }
-
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) {
-        QueryInfo queryInfo = QueryInfo.create(this, fieldFromQuery(query), true);
+    public Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
         return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
@@ -553,7 +548,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             String analyzerName = field.analyzerName();
             if (field.type() == FieldType.UNTOKENIZED)
                 analyzerName = "nontokenizing";
-            if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("default")) {
+            if (!analyzerName.isEmpty() && !analyzerName.equalsIgnoreCase("default")) {
                 Analyzer fieldAnalyzer = BuiltinAnalyzers.fromString(analyzerName).getAnalyzer();
                 if (fieldAnalyzer == null) {
                     logger.error("Unknown analyzer name " + analyzerName + " for field " + field.name());

@@ -29,7 +29,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
      */
     @Override
     public Hits executeInternal(ActiveSearch<Hits> activeSearch) {
-        return queryInfo().index().find(spanQuery, searchSettings);
+        return queryInfo().index().find(queryInfo(), spanQuery, searchSettings);
     }
 
     @Override
