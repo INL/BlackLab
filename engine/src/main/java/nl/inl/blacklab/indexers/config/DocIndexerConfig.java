@@ -667,8 +667,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             warn("Tried to add metadata value but field name is empty, ignoring (value: " + value + ")");
             return;
         }
-        this.sortedMetadataValues.computeIfAbsent(name, __ -> {
-            ConfigMetadataField conf = this.config.getMetadataField(name);
+        final String indexAsName = optTranslateFieldName(name);
+        this.sortedMetadataValues.computeIfAbsent(indexAsName, __ -> {
+            ConfigMetadataField conf = this.config.getMetadataField(indexAsName);
             if (conf != null && conf.getSortValues()) {
                 return new TreeSet<>(BlackLab.defaultCollator()::compare);
             } else {
