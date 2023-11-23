@@ -215,6 +215,20 @@ to the same word:
 
 This would match _day by day_, _step by step_, etc.
 
+::: details Multiple-value annotations and constraints
+
+Unfortunately, capture constraints can only access the first value indexed for an annotation. If you need this kind of
+functionality in combination with multi-values constraints, you'll have to find a way around this limitation.
+
+Some queries can be rewritten so they don't need a capture constraint. For example,
+`A:[word="some"] B:[word="queries"] :: A.lemma="some" & B.lemma="query"` can also be written as
+`A:[word="some" & lemma="some"] B:[word="queries" & lemma="query"]`, which does work with multiple annotation values.
+But this is rare.
+
+In other cases, you might be able to add extra annotations or use spans ("inline tags") to get around this limitation.
+
+:::
+
 #### Functions
 
 You can also use a few special functions in capture constraints. For example, ensure that words occur in the right order:
