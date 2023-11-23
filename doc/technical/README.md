@@ -2,6 +2,8 @@
 
 This directory contains various documents related to BlackLab development:
 
+- A bit of history:
+  - [Origins of BlackLab's relations search syntax](./design/design-relations-queries.md)
 - Technical design docs for major changes:
   - [Distributed search](./design/plan-distributed.md)
   - [Relations, syntactic search](./design/plan-relations.md)
