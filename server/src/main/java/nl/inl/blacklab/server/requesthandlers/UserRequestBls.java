@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Map;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -137,6 +139,7 @@ public class UserRequestBls implements UserRequest {
     @Override
     public String getSessionId() {
         return request.getSession().getId();
+
     }
 
     @Override
@@ -177,6 +180,10 @@ public class UserRequestBls implements UserRequest {
     @Override
     public String getParameter(String name) {
         return request.getParameter(name);
+    }
+
+    @Override public Map<String, String[]> getParameters() {
+        return request.getParameterMap();
     }
 
     @Override

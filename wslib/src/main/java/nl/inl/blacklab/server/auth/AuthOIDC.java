@@ -1,45 +1,26 @@
 package nl.inl.blacklab.server.auth;
 
 import java.net.URI;
-import java.net.URL;
-import java.security.PrivateKey;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
-import com.nimbusds.oauth2.sdk.pkce.CodeChallengeMethod;
-
 import org.apache.commons.lang3.NotImplementedException;
-import org.pac4j.core.authorization.authorizer.RequireAnyRoleAuthorizer;
-import org.pac4j.core.client.Clients;
-import org.pac4j.core.config.Config;
 import org.pac4j.core.context.Cookie;
-import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.WebContextFactory;
-import org.pac4j.core.context.WebContextHelper;
-import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.credentials.Credentials;
-import org.pac4j.core.matching.matcher.Matcher;
+import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.profile.UserProfile;
 import org.pac4j.http.client.direct.HeaderClient;
-import org.pac4j.oidc.client.KeycloakOidcClient;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
-import org.pac4j.oidc.config.PrivateKeyJWTClientAuthnMethodConfig;
-import org.pac4j.oidc.credentials.OidcCredentials;
+import org.pac4j.oidc.profile.OidcProfile;
+import org.pac4j.oidc.profile.creator.TokenValidator;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.token.AccessToken;
-import com.nimbusds.oauth2.sdk.token.AccessTokenType;
-import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
-import com.nimbusds.oauth2.sdk.token.BearerTokenError;
+import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.UserRequest;
 
@@ -48,38 +29,26 @@ public class AuthOIDC implements AuthMethod {
     final HeaderClient client;
 
     public AuthOIDC(Map<String, String> params) {
-//        oidcConfiguration = new OidcConfiguration();
-//        oidcConfiguration.setDiscoveryURI(params.get("discoveryURI"));
-//        oidcConfiguration.setClientId(params.get("clientId"));
-//        oidcConfiguration.setSecret(params.get("secret"));
-//        oidcConfiguration.setUseNonce(true);
-//        //oidcClient.setPreferredJwsAlgorithm(JWSAlgorithm.RS256);
-////        oidcConfiguration.addCustomParam("prompt", "consent");
-//
-//        // hmmm.
-////        KeycloakOidcClient oidcClient = new KeycloakOidcClient(oidcConfiguration);
-//        client = new OidcClient(oidcConfiguration);
+
 
         OidcConfiguration config = new OidcConfiguration();
         config.setDiscoveryURI(params.get("discoveryURI"));
-        config.setClientId(params.get("clientId"));
-        config.setSecret(params.get("secret"));
-
+        config.setClientId("unused");//params.get("clientId"));
+        config.setSecret("unused");//params.get("secret"));
+        // Disable CSRF
+        // Since we only consume the bearer token (not generate it), there is no way to supply a CSRF token to the client.
+        config.setWithState(false);
+        // unused, but required to pass initialization step of oidcclient.
         config.setClientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
 
-        // unused, but needs to be set or pac4j becomes unhappy
-//        PrivateKeyJWTClientAuthnMethodConfig c = new PrivateKeyJWTClientAuthnMethodConfig();
-//        c.setJwsAlgorithm(JWSAlgorithm.RS256);
-//        c.setKeyID("notused");
-//        c.setPrivateKey(new PrivateKey);
-//        config.setPrivateKeyJWTClientAuthnMethodConfig(c);
-        OidcClient oidcClient = new OidcClient(config);
 
+
+        OidcClient oidcClient = new OidcClient(config);
         oidcClient.setCallbackUrl("notused");
         oidcClient.init();
-        client = new HeaderClient("Authorization", "Bearer ", oidcClient.getProfileCreator());
+        client = new HeaderClient("Authorization", "Bearer ", oidcClient.getAuthenticator(), oidcClient.getProfileCreator());
 
-
+        //        client.setName(params.get("clientId"));
 
 //
 //        final GoogleOidcClient oidcClient = new GoogleOidcClient(oidcConfiguration);
@@ -156,10 +125,57 @@ public class AuthOIDC implements AuthMethod {
 //        return config;
     }
 
+    private static class BlackLabPac4jSessionStore implements SessionStore {
+        private Map<WebContext, Map<String, Object>> store = new HashMap<>(); // eh?
+
+        private static final BlackLabPac4jSessionStore INSTANCE = new BlackLabPac4jSessionStore();
+        private BlackLabPac4jSessionStore() {}
+
+        @Override
+        public Optional<String> getSessionId(WebContext context, boolean createSession) {
+            return Optional.of(((BlackLabUserRequestWebContext) context).getNativeRequest().getSessionId());
+        }
+
+        @Override
+        public Optional<Object> get(WebContext context, String key) {
+            return Optional.ofNullable(store.get(context)).map(m -> m.get(key));
+        }
+
+        @Override
+        public void set(WebContext context, String key, Object value) {
+            store.computeIfAbsent(context, k -> new HashMap<>()).put(key, value);
+        }
+
+        @Override
+        public boolean destroySession(WebContext context) {
+            return store.remove(context) != null;
+        }
+
+        @Override
+        public Optional<Object> getTrackableSession(WebContext context) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<SessionStore> buildFromTrackableSession(WebContext context, Object trackableSession) {
+            return Optional.empty();
+        }
+
+        @Override
+        public boolean renewSession(WebContext context) {
+            return false;
+        }
+    }
+
     private static class BlackLabUserRequestWebContext implements WebContext {
         private final UserRequest req;
         public BlackLabUserRequestWebContext(UserRequest req) {
             this.req = req;
+        }
+
+        /** Tunnel from pac4j context to our own request object. */
+        public UserRequest getNativeRequest() {
+            return req;
         }
 
         @Override
@@ -169,7 +185,7 @@ public class AuthOIDC implements AuthMethod {
 
         @Override
         public Map<String, String[]> getRequestParameters() {
-            throw new NotImplementedException("getRequestParameters");
+            return req.getParameters();
         }
 
         @Override
@@ -258,25 +274,30 @@ public class AuthOIDC implements AuthMethod {
         // For some info on how Pac4j works internally, see:
         // https://www.pac4j.org/blog/jee_pac4j_vs_pac4j_jee.html
         // Pac4j is an abstracted library, so we need to include a specific implementation.
-        // (the javaee one, and in the future, the jakarta-ee one)
-        try {
+        // in our case the wslib is meant to be abstracted away from a specific web framework, so we have to write some of our own code.
+
+
             String header = request.getHeader("Authorization");
             if (header == null || header.isEmpty())
                 return User.anonymous(request.getSessionId());
 
-            OidcCredentials creds = new OidcCredentials();
-            creds.setAccessToken(BearerAccessToken.parse(header));
-            client.getCredentials(new BlackLabUserRequestWebContext(request), JEESessionStore.INSTANCE);
 
-            // would like to use JEEContext(httpservletrequest, -response) here, but can't. :(
-            Optional<UserProfile> profile = client.getUserProfile(creds, new BlackLabUserRequestWebContext(request), JEESessionStore.INSTANCE);
+
+            Credentials credentials = new TokenCredentials(header.substring("Bearer ".length()));
+            Optional<UserProfile> profile = client.getUserProfile(credentials, new BlackLabUserRequestWebContext(request),
+                BlackLabPac4jSessionStore.INSTANCE);
+            client.getAuthenticator().validate(credentials, new BlackLabUserRequestWebContext(request), BlackLabPac4jSessionStore.INSTANCE);
+        
             return profile.map(p -> {
-                if (p.getRoles().contains("admin")) return User.superuser(request.getSessionId());
-                return User.loggedIn(p.getId(), request.getSessionId());
+                // The profile is retrieved from the /userinfo endpoint, but it seems implementation-specific what info that contains
+                // also the info is not validated (so any access token is accepted currently). Maybe we need to validate audience?
+                // pac4j doesn't seem to allow that, it only allows validating identity tokens, but there is no way to go from an access token to an identity token.
+                // (the default pac4j implementation is stateful, and stores the identity token somewhere in memory, and ties it to a session identifier in the requests)
+                // but that is not what we want to do, since that would require the login to be initiated from blacklab.
+
+                return User.loggedIn(((OidcProfile) p).getEmail(), request.getSessionId());
             })
             .orElse(User.anonymous(request.getSessionId()));
-        } catch (ParseException e) {
-            throw new RuntimeException("Invalid Authorization header", e);
-        }
+
     }
 }

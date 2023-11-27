@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.solr;
 
 import java.security.Principal;
+import java.util.Map;
 
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.handler.component.ResponseBuilder;
@@ -85,6 +86,8 @@ public class UserRequestSolr implements UserRequest {
     public String getParameter(String name) {
         return null;
     }
+
+    public Map<String, String[]> getParameters() { return null; }
 
     @Override
     public Object getAttribute(String name) {

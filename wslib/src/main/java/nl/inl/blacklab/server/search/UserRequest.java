@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.search;
 
+import java.util.Map;
+
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.User;
@@ -65,6 +67,8 @@ public interface UserRequest {
      */
     String getParameter(String name);
 
+    /** Interop with pac4j. */
+    Map<String, String[]> getParameters();
 
     /**
      * Get the value of a request attribute.
