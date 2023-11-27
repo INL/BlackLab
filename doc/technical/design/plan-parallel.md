@@ -57,6 +57,11 @@ For example:
 - if we find a two-word hit in Dutch, and they have aligned equivalents in German, but those are not contiguous, do we just return a span that contains both aligned words, even if that includes words not aligned with the Dutch version? (of course, the user can capture the aligned words and we can highlight those in the frontend)
 - if there's a target filter query, and the aligned version contains a match for it but doesn't match it exactly (e.g. it has a few extra words), do we keep the hit or reject it? (of course the user can always surround the filter query with `[]*` to allow for this kind of "slop", but that doesn't improve readability)
 
-## Example data
+## Indexing the example data
 
-WIP example files Jesse: `/mnt/Projecten/Corpora/Historische_Corpora/EDGeS_historical_bible_corpus/XMLConversie/`
+(WIP example files Jesse: `/mnt/Projecten/Corpora/Historische_Corpora/EDGeS_historical_bible_corpus/XMLConversie/`)
+
+The example data consists of content and alignment files. The alignment files use XInclude to include the content files.
+
+Saxon supports this: https://www.saxonica.com/html/documentation10/sourcedocs/XInclude.html
+See also: https://www.oreilly.com/library/view/learning-java-4th/9781449372477/ch24s07.html (Java included XML parser) or Xerces ()

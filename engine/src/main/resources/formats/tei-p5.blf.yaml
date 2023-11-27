@@ -32,7 +32,7 @@ annotatedFields:
     containerPath: .//text
 
     # What are our word tags? (relative to container)
-    wordPath: .//w     # (body geldt niet voor OpenSonar, maar ter illustratie)
+    wordPath: .//w
 
     # Punctuation between word tags (relative to container)
     punctPath: .//text()[not(ancestor::w)]   # = "all text nodes (under containerPath) not inside a <w/> element"
@@ -63,7 +63,7 @@ annotatedFields:
     - path: .//pb  # Page beginning
     - path: .//lb  # Line beginning
 
-# FoLiA's native metadata
+# native metadata
 metadata:
   containerPath: .//listBibl[@id='inlMetadata']
   fields:
