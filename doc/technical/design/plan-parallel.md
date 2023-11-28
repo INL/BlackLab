@@ -38,7 +38,7 @@ E.g. a we're searching for a relation _R_ between a source field _A_ and target 
 
 ### Querying alignments
 
-We're trying to find phrases with two aligned words in two languages, Dutch (`NL`) and German (`DE`). The phrases should have the structure `als ... en ...` in Dutch and `wie ... und ...` in DE, with the requirement that words in the gaps are aligned. So we're looking for phrases like `als kat en hond` in Dutch and `wie Katze und Hund` in German.
+We're trying to find phrases with two aligned words in two languages, Dutch (`nl`) and German (`de`). The phrases should have the structure `als ... en ...` in Dutch and `wie ... und ...` in German, with the requirement that words in the gaps are aligned. So we're looking for phrases like `als kat en hond` in Dutch and `wie Katze und Hund` in German.
 
 Our approach is to find the phrase in Dutch, capturing the German equivalent of the gap words while doing so, then also finding the German equivalent of the whole phrase:
 
