@@ -42,14 +42,20 @@ We're trying to find phrases with two aligned words in two languages, Dutch (`NL
 
 Our approach is to find the phrase in Dutch, capturing the German equivalent of the gap words while doing so, then also finding the German equivalent of the whole phrase:
 
-    # pmatch: find (as best as possible) aligned spans in other version
-    # (optional query filter for other version, optional capture name)
-    pver('nl', palign(
-      'als' (A:[] -@de-> C:[]) 'en' (B:[] -@de-> D:[]),
-      'de',
-      'wie' [] 'und' [],
-      'E'
-    ))
+    # pver: start searching in the specified version
+    # (palign allows "crossing over" to other versions)
+    pver('nl', 
+      # palign: find (as best as possible) aligned spans in other version
+      # (optional query filter for other version, optional capture name)
+      palign(
+        # source query, executed on Dutch field
+        'als' (A:[] -@de-> C:[]) 'en' (B:[] -@de-> D:[]),
+
+        'de',              # target version, German in this case
+        'wie' [] 'und' [], # target query, will be executed on German field
+        'E'                # target capture name
+      )
+    )
 
 If the `pattfield` specified is either `contents` or e.g. `contents..de` (which may simply be the default field for the corpus), the `pver('nl', ...)` call ensures that the primary field searched will be `contents..nl`.
 
