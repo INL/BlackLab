@@ -8,19 +8,27 @@ Documents can have several _alignments_, i.e. per sentence, per word, etc.
 
 ### Annotated fields
 
-Three options:
+There seem to be three obvious options, of which option 2 seems like the most viable at the moment:
 
-1. everything in one annotated field, e.g. NL annotations and DE annotations, with aligment relations between the two versions. Easy to do, but that would mean a single annotated field would have two very different tokenizations (i.e. the third word in NL need not correspond to the third word in JP at all). Throughout BlackLab, it is generally assumed that an annotated field has a single tokenization, so annotations are all automatically aligned.
-2. one annotated field per version, so e.g. one `contents^NL` field and one `contents^DE` field. Alignment relations between the two versions. Seems better to keep the two tokenizations in separate fields. 
-3. one document per language. This seems more difficult to implement because we would have to combine hits from different documents to resolve a single query.
+1. everything in one annotated field, e.g. Dutch annotations and German annotations, with aligment relations between the two versions. Easy to do, but that would mean a single annotated field would have two very different tokenizations (i.e. the 3rd word in Dutch need not correspond to the 3rd word in German at all). Throughout BlackLab, it is generally assumed that an annotated field has a single tokenization, so annotations are all automatically aligned.
+2. one annotated field per version, so e.g. one field for Dutch and one for German. Alignment relations between the two versions. Seems better to keep the two tokenizations in separate fields. 
+3. one Lucene document per version of an input document. This seems more difficult to implement because we would have to combine hits from different documents to resolve a single query.
 
-Option 2 seems the most viable, so that's what we're going with for the moment.
+If option 2 doesn't work out, we may try one of the others.
+
+### Field naming convention
+
+In order for BlackLab to smoothly work with alignment between different fields representing versions of the same document, we should adopt a naming convention for these fields. This convention should respect the existing restrictions on field names in BlackLab.
+
+Each field should have the same prefix name (e.g. `contents`), then a special separator (we'll use two dots `..`), then the version code (e.g. language). So the Dutch version of the contents field would be `contents..nl`, and the German version `contents..de`.
+
+Users should not use the double dot notation in their non-parallel corpora to avoid confusion.
 
 ### Alignment relations: index once or twice?
 
-Is it enough to have the relations only go from e.g. `contents^NL` to `contents^DE`, or do we need to index them both ways? The latter seems redundant.
+Is it enough to have the relations only go from e.g. the `nl` field to the `de` field, or do we need to index them both ways? The latter seems redundant.
 
-On the other hand, the user may want to search both ways, and regular relations search only works in the direction it was indexed. Maybe we could introduce two-way relations, so that queries that go in the other direction can be resolved using the single indexed relation. So e.g. if the relations are indexed in the `NL` field, and the query asks for the Dutch translation of a German word, BlackLab should know to use the two-way relations in the `NL` field "in reverse" to answer this question.
+On the other hand, the user may want to search both ways, and regular relations search only works in the direction it was indexed. Maybe we could introduce two-way relations, so that queries that go in the other direction can be resolved using the single indexed relation. So e.g. if the relations are indexed in the `nl` field, and the query asks for the Dutch translation of a German word, BlackLab should know to use the two-way relations in the `nl` field "in reverse" to answer this question.
 
 We should try to make this a general mechanism, not a hack just for parallel corpora.
 
@@ -34,22 +42,24 @@ We're trying to find phrases with two aligned words in two languages, Dutch (`NL
 
 Our approach is to find the phrase in Dutch, capturing the German equivalent of the gap words while doing so, then also finding the German equivalent of the whole phrase:
 
-    # pmatch: find (as best as possible) aligned spans in other language
-    # (optional query filter for other language, optional capture name)
-    palign(
-      'als' (A:[] -tr::DE-> C:[]) 'en' (B:[] -tr::DE-> D:[]),
-      'DE',
+    # pmatch: find (as best as possible) aligned spans in other version
+    # (optional query filter for other version, optional capture name)
+    pver('nl', palign(
+      'als' (A:[] -@de-> C:[]) 'en' (B:[] -@de-> D:[]),
+      'de',
       'wie' [] 'und' [],
       'E'
-    )
+    ))
 
-This query should be executed specifying the primary version field to search  (e.g. `contents^NL`) as a parameter.
+If the `pattfield` specified is either `contents` or e.g. `contents..de` (which may simply be the default field for the corpus), the `pver('nl', ...)` call ensures that the primary field searched will be `contents..nl`.
 
-The `palign(sourceQuery, targetLanguage, [targetQuery], [captureName])` function tries to finds the best aligned version for a hit from `sourceQuery` in the `targetLanguage`, optionally filtered by `targetQuery`, and optionally capturing the target hit as `captureName`. The function just returns the hit from the `sourceQuery` unchanged.
+This query should be executed specifying the primary version field to search as a parameter (e.g. `pattfield=contents..nl`). Optionally, there could be a parameter for the primary version to search, e.g. `pversion=nl`, that would simply make sure to select the `nl` version of the `pattfield`.
 
-The `-tr::DE->` relation operation is used where we require exact alignment through an explicit alignment relation, in this case one between single words (but could also be between two sentences, paragraphs, etc.).
+The `palign(sourceQuery, targetVersion, [targetQuery], [captureName])` function tries to finds the best aligned version for a hit from `sourceQuery` in the `targetVersion`, optionally filtered by `targetQuery` (which is executed on the `targetVersion` version), and optionally capturing the target hit as `captureName`. The function just returns the hit from the `sourceQuery` unchanged.
 
-The results for the above query is a "regular" set of hits from the `contents^NL` field, but it contains captures from the `contents^DE` field as well (`C`, `D` and `E`). For parallel queries, captures in the response indicate the field from which it was taken.
+The `-@de->` relation operation (meaning "aligns with German version") is used where we require exact alignment through an explicit alignment relation, in this case one between single words (but could also be between two sentences, paragraphs, etc.).
+
+The results for the above query is a "regular" set of hits from the `contents..nl` field, but it contains captures from the `contents..de` field as well (`C`, `D` and `E`). For parallel queries, captures in the response indicate the field from which it was taken.
 
 We should carefully consider how `palign` should work in the case where there is no exact alignment between the two versions for the hit found, and with the optional target filter query.
 
@@ -65,3 +75,5 @@ The example data consists of content and alignment files. The alignment files us
 
 Saxon supports this: https://www.saxonica.com/html/documentation10/sourcedocs/XInclude.html
 See also: https://www.oreilly.com/library/view/learning-java-4th/9781449372477/ch24s07.html (Java included XML parser) or Xerces ()
+
+(WIP; separate documents using XInclude may not be practical)
