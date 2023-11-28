@@ -59,8 +59,6 @@ Our approach is to find the phrase in Dutch, capturing the German equivalent of 
 
 If the `pattfield` specified is either `contents` or e.g. `contents..de` (which may simply be the default field for the corpus), the `pver('nl', ...)` call ensures that the primary field searched will be `contents..nl`.
 
-This query should be executed specifying the primary version field to search as a parameter (e.g. `pattfield=contents..nl`). Optionally, there could be a parameter for the primary version to search, e.g. `pversion=nl`, that would simply make sure to select the `nl` version of the `pattfield`.
-
 The `palign(sourceQuery, targetVersion, [targetQuery], [captureName])` function tries to finds the best aligned version for a hit from `sourceQuery` in the `targetVersion`, optionally filtered by `targetQuery` (which is executed on the `targetVersion` version), and optionally capturing the target hit as `captureName`. The function just returns the hit from the `sourceQuery` unchanged.
 
 The `-@de->` relation operation (meaning "aligns with German version") is used where we require exact alignment through an explicit alignment relation, in this case one between single words (but could also be between two sentences, paragraphs, etc.).
