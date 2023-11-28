@@ -52,8 +52,8 @@ Our approach is to find the phrase in Dutch, capturing the German equivalent of 
         'als' (A:[] -@de-> C:[]) 'en' (B:[] -@de-> D:[]),
 
         'de',              # target version, German in this case
-        'wie' [] 'und' [], # target query, will be executed on German field
-        'E'                # target capture name
+        'wie' [] 'und' [], # (optional) target query, executed on German field
+        'E'                # (optional) target capture name
       )
     )
 
