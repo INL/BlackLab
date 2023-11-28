@@ -71,13 +71,41 @@ For example:
 - if we find a two-word hit in Dutch, and they have aligned equivalents in German, but those are not contiguous, do we just return a span that contains both aligned words, even if that includes words not aligned with the Dutch version? (of course, the user can capture the aligned words and we can highlight those in the frontend)
 - if there's a target filter query, and the aligned version contains a match for it but doesn't match it exactly (e.g. it has a few extra words), do we keep the hit or reject it? (of course the user can always surround the filter query with `[]*` to allow for this kind of "slop", but that doesn't improve readability)
 
-## Indexing the example data
+## Indexing
 
-(WIP example files Jesse: `/mnt/Projecten/Corpora/Historische_Corpora/EDGeS_historical_bible_corpus/XMLConversie/`)
+### Linking or embedding?
 
-The example data consists of content and alignment files. The alignment files use XInclude to include the content files.
+The example data (see below) consist of alignment files that link to the different versions of the content files.
 
-Saxon supports this: https://www.saxonica.com/html/documentation10/sourcedocs/XInclude.html
-See also: https://www.oreilly.com/library/view/learning-java-4th/9781449372477/ch24s07.html (Java included XML parser) or Xerces ()
+Do we stay with this approach of several linked files, or do we embed the different versions in a single file?
 
-(WIP; separate documents using XInclude may not be practical)
+- A single files with everything seems easier to index, but may become very large and seems awkward to store and display (in pages) / highlight. At the very least we'd need to keep track of the character offsets where different versions start and end so we can 'cut' the separate versions.
+- A separate file per version is a bit trickier to index, but easier when storing and displaying.
+
+For now, we'll stick with separate files.
+
+### Linking mechanism
+
+If we stick with linked files, do we use XInclude or our own linking mechanism?
+
+- XInclude is a standard mechanism, which is generally a good thing, but it might be trickier to track when we enter a new file, keep track of character offsets in each file separately, etc. It does make referencing by `xml:id` easier, though, because logically everything is the same document.
+
+- A custom approach allows us more freedom to track which file we're in and which character position we're at. But it's nonstandard, and we'd have to resolve `xml:id` references across different files, which becomes a bit messier.
+
+We'll see if we can make XInclude work first, and only resort to the custom approach if we hit a roadblock.
+
+See [Saxon and XInclude](https://www.saxonica.com/html/documentation10/sourcedocs/XInclude.html).
+
+### Content stores
+
+We'll keep the BlackLab property that each annotated field (optionally) has its own content store. If we stay with linked files, that just means each annotated field gets one of the contents files in its store.
+
+We don't plan to store the alignment XML. Hopefully we don't need it and can resolve any alignment questions using the indexed alignment relations.
+
+### Metadata
+
+Does every version have its own metadata? Does the combined "superdocument" have its own metadata? Probably yes for both.
+
+We can use prefixes to distinguish between metadata for each version.
+
+Open question: does BlackLab need to "understand" what metadata fields belong with which version? Or is that something left to the client? For now we'll assume the latter.
