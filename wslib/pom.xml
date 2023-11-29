@@ -63,12 +63,11 @@
             <version>5.7.1</version>
         </dependency>
 
-
-<!--        <dependency>-->
-<!--            <groupId>org.keycloak</groupId>-->
-<!--            <artifactId>keycloak-authz-client</artifactId>-->
-<!--            <version>22.0.5</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-authz-client</artifactId>
+            <version>22.0.5</version>
+        </dependency>
 
         <!-- naming is a bit confusing, see https://www.pac4j.org/blog/jee_pac4j_vs_pac -->
 <!--        <dependency>-->

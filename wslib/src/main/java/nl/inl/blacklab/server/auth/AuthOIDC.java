@@ -28,13 +28,16 @@ public class AuthOIDC implements AuthMethod {
 
     final HeaderClient client;
 
-    public AuthOIDC(Map<String, String> params) {
+    final String adminRole;
 
+    public AuthOIDC(Map<String, String> params) {
+        adminRole = Optional.ofNullable(params.get("adminRole")).orElse("admin");
 
         OidcConfiguration config = new OidcConfiguration();
         config.setDiscoveryURI(params.get("discoveryURI"));
         config.setClientId("unused");//params.get("clientId"));
         config.setSecret("unused");//params.get("secret"));
+
         // Disable CSRF
         // Since we only consume the bearer token (not generate it), there is no way to supply a CSRF token to the client.
         config.setWithState(false);
@@ -276,28 +279,27 @@ public class AuthOIDC implements AuthMethod {
         // Pac4j is an abstracted library, so we need to include a specific implementation.
         // in our case the wslib is meant to be abstracted away from a specific web framework, so we have to write some of our own code.
 
+        String header = request.getHeader("Authorization");
+        if (header == null || header.isEmpty())
+            return User.anonymous(request.getSessionId());
 
-            String header = request.getHeader("Authorization");
-            if (header == null || header.isEmpty())
-                return User.anonymous(request.getSessionId());
+        Credentials credentials = new TokenCredentials(header.substring("Bearer ".length()));
+        // for profile creation code see OidcProfileCreator.java
+        Optional<UserProfile> profile = client.getUserProfile(credentials, new BlackLabUserRequestWebContext(request),
+            BlackLabPac4jSessionStore.INSTANCE);
 
+        // credentials are not checked.
+        // The access token is considered valid if it is present and not expired.
+        return profile.map(p -> (OidcProfile) p).map(p -> {
+            // We require the email scope to be present. This can be done by including the "email" scope when requesting the access token.
+            // (see https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
+            if (p.getEmail() == null || p.getEmail().isBlank())
+                throw new RuntimeException("No email address in OIDC profile");
 
-
-            Credentials credentials = new TokenCredentials(header.substring("Bearer ".length()));
-            Optional<UserProfile> profile = client.getUserProfile(credentials, new BlackLabUserRequestWebContext(request),
-                BlackLabPac4jSessionStore.INSTANCE);
-            client.getAuthenticator().validate(credentials, new BlackLabUserRequestWebContext(request), BlackLabPac4jSessionStore.INSTANCE);
-        
-            return profile.map(p -> {
-                // The profile is retrieved from the /userinfo endpoint, but it seems implementation-specific what info that contains
-                // also the info is not validated (so any access token is accepted currently). Maybe we need to validate audience?
-                // pac4j doesn't seem to allow that, it only allows validating identity tokens, but there is no way to go from an access token to an identity token.
-                // (the default pac4j implementation is stateful, and stores the identity token somewhere in memory, and ties it to a session identifier in the requests)
-                // but that is not what we want to do, since that would require the login to be initiated from blacklab.
-
-                return User.loggedIn(((OidcProfile) p).getEmail(), request.getSessionId());
-            })
-            .orElse(User.anonymous(request.getSessionId()));
+            boolean isAdmin = p.getRoles().contains(adminRole);
+            return isAdmin ? User.superuser(request.getSessionId()) : User.loggedIn(p.getEmail(), request.getSessionId());
+        })
+        .orElse(User.anonymous(request.getSessionId()));
 
     }
 }

@@ -12,6 +12,8 @@ public class User {
     /** The user id if logged in; null otherwise */
     private String userId;
 
+    private String displayName;
+
     /** The session id */
     private final String sessionId;
     
