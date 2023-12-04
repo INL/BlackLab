@@ -102,6 +102,14 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     /** XPath util functions and caching of XPathExpressions */
     private XPathFinder finder;
 
+    /** Directory from which to resolve relative XIncludes. */
+    private File currentXIncludeDir = new File(".");
+
+    @Override
+    public void setDocumentDirectory(File dir) {
+        this.currentXIncludeDir = dir.getAbsoluteFile();
+    }
+
     @Override
     public void setDocument(File file, Charset defaultCharset) {
         setDocument(file, defaultCharset, null);
@@ -136,28 +144,36 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         }
     }
 
-    private void setDocument(File file, Charset defaultCharset, char[] documentContent) {
-        assert defaultCharset != null;
+    private void setDocument(File file, Charset charset, char[] documentContent) {
+        assert charset != null;
+        document = new DocumentReference(documentContent, charset, file, false);
+    }
+
+    private void readDocument() {
         try {
+            File file = document.getFile();
+            Charset charset = document.getCharset();
+            char[] documentContent = document.getContents();
             if (documentContent == null) {
-                try (FileReader reader = new FileReader(file, defaultCharset)) {
+                try (FileReader reader = new FileReader(file, charset)) {
                     documentContent = IOUtils.toCharArray(reader);
                 }
             }
-            documentContent = resolveXInclude(documentContent);
+            File baseDir = file == null ? currentXIncludeDir : file.getParentFile();
+            documentContent = resolveXInclude(documentContent, baseDir);
             charPositions = new CharPositionsTracker(documentContent);
             contents = SaxonHelper.parseDocument(
                     new CharArrayReader(documentContent), new MyContentHandler(charPositions));
             XPath xPath = SaxonHelper.getXPathFactory().newXPath();
             finder = new XPathFinder(xPath,
                     config.isNamespaceAware() ? config.getNamespaces() : null);
-            document = new DocumentReference(documentContent, file);
+                document = new DocumentReference(documentContent, charset, file);
         } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
 
-    private char[] resolveXInclude(char[] documentContent) {
+    private char[] resolveXInclude(char[] documentContent, File dir) {
         // Implement XInclude support.
         // We need to do this before parsing so our character position tracking keeps working.
         // This basic support uses regex; we can improve it later if needed.
@@ -168,19 +184,26 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         Matcher matcher = xIncludeTag.matcher(doc);
         StringBuilder result = new StringBuilder();
         int pos = 0;
+        boolean anyFound = false;
         while (matcher.find()) {
+            anyFound = true;
             // Append the part before the XInclude tag
             result.append(doc.subSequence(pos, matcher.start()));
             try {
                 // Append the included file
                 String href = matcher.group(1);
-                InputStream is = new FileInputStream(href);
+                File f = new File(href);
+                if (!f.isAbsolute())
+                    f = new File(dir, href);
+                InputStream is = new FileInputStream(f);
                 result.append(IOUtils.toString(is, StandardCharsets.UTF_8));
             } catch (IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
             pos = matcher.end();
         }
+        if (!anyFound)
+            return documentContent;
         // Append the rest of the document
         result.append(doc.subSequence(pos, doc.length()));
         return result.toString().toCharArray();
@@ -219,6 +242,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     @Override
     public void index() throws MalformedInputFile, PluginException, IOException {
         super.index();
+        readDocument();
         indexParsedFile(config.getDocumentPath(), false);
     }
 

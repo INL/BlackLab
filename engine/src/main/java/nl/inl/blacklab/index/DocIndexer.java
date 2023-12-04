@@ -78,6 +78,11 @@ public interface DocIndexer extends AutoCloseable {
      */
     void setDocument(File file, Charset charset) throws FileNotFoundException;
 
+    /** Set the current document's directory.
+     * This may e.g. be used to resolve XIncludes, e.g. by DocIndexerSaxon.
+     */
+    default void setDocumentDirectory(File dir) {}
+
     /**
      * Index documents contained in a file.
      *
