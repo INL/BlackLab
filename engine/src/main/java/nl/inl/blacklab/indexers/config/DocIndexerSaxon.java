@@ -3,10 +3,12 @@ package nl.inl.blacklab.indexers.config;
 import java.io.ByteArrayInputStream;
 import java.io.CharArrayReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -15,6 +17,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
@@ -140,6 +144,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                     documentContent = IOUtils.toCharArray(reader);
                 }
             }
+            documentContent = resolveXInclude(documentContent);
             charPositions = new CharPositionsTracker(documentContent);
             contents = SaxonHelper.parseDocument(
                     new CharArrayReader(documentContent), new MyContentHandler(charPositions));
@@ -150,6 +155,35 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
+
+    private char[] resolveXInclude(char[] documentContent) {
+        // Implement XInclude support.
+        // We need to do this before parsing so our character position tracking keeps working.
+        // This basic support uses regex; we can improve it later if needed.
+        // <xi:include href="../content/en_1890_Darby.1Chr.xml"/>
+
+        Pattern xIncludeTag = Pattern.compile("<xi:include\\s+href=\"([^\"]+)\"\\s*/>");
+        CharSequence doc = CharBuffer.wrap(documentContent);
+        Matcher matcher = xIncludeTag.matcher(doc);
+        StringBuilder result = new StringBuilder();
+        int pos = 0;
+        while (matcher.find()) {
+            // Append the part before the XInclude tag
+            result.append(doc.subSequence(pos, matcher.start()));
+            try {
+                // Append the included file
+                String href = matcher.group(1);
+                InputStream is = new FileInputStream(href);
+                result.append(IOUtils.toString(is, StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+            pos = matcher.end();
+        }
+        // Append the rest of the document
+        result.append(doc.subSequence(pos, doc.length()));
+        return result.toString().toCharArray();
     }
 
     @Override
