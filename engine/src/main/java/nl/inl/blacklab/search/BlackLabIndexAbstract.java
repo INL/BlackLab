@@ -346,15 +346,22 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public ContentAccessor contentAccessor(Field field) {
         synchronized (contentStores) {
             ContentAccessor ca = contentStores.contentAccessor(field);
-            if (indexMode && ca == null) {
-                // Index mode. Create new content store or open existing one.
-                try {
-                    boolean createNewContentStore = isEmptyIndex;
-                    openContentStore(field, createNewContentStore, indexLocation);
-                } catch (ErrorOpeningIndex e) {
-                    throw BlackLabRuntimeException.wrap(e);
+            if (ca == null) {
+                if (indexMode) {
+                    // Index mode. Create new content store or open existing one.
+                    try {
+                        boolean createNewContentStore = isEmptyIndex;
+                        openContentStore(field, createNewContentStore, indexLocation);
+                    } catch (ErrorOpeningIndex e) {
+                        throw BlackLabRuntimeException.wrap(e);
+                    }
+                    ca = contentStores.contentAccessor(field);
+                } else if (field instanceof AnnotatedField && field != mainAnnotatedField()) {
+                    // Search mode.
+                    // If we don't have a content store for this annotated field, use the main content store.
+                    // (e.g. parallel corpus where the content for all languages is stored in the main annotated field)
+                    ca = contentStores.contentAccessor(mainAnnotatedField());
                 }
-                ca = contentStores.contentAccessor(field);
             }
             return ca;
         }
