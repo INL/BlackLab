@@ -14,6 +14,10 @@ public class Span {
         this.end = end;
     }
 
+    public static Span singleWord(int wordNumber) {
+        return new Span(wordNumber, wordNumber + 1);
+    }
+
     public int start() {
         return start;
     }

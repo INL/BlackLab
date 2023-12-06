@@ -36,6 +36,7 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
+import nl.inl.blacklab.search.Span;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
@@ -179,7 +180,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     // process annotated field
 
-    protected void processAnnotatedFieldContainer(VTDNav container, ConfigAnnotatedField annotatedField, Map<String, Integer> tokenPositionsMap) {
+    protected void processAnnotatedFieldContainer(VTDNav container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
         // First we find all inline elements (stuff like s, p, b, etc.) and store
         // the locations of their start and end tags in a sorted list.
         // This way, we can keep track of between which words these tags occur.
@@ -220,7 +221,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             // Capture tokenId for this token position?
             if (apTokenId != null) {
                 String tokenId = apTokenId.evalXPathToString();
-                tokenPositionsMap.put(tokenId, getCurrentTokenPosition());
+                tokenPositionsMap.put(tokenId, Span.singleWord(getCurrentTokenPosition()));
             }
 
             // Does an inline object occur before this word?
@@ -373,7 +374,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
         inlineObjects.add(closeTag);
     }
 
-    private void handleInlineObject(InlineObject inlineObject, Map<String, Integer> tokenPositionsMap) {
+    private void handleInlineObject(InlineObject inlineObject, Map<String, Span> tokenPositionsMap) {
         if (inlineObject.type() == InlineObjectType.PUNCTUATION) {
             punctuation(inlineObject.getText());
         } else {
@@ -382,7 +383,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             if (inlineObject.getTokenId() != null) {
                 // Add this open tag's token position (position of the token after the open tag, actually)
                 // to the tokenPositionsMap so we can refer to this position later. Useful for e.g. tei:anchor.
-                tokenPositionsMap.put(inlineObject.getTokenId(), getCurrentTokenPosition());
+                tokenPositionsMap.put(inlineObject.getTokenId(), Span.singleWord(getCurrentTokenPosition()));
             }
         }
     }

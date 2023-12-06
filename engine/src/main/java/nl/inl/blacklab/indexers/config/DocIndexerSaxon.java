@@ -40,6 +40,7 @@ import nl.inl.blacklab.indexers.config.saxon.DocumentReference;
 import nl.inl.blacklab.indexers.config.saxon.MyContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
+import nl.inl.blacklab.search.Span;
 
 /**
  * An indexer capable of XPath version supported by the provided saxon library.
@@ -249,7 +250,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     // process annotated field
 
     protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
-            Map<String, Integer> tokenPositionsMap) {
+            Map<String, Span> tokenPositionsMap) {
 
         // Collect information outside word tags:
 
@@ -309,7 +310,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             if (annotatedField.getTokenIdPath() != null) {
                 String tokenId = xpathValue(annotatedField.getTokenIdPath(), word);
                 if (tokenId != null)
-                    tokenPositionsMap.put(tokenId, wordNumber);
+                    tokenPositionsMap.put(tokenId, Span.singleWord(wordNumber));
             }
 
             wordNumber++;
@@ -362,7 +363,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     }
 
     private void handleInlineOpenTag(ConfigAnnotatedField annotatedField, Map<Integer, List<NodeInfo>> inlinesToClose,
-            InlineInfo currentInline, int wordNumber, NodeInfo word, Map<String, Integer> tokenPositionsMap) {
+            InlineInfo currentInline, int wordNumber, NodeInfo word, Map<String, Span> tokenPositionsMap) {
     /*
     - index open tag
     - remember after which word the close tag occurs
@@ -406,7 +407,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         }
 
         if (currentInline.getTokenId() != null)
-            tokenPositionsMap.put(currentInline.getTokenId(), wordNumber);
+            tokenPositionsMap.put(currentInline.getTokenId(), Span.singleWord(wordNumber));
     }
 
 
