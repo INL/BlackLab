@@ -24,36 +24,40 @@ If any of these don't work out, we'll try one of the other approaches mentioned.
 
 We're trying to find phrases with two aligned words in two languages, Dutch (`nl`) and German (`de`). The phrases should have the structure `als ... en ...` in Dutch and `wie ... und ...` in German, with the requirement that words in the gaps are aligned. So we're looking for phrases like `als kat en hond` in Dutch and `wie Katze und Hund` in German.
 
-Our approach is to find the phrase in Dutch, capturing the German equivalent of the gap words while doing so, then also finding the German equivalent of the whole phrase:
+Our approach is to find the phrase in Dutch and capturing alignment relations to German. It should also be possible to find the phrase in both languages and capture alignment relations between the hits.
 
-    # pver: start searching in the specified version
-    # (palign allows "crossing over" to other versions)
-    pver('nl', 
-      # palign: find (as best as possible) aligned spans in other version
-      # (optional query filter for other version, optional capture name)
-      palign(
-        # source query, executed on Dutch field
-        'als' (A:[] -@de-> C:[]) 'en' (B:[] -@de-> D:[]),
+Proposed syntax for the above:
 
-        'de',              # target version, German in this case
-        'wie' [] 'und' [], # (optional) target query, executed on German field
-        'E'                # (optional) target capture name
-      )
-    )
+    # Find German equivalent of Dutch phrase
+    # (based on alignment relations with source within span from left side)
+    @nl 'als [] 'en' []' ==>@de _
 
-If the `pattfield` specified is either `contents` or e.g. `contents__de` (which may simply be the default field for the corpus), the `pver('nl', ...)` call ensures that the primary field searched will be `contents__nl`.
+    # Find aligned Dutch and German phrases, capturing alignment relations
+    # (at least one matching alignment relation must exist, or the hit is skipped)
+    @nl 'als [] 'en' []' ==>@de 'wie' [] 'und' []'
 
-The `palign(sourceQuery, targetVersion, [targetQuery], [captureName])` function tries to finds the best aligned version for a hit from `sourceQuery` in the `targetVersion`, optionally filtered by `targetQuery` (which is executed on the `targetVersion` version), and optionally capturing the target hit as `captureName`. The function just returns the hit from the `sourceQuery`, with any alignment information in captures.
+The next section explains how these queries work.
 
-The `-@de->` relation operation (meaning "aligns with German version") is used where we require exact alignment through an explicit alignment relation, in this case one between single words (but could also be between two sentences, paragraphs, etc.).
+### New operator: find all relations between two spans
 
-The results for the above query is a "regular" set of hits from the `contents__nl` field, but it contains captures from the `contents__de` field as well (`C`, `D` and `E`). For parallel queries, captures in the response indicate the field from which it was taken.
+The `==>` operator is a new type of relation operator that finds all relations where the source of the relation is part of the left side hit. It also finds a right side span that encompasses all the matching relations' targets. It also required that the right side span contains a hit for the given right side query (here `'wie' [] 'und' []`), if any such query was given.
 
-We should carefully consider how `palign` should work in the case where there is no exact alignment between the two versions for the hit found, and with the optional target filter query.
+The `@de` at the end of the relation operator shows that the relations we're looking for must be cross-field relations pointing from the current field (`contents__nl`, as indicated by the `@nl` at the start) to the `contents__de` field. It also means that we automatically look for relation class `pal` (parallel alignments). Of course, the `==>` operator still supports the same relation class/type filters if necessary.
 
-For example:
-- if we find a two-word hit in Dutch, and they have aligned equivalents in German, but those are not contiguous, do we just return a span that contains both aligned words, even if that includes words not aligned with the Dutch version? (of course, the user can capture the aligned words and we can highlight those in the frontend)
-- if there's a target filter query, and the aligned version contains a match for it but doesn't match it exactly (e.g. it has a few extra words), do we keep the hit or reject it? (of course the user can always surround the filter query with `[]*` to allow for this kind of "slop", but that doesn't improve readability)
+> Be careful not to put a space before `@de`; this wouldn't discard alignment relations to different versions and will therefore yield meaningless results. (**NOTE:** we should probably recognize this situation and do the right thing automatically)
+
+This operator returns the left span and two captures: the list of relations as `rels` and the right part as `target`. The captures will indicate relations pointing to the `contents__de` field, or the capture itself being from that field.
+
+If the default capture names don't work for you, you rename them:
+
+    @nl 'als [] 'en' []' A:==>@de B:('wie [] 'und' []')
+
+### Optional new operator: find all relations with this source?
+
+We could consider also adding a `-TYPE=>` operator which will find a list of relations where the source of the relation exactly matches the left side, and the target(s) match the right side (which can also be `_`, i.e. "don't care").
+
+This could be useful in the case where a single word in one language matches multiple (discontinuous) words in another. The previously described `==>` operator would also find these though, so this operator might not be needed.
+
 
 ## Indexing
 
