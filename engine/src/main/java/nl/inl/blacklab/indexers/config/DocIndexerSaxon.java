@@ -384,6 +384,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                 }
             }
         }
+        int lastWordInsideInline = wordNumber + 1;
         if (isDescendant) {
             // Yes, word is a descendant.   (i.e. not a self-closing inline tag?)
             // Find the attributes and index the tag.
@@ -401,13 +402,14 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             // (calculate word position by determining the number of word tags inside this element)
             String xpNumberOfWordsInsideTag = "count(" + annotatedField.getWordsPath() + ")";
             int increment = Integer.parseInt(xpathValue(xpNumberOfWordsInsideTag, nodeInfo)) - 1;
-            inlinesToClose.computeIfAbsent(wordNumber + increment,
+            lastWordInsideInline = wordNumber + increment;
+            inlinesToClose.computeIfAbsent(lastWordInsideInline,
                             k -> new ArrayList<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS))
                     .add(nodeInfo);
         }
 
         if (currentInline.getTokenId() != null)
-            tokenPositionsMap.put(currentInline.getTokenId(), Span.singleWord(wordNumber));
+            tokenPositionsMap.put(currentInline.getTokenId(), new Span(wordNumber, lastWordInsideInline + 1));
     }
 
 
