@@ -58,6 +58,13 @@ We could consider also adding a `-TYPE=>` operator which will find a list of rel
 
 This could be useful in the case where a single word in one language matches multiple (discontinuous) words in another. The previously described `==>` operator would also find these though, so this operator might not be needed.
 
+### Alignments between more than two versions
+
+```
+@nl 'als [] 'en' []'
+    ==>@de 'wie' [] 'und' []' ;
+    ==>@en 'as' [] 'and' []'
+```
 
 ## Indexing
 
