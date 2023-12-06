@@ -46,7 +46,7 @@ The `@de` at the end of the relation operator shows that the relations we're loo
 
 > Be careful not to put a space before `@de`; this wouldn't discard alignment relations to different versions and will therefore yield meaningless results. (**NOTE:** we should probably recognize this situation and do the right thing automatically)
 
-This operator returns the left span and two captures: the list of relations as `rels` and the right part as `target`. The captures will indicate relations pointing to the `contents__de` field, or the capture itself being from that field.
+This operator returns the left span and two captures: the list of relations as `rels_de` and the right part as `target_de`. The captures will indicate relations pointing to the `contents__de` field, or the capture itself being from that field.
 
 If the default capture names don't work for you, you rename them:
 
@@ -65,6 +65,17 @@ This could be useful in the case where a single word in one language matches mul
     ==>@de 'wie' [] 'und' []' ;
     ==>@en 'as' [] 'and' []'
 ```
+
+### Alignments between sentences
+
+Find corresponding sentences:
+
+```
+@nl <s/> containing 'als [] 'en' []'
+    ==>@de _ ;
+    ==>@en _
+```
+
 
 ## Indexing
 
