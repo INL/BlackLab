@@ -252,6 +252,14 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
             Map<String, Span> tokenPositionsMap) {
 
+        // Is this a parallel corpus annotated field?
+        if (annotatedField.getName().contains("__")) { // TODO: make this more robust
+            // Determine boundaries of this annotated field container
+            int containerStart = charPositions.getNodeStartPos(container);
+            int containerEnd = charPositions.getNodeEndPos(container);
+            // @@@ TODO: ADD SPECIAL FIELDS (like e.g. the old content id field and length_tokens fields) FOR CONTAINER BOUNDARIES
+        }
+
         // Collect information outside word tags:
 
         // - Punctuation may occur between word tags, which we want to capture
