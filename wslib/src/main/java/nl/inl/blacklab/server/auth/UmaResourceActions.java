@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public interface UmaResourceActions {
     class UMAResource {
@@ -26,6 +27,21 @@ public interface UmaResourceActions {
             this.ownerId = ownerId;
             this.ownerName = ownerName;
             this.path = path;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            UMAResource that = (UMAResource) o;
+            return Objects.equals(id, that.id);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id);
         }
     }
 
@@ -51,10 +67,11 @@ public interface UmaResourceActions {
      * I.E. who else has what access to my resources?
      *
      * Returns { [resourceName]: { [userName]: permission[] } }
-     * @param user the user
+     * @param userAccessToken the access token of the user (needs to be issues to the current client)
      * @return the permissions
      */
-    Map<UMAResource, Map<String, List<String>>> getPermissionsOnMyResources(User user);
+    Map<UMAResource, Map<String, List<String>>> getPermissionsOnMyResources(String userAccessToken)
+            throws IOException, ParseException;
 
     /**
      * List all permissions the current user has on all resources.
