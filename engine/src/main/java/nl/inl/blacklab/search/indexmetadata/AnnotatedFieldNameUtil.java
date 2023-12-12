@@ -23,6 +23,10 @@ public final class AnnotatedFieldNameUtil {
 
     private static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
 
+    private static final String DOC_START_OFFSET_BOOKKEEP_NAME = "doc_start_offset";
+
+    private static final String DOC_END_OFFSET_BOOKKEEP_NAME = "doc_end_offset";
+
     /** Used as a default value if no name has been specified (legacy indexers only) */
     public static final String DEFAULT_MAIN_ANNOT_NAME = Constants.DEFAULT_MAIN_ANNOT_NAME;
 
@@ -144,6 +148,22 @@ public final class AnnotatedFieldNameUtil {
 
     public static String lengthTokensField(String fieldName) {
         return bookkeepingField(fieldName, LENGTH_TOKENS_BOOKKEEP_NAME);
+    }
+
+    /** Offset where the document starts in the content
+     *  (used for parallel corpora, where multiple annotated fields might use the same
+     *   file stored in the content store that contains all the languages)
+     */
+    public static String docStartOffsetField(String fieldName) {
+        return bookkeepingField(fieldName, DOC_START_OFFSET_BOOKKEEP_NAME);
+    }
+
+    /** Offset where the document ends in the content
+     *  (used for parallel corpora, where multiple annotated fields might use the same
+     *   file stored in the content store that contains all the languages)
+     */
+    public static String docEndOffsetField(String fieldName) {
+        return bookkeepingField(fieldName, DOC_END_OFFSET_BOOKKEEP_NAME);
     }
 
     /**

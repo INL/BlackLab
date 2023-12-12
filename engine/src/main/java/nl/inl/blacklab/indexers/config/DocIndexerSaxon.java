@@ -41,6 +41,7 @@ import nl.inl.blacklab.indexers.config.saxon.MyContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * An indexer capable of XPath version supported by the provided saxon library.
@@ -254,10 +255,13 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
         // Is this a parallel corpus annotated field?
         if (annotatedField.getName().contains("__")) { // TODO: make this more robust
-            // Determine boundaries of this annotated field container
-            int containerStart = charPositions.getNodeStartPos(container);
-            int containerEnd = charPositions.getNodeEndPos(container);
-            // @@@ TODO: ADD SPECIAL FIELDS (like e.g. the old content id field and length_tokens fields) FOR CONTAINER BOUNDARIES
+            // Determine boundaries of this annotated field container and store them
+            currentDoc.addStoredNumericField(
+                    AnnotatedFieldNameUtil.docStartOffsetField(annotatedField.getName()),
+                    charPositions.getNodeStartPos(container), false);
+            currentDoc.addStoredNumericField(
+                    AnnotatedFieldNameUtil.docEndOffsetField(annotatedField.getName()),
+                    charPositions.getNodeEndPos(container), false);
         }
 
         // Collect information outside word tags:
