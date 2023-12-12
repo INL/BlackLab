@@ -248,7 +248,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
             // For each configured annotation...
             int lastValuePositionAllAnnots = -1; // keep track of last value position so we can update lagging annotations
-            for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
+            for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
                 AnnotationWriter annotWriter = getAnnotation(annotation.getName());
                 int position = annotWriter.lastValuePosition() + 1;
                 processAnnotation(annotation, nav, position, -1);
@@ -280,11 +280,6 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
         while (currentInlineObject != null) {
             handleInlineObject(currentInlineObject, tokenPositionsMap);
             currentInlineObject = inlineObjectIt.hasNext() ? inlineObjectIt.next() : null;
-        }
-
-        // Process standoff annotations
-        for (ConfigStandoffAnnotations standoff: annotatedField.getStandoffAnnotations()) {
-            processStandoffAnnotation(standoff, container, tokenPositionsMap);
         }
     }
 

@@ -169,6 +169,17 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected abstract void processAnnotatedFieldContainer(T nav, ConfigAnnotatedField annotatedField,
             Map<String, Span> tokenPositionsMap);
 
+    protected void processAnnotatedFieldContainerStandoff(T container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
+
+        // (separate method because we only run these once all token positions for all fields have been collected,
+        //  so parallel corpora can refer to token positions in other fields)
+
+        // Process standoff annotations
+        for (ConfigStandoffAnnotations standoff: annotatedField.getStandoffAnnotations()) {
+            processStandoffAnnotation(standoff, container, tokenPositionsMap);
+        }
+    }
+
     protected void processStandoffAnnotation(ConfigStandoffAnnotations standoff, T container, Map<String, Span> tokenPositionsMap) {
         // For each instance of this standoff annotation..
         ConfigStandoffAnnotations.Type type = standoff.getType();
@@ -204,6 +215,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 xpathForEachStringValue(standoff.getSpanEndPath(), standoffNode, (tokenId) -> {
                     Span tokenPos = tokenPositionsMap.get(tokenId);
                     if (tokenPos == null) {
+                        // @@@ PROBLEM: token positions for xml:ids are only collected when processing those tokens,
+                        //              so the positions aren't available while processing the en version, which comes
+                        //              first. Change it so we only process standoff annotations after all tokens have
+                        //              been processed?
                         warn("Standoff annotation contains unresolved reference to span end token: '" + tokenId + "'");
                     } else {
                         endOrTargetArr[0] = tokenPos;
@@ -219,6 +234,11 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 // type
                 String spanOrRelType = xpathValue(standoff.getValuePath(), standoffNode);
                 if (endOrTarget.start() >= 0) {
+
+                    // @@@ TODO we pass position and endOrTarget as ints, but we should pass Span objects instead,
+                    //     so standoff relations can be from spans of words to spans of words. This is important
+                    //     for e.g. parallel corpora, where we use relations to store sentence alignments, etc.
+
                     if (indexAtPositions.isEmpty()) {
                         if (!isRelation) {
                             warn("Standoff annotation for inline tag has end but no start: "
@@ -379,10 +399,25 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected void indexDocument(T doc) {
         startDocument();
 
+        // This is where we'll capture token ("word") ids and remember the position associated with each id.
+        // In the case to <tei:anchor> between tokens, these are also stored here (referring to the token position after
+        // the anchor).
+        // This is used for standoff annotations, that refer back to the captured ids to add annotations later.
+        // Standoff span annotations are also supported.
+        // The full documentation is available here:
+        // https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#standoff-annotations
+        Map<String, Span> tokenPositionsMap = new HashMap<>();
+
         // For each configured annotated field...
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
             if (!annotatedField.isDummyForStoringLinkedDocuments()) {
-                processAnnotatedField(doc, annotatedField);
+                processAnnotatedField(doc, annotatedField, tokenPositionsMap);
+            }
+        }
+        // Process all the standoffs last, so token positions for all fields have been collected.
+        for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
+            if (!annotatedField.isDummyForStoringLinkedDocuments()) {
+                processAnnotatedFieldStandoff(doc, annotatedField, tokenPositionsMap);
             }
         }
 
@@ -497,16 +532,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         });
     }
 
-    protected void processAnnotatedField(T document, ConfigAnnotatedField annotatedField) {
-        // This is where we'll capture token ("word") ids and remember the position associated with each id.
-        // In the case to <tei:anchor> between tokens, these are also stored here (referring to the token position after
-        // the anchor).
-        // This is used for standoff annotations, that refer back to the captured ids to add annotations later.
-        // Standoff span annotations are also supported.
-        // The full documentation is available here:
-        // https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#standoff-annotations
-        Map<String, Span> tokenPositionsMap = new HashMap<>();
-
+    protected void processAnnotatedField(T document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
         // Determine some useful stuff about the field we're processing
         // and store in instance variables so our methods can access them
         setCurrentAnnotatedFieldName(annotatedField.getName());
@@ -514,6 +540,20 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         // For each container (e.g. "text" or "body" element) ...
         xpathForEach(annotatedField.getContainerPath(), document,
                 (container) -> processAnnotatedFieldContainer(container, annotatedField, tokenPositionsMap));
+    }
+
+    protected void processAnnotatedFieldStandoff(T document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
+
+        // (separate method because we only run these once all token positions for all fields have been collected,
+        //  so parallel corpora can refer to token positions in other fields)
+
+        // Determine some useful stuff about the field we're processing
+        // and store in instance variables so our methods can access them
+        setCurrentAnnotatedFieldName(annotatedField.getName());
+
+        // For each container (e.g. "text" or "body" element) ...
+        xpathForEach(annotatedField.getContainerPath(), document,
+                (container) -> processAnnotatedFieldContainerStandoff(container, annotatedField, tokenPositionsMap));
     }
 
     protected boolean indexParsedFile(String docXPath, boolean mustBeSingleDocument) {

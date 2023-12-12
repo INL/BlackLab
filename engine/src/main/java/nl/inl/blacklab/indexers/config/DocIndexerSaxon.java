@@ -314,7 +314,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             List<NodeInfo> closeHere = inlinesToClose.getOrDefault(wordNumber, Collections.emptyList());
             for (int i = closeHere.size() - 1; i >= 0; i--) {
                 NodeInfo inlineTag = closeHere.get(i);
-                inlineTag(inlineTag.getDisplayName(),false,null);
+                inlineTag(inlineTag.getDisplayName(), false, null);
             }
             inlinesToClose.remove(wordNumber);
 
@@ -334,11 +334,6 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         while (currentPunct != null) {
             handlePunct(currentPunct);
             currentPunct = punctIt.hasNext() ? punctIt.next() : null;
-        }
-
-        // Process standoff annotations
-        for (ConfigStandoffAnnotations standoff: annotatedField.getStandoffAnnotations()) {
-            processStandoffAnnotation(standoff, container, tokenPositionsMap);
         }
     }
 
