@@ -216,7 +216,4 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         return dummyForStoringLinkedDocument;
     }
 
-    public boolean isParallelField() {
-        return getName().contains("__"); // TODO: make this more robust
-    }
 }

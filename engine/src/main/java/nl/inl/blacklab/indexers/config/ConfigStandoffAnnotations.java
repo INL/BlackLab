@@ -3,6 +3,7 @@ package nl.inl.blacklab.indexers.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**
@@ -53,8 +54,21 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     /** For relations: the relation class to index this as. Defaults to dependency relations ("dep"). */
     private String relationClass = RelationUtil.RELATION_CLASS_DEPENDENCY;
 
-    /** For relations: target field for the relation. Defaults to empty, meaning 'this field'. */
+    /** For relations: target field for the relation. Defaults to empty, meaning 'this field'.
+     *
+     * NOTE: targetField and targetVersion are combined into a single field in the index.
+     * For example, if targetField is empty and targetVersion is "de", and this field is "contents__nl",
+     * the field will be named "contents__de".
+     */
     private String targetField = "";
+
+    /** For relations: target version for the relation. Defaults to empty, meaning 'this version'.
+     *
+     * NOTE: targetField and targetVersion are combined into a single field in the index.
+     * For example, if targetField is empty and targetVersion is "de", and this field is "contents__nl",
+     * the field will be named "contents__de".
+     */
+    private String targetVersion = "";
 
     public ConfigStandoffAnnotations() {
     }
@@ -172,11 +186,63 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.relationClass = relationClass;
     }
 
+    /**
+     * Based on the configured targetField and/or targetVersion, return the field name to use.
+     *
+     * If neither targetField nor targetVersion is set, just returns the default field name.
+     *
+     * @param defaultTargetField if no targetField given, what field to use?
+     * @return resolved target field
+     */
+    public String resolveTargetField(String defaultTargetField) {
+        String f = targetField.isEmpty() ? defaultTargetField : targetField;
+        return AnnotatedFieldNameUtil.getParallelFieldVersion(f, targetVersion);
+    }
+
+    /**
+     * Determine the actual relation class to index, including the parallel target version if applicable.
+     *
+     * Examples (if defaultTargetField == "contents__nl"):
+     * - relationClass = "dep", targetField = "", targetVersion = "" --> "dep"
+     * - relationClass = "al", targetField = "contents__de", targetVersion = "" --> "al__de"
+     * - relationClass = "al", targetField = "contents__nl", targetVersion = "de" --> "al__de"
+     *
+     * @param defaultTargetField if no target field was specified, use this (i.e. the annotated field we belong to)
+     * @return the relation class to index
+     */
+    public String resolveRelationClass(String defaultTargetField) {
+        String actualTargetField = resolveTargetField(defaultTargetField);
+        if (actualTargetField.equals(defaultTargetField)) {
+            // Not a cross-field relation
+            return relationClass;
+        } else if (AnnotatedFieldNameUtil.isSameParallelBaseField(defaultTargetField, actualTargetField)) {
+            // Cross-field relation to a different version of the same parallel field,
+            // e.g. contents__nl --> contents__de
+            String actualTargetVersion = AnnotatedFieldNameUtil.splitParallelFieldName(actualTargetField)[1];
+            return relationClass + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetVersion;
+        } else {
+            // Cross-field relation to a different field
+            // e.g. contents --> metadata
+            // (we don't support this yet, but might want to in the future; this would seem like a reasonable way to
+            //  index it)
+            return relationClass + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR
+                                 + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetField;
+        }
+    }
+
     public String getTargetField() {
         return targetField;
     }
 
     public void setTargetField(String targetField) {
         this.targetField = targetField;
+    }
+
+    public String getTargetVersion() {
+        return targetVersion;
+    }
+
+    public void setTargetVersion(String targetVersion) {
+        this.targetVersion = targetVersion;
     }
 }

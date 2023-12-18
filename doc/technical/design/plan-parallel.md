@@ -11,6 +11,7 @@ We've decided on the following initial approach:
 - We'll use one annotated field per document version.
 - Version-specific field names must all end with, so e.g. annotated fields `contents__nl` and `contents__de`, or metadata fields `title__nl` and `title__de`. (Metadata) fields without a suffix apply to all versions of the document, e.g. `subject`.
 - We'll index alignment relations both ways for now (e.g. `nl->de` and `de->nl`), so we don't need special logic to allow searching in both directions.
+- Alignment relations should use the `al` relation class by convention, suffixed with the version code, e.g. `al__de` (this is needed to search for alignments with a specific version). Any relation class suffixed with a version code will automatically be treated as a cross-field relation to that version of the document. So for example, a sentence alignment to German would have full relation type `al__de::s`.
 - We'll provide (rudimentary for now) support for XInclude to link XML documents together (e.g. link a document with alignments to the two contents documents those alignments refer to), but internally it will be treated as a single XML document.
 - The XML will be stored in the content store of the main annotated field (which is the first one in the configuration file). The other annotated fields don't get their own content store but will automatically use the content store of the main annotated field.
 
@@ -42,11 +43,11 @@ The next section explains how these queries work.
 
 The `==>` operator is a new type of relation operator that finds all relations where the source of the relation is part of the left side hit. It also finds a right side span that encompasses all the matching relations' targets. It also required that the right side span contains a hit for the given right side query (here `'wie' [] 'und' []`), if any such query was given.
 
-The `@de` at the end of the relation operator shows that the relations we're looking for must be cross-field relations pointing from the current field (`contents__nl`, as indicated by the `@nl` at the start) to the `contents__de` field. It also means that we automatically look for relation class `pal` (parallel alignments). Of course, the `==>` operator still supports the same relation class/type filters if necessary.
+The `@de` at the end of the relation operator shows that the relations we're looking for must be cross-field relations pointing from the current field (`contents__nl`, as indicated by the `@nl` at the start) to the `contents__de` field. It also means that we automatically look for relation class `al__de` (alignments with German); that is, `@de` changes the default relation class to `al` and appends the version code to the class. Of course, the `==>` operator still supports the same relation class/type filters if necessary, so you can specify a different class or type.
 
 > Be careful not to put a space before `@de`; this wouldn't discard alignment relations to different versions and will therefore yield meaningless results. (**NOTE:** we should probably recognize this situation and do the right thing automatically)
 
-This operator returns the left span and two captures: the list of relations as `rels_de` and the right part as `target_de`. The captures will indicate relations pointing to the `contents__de` field, or the capture itself being from that field.
+This operator returns the left span and two captures: the list of relations as `rels__de` and the right part as `target__de`. The captures will indicate relations pointing to the `contents__de` field, or the capture itself being from that field.
 
 If the default capture names don't work for you, you rename them:
 
@@ -72,8 +73,8 @@ Find corresponding sentences:
 
 ```
 @nl <s/> containing 'als [] 'en' []'
-    ==>@de _ ;
-    ==>@en _
+    =s=>@de _ ;
+    =s=>@en _
 ```
 
 

@@ -74,7 +74,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     private AnnotatedFieldWriter mainAnnotatedField;
 
     /** The indexing object for the annotated field we're currently processing. */
-    private AnnotatedFieldWriter currentAnnotatedField;
+    protected AnnotatedFieldWriter currentAnnotatedField;
 
     /** The _relation annotation (where inline tags and dependency relations are stored)
         for the annotated field we're currently processing. */

@@ -253,7 +253,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             Map<String, Span> tokenPositionsMap) {
 
         // Is this a parallel corpus annotated field?
-        if (annotatedField.isParallelField()) {
+        if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
             // Determine boundaries of this annotated field container and store them
             currentDoc.addStoredNumericField(
                     AnnotatedFieldNameUtil.docStartOffsetField(annotatedField.getName()),

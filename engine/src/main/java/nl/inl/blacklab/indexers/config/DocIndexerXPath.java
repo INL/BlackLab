@@ -248,7 +248,8 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                     String spanOrRelType = xpathValue(standoff.getValuePath(), standoffNode);
                     if (type == AnnotationType.RELATION && !spanOrRelType.contains(RelationUtil.RELATION_CLASS_TYPE_SEPARATOR)) {
                         // If no relation class specified, prepend the configured default relation class.
-                        spanOrRelType = RelationUtil.fullType(standoff.getRelationClass(), spanOrRelType);
+                        String relationClass = standoff.resolveRelationClass(currentAnnotatedField.name());
+                        spanOrRelType = RelationUtil.fullType(relationClass, spanOrRelType);
                     }
 
                     if (indexAtPositions.isEmpty()) {

@@ -528,6 +528,9 @@ public class InputFormatReader extends YamlJsonReader {
                 case "targetField":
                     s.setTargetField(str(e));
                     break;
+                case "targetVersion":
+                    s.setTargetVersion(str(e));
+                    break;
                 default:
                     throw new InvalidInputFormatConfig(
                             "Unknown key " + key + " in standoff annotations block.");

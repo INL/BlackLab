@@ -36,6 +36,7 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
@@ -181,7 +182,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     protected void processAnnotatedFieldContainer(VTDNav container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
 
-        if (annotatedField.isParallelField()) {
+        if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
             warnOnce("Parallel corpora not supported with VTD indexer! Results will be undefined. Use 'processor: saxon' in your config file.");
         }
 

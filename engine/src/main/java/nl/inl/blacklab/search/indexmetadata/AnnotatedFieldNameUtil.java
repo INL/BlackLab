@@ -48,6 +48,11 @@ public final class AnnotatedFieldNameUtil {
      */
     public static final String SUBANNOTATION_FIELD_PREFIX_SEPARATOR = "_";
 
+    /** For parallel corpora, this separator goes between the field name and the version name, e.g.
+     *  contents__nl, contents__de, etc.
+     */
+    public static final String PARALLEL_VERSION_SEPARATOR = "__";
+
     /**
      * Valid XML element names. Field and annotation names should generally conform to
      * this.
@@ -407,6 +412,84 @@ public final class AnnotatedFieldNameUtil {
             name = "_" + name;
         }
         return name;
+    }
+
+    /**
+     * Check if the field name is a parallel field name.
+     * <p>
+     * Parallel field names have a suffix with a version code, e.g. "contents__nl" or "contents__de".
+     *
+     * @param fieldName field name to check
+     * @return true if it's a parallel field name, false if not
+     */
+    public static boolean isParallelField(String fieldName) {
+        return fieldName.contains(PARALLEL_VERSION_SEPARATOR); // TODO: make this more robust
+    }
+
+    /**
+     * Split a parallel field name into the field base name and version.
+     * <p>
+     * If the field name doesn't have a version suffix, the second element in the
+     * returned array will be empty.
+     * <p>
+     * Examples:
+     * - "contents__de" will return ["contents", "de"]
+     * - "contents" will return ["contents", ""]
+     *
+     * @param fieldName field name to split
+     * @return array with two elements: field base name and version
+     */
+    public static String[] splitParallelFieldName(String fieldName) {
+        if (fieldName.contains(PARALLEL_VERSION_SEPARATOR))
+            return fieldName.split(PARALLEL_VERSION_SEPARATOR, 2);
+        else
+            return new String[] { fieldName, "" };
+    }
+
+    /**
+     * Get the parallel field name for a field name and version.
+     *
+     * @param fieldBaseName field base name
+     * @param version version
+     * @return parallel field name
+     */
+    public static String getParallelFieldName(String fieldBaseName, String version) {
+        return fieldBaseName + PARALLEL_VERSION_SEPARATOR + version;
+    }
+
+    /**
+     * Get a different version of the given parallel field name.
+     * <p>
+     * Examples:
+     * - getParallelFieldVersion("contents__de", "nl") will return "contents__nl"
+     * - getParallelFieldVersion("contents", "de") will return "contents__de"
+     * - getParallelFieldVersion("contents", "") will return "contents"
+     *
+     * @param fieldName a parallel field name with a version suffix
+     * @param version version to substitute
+     * @return the parallel field name with the indicated version
+     */
+    public static String getParallelFieldVersion(String fieldName, String version) {
+        if (version.isEmpty())
+            return fieldName;
+        return splitParallelFieldName(fieldName)[0] + PARALLEL_VERSION_SEPARATOR + version;
+    }
+
+    /**
+     * Check if these two fields have the same parallel base field, i.e. are different versions of the same content.
+     *
+     * Examples:
+     * - "contents__nl" and "contents__de" have the same parallel base field ("contents")
+     * - "contents__nl" and "metadata__nl" do not have the same parallel base field
+     *
+     * @param field1 first field name
+     * @param field2 second field name
+     * @return true if they have the same parallel base field, false if not
+     */
+    public static boolean isSameParallelBaseField(String field1, String field2) {
+        String f1 = splitParallelFieldName(field1)[0];
+        String f2 = splitParallelFieldName(field2)[0];
+        return f1.equals(f2);
     }
 
 }
