@@ -36,7 +36,6 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
-import nl.inl.blacklab.search.Span;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
@@ -181,6 +180,11 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
     // process annotated field
 
     protected void processAnnotatedFieldContainer(VTDNav container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
+
+        if (annotatedField.isParallelField()) {
+            warnOnce("Parallel corpora not supported with VTD indexer! Results will be undefined. Use 'processor: saxon' in your config file.");
+        }
+
         // First we find all inline elements (stuff like s, p, b, etc.) and store
         // the locations of their start and end tags in a sorted list.
         // This way, we can keep track of between which words these tags occur.
@@ -215,13 +219,15 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
         AnnotatedFieldWriter annotatedFieldWriter = getAnnotatedField(annotatedField.getName());
         finder.navpush();
+        Span tokenPosition = Span.token(0);
         for (Pair<Integer, BookMark> word: words) {
             word.getValue().setCursorPosition();
 
             // Capture tokenId for this token position?
+            tokenPosition.setTokenPosition(getCurrentTokenPosition());
             if (apTokenId != null) {
                 String tokenId = apTokenId.evalXPathToString();
-                tokenPositionsMap.put(tokenId, Span.singleWord(getCurrentTokenPosition()));
+                tokenPositionsMap.put(tokenId, tokenPosition.copy());
             }
 
             // Does an inline object occur before this word?
@@ -238,7 +244,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             int wordOffset = (int) wordFragment;
             // Handle punct and inline objects before this word
             while (currentInlineObject != null && wordOffset >= currentInlineObject.getOffset()) {
-                handleInlineObject(currentInlineObject, tokenPositionsMap);
+                handleInlineObject(currentInlineObject, tokenPositionsMap, tokenPosition);
                 currentInlineObject = inlineObjectIt.hasNext() ? inlineObjectIt.next() : null;
             }
 
@@ -250,8 +256,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             int lastValuePositionAllAnnots = -1; // keep track of last value position so we can update lagging annotations
             for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
                 AnnotationWriter annotWriter = getAnnotation(annotation.getName());
-                int position = annotWriter.lastValuePosition() + 1;
-                processAnnotation(annotation, nav, position, -1);
+                processAnnotation(annotation, nav, tokenPosition);
 
                 // last value position
                 int lvp = annotWriter.lastValuePosition();
@@ -277,8 +282,9 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
         finder.navpop();
 
         // Index any inline objects after last word
+        tokenPosition.setTokenPosition(getCurrentTokenPosition());
         while (currentInlineObject != null) {
-            handleInlineObject(currentInlineObject, tokenPositionsMap);
+            handleInlineObject(currentInlineObject, tokenPositionsMap, tokenPosition);
             currentInlineObject = inlineObjectIt.hasNext() ? inlineObjectIt.next() : null;
         }
     }
@@ -369,7 +375,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
         inlineObjects.add(closeTag);
     }
 
-    private void handleInlineObject(InlineObject inlineObject, Map<String, Span> tokenPositionsMap) {
+    private void handleInlineObject(InlineObject inlineObject, Map<String, Span> tokenPositionsMap, Span tokenPosition) {
         if (inlineObject.type() == InlineObjectType.PUNCTUATION) {
             punctuation(inlineObject.getText());
         } else {
@@ -378,7 +384,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             if (inlineObject.getTokenId() != null) {
                 // Add this open tag's token position (position of the token after the open tag, actually)
                 // to the tokenPositionsMap so we can refer to this position later. Useful for e.g. tei:anchor.
-                tokenPositionsMap.put(inlineObject.getTokenId(), Span.singleWord(getCurrentTokenPosition()));
+                tokenPositionsMap.put(inlineObject.getTokenId(), tokenPosition.copy());
             }
         }
     }
@@ -398,7 +404,8 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
      * @param spanEndPos   if >= 0, index as a span annotation with this end position (exclusive)
      * @param handler      call handler for each value found, including that of subannotations
      */
-    protected void processAnnotation(ConfigAnnotation annotation, VTDNav word, int position, int spanEndPos,
+    protected void processAnnotation(ConfigAnnotation annotation, VTDNav word,
+            Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler) {
         if (StringUtils.isEmpty(annotation.getValuePath()))
             return; // assume this will be captured using forEach
@@ -414,7 +421,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
                 finder.releaseExpression(apBase);
             }
             try {
-                processAnnotationWithinBasePath(annotation, word, position, spanEndPos, handler);
+                processAnnotationWithinBasePath(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler);
             } finally {
                 if (basePath != null) {
                     // We pushed when we navigated to the base element; pop now.

@@ -258,7 +258,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             int lastIndex = openTagIndexes.size() - 1;
             int openTagPosition = openTagPositions.remove(lastIndex);
             int closeTagPosition = propMain.lastValuePosition() + 1;
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(openTagPosition,
+            BytesRef payload = PayloadUtils.inlineTagPayload(openTagPosition,
                     closeTagPosition, getIndexType());
             Integer openTagIndex = openTagIndexes.remove(lastIndex);
             if (openTagIndex < 0) {

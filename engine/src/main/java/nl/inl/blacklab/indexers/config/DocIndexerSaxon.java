@@ -40,7 +40,6 @@ import nl.inl.blacklab.indexers.config.saxon.DocumentReference;
 import nl.inl.blacklab.indexers.config.saxon.MyContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
@@ -254,7 +253,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             Map<String, Span> tokenPositionsMap) {
 
         // Is this a parallel corpus annotated field?
-        if (annotatedField.getName().contains("__")) { // TODO: make this more robust
+        if (annotatedField.isParallelField()) {
             // Determine boundaries of this annotated field container and store them
             currentDoc.addStoredNumericField(
                     AnnotatedFieldNameUtil.docStartOffsetField(annotatedField.getName()),
@@ -275,10 +274,10 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         InlineInfo currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
 
         // Keep track of where we need to close inline tags we've opened.
-        Map<Integer, List<NodeInfo>> inlinesToClose = new HashMap<>();
+        Map<Span, List<NodeInfo>> inlinesToClose = new HashMap<>();
 
         // For each word...
-        int wordNumber = 0;
+        Span tokenPosition = Span.token(0);
         List<NodeInfo> words = finder.findNodes(annotatedField.getWordsPath(), container);
         words.sort(NodeInfo::compareOrder); // (or does Saxon guarantee that matching nodes are already in order? maybe check)
         for (NodeInfo word: words) {
@@ -294,7 +293,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             while (currentInline != null) {
                 if (currentInline.compareOrder(word) != -1)
                     break; // follows word, we'll index it later
-                handleInlineOpenTag(annotatedField, inlinesToClose, currentInline, wordNumber, word, tokenPositionsMap);
+                handleInlineOpenTag(annotatedField, inlinesToClose, currentInline, tokenPosition, word, tokenPositionsMap);
                 currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
             }
 
@@ -304,28 +303,28 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
             // For each configured annotation...
             for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
-                processAnnotation(annotation, word, wordNumber, -1);
+                processAnnotation(annotation, word, tokenPosition);
             }
 
             charPos = charPositions.getNodeEndPos(word);
             endWord();
 
             // Make sure we close inline tags at the correct position
-            List<NodeInfo> closeHere = inlinesToClose.getOrDefault(wordNumber, Collections.emptyList());
+            List<NodeInfo> closeHere = inlinesToClose.getOrDefault(tokenPosition, Collections.emptyList());
             for (int i = closeHere.size() - 1; i >= 0; i--) {
                 NodeInfo inlineTag = closeHere.get(i);
                 inlineTag(inlineTag.getDisplayName(), false, null);
             }
-            inlinesToClose.remove(wordNumber);
+            inlinesToClose.remove(tokenPosition);
 
             // Capture token id if needed (for standoff annotations)
             if (annotatedField.getTokenIdPath() != null) {
                 String tokenId = xpathValue(annotatedField.getTokenIdPath(), word);
                 if (tokenId != null)
-                    tokenPositionsMap.put(tokenId, Span.singleWord(wordNumber));
+                    tokenPositionsMap.put(tokenId, tokenPosition.copy());
             }
 
-            wordNumber++;
+            tokenPosition.increment();
         }
         if (!inlinesToClose.isEmpty()) {
             throw new BlackLabRuntimeException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
@@ -369,14 +368,14 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         punctuation(punct == null ? " " : punct);
     }
 
-    private void handleInlineOpenTag(ConfigAnnotatedField annotatedField, Map<Integer, List<NodeInfo>> inlinesToClose,
-            InlineInfo currentInline, int wordNumber, NodeInfo word, Map<String, Span> tokenPositionsMap) {
-    /*
-    - index open tag
-    - remember after which word the close tag occurs
-    - index word(s)
-    - index closing tags(s) at the right position
-     */
+    private void handleInlineOpenTag(ConfigAnnotatedField annotatedField, Map<Span, List<NodeInfo>> inlinesToClose,
+            InlineInfo currentInline, Span position, NodeInfo word, Map<String, Span> tokenPositionsMap) {
+        /*
+        - index open tag
+        - remember after which word the close tag occurs
+        - index word(s)
+        - index closing tags(s) at the right position
+         */
 
         // Check if this word is within the inline, if so this word will always be the first word in
         // the inline because we only process each inline once.
@@ -391,7 +390,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                 }
             }
         }
-        int lastWordInsideInline = wordNumber + 1;
+        int firstWordOutsideInline;
         if (isDescendant) {
             // Yes, word is a descendant.   (i.e. not a self-closing inline tag?)
             // Find the attributes and index the tag.
@@ -408,15 +407,20 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             // Add tag to the list of tags to close at the correct position.
             // (calculate word position by determining the number of word tags inside this element)
             String xpNumberOfWordsInsideTag = "count(" + annotatedField.getWordsPath() + ")";
-            int increment = Integer.parseInt(xpathValue(xpNumberOfWordsInsideTag, nodeInfo)) - 1;
-            lastWordInsideInline = wordNumber + increment;
-            inlinesToClose.computeIfAbsent(lastWordInsideInline,
+            int numberOfWordsInsideTag = Integer.parseInt(xpathValue(xpNumberOfWordsInsideTag, nodeInfo));
+            // close inline after the last word that's contained in it (position + numberOfWordsInsideTag - 1)
+            inlinesToClose.computeIfAbsent(position.plus(numberOfWordsInsideTag - 1),
                             k -> new ArrayList<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS))
                     .add(nodeInfo);
+            firstWordOutsideInline = position.start() + numberOfWordsInsideTag;
+        } else {
+            // Word is not a descendant, so this inline must be self-closing.
+            // In other words, the length of the inline is 0.
+            firstWordOutsideInline = position.start();
         }
 
         if (currentInline.getTokenId() != null)
-            tokenPositionsMap.put(currentInline.getTokenId(), new Span(wordNumber, lastWordInsideInline + 1));
+            tokenPositionsMap.put(currentInline.getTokenId(), Span.between(position.start(), firstWordOutsideInline));
     }
 
 
@@ -431,21 +435,22 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
      * its XPath expression should evaluate to "person", obviously).
      *
      * @param annotation   annotation to process.
-     * @param position     position to index at
-     * @param spanEndPos   if >= 0, index as a span annotation with this end position (exclusive)
+     * @param positionSpanEndOrSource     position to index at
+     * @param spanEndOrRelTarget   if >= 0, index as a span annotation with this end position (exclusive)
      * @param handler      call handler for each value found, including that of subannotations
      */
-    protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word, int position, int spanEndPos,
+    protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word,
+            Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler) {
         if (StringUtils.isEmpty(annotation.getValuePath()))
             return; // assume this will be captured using forEach
 
         if (annotation.getBasePath() != null) {
             for (NodeInfo baseNode: finder.findNodes(annotation.getBasePath(), word)) {
-                processAnnotationWithinBasePath(annotation, baseNode, position, spanEndPos, handler);
+                processAnnotationWithinBasePath(annotation, baseNode, positionSpanEndOrSource, spanEndOrRelTarget, handler);
             }
         } else {
-            processAnnotationWithinBasePath(annotation, word, position, spanEndPos, handler);
+            processAnnotationWithinBasePath(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler);
         }
     }
 

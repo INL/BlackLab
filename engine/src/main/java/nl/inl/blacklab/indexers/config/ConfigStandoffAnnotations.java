@@ -9,30 +9,10 @@ import java.util.Map;
  */
 public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
-    public enum Type {
-        TOKEN,
-        SPAN,
-        RELATION;
-
-        public static Type fromStringValue(String t) {
-            switch (t.toLowerCase()) {
-            case "token": return TOKEN;
-            case "span": return SPAN;
-            case "relation": return RELATION;
-            }
-            throw new IllegalArgumentException("Unknown standoff annotation type: " + t);
-        }
-
-        @Override
-        public String toString() {
-            return super.toString().toLowerCase();
-        }
-    }
-
     /**
      * The type of standoff annotation (e.g. "token" (default), "span" or "relation")
      */
-    private Type type = Type.TOKEN;
+    private AnnotationType type = AnnotationType.TOKEN;
 
     /**
      * Path to the elements containing the values to index (values may apply to
@@ -49,8 +29,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     private String tokenRefPath;
 
     /**
-     * How to find the end of the span. If non-empty, this is a span annotation instead of
-     * a regular one.
+     * How to find the end of the span or target of the relation. Empty for token annotations.
      */
     private String spanEndPath = "";
 
@@ -169,11 +148,11 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         return "ConfigStandoffAnnotations [path=" + path + "]";
     }
 
-    public void setType(Type type) {
+    public void setType(AnnotationType type) {
         this.type = type;
     }
 
-    public Type getType() {
+    public AnnotationType getType() {
         return type;
     }
 }

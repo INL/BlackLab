@@ -177,7 +177,7 @@ public class MockSpans extends BLSpans {
     private void setPayloadsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(aStart[i], aEnd[i],
+            BytesRef payload = PayloadUtils.inlineTagPayload(aStart[i], aEnd[i],
                     BlackLabIndex.IndexType.EXTERNAL_FILES);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);

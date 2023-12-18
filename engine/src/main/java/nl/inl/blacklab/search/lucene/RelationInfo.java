@@ -36,6 +36,41 @@ public class RelationInfo implements MatchInfo {
         // (rest of RelationInfo members have the default value so we skip them)
     }
 
+    public static void serializeRelation(boolean onlyHasTarget, int sourceStart, int sourceEnd,
+            int targetStart, int targetEnd, DataOutput dataOutput) {
+
+        assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
+        // Determine values to write from our source and target, and the position we're being indexed at
+        int thisLength = sourceEnd - sourceStart;
+        int relOtherStart = targetStart - sourceStart;
+        int otherLength = targetEnd - targetStart;
+
+        // Which default length should we use? (can save 1 byte per relation)
+        boolean useAlternateDefaultLength = thisLength == DEFAULT_LENGTH_ALT && otherLength == DEFAULT_LENGTH_ALT;
+        int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
+
+        byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
+                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0));
+
+        // Only write as much as we need (omitting default values from the end)
+        boolean writeOtherLength = otherLength != defaultLength;
+        boolean writeThisLength = writeOtherLength || thisLength != defaultLength;
+        boolean writeFlags = writeThisLength || flags != DEFAULT_FLAGS;
+        boolean writeRelOtherStart = writeFlags || relOtherStart != DEFAULT_REL_OTHER_START;
+        try {
+            if (writeRelOtherStart)
+                dataOutput.writeZInt(relOtherStart);
+            if (writeFlags)
+                dataOutput.writeByte(flags);
+            if (writeThisLength)
+                dataOutput.writeVInt(thisLength);
+            if (writeOtherLength)
+                dataOutput.writeVInt(otherLength);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Check that this relation has a target set.
      * <p>
@@ -219,38 +254,9 @@ public class RelationInfo implements MatchInfo {
      * @return the serialized data
      */
     public BytesRef serialize() {
-        assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
-        // Determine values to write from our source and target, and the position we're being indexed at
-        int thisLength = sourceEnd - sourceStart;
-        int relOtherStart = targetStart - sourceStart;
-        int otherLength = targetEnd - targetStart;
-
-        // Which default length should we use? (can save 1 byte per relation)
-        boolean useAlternateDefaultLength = thisLength == DEFAULT_LENGTH_ALT && otherLength == DEFAULT_LENGTH_ALT;
-        int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
-
-        byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
-                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0));
-
-        // Only write as much as we need (omitting default values from the end)
-        boolean writeOtherLength = otherLength != defaultLength;
-        boolean writeThisLength = writeOtherLength || thisLength != defaultLength;
-        boolean writeFlags = writeThisLength || flags != DEFAULT_FLAGS;
-        boolean writeRelOtherStart = writeFlags || relOtherStart != DEFAULT_REL_OTHER_START;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         DataOutput dataOutput = new OutputStreamDataOutput(os);
-        try {
-            if (writeRelOtherStart)
-                dataOutput.writeZInt(relOtherStart);
-            if (writeFlags)
-                dataOutput.writeByte(flags);
-            if (writeThisLength)
-                dataOutput.writeVInt(thisLength);
-            if (writeOtherLength)
-                dataOutput.writeVInt(otherLength);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        serializeRelation(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, dataOutput);
         return new BytesRef(os.toByteArray());
     }
 
@@ -373,7 +379,7 @@ public class RelationInfo implements MatchInfo {
     public String toString() {
         // Inline tag
         if (isTag()) {
-            String tagName = RelationUtil.classAndType(fullRelationType)[1];
+            String tagName = fullRelationType == null ? "UNKNOWN" : RelationUtil.classAndType(fullRelationType)[1];
             String attr = attributes == null || attributes.isEmpty() ? "" :
                     " " + attributes.entrySet().stream()
                             .map(e -> e.getKey() + "=\"" + e.getValue() + "\"")

@@ -268,6 +268,7 @@ public class AnnotationWriter {
      * @return new position of the last token, in case it changed.
      */
     public int addValueAtPosition(String value, int position, BytesRef payload) {
+        assert position >= 0;
 
         if (fieldWriter.getIndexType() == BlackLabIndex.IndexType.INTEGRATED &&
                 AnnotatedFieldNameUtil.isRelationAnnotation(annotationName) &&
@@ -449,7 +450,7 @@ public class AnnotationWriter {
             }
             // classic external index; tag name and attributes are indexed separately
             payload = relationInfo.getSpanEnd() >= 0 ?
-                    PayloadUtils.tagEndPositionPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
+                    PayloadUtils.inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
                             BlackLabIndex.IndexType.EXTERNAL_FILES) :
                     null;
             addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);

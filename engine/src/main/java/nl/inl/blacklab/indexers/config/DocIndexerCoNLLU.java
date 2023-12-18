@@ -109,8 +109,8 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
             "^#\\s*(\\w+)\\s*=\\s*(.+)$");
 
     private static class Span {
-        int start;
-        int end;
+        final int start;
+        final int end;
 
         public Span(int start, int end) {
             this.start = start;

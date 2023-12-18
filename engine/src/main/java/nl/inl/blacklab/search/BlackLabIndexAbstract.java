@@ -126,7 +126,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     private boolean shouldCloseIndex;
 
     /**
-     * The Lucene IndexSearcher, for dealing with non-Span queries (for per-document
+     * The Lucene IndexSearcher, for dealing with non-SpanQueries (for per-document
      * scoring)
      */
     private IndexSearcher indexSearcher;
