@@ -389,11 +389,11 @@ public class RelationInfo implements MatchInfo {
 
         // Relation
         int targetLen = targetEnd - targetStart;
-        String target = targetStart + (targetLen != 1 ? " (len=" + targetEnd + ")" : "");
+        String target = targetStart + (targetLen != 1 ? "-" + targetEnd : "");
         if (isRoot())
             return "rel( ^-" + fullRelationType + "-> " + target + ")";
         int sourceLen = sourceEnd - sourceStart;
-        String source = sourceStart + (sourceLen != 1 ? " (len=" + sourceEnd + ")" : "");
+        String source = sourceStart + (sourceLen != 1 ? "-" + sourceEnd : "");
         return "rel(" + source + " -" + fullRelationType + "-> " + target + ")";
     }
 

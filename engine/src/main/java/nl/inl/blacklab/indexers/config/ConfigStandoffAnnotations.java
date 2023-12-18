@@ -3,6 +3,8 @@ package nl.inl.blacklab.indexers.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+
 /**
  * Configuration for a block of standoff annotations (annotations that don't
  * reside under the word tag but elsewhere in the document).
@@ -47,6 +49,12 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     /** The annotations to index at the referenced token positions. */
     private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
+
+    /** For relations: the relation class to index this as. Defaults to dependency relations ("dep"). */
+    private String relationClass = RelationUtil.RELATION_CLASS_DEPENDENCY;
+
+    /** For relations: target field for the relation. Defaults to empty, meaning 'this field'. */
+    private String targetField = "";
 
     public ConfigStandoffAnnotations() {
     }
@@ -154,5 +162,21 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public AnnotationType getType() {
         return type;
+    }
+
+    public String getRelationClass() {
+        return relationClass;
+    }
+
+    public void setRelationClass(String relationClass) {
+        this.relationClass = relationClass;
+    }
+
+    public String getTargetField() {
+        return targetField;
+    }
+
+    public void setTargetField(String targetField) {
+        this.targetField = targetField;
     }
 }

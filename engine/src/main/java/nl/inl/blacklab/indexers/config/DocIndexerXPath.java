@@ -138,6 +138,8 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             // Classic external index format. Span name and attributes indexed separately.
 
+            assert type != AnnotationType.RELATION; // not supported in classic external index
+
             // First index the span name at this position, then any configured
             // annotations as attributes.
             // (we pass null for the annotation name to indicate that this is the tag name we're indexing,
@@ -162,10 +164,6 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             String fullType = spanOrRelType;
             if (type == AnnotationType.SPAN)
                 fullType = RelationUtil.inlineTagFullType(spanOrRelType);
-            else if (!fullType.contains(RelationUtil.RELATION_CLASS_TYPE_SEPARATOR)) {
-                // If no relation class specified, prepend the default relation class.
-                fullType = RelationUtil.fullType(RelationUtil.RELATION_CLASS_DEPENDENCY, spanOrRelType);
-            }
 
             // Determine the full value to index, e.g. full type and any attributes
             String valueToIndex = RelationUtil.indexTermMulti(fullType, attributes);
@@ -239,17 +237,19 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 endOrTarget = endOrTargetArr[0];
 
                 if (Span.isValid(endOrTarget)) {
-                    // type
+                    // span end
                     if (type != AnnotationType.RELATION && standoff.isSpanEndIsInclusive()) {
                         // The matched token should be included in the span, but we always store
                         // the first token outside the span as the end. Adjust the position accordingly.
                         endOrTarget = endOrTarget.plus(1); // copy because we mustn't change tokenPositionsMap
                     }
-                    String spanOrRelType = xpathValue(standoff.getValuePath(), standoffNode);
 
-                    // @@@ TODO we pass position and endOrTarget as ints, but we should pass MSpan objects instead,
-                    //       so standoff relations can be from spans of words to spans of words. This is important
-                    //       for e.g. parallel corpora, where we use relations to store sentence alignments, etc.
+                    // type
+                    String spanOrRelType = xpathValue(standoff.getValuePath(), standoffNode);
+                    if (type == AnnotationType.RELATION && !spanOrRelType.contains(RelationUtil.RELATION_CLASS_TYPE_SEPARATOR)) {
+                        // If no relation class specified, prepend the configured default relation class.
+                        spanOrRelType = RelationUtil.fullType(standoff.getRelationClass(), spanOrRelType);
+                    }
 
                     if (indexAtPositions.isEmpty()) {
                         if (type != AnnotationType.RELATION) {
