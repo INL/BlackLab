@@ -153,7 +153,8 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      *            format will be made available, which is formed from a combination
      *            of the userId and formatName. You can also specify a formatIdentifier 
      *            (including a userId); this is useful if a superuser wants to create a 
-     *            format for another user. 
+     *            format for another user.
+     *            In short: either the name of the format, or the ID of the format (which includes the owner's username).
      * @param is content of the file, assumed to be a text file with UTF_8 encoding.
      *            This stream is not closed by this function
      * @throws NotAuthorized if you try to create formats for another user (and are not the superuser)
@@ -162,10 +163,10 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      */
     public void createUserFormat(User user, String fileName, InputStream is) throws NotAuthorized, BadRequest, InternalServerError {
         try {
+            // Note that we don't always use the passed in user (if the filename already contains another user's id).
+            // Take care not pass the user's own ID to the mayManageFormatsFor function, as that would always be true.
             String formatIdentifier = fileName.contains(":") ? fileName : getFormatIdentifier(user.getUserId(), fileName);
-            
-            String userIdFromFormatIdentifier = getUserIdFromFormatIdentifier(formatIdentifier);
-            if (!user.canManageFormatsFor(userIdFromFormatIdentifier))
+            if (!user.mayManageFormatsFor(getUserIdFromFormatIdentifier(formatIdentifier)))
                 throw new NotAuthorized("You can only create formats for yourself.");
 
             // This is a little stupid, but we need to read the stream twice:
@@ -177,7 +178,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
                     fileName.endsWith(".json"), config);
             config.validate();
 
-            File userFormatDir = getUserFormatDir(this.userFormatParentDir, userIdFromFormatIdentifier);
+            File userFormatDir = getUserFormatDir(this.userFormatParentDir, user.getUserId());
             File formatFile = new File(userFormatDir, fileName);
 
             FileUtils.writeByteArrayToFile(formatFile, content, false);
@@ -208,7 +209,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
     public static void deleteUserFormat(User user, String formatIdentifier)
             throws NotAuthorized, NotFound, InternalServerError, BadRequest {
         try {
-            if (isBuiltinFormat(formatIdentifier) || !user.canManageFormatsFor(getUserIdFromFormatIdentifier(formatIdentifier)))
+            if (isBuiltinFormat(formatIdentifier) || !user.mayManageFormatsFor(getUserIdFromFormatIdentifier(formatIdentifier)))
                 throw new NotAuthorized("Can only delete your own formats");
         } catch (IllegalUserFormatIdentifier e) {
             throw new BadRequest("ILLEGAL_INDEX_NAME", e.getMessage());

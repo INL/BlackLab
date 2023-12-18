@@ -3,91 +3,13 @@ package nl.inl.blacklab.server.lib;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
-/**
- * Represents either a unique (logged-in) user, or a unique session (when not
- * logged in).
- */
-public class User {
-    /** The user id if logged in; null otherwise */
-    private String userId;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.server.index.Index;
 
-    private String displayName;
-
-    /** The session id */
-    private final String sessionId;
-    
-    /** Is this the superuser? */
-    private boolean superuser = false;
-
-    /**
-     * Create a new logged-in user.
-     *
-     * @param userId unique id identifying this user
-     * @param sessionId the session id
-     * @return the new user
-     */
-    public static User loggedIn(String userId, String sessionId) {
-        return new User(userId, sessionId, false);
-    }
-
-    /**
-     * Create a new anonymous user.
-     *
-     * @param sessionId the session id
-     * @return the new user
-     */
-    public static User anonymous(String sessionId) {
-        return new User(null, sessionId, false);
-    }
-    
-    public static User superuser(String sessionId) {
-        return new User("_superuser_", sessionId, true);
-    }
-
-    private User(String userId, String sessionId, boolean superuser) {
-        this.userId = null;
-        if (userId != null) {
-            // Replace any non-URL-safe characters from userid with _.
-            // Also leave out colon because we use colon as a separator
-            // between userid and index name.
-            this.userId = sanitize(userId);
-        }
-        this.sessionId = sessionId;
-        this.superuser = superuser;
-    }
-
-    @Override
-    public String toString() {
-        return userId != null ? userId : "SESSION:" + sessionId;
-    }
-
-    public String uniqueId() {
-        return userId != null ? userId : "S:" + sessionId;
-    }
-
-    public String uniqueIdShort() {
-        String str = uniqueId();
-        return str.length() > 6 ? str.substring(0, 6) : str;
-    }
-
-    public boolean isLoggedIn() {
-        return userId != null;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public String getUserDirName() {
-        return getUserDirNameFromId(userId);
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public static String getUserDirNameFromId(String id) {
+public interface User {
+    static String getUserDirNameFromId(String id) {
         // NOTE: we want a safe directory name, so instead of trying to
         // get rid of non-safe characters, we just strip everything that
         // isn't a regular letter and append an MD5 of the original id
@@ -111,22 +33,73 @@ public class User {
         //return FileUtil.sanitizeFilename(userId);
     }
 
-    public static boolean isValidUserId(String userId) {
-        return userId.matches("^[a-zA-Z0-9\\-._!$&'()*+,;=@]+$");
-    }
-
-    public static String sanitize(String originalUserId) {
+    static String sanitize(String originalUserId) {
         if (originalUserId == null || originalUserId.isEmpty())
             return null;
 
         return originalUserId.replaceAll("[^a-zA-Z0-9\\-._!$&'()*+,;=@]", "_");
     }
 
-    public boolean isSuperuser() {
-        return superuser;
+    static boolean isValidUserId(String userId) {
+        return userId.matches("^[a-zA-Z0-9\\-._!$&'()*+,;=@]+$");
     }
 
-    public boolean canManageFormatsFor(String userIdFromFormatIdentifier) {
-        return userIdFromFormatIdentifier.equals(getUserId()) || isSuperuser();
+    /**
+     * Create a new logged-in user.
+     *
+     * @param userId unique id identifying this user
+     * @param sessionId the session id
+     * @return the new user
+     */
+    static User loggedIn(String userId, String sessionId) {
+        return new UserGeneric(userId, sessionId);
     }
+
+    /**
+     * Create a new superuser. This user has all permissions but owns nothing.
+     *
+     * @param sessionId
+     * @return the new user.
+     */
+    static User superuser(String sessionId) {
+        return new UserAdmin(sessionId);
+    }
+
+    /**
+     * Create a new anonymous user.
+     *
+     * @param sessionId the session id
+     * @return the new user
+     */
+    static User anonymous(String sessionId) {
+        return new UserGeneric(null, sessionId);
+    }
+
+    default boolean isLoggedIn() { return getUserId() != null; }
+
+    String getSessionId();
+
+    /** May be null if not logged in. */
+    String getUserId();
+
+    default String uniqueId() {
+        return getUserId() != null ? getUserId() : "S:" + getSessionId();
+    }
+
+    /** A short ID for use in logging and such. */
+    default String uniqueIdShort() {
+        String str = uniqueId();
+        return str.length() > 6 ? str.substring(0, 6) : str;
+    }
+
+    default String getUserDirName() { return User.getUserDirNameFromId(getUserId()); }
+
+    default boolean mayReadIndex(Index index) { return !index.isUserIndex() || isOwnerOfIndex(index) || index.getShareWithUsers().contains(getUserId()); }
+    default boolean mayWriteIndex(Index index) { return isOwnerOfIndex(index); }
+    default boolean mayShareIndex(Index index) { return isOwnerOfIndex(index) || index.getShareWithUsers().contains(getUserId()); }
+    default boolean mayDeleteIndex(Index index) { return isOwnerOfIndex(index); }
+    default boolean isOwnerOfIndex(Index index) { return index.getUserId().equals(getUserId()); }
+
+    default boolean mayManageFormatsFor(User user) { return mayManageFormatsFor(user.getUserId()); }
+    default boolean mayManageFormatsFor(String userId) { return Objects.equals(userId, getUserId()); }
 }
