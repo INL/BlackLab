@@ -142,3 +142,62 @@ Does every version have its own metadata? Does the combined "superdocument" have
 We can use the same suffixes as for annotated fields to distinguish between metadata for each version.
 
 Open question: does BlackLab need to "understand" what metadata fields belong with which version? Or is that something left to the client? For now we'll assume the latter.
+
+### Configuring the different versions
+
+A corpus might have many versions of a document, all referring to one another. Configuring each annotated field separately, and configuring the relations to each other version separately would be very tedious.
+
+Here's an idea for a more compact way to configure this. A problem with this is that it includes a variable mechanism that operates directly on the hierarchical YAML structure, which is not compatible with how we currently process the YAML files. Of course we could refactor the code to make this possible, but it'd need to be a more DOM-like approach vs. the SAX-like approach we have now (because the `version` key doesn't have to be the first).
+
+```yaml
+  contents:
+
+    # Create several parallel versions of the contents field, e.g. contents__en, contents__nl, etc.
+    #
+    # Causes this annotated field to be created with each version suffix.
+    # Does a search and replace of:
+    # - $$VKEY with the version key (e.g. 'en') and
+    # - $$VINDEX with the (1-based) index of the version (e.g. en=1, nl=2).
+    # - $$VNAME with the (display) name (the value after the key, e.g. English/Dutch)
+    #
+    # Of course, you don't have to use the versions block at all; you can also explicitly
+    # define annotated fields contents__nl, contents__en, etc.; the result will be identical,
+    # just with a longer configuration with more duplication.
+    versions:
+      en: English
+      nl: Dutch
+
+    displayName: $$VNAME document contents
+    description: Contents of the $$VNAME documents
+    containerPath: TEI[$$VINDEX]
+    wordPath: .//w
+    punctPath: .//text()[not(ancestor::w)]
+    
+    annotations:
+    - name: word
+      displayName: Word
+      valuePath: .
+      sensitivity: sensitive_insensitive
+
+    standoffAnnotations:
+    - type: relation
+      # relations to index (filter using version name)
+      path: /teiCorpus/standOff/linkGrp/link[matches(@target, concat('^#$$VKEY'))]
+      # capture target version from relation @target target id
+      # (e.g. target="#nl_bla.123 #en_bla.456" -> "en")
+      targetVersionPath: "replace(./@target, '^.+ #([a-zA-Z])_.+$', '$1')"
+      # relation type
+      valuePath: "replace(@type, 'sentence-alignment', 'ab')"
+
+      # Find the relation source and target by parsing the @target attribute
+      # Make sure root relation is recognized as such (has no source in BL)
+      sourcePath: "replace(./@target, '^#(.+) .+$', '$1')"
+      targetPath: "replace(./@target, '^.+ #(.+)$', '$1')"
+
+    inlineTags:
+    - path: .//div # book/chapter
+    - path: .//ab  # verse
+      # capture verse ids so we can use them for sourcePath/targetPath above
+      tokenIdPath: "@xml:id"   
+    - path: .//s   # sentence
+```
