@@ -147,7 +147,7 @@ Open question: does BlackLab need to "understand" what metadata fields belong wi
 
 A corpus might have many versions of a document, all referring to one another. Configuring each annotated field separately, and configuring the relations to each other version separately would be very tedious.
 
-Here's an idea for a more compact way to configure this. A problem with this is that it includes a variable mechanism that operates directly on the hierarchical YAML structure, which is not compatible with how we currently process the YAML files. Of course we could refactor the code to make this possible, but it'd need to be a more DOM-like approach vs. the SAX-like approach we have now (because the `version` key doesn't have to be the first).
+Here's an idea for a more compact way to configure this. A problem with this is that it includes a variable mechanism that operates directly on the hierarchical YAML structure, which is not compatible with how we currently process the YAML files. Of course we could refactor the code to make this possible, but it'd need to be a more DOM-like approach vs. the SAX-like approach we have now (because the `versions` key doesn't have to be the first). One option is to require that `versions` appears first for the moment, and refactor later if necessary.
 
 ```yaml
   contents:
