@@ -62,13 +62,13 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      */
     private String targetField = "";
 
-    /** For relations: target version for the relation. Defaults to empty, meaning 'this version'.
+    /** For relations: how to find target version for the relation. Defaults to empty, meaning 'this version'.
      *
      * NOTE: targetField and targetVersion are combined into a single field in the index.
-     * For example, if targetField is empty and targetVersion is "de", and this field is "contents__nl",
+     * For example, if targetField is empty and targetVersion resolves to "de", and this field is "contents__nl",
      * the target field for the relations will be the field will be "contents__de".
      */
-    private String targetVersion = "";
+    private String targetVersionPath = "";
 
     public ConfigStandoffAnnotations() {
     }
@@ -192,9 +192,10 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      * If neither targetField nor targetVersion is set, just returns the default field name.
      *
      * @param defaultTargetField if no targetField given, what field to use?
+     * @param targetVersion target version to use (if empty, keep the one from the targetField)
      * @return resolved target field
      */
-    public String resolveTargetField(String defaultTargetField) {
+    public String resolveTargetField(String defaultTargetField, String targetVersion) {
         String f = targetField.isEmpty() ? defaultTargetField : targetField;
         return AnnotatedFieldNameUtil.getParallelFieldVersion(f, targetVersion);
     }
@@ -208,10 +209,11 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      * - relationClass = "al", targetField = "contents__nl", targetVersion = "de" --> "al__de"
      *
      * @param defaultTargetField if no target field was specified, use this (i.e. the annotated field we belong to)
+     * @param targetVersion target version to use (if empty, keep the one from the targetField)
      * @return the relation class to index
      */
-    public String resolveRelationClass(String defaultTargetField) {
-        String actualTargetField = resolveTargetField(defaultTargetField);
+    public String resolveRelationClass(String defaultTargetField, String targetVersion) {
+        String actualTargetField = resolveTargetField(defaultTargetField, targetVersion);
         if (actualTargetField.equals(defaultTargetField)) {
             // Not a cross-field relation
             return relationClass;
@@ -223,7 +225,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         } else {
             // Cross-field relation to a different field
             // e.g. contents --> metadata
-            // (we don't support this yet, but might want to in the future; this would seem like a reasonable way to
+            // (we don't support this yet, but might want to in the future; this might be a reasonable way to
             //  index it)
             return relationClass + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR
                                  + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetField;
@@ -238,11 +240,11 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.targetField = targetField;
     }
 
-    public String getTargetVersion() {
-        return targetVersion;
+    public String getTargetVersionPath() {
+        return targetVersionPath;
     }
 
-    public void setTargetVersion(String targetVersion) {
-        this.targetVersion = targetVersion;
+    public void setTargetVersionPath(String targetVersionPath) {
+        this.targetVersionPath = targetVersionPath;
     }
 }
