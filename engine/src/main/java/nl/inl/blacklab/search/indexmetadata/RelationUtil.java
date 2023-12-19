@@ -16,6 +16,9 @@ public class RelationUtil {
     /** Relation class to use for dependency relations. */
     public static final String RELATION_CLASS_DEPENDENCY = "dep";
 
+    /** Relation class to use for alignment relations. */
+    public static final String RELATION_CLASS_ALIGNMENT = "al";
+
     /** Separator between relation class (e.g. "__tag", "dep" for dependency relation, etc.) and relation type
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
     public static final String RELATION_CLASS_TYPE_SEPARATOR = "::";

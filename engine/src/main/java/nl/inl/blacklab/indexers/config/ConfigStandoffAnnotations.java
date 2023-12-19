@@ -51,8 +51,10 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     /** The annotations to index at the referenced token positions. */
     private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
 
-    /** For relations: the relation class to index this as. Defaults to dependency relations ("dep"). */
-    private String relationClass = RelationUtil.RELATION_CLASS_DEPENDENCY;
+    /** For relations: the relation class to index this as. If not specified, a logical default is chosen
+     *  ("al" if targetField/targetVersion specified; "dep" otherwise
+     */
+    private String relationClass = null;
 
     /** For relations: target field for the relation. Defaults to empty, meaning 'this field'.
      *
@@ -179,7 +181,15 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     }
 
     public String getRelationClass() {
-        return relationClass;
+        if (relationClass != null) {
+            return relationClass;
+        } else if (targetField != null || targetVersionPath != null) {
+            // Cross-field relation, and no explicit relationClass given; assume "al" (alignment relation)
+            return RelationUtil.RELATION_CLASS_ALIGNMENT;
+        } else {
+            // No explicit relationClass given; assume "dep" (dependency relation)
+            return RelationUtil.RELATION_CLASS_DEPENDENCY;
+        }
     }
 
     public void setRelationClass(String relationClass) {
@@ -216,18 +226,18 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         String actualTargetField = resolveTargetField(defaultTargetField, targetVersion);
         if (actualTargetField.equals(defaultTargetField)) {
             // Not a cross-field relation
-            return relationClass;
+            return getRelationClass();
         } else if (AnnotatedFieldNameUtil.isSameParallelBaseField(defaultTargetField, actualTargetField)) {
             // Cross-field relation to a different version of the same parallel field,
             // e.g. contents__nl --> contents__de
             String actualTargetVersion = AnnotatedFieldNameUtil.splitParallelFieldName(actualTargetField)[1];
-            return relationClass + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetVersion;
+            return getRelationClass() + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetVersion;
         } else {
             // Cross-field relation to a different field
             // e.g. contents --> metadata
             // (we don't support this yet, but might want to in the future; this might be a reasonable way to
             //  index it)
-            return relationClass + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR
+            return getRelationClass() + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR
                                  + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetField;
         }
     }
