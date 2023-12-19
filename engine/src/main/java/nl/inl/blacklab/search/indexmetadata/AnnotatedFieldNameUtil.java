@@ -423,7 +423,7 @@ public final class AnnotatedFieldNameUtil {
      * @return true if it's a parallel field name, false if not
      */
     public static boolean isParallelField(String fieldName) {
-        return fieldName.contains(PARALLEL_VERSION_SEPARATOR); // TODO: make this more robust
+        return fieldName.contains(PARALLEL_VERSION_SEPARATOR);
     }
 
     /**

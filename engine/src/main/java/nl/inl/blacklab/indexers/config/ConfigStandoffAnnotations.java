@@ -58,7 +58,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      *
      * NOTE: targetField and targetVersion are combined into a single field in the index.
      * For example, if targetField is empty and targetVersion is "de", and this field is "contents__nl",
-     * the field will be named "contents__de".
+     * the target field for the relations will be the field will be "contents__de".
      */
     private String targetField = "";
 
@@ -66,7 +66,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      *
      * NOTE: targetField and targetVersion are combined into a single field in the index.
      * For example, if targetField is empty and targetVersion is "de", and this field is "contents__nl",
-     * the field will be named "contents__de".
+     * the target field for the relations will be the field will be "contents__de".
      */
     private String targetVersion = "";
 

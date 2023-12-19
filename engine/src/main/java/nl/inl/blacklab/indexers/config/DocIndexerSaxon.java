@@ -254,7 +254,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
         // Is this a parallel corpus annotated field?
         if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
-            // Determine boundaries of this annotated field container and store them
+            // Yes; determine boundaries of this annotated field container and store them
+            // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
             currentDoc.addStoredNumericField(
                     AnnotatedFieldNameUtil.docStartOffsetField(annotatedField.getName()),
                     charPositions.getNodeStartPos(container), false);

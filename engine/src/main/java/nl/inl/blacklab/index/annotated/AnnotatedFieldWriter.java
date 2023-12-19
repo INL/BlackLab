@@ -28,7 +28,8 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
  * Annotated fields are implemented by indexing a field in Lucene for each
  * annotation. For example, if annotated field "contents" has annotations "headword"
  * and "pos", there would be 3 Lucene fields for the annotated field: "contents",
- * "contents__headword" and "contents__pos".
+ * "contents%headword@s" and "contents%pos@s" (@s means sensitive; multiple sensitivity
+ * alternatives may be indexed for an annotation).
  *
  * The main field ("contents" in the above example) may include offset
  * information if you want (e.g. for highlighting). All Lucene fields will
