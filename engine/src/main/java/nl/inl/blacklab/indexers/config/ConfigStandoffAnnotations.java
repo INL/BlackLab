@@ -181,15 +181,8 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     }
 
     public String getRelationClass() {
-        if (relationClass != null) {
-            return relationClass;
-        } else if (targetField != null || targetVersionPath != null) {
-            // Cross-field relation, and no explicit relationClass given; assume "al" (alignment relation)
-            return RelationUtil.RELATION_CLASS_ALIGNMENT;
-        } else {
-            // No explicit relationClass given; assume "dep" (dependency relation)
-            return RelationUtil.RELATION_CLASS_DEPENDENCY;
-        }
+        // Return default value for relation class if not specified
+        return relationClass != null ? relationClass : RelationUtil.CLASS_DEFAULT;
     }
 
     public void setRelationClass(String relationClass) {

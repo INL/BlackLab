@@ -215,7 +215,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                 boolean isRoot = strHead.equals("0");
                 String relationType = record.size() > COL_DEP ? record.get(COL_DEP) : "_";
                 String fullRelationType = RelationUtil.fullType(
-                        RelationUtil.RELATION_CLASS_DEPENDENCY, relationType);
+                        RelationUtil.CLASS_DEPENDENCY, relationType);
                 if (!isRoot) {
                     // Regular relation with source and target.
                     Span headSpan = idSpan(strHead, sentenceStartPosition);

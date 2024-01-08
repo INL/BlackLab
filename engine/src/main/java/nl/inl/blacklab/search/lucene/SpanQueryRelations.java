@@ -112,7 +112,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     public boolean isTagQuery() {
         String relationClass = RelationUtil.classAndType(relationType)[0];
-        return relationClass.equals(RelationUtil.RELATION_CLASS_INLINE_TAG);
+        return relationClass.equals(RelationUtil.CLASS_INLINE_TAG);
     }
 
     public enum Direction {
@@ -266,7 +266,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     @Override
     public String toString(String field) {
-        String inlineTagsPrefix = RelationUtil.RELATION_CLASS_INLINE_TAG + RelationUtil.RELATION_CLASS_TYPE_SEPARATOR;
+        String inlineTagsPrefix = RelationUtil.CLASS_INLINE_TAG + RelationUtil.CLASS_TYPE_SEPARATOR;
         String optCaptureAs = captureAs.isEmpty() ? "" : ", cap:" + captureAs;
         if (relationType.startsWith(inlineTagsPrefix)) {
             String type = relationType.substring(inlineTagsPrefix.length());

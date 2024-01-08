@@ -12,6 +12,8 @@ We've decided on the following initial approach:
 - Version-specific field names must all end with `__VERSION`, so e.g. annotated fields `contents__nl` and `contents__de`, or metadata fields `title__nl` and `title__de`. (Metadata) fields without a suffix apply to all versions of the document, e.g. `subject`.
 - We'll index alignment relations both ways for now (e.g. `nl->de` and `de->nl`), so we don't need special logic to allow searching in both directions.
 - Alignment relations should use the `al` relation class by convention, suffixed with the version code, e.g. `al__de` (this is needed to search for alignments with a specific version). Any relation class suffixed with a version code will automatically be treated as a cross-field relation to that version of the document. So for example, a sentence alignment to German would have full relation type `al__de::s`.
+- We'll use the `==>` operator to find all relations between two spans. Target version is indicated by a suffix, e.g. `==>de`.
+- You can set the default relations class you're searching using the new "query settings" (unary prefix) operator e.g. `@rc=al`. If no default class is set, all classes are matched, so you don't need to set it if your corpus only contains one relation class.
 - We'll provide (rudimentary for now) support for XInclude to link XML documents together (e.g. link a document with alignments to the two contents documents those alignments refer to), but internally it will be treated as a single XML document.
 - The XML will be stored in the content store of the main annotated field (which is the first one in the configuration file). The other annotated fields don't get their own content store but will automatically use the content store of the main annotated field.
 
@@ -20,6 +22,29 @@ The general approach is to only add the minimum of features needed to support pa
 If any of these don't work out, we'll try one of the other approaches mentioned. See the Indexing section at the end of the document for more details.
 
 ## BCQL
+
+### Default relations class and version
+
+Because it gets quite convoluted to specify relations class (e.g. `al` for alignment) and version (e.g. `nl` for Dutch) in the relations operators, it would be useful to set a default value once for the query. We want something that can be used as a prefix operator. On the other hand, we don't want an explosion of new operators either. Proposal:
+
+    # Set default relation class to 'al' and source version to 'nl'
+    @relationclass=al,sourceversion=nl 
+        'als [] 'en' []' ==>de 'wie' [] 'und' []'
+
+    # Abbreviated forms
+    @sv=nl,rc=al 'als [] 'en' []' ==>de 'wie' [] 'und' []'
+
+So `@` starts a "settings operator", which is a unary prefix operator where you can change settings for the rest of (this part of) the query.
+
+The settings you can change are currently:
+- `sourceversion=nl` or `sv=nl` means "this is a query on the Dutch version of the document (except for when relation operators jump to different versions)". It allows us to e.g. always pass `pattfield=contents__en` even when we have several queries that query different versions of the document. Of course, if the version you're searching matches the `pattfield` you passed, you don't need to specify `sv` at all.
+- `relationclass=al` or `rc=al` means "set the default relation class to `al`". You could also set `@rc=al__de` to set the default relation class to `al__de`, which means you can use the plain `==>` operator later in the query (i.e. you don't need to use `==>de` because `de` was already set in the relation class).
+
+
+If needed, there could be a variant `@(rc=al,tv=de)` that uses parentheses to group the settings.
+
+Note that in many cases, you won't need to specify `relationclass`. If the only versioned relations in your corpus are alignment relations, they will automatically be found by the `==>de` operator, so you don't need to specify `rc`. Similarly, if your corpus only contains dependency relations, everything will work as expected automatically. It's only when you have multiple relation classes in a corpus that you need to either change the default, or be more explicit in the relations operator.
+
 
 ### Querying alignments
 
@@ -31,11 +56,11 @@ Proposed syntax for the above:
 
     # Find German equivalent of Dutch phrase
     # (based on alignment relations with source within span from left side)
-    'als [] 'en' []' ==de> _
+    'als [] 'en' []' ==>de _
 
     # Find aligned Dutch and German phrases, capturing alignment relations
     # (at least one matching alignment relation must exist, or the hit is skipped)
-    'als [] 'en' []' ==de> 'wie' [] 'und' []'
+    'als [] 'en' []' ==>de 'wie' [] 'und' []'
 
 The next section explains how these queries work.
 
@@ -43,13 +68,13 @@ The next section explains how these queries work.
 
 The `==>` operator is a new type of relation operator that finds all relations where the source of the relation is part of the left side hit. It also finds a right side span that encompasses all the matching relations' targets. It also required that the right side span contains a hit for the given right side query (here `'wie' [] 'und' []`), if any such query was given.
 
-The `de` at the end of the relation operator shows that the relations we're looking for must be cross-field relations pointing from the current field (`contents__nl`, as indicated by the `pattfield` parameter) to the `contents__de` field. It also means that we automatically look for relation class `al__de` (alignments with German); that is, placing a target version in the operator changes the default relation class to `al` and appends the version code to the class. Of course, the `==>` operator still supports the same relation class/type filters if necessary, so you can specify a different class or type, e.g. `=s=de>`.
+The `de` at the end of the relation operator shows that the relations we're looking for must be cross-field relations pointing from the current field (`contents__nl`, as indicated by the `pattfield` parameter) to the `contents__de` field. Of course, the `==>` operator still supports the same relation class/type filters if necessary, so you can specify a different class or type, e.g. `=s=>de` or `=al::s=>de`.
 
 This operator returns the left span and two captures: the list of relations as `rels/de` and the right part as `target/de`. The captures will indicate relations pointing to the `contents__de` field, or the capture itself being from that field.
 
 If the default capture names don't work for you, you rename them:
 
-    'als [] 'en' []' A:==de> B:('wie [] 'und' []')
+    'als [] 'en' []' A:==>de B:('wie [] 'und' []')
 
 ### Alignments between more than two versions
 
@@ -57,8 +82,8 @@ Find corresponding sentences (`pattfield=contents__nl`):
 
 ```
 'als [] 'en' []'
-    ==de> 'wie' [] 'und' []' ;
-    ==en> 'as' [] 'and' []'
+    ==>de 'wie' [] 'und' []' ;
+    ==>en 'as' [] 'and' []'
 ```
 
 ### Alignments between sentences
@@ -67,8 +92,8 @@ Find corresponding sentences (`pattfield==contents__nl`):
 
 ```
 <s/> containing 'als [] 'en' []'
-    =s=de> _ ;
-    =s=en> _
+    =s=>de _ ;
+    =s=>en _
 ```
 
 

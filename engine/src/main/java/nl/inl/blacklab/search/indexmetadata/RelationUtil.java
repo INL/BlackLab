@@ -11,17 +11,29 @@ import nl.inl.blacklab.search.BlackLabIndex;
 public class RelationUtil {
 
     /** Relation class used for inline tags. Deliberately obscure to avoid collisions with "real" relations. */
-    public static final String RELATION_CLASS_INLINE_TAG = "__tag";
+    public static final String CLASS_INLINE_TAG = "__tag";
+
+    /** Relation class to use for dependency relations (by convention). */
+    public static final String CLASS_DEPENDENCY = "dep";
 
     /** Relation class to use for dependency relations. */
-    public static final String RELATION_CLASS_DEPENDENCY = "dep";
+    public static final String CLASS_DEFAULT = "rel";
 
-    /** Relation class to use for alignment relations. */
-    public static final String RELATION_CLASS_ALIGNMENT = "al";
+    /** Relation class to use for alignment relations (by convention). */
+    public static final String CLASS_ALIGNMENT = "al";
+
+    /** Default relation class regex for finding dependency relations ("any true relation class", i.e. no inline tags). */
+    public static final String CLASS_ANY_REGEX = "[^_].*";
+
+    /** Default relation target version: any or none */
+    public static final String OPTIONAL_TARGET_VERSION_REGEX = "(__.*)?";
+
+    /** Default relation type: any */
+    public static final String ANY_TYPE_REGEX = ".*";
 
     /** Separator between relation class (e.g. "__tag", "dep" for dependency relation, etc.) and relation type
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
-    public static final String RELATION_CLASS_TYPE_SEPARATOR = "::";
+    public static final String CLASS_TYPE_SEPARATOR = "::";
 
     /** Separator after relation type and attribute value in _relation annotation. */
     private static final String ATTR_SEPARATOR = "\u0001";
@@ -104,7 +116,7 @@ public class RelationUtil {
      * @return full relation type
      */
     public static String fullType(String relClass, String type) {
-        return relClass + RELATION_CLASS_TYPE_SEPARATOR + type;
+        return relClass + CLASS_TYPE_SEPARATOR + type;
     }
 
     /**
@@ -114,7 +126,7 @@ public class RelationUtil {
      * @return full relation type
      */
     public static String inlineTagFullType(String tagName) {
-        return fullType(RELATION_CLASS_INLINE_TAG, tagName);
+        return fullType(CLASS_INLINE_TAG, tagName);
     }
 
     /**
@@ -184,12 +196,12 @@ public class RelationUtil {
      * @return relation class and relation type
      */
     public static String[] classAndType(String fullRelationType) {
-        int sep = fullRelationType.indexOf(RELATION_CLASS_TYPE_SEPARATOR);
+        int sep = fullRelationType.indexOf(CLASS_TYPE_SEPARATOR);
         if (sep < 0)
             return new String[] { "", fullRelationType };
         return new String[] {
             fullRelationType.substring(0, sep),
-            fullRelationType.substring(sep + RELATION_CLASS_TYPE_SEPARATOR.length())
+            fullRelationType.substring(sep + CLASS_TYPE_SEPARATOR.length())
         };
     }
 

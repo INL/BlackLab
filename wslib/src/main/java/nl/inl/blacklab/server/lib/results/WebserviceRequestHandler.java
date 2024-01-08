@@ -342,7 +342,7 @@ public class WebserviceRequestHandler {
         Map<String, RelationsStats.ClassStats> classesMap = stats.getClasses();
         Collection<String> relClasses = params.getRelClasses().isEmpty() ? classesMap.keySet() :
                 new HashSet<>(Arrays.asList(params.getRelClasses().split(",")));
-        final String spansClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
+        String spansClass = RelationUtil.CLASS_INLINE_TAG;
         if (params.getRelOnlySpans()) {
             relClasses = Set.of(spansClass);
         }

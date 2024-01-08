@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
@@ -23,7 +24,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class XFRelations implements ExtensionFunctionClass {
 
     /** Relation type to prepend if argument does not contain substring "::" */
-    private static final String DEFAULT_RELATION_TYPE = "dep"; // could be made configurable if needed
+    private static final String DEFAULT_RELATION_TYPE = RelationUtil.CLASS_ANY_REGEX; // could be made configurable if needed
 
     public static final String FUNC_REL = "rel";
     public static final String FUNC_RMATCH = "rmatch";
@@ -98,10 +99,10 @@ public class XFRelations implements ExtensionFunctionClass {
         return isAnyNGram;
     }
 
-    private static String optPrependDefaultType(String relationType) {
-        if (!relationType.contains("::"))
-            relationType = DEFAULT_RELATION_TYPE + "::(" + relationType + ")";
-        return relationType;
+    private static String optPrependDefaultType(String relationTypeRegex) {
+        if (!relationTypeRegex.contains("::"))
+            relationTypeRegex = DEFAULT_RELATION_TYPE + "::(" + relationTypeRegex + ")";
+        return relationTypeRegex;
     }
 
     /**

@@ -141,7 +141,7 @@ public class RelationsStats {
         String relationClass;
         if (oldStyleStarttag) {
             // Old external index. Convert term to new style so we can process it the same way.
-            relationClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
+            relationClass = RelationUtil.CLASS_INLINE_TAG;
             term = RelationUtil.indexTerm(RelationUtil.fullType(relationClass, term), null);
         } else {
             // New integrated index with spans indexed as relations as well.
