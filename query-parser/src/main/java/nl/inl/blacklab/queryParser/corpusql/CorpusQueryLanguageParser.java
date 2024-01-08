@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -159,7 +159,7 @@ public class CorpusQueryLanguageParser {
         return value.withAnnotationAndSensitivity(annot, null);
     }
 
-    private static final Pattern PATT_RELATION_OPERATOR = Pattern.compile("^[-=](.*)[-=]>([a-zA-Z_]*)$");
+    private static final Pattern PATT_RELATION_OPERATOR = Pattern.compile("^([a-zA-Z0-9_]*)[-=](.*)[-=]>([a-zA-Z0-9_]*)$");
 
     /**
      * Get the relation type and target version regexes from the operator.
@@ -172,17 +172,18 @@ public class CorpusQueryLanguageParser {
      * @param relationOperator relation operator with optional type regex, e.g. "-det->" or "-det->de"
      * @return relation type and target version (intepret both as regexes)
      */
-    private static Pair<String,String> parseRelationOperator(String relationOperator) {
+    private static Triple<String, String, String> parseRelationOperator(String relationOperator) {
         Matcher matcher = PATT_RELATION_OPERATOR.matcher(relationOperator);
         if (!matcher.matches())
             throw new RuntimeException("Invalid relation operator: " + relationOperator);
-        String type = matcher.group(1);
-        String targetVersion = matcher.group(2);
+        String sourceVersion = matcher.group(1);
+        String type = matcher.group(2);
+        String targetVersion = matcher.group(3);
         if (StringUtils.isEmpty(targetVersion))
             targetVersion = RelationUtil.OPTIONAL_TARGET_VERSION_REGEX;
         if (StringUtils.isEmpty(type))
             type = RelationUtil.ANY_TYPE_REGEX; // any relation type
-        return Pair.of(type, targetVersion);
+        return Triple.of(sourceVersion, type, targetVersion);
     }
 
     static class ChildRelationStruct {
@@ -205,19 +206,23 @@ public class CorpusQueryLanguageParser {
         public static RelationTypeStruct fromOperator(String op) {
             boolean negate = false;
             assert op.charAt(0) != '^'; // should've been stripped already
-            boolean isAlignmentOperator = op.charAt(0) == '=';
+            boolean isAlignmentOperator = op.contains("=>");
             if (op.charAt(0) == '!') {
                 negate = true;
                 op = op.substring(1);
             }
-            Pair<String, String> typeAndTargetVersion = parseRelationOperator(op);
-            String typeRegex = typeAndTargetVersion.getLeft();
+            Triple<String, String, String> typeAndTargetVersion = parseRelationOperator(op);
+            String sourceVersion = typeAndTargetVersion.getLeft();
+            String typeRegex = typeAndTargetVersion.getMiddle();
             String targetVersion = typeAndTargetVersion.getRight();
-            return new RelationTypeStruct(typeRegex, targetVersion, negate, isAlignmentOperator);
+            return new RelationTypeStruct(typeRegex, sourceVersion, targetVersion, negate, isAlignmentOperator);
         }
 
         /** Relation type regex */
         public final String regex;
+
+        /** Source version we want to search the left side in */
+        public final String sourceVersion;
 
         /** Relation target regex */
         public final String targetVersion;
@@ -228,8 +233,9 @@ public class CorpusQueryLanguageParser {
         /** Is this an alignment operator? E.g. ==>de ("find all alignment relations between spans on left and right") */
         public final boolean isAlignmentOperator;
 
-        public RelationTypeStruct(String regex, String targetVersion, boolean negate, boolean isAlignmentOperator) {
+        public RelationTypeStruct(String regex, String sourceVersion, String targetVersion, boolean negate, boolean isAlignmentOperator) {
             this.regex = regex;
+            this.sourceVersion = sourceVersion;
             this.targetVersion = targetVersion;
             this.negate = negate;
             this.isAlignmentOperator = isAlignmentOperator;
