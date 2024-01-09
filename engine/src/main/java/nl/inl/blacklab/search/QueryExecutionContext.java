@@ -31,6 +31,22 @@ public class QueryExecutionContext {
     private final MatchSensitivity requestedSensitivity;
 
     /**
+     * Name of the annotated field we're searching.
+     * Stored as a string because we might want to jump between versions
+     * (e.g. different languages), and this name might not include a version and
+     * therefore not be an existing field. (e.g. this might be "contents"
+     * when the actual fields for different versions are named "contents__en" and "contents__nl")
+     */
+    private final String fieldName;
+
+    /** Version of the document we're searching, or null if this is not a parallel corpus. */
+    private final String version = null;
+
+    private final String annotationName;
+
+    private final Set<String> captures = new HashSet<>();
+
+    /**
      * Construct a query execution context object.
      * 
      * @param index the index object
@@ -43,6 +59,8 @@ public class QueryExecutionContext {
         this.index = index;
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
+        fieldName = annotation.field().name();
+        annotationName = annotation.name();
     }
 
     public QueryExecutionContext withAnnotation(Annotation annotation) {
@@ -59,6 +77,11 @@ public class QueryExecutionContext {
         if (matchSensitivity == null)
             matchSensitivity = requestedSensitivity;
         return new QueryExecutionContext(index, annotation, matchSensitivity);
+    }
+
+    public QueryExecutionContext withVersion(String version) {
+        // @@@ TODO implement
+        return this;
     }
 
     public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity) {
@@ -151,8 +174,6 @@ public class QueryExecutionContext {
     public QueryInfo queryInfo() {
         return QueryInfo.create(index(), field());
     }
-
-    Set<String> captures = new HashSet<>();
 
     public String ensureUniqueCapture(String captureBaseName) {
         String capture = captureBaseName;

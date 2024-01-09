@@ -10,11 +10,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
- * Apply a global constraint (or "match filter") to our matches.
- *
- * A global constraint is specified in Corpus Query Language using
- * the :: operator, e.g. <code>a:[] "and" b:[] :: a.word = b.word</code>
- * to find things like "more and more", "less and less", etc.
+ * Apply some settings to part of the query.
  */
 public class TextPatternSettings extends TextPattern {
 
