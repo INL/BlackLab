@@ -198,7 +198,7 @@ public class CorpusQueryLanguageParser {
             String typeRegex = matcher.group(2);
             String targetVersion = matcher.group(3);
             if (StringUtils.isEmpty(targetVersion))
-                targetVersion = RelationUtil.OPTIONAL_TARGET_VERSION_REGEX;
+                targetVersion = RelationUtil.OPTIONAL_TARGET_VERSION_REGEX;  //@@@ WRONG!
             if (StringUtils.isEmpty(typeRegex))
                 typeRegex = RelationUtil.ANY_TYPE_REGEX; // any relation type
             return new RelationOperatorInfo(typeRegex, sourceVersion, targetVersion, negate, isAlignmentOperator);
