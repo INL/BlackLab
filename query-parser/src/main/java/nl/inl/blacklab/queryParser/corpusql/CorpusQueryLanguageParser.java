@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Triple;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -18,7 +16,6 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
@@ -159,51 +156,56 @@ public class CorpusQueryLanguageParser {
         return value.withAnnotationAndSensitivity(annot, null);
     }
 
-    private static final Pattern PATT_RELATION_OPERATOR = Pattern.compile("^([a-zA-Z0-9_]*)[-=](.*)[-=]>([a-zA-Z0-9_]*)$");
-
-    /**
-     * Get the relation type and target version regexes from the operator.
-     *
-     * NOTE: if the operator started with ! or ^, this character must have been removed already!
-     *
-     * If no type was specified, the type will be ".*" (any relation type). If no target version was specified,
-     * the target version will be the empty string (any target version or no target version).
-     *
-     * @param relationOperator relation operator with optional type regex, e.g. "-det->" or "-det->de"
-     * @return relation type and target version (intepret both as regexes)
-     */
-    private static Triple<String, String, String> parseRelationOperator(String relationOperator) {
-        Matcher matcher = PATT_RELATION_OPERATOR.matcher(relationOperator);
-        if (!matcher.matches())
-            throw new RuntimeException("Invalid relation operator: " + relationOperator);
-        String sourceVersion = matcher.group(1);
-        String type = matcher.group(2);
-        String targetVersion = matcher.group(3);
-        if (StringUtils.isEmpty(targetVersion))
-            targetVersion = RelationUtil.OPTIONAL_TARGET_VERSION_REGEX;
-        if (StringUtils.isEmpty(type))
-            type = RelationUtil.ANY_TYPE_REGEX; // any relation type
-        return Triple.of(sourceVersion, type, targetVersion);
-    }
-
     static class ChildRelationStruct {
 
-        public final RelationTypeStruct type;
+        public final RelationOperatorInfo type;
 
         public final TextPattern target;
 
         public final String captureAs;
 
-        public ChildRelationStruct(RelationTypeStruct type, TextPattern target, String captureAs) {
+        public ChildRelationStruct(RelationOperatorInfo type, TextPattern target, String captureAs) {
             this.type = type;
             this.target = target;
             this.captureAs = captureAs;
         }
     }
 
-    static class RelationTypeStruct {
+    static class RelationOperatorInfo {
 
-        public static RelationTypeStruct fromOperator(String op) {
+        /** Relation or alignment operator, with optional source/target version and relation type regex.
+         *  Examples: --> ; -nmod-> ; nl==>de
+         */
+        private static final Pattern PATT_RELATION_OPERATOR = Pattern.compile("^([a-zA-Z0-9_]*)[-=](.*)[-=]>([a-zA-Z0-9_]*)$");
+
+        /**
+         * Get the relation type and target version regexes from the operator.
+         * NOTE: if the operator started with ! or ^, this character must have been removed already!
+         * If no type was specified, the type will be ".*" (any relation type). If no target version was specified,
+         * the target version will be the empty string (any target version or no target version).
+         *
+         * @param relationOperator     relation operator with optional type regex, e.g. "-det->" or "-det->de"
+         * @param negate               is this a negated relation operator? E.g. !-nmod->
+         * @param isAlignmentOperator  is this an alignment operator? E.g. ==>
+         * @return relation type and target version (intepret both as regexes)
+         */
+        private static RelationOperatorInfo parseRelationOperator(String relationOperator, boolean negate,
+                boolean isAlignmentOperator) {
+            Matcher matcher = PATT_RELATION_OPERATOR.matcher(relationOperator);
+            if (!matcher.matches())
+                throw new RuntimeException("Invalid relation operator: " + relationOperator);
+            String sourceVersion = matcher.group(1);
+            String typeRegex = matcher.group(2);
+            String targetVersion = matcher.group(3);
+            if (StringUtils.isEmpty(targetVersion))
+                targetVersion = RelationUtil.OPTIONAL_TARGET_VERSION_REGEX;
+            if (StringUtils.isEmpty(typeRegex))
+                typeRegex = RelationUtil.ANY_TYPE_REGEX; // any relation type
+            return new RelationOperatorInfo(typeRegex, sourceVersion, targetVersion, negate, isAlignmentOperator);
+        }
+
+        /** Create an info struct from the operator string. */
+        public static RelationOperatorInfo fromOperator(String op) {
             boolean negate = false;
             assert op.charAt(0) != '^'; // should've been stripped already
             boolean isAlignmentOperator = op.contains("=>");
@@ -211,15 +213,11 @@ public class CorpusQueryLanguageParser {
                 negate = true;
                 op = op.substring(1);
             }
-            Triple<String, String, String> typeAndTargetVersion = parseRelationOperator(op);
-            String sourceVersion = typeAndTargetVersion.getLeft();
-            String typeRegex = typeAndTargetVersion.getMiddle();
-            String targetVersion = typeAndTargetVersion.getRight();
-            return new RelationTypeStruct(typeRegex, sourceVersion, targetVersion, negate, isAlignmentOperator);
+            return parseRelationOperator(op, negate, isAlignmentOperator);
         }
 
         /** Relation type regex */
-        public final String regex;
+        public final String typeRegex;
 
         /** Source version we want to search the left side in */
         public final String sourceVersion;
@@ -233,50 +231,59 @@ public class CorpusQueryLanguageParser {
         /** Is this an alignment operator? E.g. ==>de ("find all alignment relations between spans on left and right") */
         public final boolean isAlignmentOperator;
 
-        public RelationTypeStruct(String regex, String sourceVersion, String targetVersion, boolean negate, boolean isAlignmentOperator) {
-            this.regex = regex;
+        private RelationOperatorInfo(String typeRegex, String sourceVersion, String targetVersion, boolean negate, boolean isAlignmentOperator) {
+            this.typeRegex = typeRegex;
             this.sourceVersion = sourceVersion;
             this.targetVersion = targetVersion;
             this.negate = negate;
             this.isAlignmentOperator = isAlignmentOperator;
         }
+
+        /**
+         * Get the full relation type regex, optionally including the target version.
+         *
+         * @return
+         */
+        public String getFullTypeRegex() {
+            // Make sure our type regex has a relation class
+            String regex = RelationUtil.optPrependDefaultClass(typeRegex);
+            String[] classAndType = RelationUtil.classAndType(regex);
+            String relationClass = classAndType[0];
+            String relationType = classAndType[1];
+            if (!targetVersion.isEmpty()) {
+                // A target version was set. Target version must be added to or replaced in type regex.
+                // Replace or add target version in relation class
+                relationClass = AnnotatedFieldNameUtil.getParallelFieldVersion(relationClass, targetVersion);
+            } else {
+                // No target version set.
+                if (regex.contains(AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR) || regex.endsWith("$")) {
+                    // typeRegex already includes a version, or is a regex that ends with $ (so we shouldn't add a version)
+                    return regex;
+                } else {
+                    // Explicitly state that there may or may not be a target version
+                    relationClass = relationClass + "(" + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + ".*)?";
+                }
+            }
+            return RelationUtil.fullTypeRegex(relationClass, relationType);
+        }
     }
 
     TextPattern relationQuery(TextPattern parent, List<ChildRelationStruct> childRels) {
-        if (USE_TP_RELATION) {
-            List<TextPattern> children = new ArrayList<>();
-            for (ChildRelationStruct childRel: childRels) {
-                TextPattern child = new TextPatternRelationTarget(
-                        childRel.type.regex, childRel.type.negate, childRel.target, RelationInfo.SpanMode.SOURCE,
-                        SpanQueryRelations.Direction.BOTH_DIRECTIONS, childRel.captureAs);
-                children.add(child);
-            }
-            return new TextPatternRelationMatch(parent, children);
-        } else {
-            List<TextPattern> clauses = new ArrayList<>();
-            clauses.add(parent);
-            clauses.addAll(childRels.stream().map(rel -> {
-                TextPattern tp = new TextPatternQueryFunction(XFRelations.FUNC_REL,
-                        List.of(rel.type.regex, rel.target, "source", rel.captureAs));
-                if (rel.type.negate)
-                    tp = new TextPatternNot(tp);
-                return tp;
-            }).collect(Collectors.toList()));
-            return new TextPatternQueryFunction(XFRelations.FUNC_RMATCH, clauses);
+        List<TextPattern> children = new ArrayList<>();
+        for (ChildRelationStruct childRel: childRels) {
+            TextPattern child = new TextPatternRelationTarget(
+                    childRel.type.getFullTypeRegex(), childRel.type.negate, childRel.target, RelationInfo.SpanMode.SOURCE,
+                    SpanQueryRelations.Direction.BOTH_DIRECTIONS, childRel.captureAs);
+            children.add(child);
         }
+        return new TextPatternRelationMatch(parent, children);
     }
 
     TextPattern rootRelationQuery(ChildRelationStruct childRel) {
         assert !childRel.type.negate : "Cannot negate root query";
-        if (USE_TP_RELATION) {
-            return new TextPatternRelationTarget(
-                    childRel.type.regex, false, childRel.target, RelationInfo.SpanMode.TARGET,
-                    SpanQueryRelations.Direction.ROOT, childRel.captureAs);
-        } else {
-            return new TextPatternQueryFunction(
-                    XFRelations.FUNC_REL, List.of(childRel.type.regex, childRel.target, "target",
-                    childRel.captureAs, "root"));
-        }
+        return new TextPatternRelationTarget(
+                childRel.type.getFullTypeRegex(), false, childRel.target, RelationInfo.SpanMode.TARGET,
+                SpanQueryRelations.Direction.ROOT, childRel.captureAs);
     }
 
 }

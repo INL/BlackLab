@@ -163,7 +163,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             // Determine the full type name to index (relation class and relation type, e.g. "__tag::s" or "dep::nmod")
             String fullType = spanOrRelType;
             if (type == AnnotationType.SPAN)
-                fullType = RelationUtil.inlineTagFullType(spanOrRelType);
+                fullType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, spanOrRelType);
 
             // Determine the full value to index, e.g. full type and any attributes
             String valueToIndex = RelationUtil.indexTermMulti(fullType, attributes);

@@ -423,7 +423,10 @@ public class AnnotationWriter {
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo matchInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
-        String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : RelationUtil.inlineTagFullType(tagName);
+        String fullRelationType;
+        fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
+                tagName :
+                RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
         return indexRelation(fullRelationType, attributes, indexType, matchInfo);
     }
 

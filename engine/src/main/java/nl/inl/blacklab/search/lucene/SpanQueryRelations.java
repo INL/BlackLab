@@ -167,7 +167,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private String captureAs;
 
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationTypeRegex,
             Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs) {
         super(queryInfo);
 
@@ -177,11 +177,11 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             throw new IllegalArgumentException("ALL_SPANS makes no sense for SpanQueryRelations");
 
         // Construct the clause from the field, relation type and attributes
-        String regexp = RelationUtil.searchRegex(queryInfo.index(), relationType, attributes);
-        RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp), RegExp.COMPLEMENT);
+        String completeRegex = RelationUtil.searchRegex(queryInfo.index(), relationTypeRegex, attributes);
+        RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, completeRegex), RegExp.COMPLEMENT);
         BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
 
-        init(relationFieldName, relationType, attributes, clause, direction, spanMode, captureAs);
+        init(relationFieldName, relationTypeRegex, attributes, clause, direction, spanMode, captureAs);
     }
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,

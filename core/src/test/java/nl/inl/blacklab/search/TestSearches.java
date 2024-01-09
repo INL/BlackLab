@@ -298,7 +298,7 @@ public class TestSearches {
             List<String> targets = List.of("fox [] jumps", "dog []", "Force [] be");
             List<String> sources = List.of("[] The", "over [] the", "May [] the");
             List<String> none = Collections.emptyList();
-            String type = RelationUtil.inlineTagFullType("entity");
+            String type = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, "entity");
 
             Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', _, 'full')"));
             Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "'), 'full')"));

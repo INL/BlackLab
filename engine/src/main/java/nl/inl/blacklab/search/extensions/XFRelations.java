@@ -23,9 +23,6 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class XFRelations implements ExtensionFunctionClass {
 
-    /** Relation type to prepend if argument does not contain substring "::" */
-    private static final String DEFAULT_RELATION_TYPE = RelationUtil.CLASS_ANY_REGEX; // could be made configurable if needed
-
     public static final String FUNC_REL = "rel";
     public static final String FUNC_RMATCH = "rmatch";
     public static final String FUNC_RSPAN = "rspan";
@@ -58,14 +55,14 @@ public class XFRelations implements ExtensionFunctionClass {
         // Autodetermine capture name if no explicit name given.
         // Discard relation class if specified, keep Unicode letters from relationType, and add unique number
         if (StringUtils.isEmpty(captureAs)) {
-            String relTypeNoClass = relationType.replaceAll("^.+::", "").replaceAll("[^\\p{L}]", "");
+            String relTypeNoClass = RelationUtil.classAndType(relationType)[1].replaceAll("[^\\p{L}]", "");
             if (relTypeNoClass.isEmpty())
                 relTypeNoClass = FUNC_REL;
             captureAs = context.ensureUniqueCapture(relTypeNoClass);
         }
 
         // Make sure relationType has a relation class
-        relationType = optPrependDefaultType(relationType);
+        relationType = RelationUtil.optPrependDefaultClass(relationType);
 
         // Do we need to match a target, or don't we care?
         if (isAnyNGram(matchTarget))
@@ -97,12 +94,6 @@ public class XFRelations implements ExtensionFunctionClass {
             }
         }
         return isAnyNGram;
-    }
-
-    private static String optPrependDefaultType(String relationTypeRegex) {
-        if (!relationTypeRegex.contains("::"))
-            relationTypeRegex = DEFAULT_RELATION_TYPE + "::(" + relationTypeRegex + ")";
-        return relationTypeRegex;
     }
 
     /**
@@ -198,7 +189,7 @@ public class XFRelations implements ExtensionFunctionClass {
         BLSpanQuery query = (BLSpanQuery)args.get(0);
         String toCapture = (String)args.get(1);
         String captureAs = context.ensureUniqueCapture((String)args.get(2));
-        String relationType = optPrependDefaultType((String) args.get(3));
+        String relationType = RelationUtil.optPrependDefaultClass((String) args.get(3));
         String field = context.withRelationAnnotation().luceneField();
         return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, toCapture, captureAs, relationType);
     }

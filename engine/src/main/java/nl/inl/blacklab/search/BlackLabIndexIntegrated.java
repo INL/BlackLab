@@ -195,7 +195,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         case FULL_TAG:      spanMode = RelationInfo.SpanMode.FULL_SPAN; break;
         }
         return new SpanQueryRelations(queryInfo, luceneField,
-                RelationUtil.inlineTagFullType(tagName), attributes,
+                RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName), attributes,
                 SpanQueryRelations.Direction.FORWARD, spanMode, captureAs);
     }
 

@@ -9,10 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.ChildRelationStruct;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.RelationTypeStruct;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.RelationOperatorInfo;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
@@ -32,7 +30,6 @@ import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
 import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
-import nl.inl.blacklab.search.textpattern.TextPatternEdge;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
@@ -399,7 +396,8 @@ if (childRels.isEmpty())
     throw new Error("Missing return statement in function");
   }
 
-  final public ChildRelationStruct childRelation() throws ParseException {RelationTypeStruct relType = null;
+  final public ChildRelationStruct childRelation() throws ParseException {
+      RelationOperatorInfo relType = null;
     TextPattern target = null;
     String label = "";
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -419,7 +417,7 @@ if (childRels.isEmpty())
     throw new Error("Missing return statement in function");
   }
 
-  final public RelationTypeStruct relationType() throws ParseException {Token t = null;
+  final public RelationOperatorInfo relationType() throws ParseException {Token t = null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case DEP_OP:{
       t = jj_consume_token(DEP_OP);
@@ -434,7 +432,7 @@ if (childRels.isEmpty())
       jj_consume_token(-1);
       throw new ParseException();
     }
-{if ("" != null) return RelationTypeStruct.fromOperator(t.toString());}
+{if ("" != null) return RelationOperatorInfo.fromOperator(t.toString());}
     throw new Error("Missing return statement in function");
   }
 
@@ -454,7 +452,7 @@ if (childRels.isEmpty())
     }
     t = jj_consume_token(ROOT_DEP_OP);
     target = relationQuery();
-RelationTypeStruct relType = RelationTypeStruct.fromOperator(t.toString().substring(1));
+RelationOperatorInfo relType = RelationOperatorInfo.fromOperator(t.toString().substring(1));
         {if ("" != null) return wrapper.rootRelationQuery(new ChildRelationStruct(relType, target, label));}
     throw new Error("Missing return statement in function");
   }
