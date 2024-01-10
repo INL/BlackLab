@@ -352,8 +352,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         return sensitivity.luceneFieldSuffix();
     }
 
-    private static String nullIfEmpty(String captureAs) {
-        return captureAs.isEmpty() ? null : captureAs;
+    private static String nullIfEmpty(String str) {
+        return str == null || str.isEmpty() ? null : str;
     }
 
     private static Map<String, String> nullIfEmpty(Map<String, String> attributes) {

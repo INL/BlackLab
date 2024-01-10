@@ -127,7 +127,7 @@ public class QueryExecutionContext {
      * @return new context object
      */
     public QueryExecutionContext withDocVersion(String version) {
-        if (version.equals(this.version))
+        if (version == null && this.version == null || version.equals(this.version))
             return this;
         return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
                 defaultRelationClass, captures);

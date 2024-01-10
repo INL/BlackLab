@@ -197,8 +197,8 @@ public class CorpusQueryLanguageParser {
 
         private RelationOperatorInfo(String typeRegex, String sourceVersion, String targetVersion, boolean negate, boolean isAlignmentOperator) {
             this.typeRegex = typeRegex;
-            this.sourceVersion = sourceVersion;
-            this.targetVersion = targetVersion;
+            this.sourceVersion = sourceVersion == null || sourceVersion.isEmpty() ? null : sourceVersion;
+            this.targetVersion = targetVersion == null || targetVersion.isEmpty() ? null : targetVersion;
             this.negate = negate;
             this.isAlignmentOperator = isAlignmentOperator;
         }
@@ -211,7 +211,7 @@ public class CorpusQueryLanguageParser {
         public String getFullTypeRegex() {
             // Make sure our type regex has a relation class
             String regex = RelationUtil.optPrependDefaultClass(typeRegex);
-            if (targetVersion.isEmpty())
+            if (targetVersion == null || targetVersion.isEmpty())
                 return regex;
             String[] classAndType = RelationUtil.classAndType(regex);
             String relationClass = classAndType[0];
