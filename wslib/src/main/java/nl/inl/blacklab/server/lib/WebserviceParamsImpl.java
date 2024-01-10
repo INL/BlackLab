@@ -128,9 +128,15 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public Optional<TextPattern> pattern() throws BlsException {
         if (pattern == null) {
-            pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData());
+            pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData(),
+                    getAdjustRelationHits());
         }
         return pattern == null ? Optional.empty() : Optional.of(pattern);
+    }
+
+    @Override
+    public boolean getAdjustRelationHits() {
+        return params.getAdjustRelationHits();
     }
 
     /** Pattern, optionally within s if context=s was specified. */

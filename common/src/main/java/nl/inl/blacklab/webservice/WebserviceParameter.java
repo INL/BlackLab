@@ -102,6 +102,9 @@ public enum WebserviceParameter {
     // for listing values (metadata, annotations, relations, attributes)
     LIMIT_VALUES("limitvalues"),        // truncate lists/maps of values to this length [1000]
 
+    // relations querying options
+    REL_ADJUST_HITS("adjust-hits"),       // adjust hits to cover all words involved in relation [no]
+
     DEBUG("debug"), // include debug info (cache)
 
     OPERATION("op"),

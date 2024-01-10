@@ -10,13 +10,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationTarget;
@@ -43,32 +41,8 @@ public class CorpusQueryLanguageParser {
         return parse(query, AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME);
     }
 
-    /** Automatically add rspan so hit encompasses all matched relations.
-     *
-     * Only does this if this is a relations query and if setting enabled.
-     */
-    public TextPattern ensureHitSpansMatchedRelations(TextPattern pattern) {
-        boolean addRspanAll = false;
-        if (hitsShouldSpanMatchedRelations && pattern.isRelationsQuery()) {
-            addRspanAll = true;
-            if (pattern instanceof TextPatternQueryFunction) {
-                TextPatternQueryFunction qf = (TextPatternQueryFunction) pattern;
-                // Only add rspan if not already doing it explicitly
-                if (qf.getName().equals(XFRelations.FUNC_RSPAN) || qf.getName().equals(XFRelations.FUNC_REL)) {
-                    addRspanAll = false;
-                }
-            }
-        }
-        return addRspanAll ? new TextPatternQueryFunction(XFRelations.FUNC_RSPAN,
-                List.of(pattern, "all")) : pattern;
-    }
-
     /** Allow strings to be quoted using single quotes? */
     private boolean allowSingleQuotes = true;
-
-    /** If this is a relations query, should we automatically add rspan(..., 'all') so the resulting hit encompasses all
-     *  matches relations? */
-    private boolean hitsShouldSpanMatchedRelations = true;
 
     private String defaultAnnotation;
 
@@ -79,7 +53,7 @@ public class CorpusQueryLanguageParser {
         try {
             GeneratedCorpusQueryLanguageParser parser = new GeneratedCorpusQueryLanguageParser(new StringReader(query));
             parser.wrapper = this;
-            return ensureHitSpansMatchedRelations(parser.query());
+            return parser.query();
         } catch (ParseException | TokenMgrError e) {
             throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
         }
@@ -139,14 +113,6 @@ public class CorpusQueryLanguageParser {
 
     public String getDefaultAnnotation() {
         return defaultAnnotation;
-    }
-
-    public void setHitsShouldSpanMatchedRelations(boolean hitsShouldSpanMatchedRelations) {
-        this.hitsShouldSpanMatchedRelations = hitsShouldSpanMatchedRelations;
-    }
-
-    public boolean isHitsShouldSpanMatchedRelations() {
-        return hitsShouldSpanMatchedRelations;
     }
 
     TextPattern annotationClause(String annot, TextPatternTerm value) {
@@ -259,20 +225,28 @@ public class CorpusQueryLanguageParser {
 
     TextPattern relationQuery(TextPattern parent, List<ChildRelationStruct> childRels) {
         List<TextPattern> children = new ArrayList<>();
+        String sourceVersion = null;
         for (ChildRelationStruct childRel: childRels) {
+            if (childRel.type.sourceVersion != null) {
+                if (sourceVersion != null && !sourceVersion.equals(childRel.type.sourceVersion))
+                    throw new RuntimeException("Cannot combine different source versions in one relation query");
+                sourceVersion = childRel.type.sourceVersion;
+            }
             TextPattern child = new TextPatternRelationTarget(
                     childRel.type.getFullTypeRegex(), childRel.type.negate, childRel.target, RelationInfo.SpanMode.SOURCE,
-                    SpanQueryRelations.Direction.BOTH_DIRECTIONS, childRel.captureAs, childRel.type.targetVersion);
+                    SpanQueryRelations.Direction.BOTH_DIRECTIONS, childRel.captureAs, childRel.type.sourceVersion,
+                    childRel.type.targetVersion);
             children.add(child);
         }
-        return new TextPatternRelationMatch(parent, children);
+        return new TextPatternRelationMatch(sourceVersion, parent, children);
     }
 
     TextPattern rootRelationQuery(ChildRelationStruct childRel) {
         assert !childRel.type.negate : "Cannot negate root query";
         return new TextPatternRelationTarget(
                 childRel.type.getFullTypeRegex(), false, childRel.target, RelationInfo.SpanMode.TARGET,
-                SpanQueryRelations.Direction.ROOT, childRel.captureAs, childRel.type.targetVersion);
+                SpanQueryRelations.Direction.ROOT, childRel.captureAs, childRel.type.sourceVersion,
+                childRel.type.targetVersion);
     }
 
 }

@@ -93,6 +93,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_REL_SPAN_MODE = "spanmode";
     private static final String KEY_REL_TYPE = "reltype";
     private static final String KEY_SENSITIVITY = "sensitivity";
+    private static final String KEY_SOURCE_VERSION = "sourceVersion";
     private static final String KEY_START = "start";
     private static final String KEY_TARGET_VERSION = "targetVersion";
     private static final String KEY_TRAILING_EDGE = "trailingEdge";
@@ -210,6 +211,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         jsonSerializers.put(TextPatternRelationMatch.class, (pattern, writer) -> {
             TextPatternRelationMatch tp = (TextPatternRelationMatch) pattern;
             writer.write(TextPattern.NT_RELATION_MATCH,
+                    KEY_SOURCE_VERSION, tp.getSourceVersion(),
                     KEY_PARENT, tp.getParent(),
                     KEY_CHILDREN, tp.getChildren());
         });
@@ -224,6 +226,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_REL_SPAN_MODE, nullIf(tp.getSpanMode().getCode(), "source"),
                     KEY_DIRECTION, nullIf(tp.getDirection().getCode(), "both"),
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()),
+                    KEY_SOURCE_VERSION, nullIfEmpty(tp.getSourceVersion()),
                     KEY_TARGET_VERSION, nullIfEmpty(tp.getTargetVersion()));
         });
 
@@ -442,6 +445,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     optArgSensitivity(args));
         case TextPattern.NT_RELATION_MATCH:
             return new TextPatternRelationMatch(
+                    (String)args.getOrDefault(KEY_SOURCE_VERSION, null),
                     (TextPattern) args.get(KEY_PARENT),
                     (List<TextPattern>) args.get(KEY_CHILDREN));
         case TextPattern.NT_RELATION_TARGET:
@@ -451,7 +455,9 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (TextPattern) args.get(KEY_CLAUSE),
                     RelationInfo.SpanMode.fromCode((String)args.getOrDefault(KEY_REL_SPAN_MODE, "source")),
                     SpanQueryRelations.Direction.fromCode((String)args.getOrDefault(KEY_DIRECTION, "both")),
-                    (String) args.get(KEY_CAPTURE), (String)args.getOrDefault(KEY_TARGET_VERSION, null));
+                    (String) args.get(KEY_CAPTURE),
+                    (String)args.getOrDefault(KEY_SOURCE_VERSION, null),
+                    (String)args.getOrDefault(KEY_TARGET_VERSION, null));
         case TextPattern.NT_REPEAT:
             return TextPatternRepetition.get(
                     (TextPattern) args.get(KEY_CLAUSE),

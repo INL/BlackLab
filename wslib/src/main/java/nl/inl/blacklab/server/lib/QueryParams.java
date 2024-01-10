@@ -177,4 +177,11 @@ public interface QueryParams {
      * @return should we include deprecated field info?
      */
     ApiVersion apiCompatibility();
+
+    /**
+     * Should relations queries automatically be adjusted so the hit covers all words involved in the relation?
+     *
+     * @return should we auto-adjust relations?
+     */
+    boolean getAdjustRelationHits();
 }
