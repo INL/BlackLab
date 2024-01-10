@@ -180,6 +180,40 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     }
 
     /**
+     * Check that clauses all search in compatible fields.
+     *
+     * NOTE: for parallel corpora, checks if clauses search in the same base field
+     * WITHOUT the document version, so one query may search both contents__nl and
+     * contents__en. The return value will be one of the versioned field names. It
+     * doesn't matter which because this value is only ever used to run this check
+     * again on a higher level in the query tree.
+     *
+     * @param include clauses to check
+     * @return base field name
+     * @throws if clauses search in incompatible fields
+     */
+    public static String checkAllCompatibleFields(List<BLSpanQuery> include) {
+        String baseFieldNameWithVersion = null;
+        String baseFieldName = null;
+        for (BLSpanQuery clause : include) {
+            // Get base field name (i.e. without annotation and sensitivity suffixes,
+            // so "contents" instead of "contents%lemma@i")
+            String baseWithVersion = AnnotatedFieldNameUtil.getBaseName(clause.getField());
+            // In parallel corpora, a query may contain clauses that search in different
+            // versions of the same field (e.g. "contents__en" and "contents__nl").
+            String base = AnnotatedFieldNameUtil.splitParallelFieldName(baseWithVersion)[0];
+            if (baseFieldName == null) {
+                baseFieldName = base;
+                baseFieldNameWithVersion = baseWithVersion;
+            }
+            else if (!baseFieldName.equals(base))
+                throw new BlackLabRuntimeException("Mix of incompatible fields in query ("
+                        + baseFieldName + " and " + base + ")");
+        }
+        return baseFieldNameWithVersion;
+    }
+
+    /**
      * Return an inverted version of this query.
      *
      * @return the inverted query

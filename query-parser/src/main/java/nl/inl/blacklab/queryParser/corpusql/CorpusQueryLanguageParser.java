@@ -197,8 +197,6 @@ public class CorpusQueryLanguageParser {
             String sourceVersion = matcher.group(1);
             String typeRegex = matcher.group(2);
             String targetVersion = matcher.group(3);
-            if (StringUtils.isEmpty(targetVersion))
-                targetVersion = RelationUtil.OPTIONAL_TARGET_VERSION_REGEX;  //@@@ WRONG!
             if (StringUtils.isEmpty(typeRegex))
                 typeRegex = RelationUtil.ANY_TYPE_REGEX; // any relation type
             return new RelationOperatorInfo(typeRegex, sourceVersion, targetVersion, negate, isAlignmentOperator);
@@ -247,23 +245,14 @@ public class CorpusQueryLanguageParser {
         public String getFullTypeRegex() {
             // Make sure our type regex has a relation class
             String regex = RelationUtil.optPrependDefaultClass(typeRegex);
+            if (targetVersion.isEmpty())
+                return regex;
             String[] classAndType = RelationUtil.classAndType(regex);
             String relationClass = classAndType[0];
             String relationType = classAndType[1];
-            if (!targetVersion.isEmpty()) {
-                // A target version was set. Target version must be added to or replaced in type regex.
-                // Replace or add target version in relation class
-                relationClass = AnnotatedFieldNameUtil.getParallelFieldVersion(relationClass, targetVersion);
-            } else {
-                // No target version set.
-                if (regex.contains(AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR) || regex.endsWith("$")) {
-                    // typeRegex already includes a version, or is a regex that ends with $ (so we shouldn't add a version)
-                    return regex;
-                } else {
-                    // Explicitly state that there may or may not be a target version
-                    relationClass = relationClass + "(" + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + ".*)?";
-                }
-            }
+            // A target version was set. Target version must be added to or replaced in type regex.
+            // Replace or add target version in relation class
+            relationClass = AnnotatedFieldNameUtil.getParallelFieldVersion(relationClass, targetVersion);
             return RelationUtil.fullTypeRegex(relationClass, relationType);
         }
     }
@@ -273,7 +262,7 @@ public class CorpusQueryLanguageParser {
         for (ChildRelationStruct childRel: childRels) {
             TextPattern child = new TextPatternRelationTarget(
                     childRel.type.getFullTypeRegex(), childRel.type.negate, childRel.target, RelationInfo.SpanMode.SOURCE,
-                    SpanQueryRelations.Direction.BOTH_DIRECTIONS, childRel.captureAs);
+                    SpanQueryRelations.Direction.BOTH_DIRECTIONS, childRel.captureAs, childRel.type.targetVersion);
             children.add(child);
         }
         return new TextPatternRelationMatch(parent, children);
@@ -283,7 +272,7 @@ public class CorpusQueryLanguageParser {
         assert !childRel.type.negate : "Cannot negate root query";
         return new TextPatternRelationTarget(
                 childRel.type.getFullTypeRegex(), false, childRel.target, RelationInfo.SpanMode.TARGET,
-                SpanQueryRelations.Direction.ROOT, childRel.captureAs);
+                SpanQueryRelations.Direction.ROOT, childRel.captureAs, childRel.type.targetVersion);
     }
 
 }

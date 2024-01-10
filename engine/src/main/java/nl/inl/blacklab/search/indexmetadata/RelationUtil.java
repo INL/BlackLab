@@ -16,14 +16,14 @@ public class RelationUtil {
     /** Relation class to use for dependency relations (by convention). */
     public static final String CLASS_DEPENDENCY = "dep";
 
-    /** Relation class to use for dependency relations. */
-    public static final String CLASS_DEFAULT = "rel";
-
     /** Relation class to use for alignment relations (by convention). */
     public static final String CLASS_ALIGNMENT = "al";
 
-    /** Default relation class regex for finding dependency relations ("any true relation class", i.e. no inline tags). */
-    public static final String CLASS_ANY_REGEX = "[^_].*";
+    /** Relation class to use for relations if not specified. */
+    public static final String CLASS_DEFAULT_INDEX = CLASS_DEPENDENCY;
+
+    /** Default relation class to use when searching (TODO: make configurable; choose smart default based on data?) */
+    public static final String CLASS_DEFAULT_SEARCH = CLASS_DEFAULT_INDEX;
 
     /** Default relation target version: any or none */
     public static final String OPTIONAL_TARGET_VERSION_REGEX = "(" + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + ".*)?";
@@ -108,10 +108,10 @@ public class RelationUtil {
         return attributes;
     }
 
-    public static String optPar(String expr) {
-        if (expr.startsWith("(") && expr.endsWith(")") || expr.matches("\\.[*+?]"))
-            return expr;
-        return "(" + expr + ")";
+    private static String optParRegex(String regex) {
+        if (regex.startsWith("(") && regex.endsWith(")") || regex.matches("\\.[*+?]|\\w+"))
+            return regex;
+        return "(" + regex + ")";
     }
 
     /**
@@ -122,7 +122,7 @@ public class RelationUtil {
      * @return full relation type regex
      */
     public static String fullTypeRegex(String relClass, String type) {
-        return optPar(relClass) + CLASS_TYPE_SEPARATOR + optPar(type);
+        return optParRegex(relClass) + CLASS_TYPE_SEPARATOR + optParRegex(type);
     }
 
     /**
@@ -233,7 +233,7 @@ public class RelationUtil {
         if (attributes == null || attributes.isEmpty()) {
             // No attribute filters, so find the faster term that only has the relation type.
             // (for older encoding, just do a prefix query on the slower terms)
-            return optPar(fullRelationTypeRegex) + ATTR_SEPARATOR + (useOldRelationsEncoding ? ".*" : "");
+            return optParRegex(fullRelationTypeRegex) + ATTR_SEPARATOR + (useOldRelationsEncoding ? ".*" : "");
         }
 
         // Sort and concatenate the attribute names and values
@@ -244,12 +244,12 @@ public class RelationUtil {
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
         // The regex consists of the type part followed by the (sorted) attributes part.
-        return optPar(fullRelationTypeRegex) + ATTR_SEPARATOR + ".*" + attrPart + ".*";
+        return optParRegex(fullRelationTypeRegex) + ATTR_SEPARATOR + ".*" + attrPart + ".*";
     }
 
     public static String optPrependDefaultClass(String relationTypeRegex) {
         if (!relationTypeRegex.contains(CLASS_TYPE_SEPARATOR))
-            relationTypeRegex = fullTypeRegex(CLASS_ANY_REGEX, optPar(relationTypeRegex));
+            relationTypeRegex = fullTypeRegex(CLASS_DEFAULT_SEARCH, optParRegex(relationTypeRegex));
         return relationTypeRegex;
     }
 }

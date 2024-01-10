@@ -614,7 +614,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         Annotation mainAnnotation = annotatedField.mainAnnotation();
         if (mainAnnotation == null)
             throw new IllegalArgumentException("Main annotation not found for " + annotatedField.name());
-        return new QueryExecutionContext(this, mainAnnotation, defaultMatchSensitivity);
+        return QueryExecutionContext.get(this, mainAnnotation, defaultMatchSensitivity);
     }
 
     @Override

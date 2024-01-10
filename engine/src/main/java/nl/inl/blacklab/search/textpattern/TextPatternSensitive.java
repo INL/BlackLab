@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.textpattern;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
@@ -32,7 +33,7 @@ public class TextPatternSensitive extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return clause.translate(context.withSensitivity(sensitivity));
+        return clause.translate(context.withAnnotationAndSensitivity((Annotation) null, sensitivity));
     }
 
     @Override

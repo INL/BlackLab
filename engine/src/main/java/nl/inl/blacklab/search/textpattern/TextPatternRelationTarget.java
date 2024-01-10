@@ -27,14 +27,17 @@ public class TextPatternRelationTarget extends TextPattern {
 
     private final String captureAs;
 
+    private final String targetVersion;
+
     public TextPatternRelationTarget(String regex, boolean negate, TextPattern target, RelationInfo.SpanMode spanMode,
-            SpanQueryRelations.Direction direction, String captureAs) {
+            SpanQueryRelations.Direction direction, String captureAs, String targetVersion) {
         this.regex = regex;
         this.negate = negate;
         this.target = target;
         this.spanMode = spanMode;
         this.direction = direction;
         this.captureAs = captureAs == null ? "" : captureAs;
+        this.targetVersion = targetVersion;
     }
 
     @Override
@@ -46,12 +49,12 @@ public class TextPatternRelationTarget extends TextPattern {
         TextPatternRelationTarget that = (TextPatternRelationTarget) o;
         return negate == that.negate && Objects.equals(regex, that.regex) && Objects.equals(target,
                 that.target) && spanMode == that.spanMode && direction == that.direction && Objects.equals(
-                captureAs, that.captureAs);
+                captureAs, that.captureAs) && Objects.equals(targetVersion, that.targetVersion);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(regex, negate, target, spanMode, direction, captureAs);
+        return Objects.hash(regex, negate, target, spanMode, direction, captureAs, targetVersion);
     }
 
     @Override
@@ -62,7 +65,7 @@ public class TextPatternRelationTarget extends TextPattern {
                 context.queryInfo(),
                 context,
                 regex,
-                targetNoDefVal.translate(context),
+                targetNoDefVal.translate(context.withDocVersion(targetVersion)),
                 direction,
                 captureAs,
                 spanMode
@@ -106,5 +109,9 @@ public class TextPatternRelationTarget extends TextPattern {
     @Override
     public boolean isRelationsQuery() {
         return true;
+    }
+
+    public String getTargetVersion() {
+        return targetVersion;
     }
 }

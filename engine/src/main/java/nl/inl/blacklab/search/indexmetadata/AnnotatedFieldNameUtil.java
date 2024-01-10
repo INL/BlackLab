@@ -470,7 +470,7 @@ public final class AnnotatedFieldNameUtil {
      * @return the parallel field name with the indicated version
      */
     public static String getParallelFieldVersion(String fieldName, String version) {
-        if (version.isEmpty())
+        if (version == null || version.isEmpty())
             return fieldName;
         return splitParallelFieldName(fieldName)[0] + PARALLEL_VERSION_SEPARATOR + version;
     }

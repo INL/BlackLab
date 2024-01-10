@@ -11,8 +11,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.QueryVisitor;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -56,16 +54,9 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     }
 
     private void determineBaseFieldName() {
-        if (!clauses.isEmpty()) {
+        baseFieldName = checkAllCompatibleFields(clauses);
+        if (!clauses.isEmpty())
             luceneFieldName = clauses.get(0).getRealField();
-            baseFieldName = AnnotatedFieldNameUtil.getBaseName(clauses.get(0).getField());
-            for (int i = 1; i < clauses.size(); i++) {
-                String f = AnnotatedFieldNameUtil.getBaseName(clauses.get(i).getField());
-                if (!baseFieldName.equals(f))
-                    throw new BlackLabRuntimeException("Mix of incompatible fields in query ("
-                            + baseFieldName + " and " + f + ")");
-            }
-        }
     }
 
     @Override

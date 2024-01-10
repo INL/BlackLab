@@ -88,7 +88,7 @@ public class ResultDocSnippet {
                     SpanQueryPositionFilter.Operation.WITHIN);
             // Also capture any relations that are in the tag
             pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, captureInlineTagAs, "rels"));
-            QueryExecutionContext queryContext = new QueryExecutionContext(index,
+            QueryExecutionContext queryContext = QueryExecutionContext.get(index,
                     index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {
                 BLSpanQuery query = pattern.translate(queryContext);

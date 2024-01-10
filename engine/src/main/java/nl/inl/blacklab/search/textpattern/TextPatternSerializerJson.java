@@ -94,6 +94,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_REL_TYPE = "reltype";
     private static final String KEY_SENSITIVITY = "sensitivity";
     private static final String KEY_START = "start";
+    private static final String KEY_TARGET_VERSION = "targetVersion";
     private static final String KEY_TRAILING_EDGE = "trailingEdge";
     private static final String KEY_VALUE = "value"; // term, regex, etc.
 
@@ -222,7 +223,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_NEGATE, nullIf(tp.isNegate(), false),
                     KEY_REL_SPAN_MODE, nullIf(tp.getSpanMode().getCode(), "source"),
                     KEY_DIRECTION, nullIf(tp.getDirection().getCode(), "both"),
-                    KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()));
+                    KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()),
+                    KEY_TARGET_VERSION, nullIfEmpty(tp.getTargetVersion()));
         });
 
         // Repetition
@@ -449,7 +451,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (TextPattern) args.get(KEY_CLAUSE),
                     RelationInfo.SpanMode.fromCode((String)args.getOrDefault(KEY_REL_SPAN_MODE, "source")),
                     SpanQueryRelations.Direction.fromCode((String)args.getOrDefault(KEY_DIRECTION, "both")),
-                    (String) args.get(KEY_CAPTURE));
+                    (String) args.get(KEY_CAPTURE), (String)args.getOrDefault(KEY_TARGET_VERSION, null));
         case TextPattern.NT_REPEAT:
             return TextPatternRepetition.get(
                     (TextPattern) args.get(KEY_CLAUSE),

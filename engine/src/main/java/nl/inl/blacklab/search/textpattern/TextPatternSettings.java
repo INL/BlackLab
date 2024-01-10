@@ -25,7 +25,24 @@ public class TextPatternSettings extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        // TODO: apply settings ( to context
+        for (Map.Entry<String, String> e : settings.entrySet()) {
+            String key = e.getKey();
+            String value = e.getValue();
+            switch (key.toLowerCase()) {
+            case "relationclass":
+            case "rc":
+                // Set default relation class to use if not overridden
+                context = context.withDefaultRelationClass(value);
+                break;
+            case "targetversion":
+            case "tv":
+                // Set default target version for alignment relations (parallel corpora)
+                context = context.withDocVersion(value);
+                break;
+            default:
+                throw new InvalidQuery("Unknown setting: " + key + "= " + value);
+            }
+        }
         return clause.translate(context);
     }
 

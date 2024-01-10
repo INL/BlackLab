@@ -8,6 +8,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -18,17 +19,18 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class QueryExecutionContext {
 
+    public static QueryExecutionContext get(BlackLabIndex index, Annotation annotation, MatchSensitivity matchSensitivity) {
+        return new QueryExecutionContext(index, annotation.field().name(), null, annotation.name(),
+                matchSensitivity, null, null);
+    }
+
+    public static QueryExecutionContext get(BlackLabIndex index, String field, String version, String annotation,
+            MatchSensitivity sensitivity, String defaultRelationClass) {
+        return new QueryExecutionContext(index, field, version, annotation, sensitivity, defaultRelationClass, null);
+    }
+
     /** The index object, representing the BlackLab index */
     private final BlackLabIndex index;
-
-    /** The sensitivity variant of our annotation we'll search. */
-    private final AnnotationSensitivity sensitivity;
-
-    /** The originally requested match sensitivity.
-     *
-     *  This might be different from the AnnotationSensitivity we search, because not all
-     *  fields support all sensitivities. */
-    private final MatchSensitivity requestedSensitivity;
 
     /**
      * Name of the annotated field we're searching.
@@ -40,35 +42,54 @@ public class QueryExecutionContext {
     private final String fieldName;
 
     /** Version of the document we're searching, or null if this is not a parallel corpus. */
-    private final String version = null;
+    private final String version;
 
+    /** Annotation to search */
     private final String annotationName;
 
-    private final Set<String> captures = new HashSet<>();
+    /** The originally requested match sensitivity.
+     *
+     *  This might be different from the AnnotationSensitivity we search, because not all
+     *  fields support all sensitivities. */
+    private final MatchSensitivity requestedSensitivity;
+
+    /** The sensitivity variant of our annotation we'll search. */
+    private final AnnotationSensitivity sensitivity;
+
+    /** Default relation class to search */
+    private final String defaultRelationClass;
+
+    /** Registered capture names */
+    private final Set<String> captures;
 
     /**
      * Construct a query execution context object.
-     * 
+     *
      * @param index the index object
-     * @param annotation the annotation to search
+     * @param fieldName the annotated field to search
+     * @param version the version to search (if this is a parallel corpus; otherwise null)
+     * @param annotationName the annotation to search
      * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
+     * @param defaultRelationClass default relation class to search (or null to use global default)
+     * @param captures unique capture names assigned so far
      */
-    public QueryExecutionContext(BlackLabIndex index, Annotation annotation, MatchSensitivity matchSensitivity) {
+    private QueryExecutionContext(BlackLabIndex index, String fieldName, String version, String annotationName,
+            MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures) {
+        this.index = index;
+        this.fieldName = version == null ? fieldName :
+                AnnotatedFieldNameUtil.getParallelFieldVersion(fieldName, version);
+        this.version = version;
+        this.annotationName = annotationName;
+        AnnotatedField field = index.annotatedField(this.fieldName);
+        if (field == null)
+            throw new IllegalArgumentException("Annotated field doesn't exist: null");
+        Annotation annotation = field.annotation(annotationName);
         if (annotation == null)
             throw new IllegalArgumentException("Annotation doesn't exist: null");
-        this.index = index;
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
-        fieldName = annotation.field().name();
-        annotationName = annotation.name();
-    }
-
-    public QueryExecutionContext withAnnotation(Annotation annotation) {
-        return withAnnotationAndSensitivity(annotation, null);
-    }
-
-    public QueryExecutionContext withSensitivity(MatchSensitivity matchSensitivity) {
-        return withAnnotationAndSensitivity((Annotation)null, matchSensitivity);
+        this.defaultRelationClass = defaultRelationClass == null ? RelationUtil.CLASS_DEFAULT_SEARCH : defaultRelationClass;
+        this.captures = captures == null ? new HashSet<>() : captures;
     }
 
     public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
@@ -76,12 +97,8 @@ public class QueryExecutionContext {
             annotation = sensitivity.annotation();
         if (matchSensitivity == null)
             matchSensitivity = requestedSensitivity;
-        return new QueryExecutionContext(index, annotation, matchSensitivity);
-    }
-
-    public QueryExecutionContext withVersion(String version) {
-        // @@@ TODO implement
-        return this;
+        return new QueryExecutionContext(index, fieldName, version, annotation.name(), matchSensitivity,
+                defaultRelationClass, captures);
     }
 
     public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity) {
@@ -95,12 +112,36 @@ public class QueryExecutionContext {
         String name = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
         if (field().annotation(name) == null)
             throw new RuntimeException("Field has no relation annotation named " + name + "!");
-        return withAnnotation(field().annotation(name));
+        return withAnnotationAndSensitivity(field().annotation(name), null);
     }
 
     @Deprecated
     public QueryExecutionContext withXmlTagsAnnotation() {
         return withRelationAnnotation();
+    }
+
+    /**
+     * Get a copy of this context for a different document version (parallel corpora).
+     *
+     * @param version document version to search
+     * @return new context object
+     */
+    public QueryExecutionContext withDocVersion(String version) {
+        if (version.equals(this.version))
+            return this;
+        return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
+                defaultRelationClass, captures);
+    }
+
+    /**
+     * Get a copy of this context for a different default relation class.
+     *
+     * @param relClass default relation class to use if not overridden
+     * @return new context object
+     */
+    public QueryExecutionContext withDefaultRelationClass(String relClass) {
+        return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
+                relClass, captures);
     }
 
     public String optDesensitize(String value) {
