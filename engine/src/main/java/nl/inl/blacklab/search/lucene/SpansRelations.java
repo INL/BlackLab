@@ -47,7 +47,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** Name to capture the relation info as */
     private final String captureAs;
 
-    /** Can our spans include root relations, or are we sure it doesn't?
+    /**
+     * Can our spans include root relations, or are we sure it doesn't?
      * If it might include root relations, we need to check for this in accept(),
      * forcing us to decode the payload.
      */
@@ -55,21 +56,22 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     /**
      * Construct SpansRelations.
-     *
      * NOTE: relation payloads contain the location of the other side of the relation. To work with these,
      * we also need to know if there's "is primary value" indicators in (some of) the payloads,
      * so we can skip these. See {@link PayloadUtils}.
      *
-     * @param relationType type of relation we're looking for
-     * @param relationsMatches relation matches for us to decode
+     * @param relationType                  type of relation we're looking for
+     * @param relationsMatches              relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
-     * @param direction direction of the relation
-     * @param spanMode what span to return for the relations found
-     * @param captureAs name to capture the relation info as, or empty not to capture
+     * @param direction                     direction of the relation
+     * @param spanMode                      what span to return for the relations found
+     * @param captureAs                     name to capture the relation info as, or empty not to capture
      */
     public SpansRelations(String relationType, BLSpans relationsMatches,
-            boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode, String captureAs) {
-        super(relationsMatches, SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
+            boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
+            String captureAs) {
+        super(relationsMatches,
+                SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
         this.relationType = relationType;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
@@ -96,7 +98,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         return !captureAs.isEmpty() || in.hasMatchInfo();
     }
 
-    /** Return current relation info.
+    /**
+     * Return current relation info.
      *
      * @return current relation info object; don't store or modify this, use .copy() first!
      */
@@ -167,7 +170,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             if (startPos >= target)
                 return startPos;
         }
-        if (direction == Direction.FORWARD && spanMode == RelationInfo.SpanMode.FULL_SPAN || spanMode == RelationInfo.SpanMode.SOURCE) {
+        if (direction == Direction.FORWARD && spanMode == RelationInfo.SpanMode.FULL_SPAN
+                || spanMode == RelationInfo.SpanMode.SOURCE) {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
             return super.advanceStartPosition(target);
         }
@@ -240,6 +244,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     public String toString() {
-        return "REL(" + relationType + ", " + spanMode + (direction != Direction.BOTH_DIRECTIONS ? ", " + direction : "") + ")";
+        return "REL(" + relationType + ", " + spanMode + (direction != Direction.BOTH_DIRECTIONS ?
+                ", " + direction :
+                "") + ")";
     }
 }

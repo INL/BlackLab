@@ -47,7 +47,7 @@ public class HitsFromQuery extends HitsMutable {
     protected final long maxHitsToCount;
 
     // state
-    protected final HitQueryContext hitQueryContext = new HitQueryContext();
+    protected final HitQueryContext hitQueryContext = new HitQueryContext(null); // each spans will get a copy
     protected final Lock ensureHitsReadLock = new ReentrantLock();
     protected final List<SpansReader> spansReaders = new ArrayList<>();
     protected boolean allSourceSpansFullyRead = false;

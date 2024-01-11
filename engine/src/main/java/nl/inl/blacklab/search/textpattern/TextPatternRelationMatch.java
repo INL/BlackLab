@@ -3,11 +3,14 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryAnd;
+import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Relations operator, matching a source (parent) to one or more targets (children).
@@ -28,16 +31,36 @@ public class TextPatternRelationMatch extends TextPattern {
         this.children = children;
     }
 
+    public static BLSpanQuery createRelMatchQuery(QueryInfo queryInfo, QueryExecutionContext context,
+            List<BLSpanQuery> args) {
+        assert !args.isEmpty();
+        // Filter out "any n-gram" arguments ([]*) because they don't do anything
+        List<BLSpanQuery> clauses = args.stream()
+                .filter(q -> !BLSpanQuery.isAnyNGram(q))    // remove any []* clauses, which don't do anything
+                .collect(Collectors.toList());
+
+        if (clauses.isEmpty()) {
+            // All clauses were []*; return any n-gram query (good luck with that...)
+            return SpanQueryAnyToken.anyNGram(queryInfo, context);
+        }
+        if (clauses.size() == 1) {
+            // Nothing to match, just return the clause
+            return clauses.get(0);
+        }
+        SpanQueryAnd spanQueryAnd = new SpanQueryAnd(clauses);
+        spanQueryAnd.setRequireUniqueRelations(true); // discard match if relation matched twice
+        return spanQueryAnd;
+    }
+
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        TextPattern parentNoDefVal = TextPatternDefaultValue.replaceWithAnyToken(parent);
-        BLSpanQuery qParent = parentNoDefVal.translate(context.withDocVersion(sourceVersion));
         List<BLSpanQuery> queries = new ArrayList<>();
-        queries.add(qParent);
+        queries.add(TextPatternDefaultValue.replaceWithAnyToken(parent)
+                .translate(context.withDocVersion(sourceVersion)));
         for (TextPattern child: children) {
             queries.add(child.translate(context));
         }
-        return XFRelations.createRelMatchQuery(context.queryInfo(), context, queries);
+        return createRelMatchQuery(context.queryInfo(), context, queries);
     }
 
     @Override

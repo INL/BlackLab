@@ -12,11 +12,11 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
-import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsWithinSpan;
 import nl.inl.blacklab.search.lucene.SpanQueryRelationSpanAdjust;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 
 /**
  * Extension functions for debugging forward index matching.
@@ -65,7 +65,7 @@ public class XFRelations implements ExtensionFunctionClass {
         relationType = RelationUtil.optPrependDefaultClass(relationType);
 
         // Do we need to match a target, or don't we care?
-        if (isAnyNGram(matchTarget))
+        if (BLSpanQuery.isAnyNGram(matchTarget))
             matchTarget = null;
         String field = context.withRelationAnnotation().luceneField();
         if (matchTarget != null) {
@@ -82,18 +82,6 @@ public class XFRelations implements ExtensionFunctionClass {
             return new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String>) null,
                     direction, spanMode, captureAs);
         }
-    }
-
-    private static boolean isAnyNGram(BLSpanQuery matchTarget) {
-        boolean isAnyNGram = false;
-        if (matchTarget instanceof SpanQueryAnyToken) {
-            SpanQueryAnyToken any = (SpanQueryAnyToken) matchTarget;
-            if (any.getMin() == 0 && any.getMax() == BLSpanQuery.MAX_UNLIMITED) {
-                // No restrictions on target.
-                isAnyNGram = true;
-            }
-        }
-        return isAnyNGram;
     }
 
     /**
@@ -128,27 +116,7 @@ public class XFRelations implements ExtensionFunctionClass {
         if (args.isEmpty())
             throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
         List<BLSpanQuery> tps = args.stream().map(o -> (BLSpanQuery)o).collect(Collectors.toList());
-        return createRelMatchQuery(queryInfo, context, tps);
-    }
-
-    public static BLSpanQuery createRelMatchQuery(QueryInfo queryInfo, QueryExecutionContext context, List<BLSpanQuery> args) {
-        assert !args.isEmpty();
-        // Filter out "any n-gram" arguments ([]*) because they don't do anything
-        List<BLSpanQuery> clauses = args.stream()
-                .filter(q -> !isAnyNGram(q))    // remove any []* clauses, which don't do anything
-                .collect(Collectors.toList());
-
-        if (clauses.isEmpty()) {
-            // All clauses were []*; return any n-gram query (good luck with that...)
-            return SpanQueryAnyToken.anyNGram(queryInfo, context);
-        }
-        if (clauses.size() == 1) {
-            // Nothing to match, just return the clause
-            return clauses.get(0);
-        }
-        SpanQueryAnd spanQueryAnd = new SpanQueryAnd(clauses);
-        spanQueryAnd.setRequireUniqueRelations(true); // discard match if relation matched twice
-        return spanQueryAnd;
+        return TextPatternRelationMatch.createRelMatchQuery(queryInfo, context, tps);
     }
 
     /**

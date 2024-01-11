@@ -119,6 +119,18 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     /** Information such as our index, our search logger, etc. */
     protected QueryInfo queryInfo;
 
+    public static boolean isAnyNGram(BLSpanQuery matchTarget) {
+        boolean isAnyNGram = false;
+        if (matchTarget instanceof SpanQueryAnyToken) {
+            SpanQueryAnyToken any = (SpanQueryAnyToken) matchTarget;
+            if (any.getMin() == 0 && any.getMax() == MAX_UNLIMITED) {
+                // No restrictions on target.
+                isAnyNGram = true;
+            }
+        }
+        return isAnyNGram;
+    }
+
     @Override
     public abstract String toString(String field);
 
@@ -303,6 +315,11 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         return AnnotatedFieldNameUtil.getBaseName(getRealField());
     }
 
+    /**
+     * Return the full Lucene field name including annotation and sensitivity suffixes.
+     *
+     * @return the real field name
+     */
     public abstract String getRealField();
 
     /**

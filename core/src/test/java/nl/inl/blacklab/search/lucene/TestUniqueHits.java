@@ -45,7 +45,7 @@ public class TestUniqueHits {
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc");
         BLSpans spans = new SpansUnique(tags);
-        HitQueryContext context = new HitQueryContext();
+        HitQueryContext context = new HitQueryContext(null);
         context.registerMatchInfo("abc");
         spans.setHitQueryContext(context);
 
@@ -64,7 +64,7 @@ public class TestUniqueHits {
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc");
         BLSpans spans = new PerDocumentSortedSpans(tags, true, true);
-        HitQueryContext context = new HitQueryContext();
+        HitQueryContext context = new HitQueryContext(null);
         context.registerMatchInfo("abc");
         spans.setHitQueryContext(context);
 

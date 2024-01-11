@@ -81,10 +81,6 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
     /** We will delegate our guarantee methods to this. */
     protected SpanGuarantees guarantees;
 
-    public BLSpans() {
-        this(null);
-    }
-
     public BLSpans(SpanGuarantees guarantees) {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
     }

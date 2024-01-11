@@ -29,10 +29,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  *
  * Returns relation spans matching the given type and (optionally) attributes.
  * <p>
- * This version works with the integrated index and the new _relation annotation.
- * <p>
- * For example, SpanQueryTags("ne") will give us spans for all the {@code <ne>}
- * elements in the document.
+ * This version works with the integrated index and the _relation annotation.
  */
 public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
@@ -259,7 +256,8 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode, captureAs);
+            return new SpansRelations(relationType, spans, primaryIndicator,
+                    direction, spanMode, captureAs);
         }
 
     }
