@@ -70,7 +70,7 @@ public class TestPayloadUtils {
 
             // Integrated index type: writes start and end position
             b = PayloadUtils.inlineTagPayload(starts[i], ends[i], BlackLabIndex.IndexType.INTEGRATED);
-            RelationInfo r = new RelationInfo();
+            RelationInfo r = RelationInfo.create();
             r.deserialize(starts[i], new ByteArrayDataInput(b.bytes));
             Assert.assertEquals(starts[i], r.getSpanStart());
             Assert.assertEquals(starts[i], r.getSourceStart());

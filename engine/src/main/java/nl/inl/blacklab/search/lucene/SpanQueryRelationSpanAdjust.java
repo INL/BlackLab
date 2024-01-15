@@ -14,6 +14,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -32,12 +33,15 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     private final RelationInfo.SpanMode mode;
 
-    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, RelationInfo.SpanMode mode) {
+    private final String overriddenField;
+
+    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, RelationInfo.SpanMode mode, String overriddenField) {
         super(clause.queryInfo);
         this.clause = clause;
         this.mode = mode;
 
         this.guarantees = createGuarantees(clause.guarantees(), mode);
+        this.overriddenField = overriddenField;
     }
 
     @Override
@@ -55,13 +59,13 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
         }
         if (rewritten == clause)
             return this;
-        return new SpanQueryRelationSpanAdjust(rewritten, mode);
+        return new SpanQueryRelationSpanAdjust(rewritten, mode, overriddenField);
     }
 
     private BLSpanQuery withSpanMode(RelationInfo.SpanMode mode) {
         if (this.mode == mode)
             return this;
-        return new SpanQueryRelationSpanAdjust(clause, mode);
+        return new SpanQueryRelationSpanAdjust(clause, mode, overriddenField);
     }
 
     @Override
@@ -108,7 +112,10 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            return new SpansRelationSpanAdjust(spans, mode);
+            spans = new SpansRelationSpanAdjust(spans, mode);
+            if (overriddenField != null)
+                spans = new SpansOverrideField(spans, overriddenField);
+            return spans;
         }
     }
 
@@ -142,11 +149,15 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
      */
     @Override
     public String getField() {
+        if (overriddenField != null)
+            return AnnotatedFieldNameUtil.getBaseName(overriddenField);
         return clause.getField();
     }
 
     @Override
     public String getRealField() {
+        if (overriddenField != null)
+            return overriddenField;
         return clause.getRealField();
     }
 

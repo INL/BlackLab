@@ -191,7 +191,7 @@ class SpansReader implements Runnable {
             this.twoPhaseIt = spans.asTwoPhaseIterator();
             this.twoPhaseApproximation = twoPhaseIt == null ? spans : twoPhaseIt.approximation();
 
-            this.hitQueryContext = this.sourceHitQueryContext.copyWith(this.spans);
+            this.hitQueryContext = this.sourceHitQueryContext.withSpans(this.spans);
             this.spans.setHitQueryContext(this.hitQueryContext);
             this.sourceHitQueryContext = null;
         } catch (IOException e) {

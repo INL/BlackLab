@@ -33,7 +33,43 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
-    private Map<String, String> attributes;
+    public enum Direction {
+        // Only return root relations (relations without a source)
+        ROOT("root"),
+
+        // Only return relations where target occurs after source
+        FORWARD("forward"),
+
+        // Only return relations where target occurs before source
+        BACKWARD("backward"),
+
+        // Return any relation
+        BOTH_DIRECTIONS("both");
+
+        private final String code;
+
+        Direction(String code) {
+            this.code = code;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        @Override
+        public String toString() {
+            return getCode();
+        }
+
+        public static Direction fromCode(String code) {
+            for (Direction dir : values()) {
+                if (dir.getCode().equals(code)) {
+                    return dir;
+                }
+            }
+            throw new IllegalArgumentException("Unknown relation direction: " + code);
+        }
+    }
 
     public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction,
             RelationInfo.SpanMode spanMode) {
@@ -97,62 +133,11 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         };
     }
 
-    public RelationInfo.SpanMode getSpanMode() {
-        return spanMode;
-    }
-
-    public BLSpanQuery withSpanMode(RelationInfo.SpanMode mode) {
-        if (this.spanMode == mode)
-            return this;
-        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, attributes, clause, direction, mode, captureAs);
-    }
-
-    public boolean isTagQuery() {
-        String relationClass = RelationUtil.classAndType(relationType)[0];
-        return relationClass.equals(RelationUtil.CLASS_INLINE_TAG);
-    }
-
-    public enum Direction {
-        // Only return root relations (relations without a source)
-        ROOT("root"),
-
-        // Only return relations where target occurs after source
-        FORWARD("forward"),
-
-        // Only return relations where target occurs before source
-        BACKWARD("backward"),
-
-        // Return any relation
-        BOTH_DIRECTIONS("both");
-
-        private final String code;
-
-        Direction(String code) {
-            this.code = code;
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        @Override
-        public String toString() {
-            return getCode();
-        }
-
-        public static Direction fromCode(String code) {
-            for (Direction dir : values()) {
-                if (dir.getCode().equals(code)) {
-                    return dir;
-                }
-            }
-            throw new IllegalArgumentException("Unknown relation direction: " + code);
-        }
-    }
-
     private BLSpanQuery clause;
 
     private String relationType;
+
+    private Map<String, String> attributes;
 
     private String baseFieldName;
 
@@ -164,8 +149,11 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private String captureAs;
 
+    private String targetField;
+
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationTypeRegex,
-            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs) {
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs,
+            String targetField) {
         super(queryInfo);
 
         if (StringUtils.isEmpty(relationFieldName))
@@ -178,18 +166,18 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, completeRegex), RegExp.COMPLEMENT);
         BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
 
-        init(relationFieldName, relationTypeRegex, attributes, clause, direction, spanMode, captureAs);
+        init(relationFieldName, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, targetField);
     }
 
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationTypeRegex,
             Map<String, String> attributes, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode,
-            String captureAs) {
+            String captureAs, String targetField) {
         super(queryInfo);
-        init(relationFieldName, relationType, attributes, clause, direction, spanMode, captureAs);
+        init(relationFieldName, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, targetField);
     }
 
     private void init(String relationFieldName, String relationType, Map<String, String> attributes, BLSpanQuery clause, Direction direction,
-            RelationInfo.SpanMode spanMode, String captureAs) {
+            RelationInfo.SpanMode spanMode, String captureAs, String targetField) {
         this.relationFieldName = relationFieldName;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
         this.relationType = relationType;
@@ -199,6 +187,14 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         this.spanMode = spanMode;
         this.captureAs = captureAs == null ? "" : captureAs;
         this.guarantees = createGuarantees(clause.guarantees(), direction, spanMode);
+        this.targetField = targetField;
+    }
+
+    public BLSpanQuery withSpanMode(RelationInfo.SpanMode mode) {
+        if (this.spanMode == mode)
+            return this;
+        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, attributes, clause, direction, mode,
+                captureAs, targetField);
     }
 
     @Override
@@ -207,7 +203,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         if (rewritten == clause)
             return this;
         return new SpanQueryRelations(queryInfo, relationFieldName, relationType, attributes, rewritten, direction,
-                spanMode, captureAs);
+                spanMode, captureAs, targetField);
     }
 
     @Override
@@ -250,16 +246,28 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         }
 
         @Override
-        public SpansRelations getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(relationType, spans, primaryIndicator,
+            spans = new SpansRelations(relationType, spans, primaryIndicator,
                     direction, spanMode, captureAs);
+            if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null)
+                spans = new SpansOverrideField(spans, targetField);
+            return spans;
         }
 
+    }
+
+    public RelationInfo.SpanMode getSpanMode() {
+        return spanMode;
+    }
+
+    public boolean isTagQuery() {
+        String relationClass = RelationUtil.classAndType(relationType)[0];
+        return relationClass.equals(RelationUtil.CLASS_INLINE_TAG);
     }
 
     @Override
@@ -307,6 +315,8 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
      */
     @Override
     public String getField() {
+        if (spanMode == RelationInfo.SpanMode.TARGET)
+            return AnnotatedFieldNameUtil.getBaseName(targetField);
         return baseFieldName;
     }
 

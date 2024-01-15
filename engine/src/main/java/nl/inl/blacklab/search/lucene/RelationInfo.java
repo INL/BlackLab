@@ -21,7 +21,23 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  * Note that this is not named MatchInfoRelation, as it is
  * used while indexing as well as matching.
  */
-public class RelationInfo implements MatchInfo {
+public class RelationInfo extends MatchInfo {
+
+    public static RelationInfo create() {
+        return new RelationInfo(false, -1, -1, -1, -1, null, null, null);
+    }
+
+    public static RelationInfo createWithOverriddenField(String overriddenField) {
+        return new RelationInfo(false, -1, -1, -1, -1, null, null, overriddenField);
+    }
+
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, null, null, null);
+    }
+
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, String fullRelationType) {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, null, null);
+    }
 
     /** Include attributes in relation info? We wanted to do this but can't anymore
      *  because they're only available in the version indexed with attributes. We also index
@@ -188,15 +204,9 @@ public class RelationInfo implements MatchInfo {
     /** Tag attributes (if any), or empty if not set (set during search by SpansRelations) */
     private Map<String, String> attributes;
 
-    public RelationInfo() {
-        this(false, -1, -1, -1, -1, null, null);
-    }
-
-    public RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
-        this(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, null, null);
-    }
-
-    public RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, String fullRelationType, Map<String, String> attributes) {
+    private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
+            String fullRelationType, Map<String, String> attributes, String overriddenField) {
+        super(overriddenField);
         this.fullRelationType = fullRelationType;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
         this.onlyHasTarget = onlyHasTarget;
@@ -208,6 +218,11 @@ public class RelationInfo implements MatchInfo {
         this.sourceEnd = sourceEnd;
         this.targetStart = targetStart;
         this.targetEnd = targetEnd;
+    }
+
+    public RelationInfo copy() {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType,
+                attributes, getOverriddenField());
     }
 
     /**
@@ -258,10 +273,6 @@ public class RelationInfo implements MatchInfo {
         DataOutput dataOutput = new OutputStreamDataOutput(os);
         serializeRelation(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, dataOutput);
         return new BytesRef(os.toByteArray());
-    }
-
-    public RelationInfo copy() {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, attributes);
     }
 
     public boolean isRoot() {
@@ -384,7 +395,7 @@ public class RelationInfo implements MatchInfo {
                     " " + attributes.entrySet().stream()
                             .map(e -> e.getKey() + "=\"" + e.getValue() + "\"")
                             .collect(Collectors.joining(" "));
-            return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )";
+            return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )" + toStringOptFieldName();
         }
 
         // Relation
@@ -394,14 +405,14 @@ public class RelationInfo implements MatchInfo {
             return "rel( ^-" + fullRelationType + "-> " + target + ")";
         int sourceLen = sourceEnd - sourceStart;
         String source = sourceStart + (sourceLen != 1 ? "-" + sourceEnd : "");
-        return "rel(" + source + " -" + fullRelationType + "-> " + target + ")";
+        return "rel(" + source + " -" + fullRelationType + "-> " + target + ")" + toStringOptFieldName();
     }
 
     @Override
     public int compareTo(MatchInfo o) {
         if (o instanceof RelationInfo)
             return compareTo((RelationInfo) o);
-        return MatchInfo.super.compareTo(o);
+        return super.compareTo(o);
     }
 
     public int compareTo(RelationInfo o) {

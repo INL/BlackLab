@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.extensions;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -45,20 +44,20 @@ public class XFRelations implements ExtensionFunctionClass {
         RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.fromCode((String)args.get(2));
         String captureAs = (String)args.get(3);
         SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.fromCode((String)args.get(4));
-        return createRelationQuery(queryInfo, context, relationType, matchTarget, direction, captureAs, spanMode);
+        return createRelationQuery(queryInfo, context, relationType, matchTarget, direction, captureAs, spanMode, null);
     }
 
     public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, QueryExecutionContext context, String relationType,
             BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs,
-            RelationInfo.SpanMode spanMode) {
+            RelationInfo.SpanMode spanMode, String targetField) {
 
         // Autodetermine capture name if no explicit name given.
         // Discard relation class if specified, keep Unicode letters from relationType, and add unique number
         if (StringUtils.isEmpty(captureAs)) {
-            String relTypeNoClass = RelationUtil.classAndType(relationType)[1].replaceAll("[^\\p{L}]", "");
-            if (relTypeNoClass.isEmpty())
-                relTypeNoClass = FUNC_REL;
-            captureAs = context.ensureUniqueCapture(relTypeNoClass);
+            String captureName = RelationUtil.classAndType(relationType)[1].replaceAll("[^\\p{L}]", "");
+            if (captureName.isEmpty())
+                captureName = FUNC_REL;
+            captureAs = context.ensureUniqueCapture(captureName);
         }
 
         // Make sure relationType has a relation class
@@ -70,17 +69,21 @@ public class XFRelations implements ExtensionFunctionClass {
         String field = context.withRelationAnnotation().luceneField();
         if (matchTarget != null) {
             // Ensure relation matches given target, then adjust to the requested span mode
-            BLSpanQuery rel = new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String>) null,
-                    direction, RelationInfo.SpanMode.TARGET, captureAs);
-            rel = new SpanQueryAnd(List.of(rel, matchTarget));
-            ((SpanQueryAnd)rel).setRequireUniqueRelations(true); // don't match the same relation twice
-            if (spanMode != RelationInfo.SpanMode.TARGET)
-                rel = new SpanQueryRelationSpanAdjust(rel, spanMode);
-            return rel;
+            BLSpanQuery rel = new SpanQueryRelations(queryInfo, field, relationType, null,
+                    direction, RelationInfo.SpanMode.TARGET, captureAs, targetField);
+            BLSpanQuery relAndTarget = new SpanQueryAnd(List.of(rel, matchTarget));
+            ((SpanQueryAnd)relAndTarget).setRequireUniqueRelations(true); // don't match the same relation twice
+            if (spanMode != RelationInfo.SpanMode.TARGET) {
+                // Not in the target but the source field. Adjust spans accordingly.
+                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.luceneField());
+
+                // @@@ TODO ensure the correct field is returned (source field)
+            }
+            return relAndTarget;
         } else {
             // No target to match; we can just return the relation matches with the correct span mode right away
-            return new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String>) null,
-                    direction, spanMode, captureAs);
+            return new SpanQueryRelations(queryInfo, field, relationType, null,
+                    direction, spanMode, captureAs, targetField);
         }
     }
 
@@ -101,7 +104,7 @@ public class XFRelations implements ExtensionFunctionClass {
             throw new IllegalArgumentException("rmatch() requires a query and a span mode as arguments");
         BLSpanQuery relations = (BLSpanQuery) args.get(0);
         RelationInfo.SpanMode mode = RelationInfo.SpanMode.fromCode((String)args.get(1));
-        return new SpanQueryRelationSpanAdjust(relations, mode);
+        return new SpanQueryRelationSpanAdjust(relations, mode, null);
     }
 
     /**

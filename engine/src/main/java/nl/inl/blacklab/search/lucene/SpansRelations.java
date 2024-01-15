@@ -24,7 +24,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     private final int NOT_YET_NEXTED = -1;
 
     /** Source and target for this relation */
-    private final RelationInfo relationInfo = new RelationInfo();
+    private RelationInfo relationInfo = RelationInfo.create();
 
     /** Have we fetched relation info (decoded payload) for current hit yet? */
     private boolean fetchedRelationInfo = false;
@@ -81,6 +81,11 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
+        if (relationInfo == null && context.getOverriddenField() != null) {
+            // When capturing relations, remember that we're producing hits in a different field.
+            // (used with parallel corpora)
+            relationInfo = RelationInfo.createWithOverriddenField(context.getOverriddenField());
+        }
         // Register our group
         if (!captureAs.isEmpty())
             this.groupIndex = context.registerMatchInfo(captureAs);

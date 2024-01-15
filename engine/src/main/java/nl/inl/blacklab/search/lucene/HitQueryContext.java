@@ -20,17 +20,27 @@ public class HitQueryContext {
     /** Match info names for our query, in index order */
     List<String> matchInfoNames = new ArrayList<>();
 
-    /** We use this to check if subclauses capture groups or not */
-    private int numberOfTimesMatchInfoRegistered = 0;
+    /** If non-null, this part of the query searches a different field (parallel corpora) */
+    private final String overriddenField;
 
     public HitQueryContext(BLSpans spans) {
-        this.rootSpans = spans;
+        this(spans, null);
     }
 
-    public HitQueryContext copyWith(BLSpans spans) {
-        HitQueryContext result = new HitQueryContext(spans);
+    private HitQueryContext(BLSpans spans, String overriddenField) {
+        this.rootSpans = spans;
+        this.overriddenField = overriddenField;
+    }
+
+    public HitQueryContext withSpans(BLSpans spans) {
+        HitQueryContext result = new HitQueryContext(spans, overriddenField);
         result.matchInfoNames = matchInfoNames;
-        result.numberOfTimesMatchInfoRegistered = numberOfTimesMatchInfoRegistered;
+        return result;
+    }
+
+    public HitQueryContext withField(String overriddenField) {
+        HitQueryContext result = new HitQueryContext(rootSpans, overriddenField);
+        result.matchInfoNames = matchInfoNames;
         return result;
     }
 
@@ -53,7 +63,6 @@ public class HitQueryContext {
      * @return the group's assigned index
      */
     public int registerMatchInfo(String name) {
-        numberOfTimesMatchInfoRegistered++;
         while (matchInfoNames.contains(name)) {
             return matchInfoNames.indexOf(name); // already registered, reuse
         }
@@ -90,7 +99,14 @@ public class HitQueryContext {
         return Collections.unmodifiableList(matchInfoNames);
     }
 
-    public int getMatchInfoRegisterNumber() {
-        return numberOfTimesMatchInfoRegistered;
+    /**
+     * Get the overridden field for this part of the query (if any).
+     *
+     * Used for parallel corpora. Will always return null in non-parallel corpora.
+     *
+     * @return the field this part of the query searches, or null if it's just the main field we're querying
+     */
+    public String getOverriddenField() {
+        return overriddenField;
     }
 }

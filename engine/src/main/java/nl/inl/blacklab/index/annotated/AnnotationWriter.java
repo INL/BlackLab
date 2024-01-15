@@ -422,7 +422,7 @@ public class AnnotationWriter {
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
+        RelationInfo matchInfo = RelationInfo.create(false, startPos, startPos, endPos, endPos);
         String fullRelationType;
         fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
                 tagName :
@@ -432,7 +432,7 @@ public class AnnotationWriter {
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
+        RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort

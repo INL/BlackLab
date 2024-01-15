@@ -326,4 +326,9 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
         // that's okay, we only use payload directly in "simple" spans anyway,
         // we don't need to propagate it to "parent" spans.
     }
+
+    @Override
+    public String toString() {
+        return "ANDUNIQREL(" + subSpans[0] + ", " + subSpans[1] + ")";
+    }
 }

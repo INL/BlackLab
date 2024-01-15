@@ -25,9 +25,6 @@ public class RelationUtil {
     /** Default relation class to use when searching (TODO: make configurable; choose smart default based on data?) */
     public static final String CLASS_DEFAULT_SEARCH = CLASS_DEFAULT_INDEX;
 
-    /** Default relation target version: any or none */
-    public static final String OPTIONAL_TARGET_VERSION_REGEX = "(" + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + ".*)?";
-
     /** Default relation type: any */
     public static final String ANY_TYPE_REGEX = ".*";
 
@@ -167,7 +164,8 @@ public class RelationUtil {
      * @param value attribute value
      * @return value to index for this attribute
      */
-    public static String tagAttributeIndexValue(boolean useOldEncoding, String name, String value, BlackLabIndex.IndexType indexType) {
+    public static String tagAttributeIndexValue(boolean useOldEncoding, String name, String value,
+            BlackLabIndex.IndexType indexType) {
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             // NOTE: this means that we cannot distinguish between attributes for
             // different start tags occurring at the same token position!

@@ -6,12 +6,12 @@ package nl.inl.blacklab.search.lucene;
  * This can be a captured group, or a relation (e.g. a dependency relation
  * or an inline tag) used in the query.
  */
-public interface MatchInfo extends Comparable<MatchInfo> {
+public abstract class MatchInfo implements Comparable<MatchInfo> {
 
     /**
      * The type of match info.
      */
-    enum Type {
+    public enum Type {
         SPAN,
         RELATION,
         LIST_OF_RELATIONS,
@@ -27,7 +27,7 @@ public interface MatchInfo extends Comparable<MatchInfo> {
      * @param b the second MatchInfo
      * @return true iff both are null, or if they are equal
      */
-    static boolean equal(MatchInfo[] a, MatchInfo[] b) {
+    public static boolean equal(MatchInfo[] a, MatchInfo[] b) {
         if ((a == null) != (b == null)) {
             // One is null, the other is not.
             return false;
@@ -40,29 +40,44 @@ public interface MatchInfo extends Comparable<MatchInfo> {
         return a.equals(b);
     }
 
-    Type getType();
+    /** Field this match info is from (parallel corpora), or null if default field. */
+    private String overriddenField;
+
+    MatchInfo(String overriddenField) {
+        this.overriddenField = overriddenField;
+    }
+
+    public String getOverriddenField() {
+        return overriddenField;
+    }
+
+    public abstract Type getType();
 
     @Override
-    String toString();
+    public abstract String toString();
+
+    protected String toStringOptFieldName() {
+        return getOverriddenField() == null ? "" : " (" + getOverriddenField() + ")";
+    }
 
     @Override
-    default int compareTo(MatchInfo o) {
+    public int compareTo(MatchInfo o) {
         // Subclasses should compare properly if types match;
         // if not, just compare class names
         return getClass().getName().compareTo(o.getClass().getName());
     }
 
     @Override
-    boolean equals(Object o);
+    public abstract boolean equals(Object o);
 
     @Override
-    int hashCode();
+    public abstract int hashCode();
 
-    int getSpanStart();
+    public abstract int getSpanStart();
 
-    int getSpanEnd();
+    public abstract int getSpanEnd();
 
-    default boolean isSpanEmpty() {
+    public boolean isSpanEmpty() {
         return getSpanStart() == getSpanEnd();
     }
 }

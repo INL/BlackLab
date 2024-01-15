@@ -51,7 +51,7 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
     public SpanQueryCaptureRelationsWithinSpan(QueryInfo queryInfo, String relationFieldName, BLSpanQuery query,
             String captureRelsInside, String captureRelsAs, String relationType) {
         super(query, new SpanQueryRelations(queryInfo, relationFieldName, relationType, Collections.emptyMap(),
-                SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN, ""));
+                SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN, "", null));
         this.captureRelsInside = captureRelsInside;
         this.captureRelsAs = captureRelsAs;
         this.guarantees = query.guarantees();
@@ -144,7 +144,7 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            SpansRelations relations = relationsWeight.getSpans(context, requiredPostings);
+            BLSpans relations = relationsWeight.getSpans(context, requiredPostings);
             return new SpansCaptureRelationsWithinSpan(spans, relations, captureRelsInside,
                     captureRelsAs);
         }

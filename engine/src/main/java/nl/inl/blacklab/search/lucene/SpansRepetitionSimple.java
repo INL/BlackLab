@@ -168,7 +168,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
 
     @Override
     public String toString() {
-        return "SpansRepetition(" + in + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
+        return "SpansRepetitionSimple(" + in + ", " + min + ", " + BLSpanQuery.inf(max) + ")";
     }
 
     @Override

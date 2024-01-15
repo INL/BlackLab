@@ -54,6 +54,10 @@ public class MatchInfo {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<MatchInfo> infos;
 
+    /** The field this match info is from, if any */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String fieldName;
+
     @Override
     public String toString() {
         return "MatchInfo{" +

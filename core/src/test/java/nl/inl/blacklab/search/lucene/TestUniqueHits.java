@@ -31,11 +31,11 @@ public class TestUniqueHits {
      *  we therefore expect the last two hits to both be returned, and not reduced to 1 using SpansUnique.
      */
     RelationInfo[] aRelationInfo = {
-            new RelationInfo(false, 10, 10, 11, 11, "abc", null),
-            new RelationInfo(false, 10, 10, 11, 11, "abc", null),
-            new RelationInfo(false, 10, 10, 11, 11, "abc", null),
-            new RelationInfo(false, 1, 1, 2, 2, "abc", null),
-            new RelationInfo(false, 1, 1, 1, 2, "abc", null),
+            RelationInfo.create(false, 10, 10, 11, 11, "abc"),
+            RelationInfo.create(false, 10, 10, 11, 11, "abc"),
+            RelationInfo.create(false, 10, 10, 11, 11, "abc"),
+            RelationInfo.create(false, 1, 1, 2, 2, "abc"),
+            RelationInfo.create(false, 1, 1, 1, 2, "abc"),
     };
 
     @Test

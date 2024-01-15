@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryNot;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 
 /**
- * Relations operator, matching a source (parent) to one or more targets (children).
+ * Relations operator plus an optional target clause.
  */
 public class TextPatternRelationTarget extends TextPattern {
 
@@ -65,14 +65,16 @@ public class TextPatternRelationTarget extends TextPattern {
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         // replace _ with any ngram
         TextPattern targetNoDefVal = TextPatternDefaultValue.replaceWithAnyToken(target);
+        QueryExecutionContext targetContext = context.withDocVersion(targetVersion);
         BLSpanQuery translated = XFRelations.createRelationQuery(
                 context.queryInfo(),
                 context.withDocVersion(sourceVersion), // relations are always indexed in source version
                 regex,
-                targetNoDefVal.translate(context.withDocVersion(targetVersion)),
+                targetNoDefVal.translate(targetContext),
                 direction,
                 captureAs,
-                spanMode
+                spanMode,
+                targetContext.luceneField()
         );
         if (negate)
             translated = new SpanQueryNot(translated);

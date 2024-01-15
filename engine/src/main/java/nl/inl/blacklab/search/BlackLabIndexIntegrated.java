@@ -196,7 +196,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         }
         return new SpanQueryRelations(queryInfo, luceneField,
                 RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName), attributes,
-                SpanQueryRelations.Direction.FORWARD, spanMode, captureAs);
+                SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, null);
     }
 
     @Override

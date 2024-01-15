@@ -1671,7 +1671,7 @@ public class QueryTool {
                     MatchInfo mi = e.getValue();
                     if (mi == null)
                         return "(null)";
-                    return e.getKey() + "=" + e.getValue();
+                    return e.getKey() + "=" + mi;
                 })
                 .collect(Collectors.joining(", "));
     }

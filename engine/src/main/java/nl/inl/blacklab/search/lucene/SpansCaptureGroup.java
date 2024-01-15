@@ -71,7 +71,7 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
         // Place our start and end position at the correct index in the array
         int start = startPosition() + leftAdjust;
         int end = endPosition() + rightAdjust;
-        matchInfo[groupIndex] = new SpanInfo(start, end);
+        matchInfo[groupIndex] = SpanInfo.create(start, end, getOverriddenField());
     }
 
     @Override

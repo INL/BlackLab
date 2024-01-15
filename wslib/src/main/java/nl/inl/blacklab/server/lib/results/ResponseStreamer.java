@@ -699,6 +699,7 @@ public class ResponseStreamer {
                 }
             }
             ds.endList().endEntry();
+            optFieldName(ds, listOfRelations);
         }
         ds.endMap();
     }
@@ -709,6 +710,7 @@ public class ResponseStreamer {
             ds.entry(KEY_MATCH_INFO_TYPE, "span");
             ds.entry(KEY_SPAN_START, capturedGroup.getSpanStart());
             ds.entry(KEY_SPAN_END, capturedGroup.getSpanEnd());
+            optFieldName(ds, capturedGroup);
         }
         ds.endMap();
     }
@@ -723,10 +725,12 @@ public class ResponseStreamer {
             optAttributes(ds, inlineTag);
             ds.entry(KEY_SPAN_START, inlineTag.getSourceStart());
             ds.entry(KEY_SPAN_END, inlineTag.getTargetStart());
+            optFieldName(ds, inlineTag);
         }
         ds.endMap();
     }
 
+    /** If attribute values are avaiable, include those in the response. */
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
         if (RelationInfo.INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
             if (!inlineTag.getAttributes().isEmpty()) {
@@ -737,6 +741,12 @@ public class ResponseStreamer {
                 ds.endMap().endEntry();
             }
         }
+    }
+
+    /** If field name was overridden (parallel corpora), include it in the response. */
+    private static void optFieldName(DataStream ds, MatchInfo matchInfo) {
+        if (matchInfo.getOverriddenField() != null)
+            ds.entry(KEY_FIELD_NAME, matchInfo.getOverriddenField());
     }
 
     private static void matchInfoRelation(DataStream ds, RelationInfo relationInfo) {
@@ -753,6 +763,7 @@ public class ResponseStreamer {
             ds.entry("targetEnd", relationInfo.getTargetEnd());
             ds.entry(KEY_SPAN_START, relationInfo.getSpanStart());
             ds.entry(KEY_SPAN_END, relationInfo.getSpanEnd());
+            optFieldName(ds, relationInfo);
         }
         ds.endMap();
     }
