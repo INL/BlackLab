@@ -12,7 +12,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     /** how to adjust spans */
     private final RelationInfo.SpanMode spanMode;
-    
+
     /** Adjusted start position of current hit */
     private int startAdjusted = -1;
 
@@ -23,15 +23,19 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     private MatchInfo[] matchInfo;
 
+    /** What field is our clause in? */
+    private final String clauseField;
+
     /**
      * Constructs a SpansRelationSpanAdjust.
      *
      * @param in spans to adjust
      * @param spanMode how to adjust spans
      */
-    public SpansRelationSpanAdjust(BLSpans in, RelationInfo.SpanMode spanMode) {
+    public SpansRelationSpanAdjust(BLSpans in, RelationInfo.SpanMode spanMode, String clauseField) {
         super(in, SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), spanMode));
         this.spanMode = spanMode;
+        this.clauseField = clauseField;
     }
 
     @Override
@@ -85,8 +89,8 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
         this.context = context;
+        super.passHitQueryContextToClauses(context.withField(clauseField));
     }
 
     private void setAdjustedStartEnd() {

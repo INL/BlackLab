@@ -39,8 +39,11 @@ public class HitQueryContext {
     }
 
     public HitQueryContext withField(String overriddenField) {
-        HitQueryContext result = new HitQueryContext(rootSpans, overriddenField);
-        result.matchInfoNames = matchInfoNames;
+        HitQueryContext result = this;
+        if (overriddenField != null) {
+            result = new HitQueryContext(rootSpans, overriddenField);
+            result.matchInfoNames = matchInfoNames;
+        }
         return result;
     }
 

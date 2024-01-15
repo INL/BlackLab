@@ -315,13 +315,15 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
      */
     @Override
     public String getField() {
-        if (spanMode == RelationInfo.SpanMode.TARGET)
+        if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null)
             return AnnotatedFieldNameUtil.getBaseName(targetField);
         return baseFieldName;
     }
 
     @Override
     public String getRealField() {
+        if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null)
+            return targetField;
         return relationFieldName;
     }
 
