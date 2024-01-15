@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.auth;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 public enum BlPermission implements PermissionEnum<BlPermission> {
     READ,
@@ -9,7 +10,7 @@ public enum BlPermission implements PermissionEnum<BlPermission> {
     SHARE,
     ADMIN;
 
-    public EnumSet<BlPermission> implies() {
+    public Set<BlPermission> implies() {
         switch (this) {
         case READ:
             return EnumSet.of(READ);
@@ -27,7 +28,7 @@ public enum BlPermission implements PermissionEnum<BlPermission> {
     }
 
     /** Which permissions may the holder of this permission grant to others */
-    public EnumSet<BlPermission> mayGrant() {
+    public Set<BlPermission> mayGrant() {
         switch (this) {
         case SHARE:
             return EnumSet.of(BlPermission.READ, BlPermission.SHARE);
@@ -42,27 +43,19 @@ public enum BlPermission implements PermissionEnum<BlPermission> {
         return this.mayGrant().contains(other);
     }
 
-    public boolean mayGrant(EnumSet<BlPermission> other) {
+    public boolean mayGrant(Set<BlPermission> other) {
         return this.mayGrant().containsAll(other);
     }
 
     public boolean implies(BlPermission other) {
         return this.implies().contains(other);
     }
-    public boolean implies(EnumSet<BlPermission> others) {
+    public boolean implies(Set<BlPermission> others) {
         return this.implies().containsAll(others);
     }
 
     @Override
     public String toString() {
         return this.name().toLowerCase();
-    }
-
-    public static BlPermission fromString(String str) {
-        return BlPermission.valueOf(str.toUpperCase());
-    }
-
-    public static PermissionEnum<?>[] getValues() {
-        return BlPermission.values();
     }
 }

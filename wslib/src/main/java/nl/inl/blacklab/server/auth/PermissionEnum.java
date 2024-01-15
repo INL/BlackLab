@@ -1,24 +1,24 @@
 package nl.inl.blacklab.server.auth;
 
+import java.lang.reflect.Constructor;
+import java.security.Permission;
 import java.util.EnumSet;
+import java.util.Set;
 
 import org.apache.commons.lang3.NotImplementedException;
 
-public interface PermissionEnum<T extends Enum<T>> {
-    EnumSet<BlPermission> implies();
+public interface PermissionEnum<T extends PermissionEnum<T>> {
+    Set<T> implies();
 
-    EnumSet<BlPermission> mayGrant();
+    Set<T> mayGrant();
 
-    boolean implies(BlPermission other);
+    boolean implies(T other);
 
-    boolean mayGrant(BlPermission other);
+    boolean mayGrant(T other);
 
-    boolean implies(EnumSet<BlPermission> others);
+    boolean implies(Set<T> others);
 
-    boolean mayGrant(EnumSet<BlPermission> other);
+    boolean mayGrant(Set<T> other);
 
-    /** Workaround for values() function not existing on generic Enum class. (enums are weird). */
-    static PermissionEnum<?>[] getValues() {
-        throw new NotImplementedException("This method should be overridden by the implementing enum.");
-    }
+    T valueOf(String name);
 }

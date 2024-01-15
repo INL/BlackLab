@@ -57,6 +57,10 @@
             <version>5.7.1</version>
         </dependency>
 
+    <!-- Required for HeaderClient -->
+        <!-- Doesn't depend on servlet, but does depend on the Pac4J WebContext interface, which contains almost everything you can do with a HttpServletRequest/Response.
+        It would make more sense to use the WebRequest interface and just rely on pac4j instead of implementing (as we currently do) our own web abstraction layer.
+    -->
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-http</artifactId>
@@ -69,7 +73,8 @@
             <version>22.0.5</version>
         </dependency>
 
-        <!-- naming is a bit confusing, see https://www.pac4j.org/blog/jee_pac4j_vs_pac -->
+<!--        This pulls in the specific implementation(s) of the -->
+        <!-- naming is a bit confusing, see https://www.pac4j.org/blog/jee_pac4j_vs_pac4j_jee.html -->
 <!--        <dependency>-->
 <!--            <groupId>org.pac4j</groupId>-->
 <!--            <artifactId>jee-pac4j</artifactId>-->

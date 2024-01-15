@@ -3,29 +3,14 @@ package nl.inl.blacklab.server.auth;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.text.ParseException;
-import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
-
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 
-import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
-
-public interface UmaResourceActions<T extends Enum<T>> {
+public interface UmaResourceActions<T extends PermissionEnum<T>> {
     /**
      * Create/register a new resource in the UMA server.
      * A resource is identified by either: the ID in the Authorization Server, or the name + owner.
@@ -44,7 +29,7 @@ public interface UmaResourceActions<T extends Enum<T>> {
 
     /** Grant or revoke permissions as the owner of a resource. */
     void updatePermissions(String ownerAccessToken, NameOrId resource, NameOrId otherUser, boolean grant,
-            EnumSet<T> permissions) throws IOException;
+            Set<T> permissions) throws IOException;
 
     /**
      * Grant permission to a user on a resource owned by another user.
@@ -55,15 +40,15 @@ public interface UmaResourceActions<T extends Enum<T>> {
      * For this, the client's Service Account should have the "impersonation" role (from the 'realm-management' client).
      */
     void updatePermissionsAsApplication(NameOrId owner, NameOrId resource, NameOrId otherUser, boolean grant,
-            EnumSet<T> permissions)
+            Set<T> permissions)
             throws IOException;
 
     /** Returns { [resource]: { [user]: permission[] } } */
-    Map<NameOrId, Map<NameOrId, EnumSet<T>>> getPermissionsOnMyResources(String ownerAccessToken)
+    Map<NameOrId, Map<NameOrId, Set<T>>> getPermissionsOnMyResources(String ownerAccessToken)
             throws IOException, ParseException;
 
     /** Return { [resource]: permission[] } */
-    Map<NameOrId, EnumSet<T>> getMyPermissionsOnResources(String userAccessToken)
+    Map<NameOrId, Set<T>> getMyPermissionsOnResources(String userAccessToken)
             throws IOException;
 
     /**
@@ -73,7 +58,7 @@ public interface UmaResourceActions<T extends Enum<T>> {
      * @return the ticket.
      * @throws IOException
      */
-    String createPermissionTicket(NameOrId owner, NameOrId resource, EnumSet<T> permissions)
+    String createPermissionTicket(NameOrId owner, NameOrId resource, Set<T> permissions)
             throws IOException;
 
     /** Get the user ID in the Authorization Server for the given user in the application. */
@@ -104,7 +89,7 @@ public interface UmaResourceActions<T extends Enum<T>> {
 
 
     /** Does the access token grant all the given permissions on the given resource? */
-    boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, EnumSet<T> permissions)
+    boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, Set<T> permissions)
             throws IOException;
 
     default boolean isJwt(String token) {

@@ -11,7 +11,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -32,7 +33,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 
 public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements Closeable, UmaResourceActions<T> {
-
     public static class UMAPermission {
         // ids
         String id; // id of the permission ticket (see this as the instance of the permission)
@@ -55,17 +55,22 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
 
     private AuthzClient client;
 
-    private UserIdProperty userIdProperty;
+    final private UmaResourceActions.UserIdProperty userIdProperty;
 
-    private final CloseableHttpClient http = HttpClients.createDefault();
+    final private Function<String, T> getPermissionValue;
+    final private Supplier<T[]> getPermissionValues;
 
-    public UmaResourceActionsKeycloak(String endpoint, String realm, String clientId, String clientSecret, UserIdProperty userNameProperty) {
+    final private CloseableHttpClient http = HttpClients.createDefault();
+
+    public UmaResourceActionsKeycloak(String endpoint, String realm, String clientId, String clientSecret, UmaResourceActions.UserIdProperty userNameProperty, Function<String, T> getPermissionValue, Supplier<T[]> getPermissionValues) {
         client = AuthzClient.create(new Configuration(endpoint, realm, clientId, Map.of("secret", clientSecret), null));
         this.userIdProperty = userNameProperty;
+        this.getPermissionValue = getPermissionValue;
+        this.getPermissionValues = getPermissionValues;
     }
 
     @Override
-    public String createResource(NameOrId owner, String resourceName, String resourceDisplayName, String resourcePath)
+    public String createResource(UmaResourceActions.NameOrId owner, String resourceName, String resourceDisplayName, String resourcePath)
             throws IOException {
         /*
         curl -v -X POST \
@@ -92,10 +97,8 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
         resource.setOwnerManagedAccess(true); // This doesn't seem to actually do anything so far? Might just not have found out exactly what it does.
         resource.setUris(Set.of(resourcePath));
         // in UMA, a permission is called a Scope, but we abstract that away.
-//        resource.addScope(Permission.Arrays.stream(Permission.values()).map(Permission::toString).collect(Collectors.toList()).toArray(new String[0]));
-
-        T.getValues();
-
+        // add all permissions
+        resource.addScope(Arrays.stream(getPermissionValues.get()).map(T::toString).toArray(String[]::new));
 
         ResourceRepresentation response = client.protection().resource().create(resource);
         return response.getId();
@@ -113,12 +116,12 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
 
     @Override
     public void updatePermissions(String ownerAccessToken, NameOrId resource, NameOrId otherUser, boolean grant,
-            EnumSet<T> permissionName) throws IOException {
+            Set<T> permissionName) throws IOException {
         // Unfortunately this will result in a call to the Authorization Server.
         String resourceId = getResourceId(NameOrId.id(getUserId(ownerAccessToken)), resource);
         String otherUserId = getUserId(otherUser);
 
-        for (Permission permission : permissionName) {
+        for (T permission : permissionName) {
             HttpUriRequest req = RequestBuilder.create("post")
                     .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
                     .addHeader("Authorization", "Bearer " + ownerAccessToken)
@@ -140,7 +143,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
 
     @Override
     public void updatePermissionsAsApplication(NameOrId owner, NameOrId resource, NameOrId otherUser, boolean grant,
-            EnumSet<T> permissions)
+            Set<T> permissions)
             throws IOException {
         // Get impersonation token
         /*
@@ -196,7 +199,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
            "scopeName": "view"
          }'
         */
-        for (Permission permission: permissions) {
+        for (T permission: permissions) {
             req = RequestBuilder.create("post")
                     .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
                     .addHeader("Authorization", "Bearer " + impersonationToken)
@@ -216,7 +219,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
     }
 
     @Override
-    public Map<NameOrId, Map<NameOrId, List<Permission>>> getPermissionsOnMyResources(String ownerAccessToken)
+    public Map<NameOrId, Map<NameOrId, Set<T>>> getPermissionsOnMyResources(String ownerAccessToken)
             throws IOException {
         HttpUriRequest req = RequestBuilder.create("get")
                 .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
@@ -228,15 +231,16 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
 
         try (CloseableHttpResponse response = http.execute(req)) {
             // parse as Permission[]
-            List<Permission> permissions = new JsonMapper().readValue(response.getEntity().getContent(), new TypeReference<List<Permission>>() {});
+            List<UMAPermission> permissions = new JsonMapper().readValue(response.getEntity().getContent(), new TypeReference<List<UMAPermission>>() {});
 
-            Map<NameOrId, Map<NameOrId, List<Permission>>> ret = new HashMap<>();
-            for (Permission permission: permissions) {
+            Map<NameOrId, Map<NameOrId, Set<T>>> ret = new HashMap<>();
+            for (UMAPermission permission: permissions) {
+                if (!permission.granted) continue; // skip denied permissions
                 NameOrId resource = new NameOrId(permission.resource, permission.resourceName);
                 ret
                     .computeIfAbsent(resource, k -> new HashMap<>())
-                    .computeIfAbsent(new NameOrId(permission.requester, permission.requesterName), k -> new ArrayList<>())
-                    .add(Permission.valueOf(permission.scopeName));
+                    .computeIfAbsent(new NameOrId(permission.requester, permission.requesterName), k -> new HashSet<>())
+                    .add(getPermissionValue.apply(permission.scopeName));
             }
 
             return ret;
@@ -244,7 +248,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
     }
 
     @Override
-    public Map<NameOrId, Set<Permission>> getMyPermissionsOnResources(String userAccessToken)
+    public Map<NameOrId, Set<T>> getMyPermissionsOnResources(String userAccessToken)
             throws IOException {
         // TODO check if permissions already encoded inside the access/rpt token.
         HttpUriRequest req = RequestBuilder.create("get")
@@ -258,22 +262,21 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
 
         try (CloseableHttpResponse response = http.execute(req)) {
             // parse as Permission[]
-            List<Permission> permissions = new JsonMapper().readValue(response.getEntity().getContent(),new TypeReference<List<Permission>>() {});
-            Map<NameOrId, Set<Permission>> ret = new HashMap<>();
-            for (Permission permission: permissions) {
+            List<UMAPermission> permissions = new JsonMapper().readValue(response.getEntity().getContent(),new TypeReference<List<UMAPermission>>() {});
+            Map<NameOrId, Set<T>> ret = new HashMap<>();
+            // add all implied permissions.
+            for (UMAPermission permission: permissions) {
+                if (!permission.granted) continue; // skip denied permissions
                 NameOrId resource = new NameOrId(permission.resource, permission.resourceName);
-                Permission p = Permission.valueOf(permission.scopeName.toUpperCase());
-                for (Permission implied: p.implies()) {
-                    ret.computeIfAbsent(resource, k -> new HashSet<>()).add(implied);
-                }
+                ret.computeIfAbsent(resource, k -> new HashSet<>())
+                        .addAll(getPermissionValue.apply(permission.scopeName).implies());
             }
-
             return ret;
         }
     }
 
     @Override
-    public String createPermissionTicket(NameOrId owner, NameOrId resource, EnumSet<T> permissions)
+    public String createPermissionTicket(NameOrId owner, NameOrId resource, Set<T> permissions)
             throws IOException {
         HttpUriRequest req = RequestBuilder.create("post")
                 .setUri(client.getServerConfiguration().getPermissionEndpoint())
@@ -569,7 +572,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
 
     @Override
     public String getPermissionId(String userAccessToken, NameOrId owner, NameOrId resource, NameOrId otherUser,
-            Permission permission) throws IOException {
+            T permission) throws IOException {
         HttpUriRequest req = RequestBuilder.create("get")
                 .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
                 .addHeader("Authorization", "Bearer " + userAccessToken)
@@ -589,7 +592,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
 
 
     @Override
-    public boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, EnumSet<T> permissions)
+    public boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, Set<T> permissions)
             throws IOException {
 
         // TODO check if permissions already encoded inside the access/rpt token.
@@ -624,7 +627,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
         // https://github.com/keycloak/keycloak/issues/25057
         String resourceId = getResourceId(owner, resource);
         List<BasicNameValuePair> parameters = new ArrayList<>();
-        for (Permission p : permissions) parameters.add(new BasicNameValuePair("permission", resourceId + "#" + p.toString()));
+        for (T p : permissions) parameters.add(new BasicNameValuePair("permission", resourceId + "#" + p.toString()));
         parameters.add(new BasicNameValuePair("grant_type", "urn:ietf:params:oauth:grant-type:uma-ticket"));
         parameters.add(new BasicNameValuePair("audience", client.getConfiguration().getResource()));
         parameters.add(new BasicNameValuePair("response_mode", "decision"));

@@ -5,7 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 
-import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.server.index.Index;
 
 public interface User {
