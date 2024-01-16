@@ -60,7 +60,7 @@ Result for `/relations?only-spans=true`:
 }
 ```
 
-Result for `/relations?classes=family`:
+Result for `/relations?classes=fam`:
 
 ```json
 {
