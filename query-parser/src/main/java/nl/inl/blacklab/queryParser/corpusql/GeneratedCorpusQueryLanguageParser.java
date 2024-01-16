@@ -9,6 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.ChildRelationStruct;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.RelationOperatorInfo;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -30,6 +32,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
 import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
+import nl.inl.blacklab.search.textpattern.TextPatternEdge;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
@@ -396,8 +399,7 @@ if (childRels.isEmpty())
     throw new Error("Missing return statement in function");
   }
 
-  final public ChildRelationStruct childRelation() throws ParseException {
-      RelationOperatorInfo relType = null;
+  final public ChildRelationStruct childRelation() throws ParseException {RelationOperatorInfo relType = null;
     TextPattern target = null;
     String label = "";
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {

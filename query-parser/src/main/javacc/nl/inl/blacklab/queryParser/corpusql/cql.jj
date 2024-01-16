@@ -27,7 +27,7 @@ import java.util.Map;
 import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.ChildRelationStruct;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.RelationTypeStruct;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.RelationOperatorInfo;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
@@ -324,7 +324,7 @@ TextPattern relationQuery():
 
 ChildRelationStruct childRelation():
 {
-    RelationTypeStruct relType = null;
+    RelationOperatorInfo relType = null;
     TextPattern target = null;
     String label = "";
 }
@@ -336,14 +336,14 @@ ChildRelationStruct childRelation():
     }
 }
 
-RelationTypeStruct relationType():
+RelationOperatorInfo relationType():
 {
     Token t = null;
 }
 {
     (t=<DEP_OP> | t=<ALIGNMENT_OP>)
     {
-        return RelationTypeStruct.fromOperator(t.toString());
+        return RelationOperatorInfo.fromOperator(t.toString());
     }
 }
 
@@ -357,7 +357,7 @@ TextPattern rootRelationType():
     [ label=captureLabel() ":" ]
     t=<ROOT_DEP_OP> target=relationQuery()
     {
-        RelationTypeStruct relType = RelationTypeStruct.fromOperator(t.toString().substring(1));
+        RelationOperatorInfo relType = RelationOperatorInfo.fromOperator(t.toString().substring(1));
         return wrapper.rootRelationQuery(new ChildRelationStruct(relType, target, label));
     }
 }
