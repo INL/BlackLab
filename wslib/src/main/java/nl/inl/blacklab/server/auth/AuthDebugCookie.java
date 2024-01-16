@@ -8,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.UserRequest;
 
+import org.pac4j.core.context.Cookie;
+
 /**
  * Set a cookie to simulate a logged-in user.
  * 
@@ -25,35 +27,24 @@ public class AuthDebugCookie implements AuthMethod {
 
     public AuthDebugCookie(Map<String, Object> param) {
         // doesn't take any parameters
-        if (param.size() > 0)
+        if (!param.isEmpty())
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 
     @Override
     public User determineCurrentUser(UserRequest request) {
-        String userId = request.getPersistedUserId();
+        String userId = request.getContext()
+                .getRequestCookies().stream().
+                filter(c -> c.getName().equals("autosearch-debug-user"))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElseGet(() -> "user-" + request.getSessionId().substring(0, 6));
 
-        if (userId == null) {
-            // No cookie yet. Generate userId based on sessionId. Cookie will be saved in persistUser().
-            userId = request.getSessionId();
-            if (userId.length() > 6) {
-                userId = userId.substring(0, 6);
-            }
-            userId = "user-" + userId;
+        Cookie cookie = new Cookie("autosearch-debug-user", userId);
+        cookie.setPath("/");
+        cookie.setMaxAge(TEN_YEARS);
+        request.getContext().addResponseCookie(cookie);
 
-        }
-
-        // Return the appropriate User object
-        String sessionId = request.getSessionId();
-        if (userId.isEmpty()) {
-            return User.anonymous(sessionId);
-        }
-        return User.loggedIn(userId, sessionId);
+        return User.loggedIn(userId, request.getSessionId());
     }
-
-    @Override
-    public void persistUser(UserRequest request, User user) {
-        request.persistUser(user, TEN_YEARS);
-    }
-
 }

@@ -93,6 +93,13 @@ public interface User {
 
     default String getUserDirName() { return User.getUserDirNameFromId(getUserId()); }
 
+    /**
+     * Some actions may be performed by superusers only, such as creating a corpus on behalf of another user.
+     * The superuser has a higher limit for certain resources, such as the maximum number of owned corpora.
+     * We keep that business logic out of the User object, so we need to expose a method to check if a user is a superuser.
+     */
+    default boolean isSuperuser() { return false; }
+
     default boolean mayReadIndex(Index index) { return !index.isUserIndex() || isOwnerOfIndex(index) || index.getShareWithUsers().contains(getUserId()); }
     default boolean mayWriteIndex(Index index) { return isOwnerOfIndex(index); }
     default boolean mayShareIndex(Index index) { return isOwnerOfIndex(index) || index.getShareWithUsers().contains(getUserId()); }

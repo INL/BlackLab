@@ -410,33 +410,15 @@ public class Index {
     }
 
     public boolean userMayRead(User user) {
-        // Superuser can read anything
-        if (user.isSuperuser())
-            return true;
-
-        // There are no restrictions on who can read non-user (public) indices
-        if (!isUserIndex())
-            return true;
-
-        // Owner can always read their own index
-        if (user.getUserId().equals(getUserId()))
-            return true;
-
-        // Any user the index is explicitly shared with can read it too
-        return shareWithUsers.contains(user.getUserId());
-    }
-
-    private boolean authorizedForIndex(User user) {
-        // You are authorized (can add to, can delete) a private index if it's yours or you're the superuser
-        return isUserIndex() && (getUserId().equals(user.getUserId()) || user.isSuperuser());
+        return user.mayReadIndex(this);
     }
 
     public boolean userMayAddData(User user) {
-        return authorizedForIndex(user);
+        return user.mayWriteIndex(this);
     }
 
     public boolean userMayDelete(User user) {
-        return authorizedForIndex(user);
+        return user.mayDeleteIndex(this);
     }
 
     /**

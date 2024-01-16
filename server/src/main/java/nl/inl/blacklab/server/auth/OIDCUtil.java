@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Optional;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -26,41 +27,36 @@ import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 
+import org.keycloak.authorization.client.AuthzClient;
+
 public class OIDCUtil {
-    RemoteJWKSet<SecurityContext> keySource = new RemoteJWKSet<>(
-            new URL(client.getServerConfiguration().getJwksUri()),
-            new DefaultResourceRetriever(5000, 5000, 4));
+    AuthzClient client;
 
+    /**
+     * This will cache and re-retrieve internally (15 minutes by default I think)
+     * In future versions, migrate to JWKSourceBuilder.
+     * See https://connect2id.com/products/nimbus-jose-jwt/examples/validating-jwt-access-tokens
+     * we should cache this keysource object as well.
+     */
+    RemoteJWKSet<SecurityContext> keySource;
 
-    public OIDCUtil(String idpUrl, String clientId, String clientSecret) {
+    ConfigurableJWTProcessor<SecurityContext> jwtProcessor;
 
-    }
-
-    public Object decodeAccessToken(String accessToken) throws IOException {
-        /**
-         * Token without Bearer prefix
-         */
-        // TODO move to utils
-        // TODO when parsing fails (opaque token), try to introspect it and return the result of that
-        // TODO cache these until the token expires.
-        // TODO RPT and Access Token have different shape. Map into a common shape.
-        // TODO introspection for RPT doesn't contain very much info. We need to introspect the access token to get the user id.
-        // So we need to make sure we never have the situation where we need to introspect an RPT to obtain a user ID (or some other non-permission claim).
-
+    public OIDCUtil(AuthzClient client, String idpUrl, String clientId, String clientSecret) {
+        this.client = client;
+        try {
+            this.keySource =
+            new RemoteJWKSet<>(
+                    new URL(client.getServerConfiguration().getJwksUri()),
+                    new DefaultResourceRetriever(5000, 5000, 4));
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("Invalid JWK URI", ex);
+        }
 
         // Create a JWT processor for the access tokens
-        ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-
+        jwtProcessor = new DefaultJWTProcessor<>();
         // Set the required "typ" header "jwt" for access tokens
         jwtProcessor.setJWSTypeVerifier(new DefaultJOSEObjectTypeVerifier<>(JOSEObjectType.JWT));
-
-        // This will cache and re-retrieve internally (15 minutes by defualt I think)
-        // In future versions, migrate to JWKSourceBuilder.
-        // See https://connect2id.com/products/nimbus-jose-jwt/examples/validating-jwt-access-tokens
-        // we should cache this keysource object as well.
-        RemoteJWKSet<SecurityContext> keySource = new RemoteJWKSet<>(
-                new URL(client.getServerConfiguration().getJwksUri()),
-                new DefaultResourceRetriever(5000, 5000, 4));
 
         // Configure the JWT processor with a key selector to feed matching public
         // RSA keys sourced from the JWK set URL
@@ -86,14 +82,29 @@ public class OIDCUtil {
                                 JWTClaimNames.JWT_ID))
                 )
         );
+    }
+
+    /**
+     * Parse the token into a JWTClaimsSet object. Introspect the token if necessary.
+     * (TODO) This will internally cache the token until it expires.
+     * @param accessToken Token without Bearer prefix
+     */
+    public Optional<JWTClaimsSet> decodeAccessToken(String accessToken) {
+        // TODO when parsing fails (opaque token), try to introspect it and return the result of that
+        // TODO cache these until the token expires.
+        // TODO RPT and Access Token have different shape. Map into a common shape.
+        // TODO introspection for RPT doesn't contain very much info. We need to introspect the access token to get the user id.
+        // I believe there are two introspection points in keycloak, but passing an RPT will work with either one, whereas passing an access token
+        // will only work with the accesstoken introspection endpoint.
+        // the rpt introspection point returns a lot less useful information.
 
         // Process the token
         try {
-            return jwtProcessor.process(accessTokenOrRPT, null);
+            return Optional.ofNullable(jwtProcessor.process(accessToken, null));
         } catch (ParseException | BadJOSEException e) {
             // Invalid token
             System.err.println(e.getMessage());
-            return null;
+            return Optional.empty();
         } catch (JOSEException e) {
             // Key sourcing failed or another internal exception
             System.err.println(e.getMessage());
@@ -101,14 +112,7 @@ public class OIDCUtil {
         }
 
     }
-    public Object decodeRPT(String rpt) throws IOException {
-
-    }
-
-    public String getSubject(String accessToken) throws IOException {
-
-    }
-    public String getSubjectFromRPT(String rpt) throws IOException {
-
+    public Optional<JWTClaimsSet> decodeRPT(String rpt) throws IOException {
+        return decodeAccessToken(rpt); // seems to work the same in keycloak.
     }
 }

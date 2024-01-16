@@ -27,6 +27,12 @@ import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.ServletUtil;
 
+import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.jee.context.JEEContext;
+import org.pac4j.jee.context.session.JEESessionStore;
+import org.pac4j.jee.context.session.JEESessionStoreFactory;
+
 /** Represents a servlet request to the webservice. */
 public class UserRequestBls implements UserRequest {
 
@@ -35,6 +41,10 @@ public class UserRequestBls implements UserRequest {
     private final HttpServletRequest request;
 
     private final HttpServletResponse response;
+
+    WebContext context;
+
+    SessionStore sessionStore;
 
     /** Newly added encdpoint that always uses v5 conventions for response, etc.? */
     private boolean newEndpoint = false;
@@ -54,6 +64,8 @@ public class UserRequestBls implements UserRequest {
         this.servlet = servlet;
         this.request = request;
         this.response = response;
+        this.context = new JEEContext(request, response);
+        this.sessionStore = JEESessionStore.INSTANCE;
 
         // Pass requestId to instrumentationProvider
         RequestInstrumentationProvider instrumentationProvider = getInstrumentationProvider();
@@ -131,65 +143,61 @@ public class UserRequestBls implements UserRequest {
         return response;
     }
 
+    public WebContext getContext() { return context; }
+
+    public SessionStore getSessionStore() { return sessionStore; }
+
     @Override
     public SearchManager getSearchManager() {
         return servlet.getSearchManager();
     }
 
-    @Override
-    public String getSessionId() {
-        return request.getSession().getId();
+//    @Override
+//    public String getSessionId() {
+//        return request.getSession().getId();
+//
+//    }
 
-    }
+//    @Override
+//    public String getRemoteAddr() {
+//        return ServletUtil.getOriginatingAddress(request);
+//    }
 
-    @Override
-    public String getRemoteAddr() {
-        return ServletUtil.getOriginatingAddress(request);
-    }
+//    @Override
+//    public String getPersistedUserId() {
+//        // Is there a cookie yet?
+//        String userId = null;
+//        Cookie[] cookies = request.getCookies();
+//        if (cookies != null) {
+//            // Check if we have a session cookie
+//            for (Cookie cookie : cookies) {
+//                if (cookie.getName().equals("autosearch-debug-user")) {
+//                    userId = cookie.getValue();
+//                    break;
+//                }
+//            }
+//        }
+//        return userId;
+//    }
 
-    @Override
-    public String getPersistedUserId() {
-        // Is there a cookie yet?
-        String userId = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            // Check if we have a session cookie
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("autosearch-debug-user")) {
-                    userId = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        return userId;
-    }
+//    @Override
+//    public String getHeader(String name) {
+//        return request.getHeader(name);
+//    }
 
-    @Override
-    public void persistUser(User user, int durationSec) {
-        Cookie cookie = new Cookie("autosearch-debug-user", user.getUserId());
-        cookie.setPath("/");
-        cookie.setMaxAge(durationSec);
-        response.addCookie(cookie);
-    }
+//    @Override
+//    public String getParameter(String name) {
+//        return request.getParameter(name);
+//    }
 
-    @Override
-    public String getHeader(String name) {
-        return request.getHeader(name);
-    }
+//    @Override public Map<String, String[]> getParameters() {
+//        return request.getParameterMap();
+//    }
 
-    @Override
-    public String getParameter(String name) {
-        return request.getParameter(name);
-    }
-
-    @Override public Map<String, String[]> getParameters() {
-        return request.getParameterMap();
-    }
-
-    @Override
-    public Object getAttribute(String name) {
-        return request.getAttribute(name);
-    }
+//    @Override
+//    public Object getAttribute(String name) {
+//        return request.getAttribute(name);
+//    }
 
     @Override
     public WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation) {

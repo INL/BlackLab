@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.auth;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,21 +20,22 @@ public class AuthClarinEppn extends AuthRequestAttribute {
 
     public AuthClarinEppn(Map<String, Object> param) {
         super("eppn");
-        if (param.size() > 0)
+        if (!param.isEmpty())
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 
     @Override
-    protected String getUserId(UserRequest request) {
-        String userId = super.getUserId(request);
-        if (userId != null) {
-            String[] parts = userId.split(";", 2);
-            if (parts.length == 2 && parts[0].equals(parts[1])) {
-                // The user id string is of the form "USERID;USERID".
-                // Only return it once.
-                return parts[0];
-            }
-        }
-        return userId;
+    protected Optional<String> getUserId(UserRequest request) {
+        return super
+                .getUserId(request)
+                .map(userId -> {
+                    String[] parts = userId.split(";", 2);
+                    if (parts.length == 2 && parts[0].equals(parts[1])) {
+                        // The user id string is of the form "USERID;USERID".
+                        // Only return it once.
+                        return parts[0];
+                    }
+                    return userId;
+                });
     }
 }

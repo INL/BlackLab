@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.auth;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,14 +32,16 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 
 public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements Closeable, UmaResourceActions<T> {
+    /** Shape of a permission as returned by Keycloak */
     public static class UMAPermission {
-        // ids
+        // ids (uuid)
         String id; // id of the permission ticket (see this as the instance of the permission)
         String owner; // id of the owner of the resource
         String resource; // id of the resource
         String scope; // id of the scope (i.e. permission)
         String requester; // id of the user who requested the permission.
 
+        // names (as given by an application or user), unique within an application+user combination (I think)
         String scopeName;
         String resourceName;
         String ownerName;
@@ -53,25 +54,24 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
     // I don't see the benefit of using a URN, so we'll just use a string for now.
     private static final String RESOURCE_TYPE = "corpus";
 
-    private AuthzClient client;
+    private final AuthzClient client;
+    private final OIDCUtil oidcUtil;
 
-    final private UmaResourceActions.UserIdProperty userIdProperty;
-
-    final private Function<String, T> getPermissionValue;
-    final private Supplier<T[]> getPermissionValues;
-
-    final private CloseableHttpClient http = HttpClients.createDefault();
+    private final UmaResourceActions.UserIdProperty userIdProperty;
+    private final Function<String, T> getPermissionValue;
+    private final Supplier<T[]> getPermissionValues;
+    private final CloseableHttpClient http = HttpClients.createDefault();
 
     public UmaResourceActionsKeycloak(String endpoint, String realm, String clientId, String clientSecret, UmaResourceActions.UserIdProperty userNameProperty, Function<String, T> getPermissionValue, Supplier<T[]> getPermissionValues) {
         client = AuthzClient.create(new Configuration(endpoint, realm, clientId, Map.of("secret", clientSecret), null));
+        oidcUtil = new OIDCUtil(client, endpoint, clientId, clientSecret);
         this.userIdProperty = userNameProperty;
         this.getPermissionValue = getPermissionValue;
         this.getPermissionValues = getPermissionValues;
     }
 
     @Override
-    public String createResource(UmaResourceActions.NameOrId owner, String resourceName, String resourceDisplayName, String resourcePath)
-            throws IOException {
+    public String createResource(NameOrId owner, String resourceName, String resourceDisplayName, String resourcePath) {
         /*
         curl -v -X POST \
           http://${host}:${port}/realms/${realm_name}/authz/protection/resource_set \
@@ -105,7 +105,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
     }
 
     @Override
-    public void deleteResource(NameOrId owner, NameOrId resource) throws IOException {
+    public void deleteResource(NameOrId owner, NameOrId resource) {
         /* curl -v -X DELETE \
          http://${host}:${port}/realms/${realm_name}/authz/protection/resource_set/{resource_id} \
          -H 'Authorization: Bearer '$pat
@@ -115,36 +115,38 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
     }
 
     @Override
-    public void updatePermissions(String ownerAccessToken, NameOrId resource, NameOrId otherUser, boolean grant,
-            Set<T> permissionName) throws IOException {
+    public void updatePermissions(String ownerAccessToken, NameOrId resource, NameOrId otherUser, boolean grant, Set<T> permissionName) {
         // Unfortunately this will result in a call to the Authorization Server.
         String resourceId = getResourceId(NameOrId.id(getUserId(ownerAccessToken)), resource);
         String otherUserId = getUserId(otherUser);
 
-        for (T permission : permissionName) {
-            HttpUriRequest req = RequestBuilder.create("post")
-                    .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
-                    .addHeader("Authorization", "Bearer " + ownerAccessToken)
-                    .addHeader("Content-Type", "application/json")
-                    // Could also pass "requestName" and the username of the other. But we don't know if we're using usernames or emails (probably emails to be honest).
-                    .setEntity(new StringEntity(new JsonMapper().writeValueAsString(Map.of(
-                            "resource", resourceId,
-                            "granted", grant,
-                            "requester", otherUserId,
-                            "scopeName", permission.toString()
-                    ))))
-                    .build();
+        try {
+            for (T permission : permissionName) {
+                HttpUriRequest req = RequestBuilder.create("post")
+                        .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
+                        .addHeader("Authorization", "Bearer " + ownerAccessToken)
+                        .addHeader("Content-Type", "application/json")
+                        // Could also pass "requestName" and the username of the other. But we don't know if we're using usernames or emails (probably emails to be honest).
+                        .setEntity(new StringEntity(new JsonMapper().writeValueAsString(Map.of(
+                                "resource", resourceId,
+                                "granted", grant,
+                                "requester", otherUserId,
+                                "scopeName", permission.toString()
+                        ))))
+                        .build();
 
-            try (CloseableHttpResponse response = http.execute(req)) {
-                // TODO check response
+                try (CloseableHttpResponse response = http.execute(req)) {
+                    // TODO check response
+                }
             }
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to update permissions", "UPDATE_PERMISSIONS_ERROR", e);
         }
     }
 
+    /** This is specifically a keycloak extension, but it's not unlikely other IDPs have similar mechanisms. */
     @Override
-    public void updatePermissionsAsApplication(NameOrId owner, NameOrId resource, NameOrId otherUser, boolean grant,
-            Set<T> permissions)
-            throws IOException {
+    public void updatePermissionsAsApplication(NameOrId owner, NameOrId resource, NameOrId otherUser, boolean grant, Set<T> permissions) {
         // Get impersonation token
         /*
         curl --location --request POST 'http://localhost:8180/auth/realms/tenant/protocol/openid-connect/token' \
@@ -183,6 +185,8 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
         final String impersonationToken;
         try (CloseableHttpResponse response = http.execute(req)) {
             impersonationToken = new JsonMapper().readValue(response.getEntity().getContent(), Map.class).get("access_token").toString();
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to get impersonation token", "GET_IMPERSONATION_TOKEN_ERROR", e);
         }
 
         // Grant permission
@@ -200,27 +204,29 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
          }'
         */
         for (T permission: permissions) {
-            req = RequestBuilder.create("post")
-                    .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
-                    .addHeader("Authorization", "Bearer " + impersonationToken)
-                    .addHeader("Content-Type", "x-www-form-urlencoded")
-                    .setEntity(new StringEntity(new JsonMapper().writeValueAsString(Map.of(
-                            "resource", getResourceId(owner, resource),
-                            "granted", grant,
-                            otherUser.isId() ? "requester" : "requesterName", otherUser.get(),
-                            "scopeName", permission.toString()
-                    ))))
-                    .build();
-
-            try (CloseableHttpResponse response = http.execute(req)) {
-                // TODO check response
+            try {
+                req = RequestBuilder.create("post")
+                        .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
+                        .addHeader("Authorization", "Bearer " + impersonationToken)
+                        .addHeader("Content-Type", "x-www-form-urlencoded")
+                        .setEntity(new StringEntity(new JsonMapper().writeValueAsString(Map.of(
+                                "resource", getResourceId(owner, resource),
+                                "granted", grant,
+                                otherUser.isId() ? "requester" : "requesterName", otherUser.getEither(),
+                                "scopeName", permission.toString()
+                        ))))
+                        .build();
+                try (CloseableHttpResponse response = http.execute(req)) {
+                    // TODO check response
+                }
+            } catch (IOException e) {
+                throw new InternalServerError("Failed to update permissions", "UPDATE_PERMISSIONS_ERROR", e);
             }
         }
     }
 
     @Override
-    public Map<NameOrId, Map<NameOrId, Set<T>>> getPermissionsOnMyResources(String ownerAccessToken)
-            throws IOException {
+    public Map<NameOrId, Map<NameOrId, Set<T>>> getPermissionsOnMyResources(String ownerAccessToken) {
         HttpUriRequest req = RequestBuilder.create("get")
                 .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
                 .addHeader("Authorization", "Bearer " + ownerAccessToken)
@@ -244,12 +250,13 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
             }
 
             return ret;
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to get permissions on my resources", "GET_PERMISSIONS_ON_MY_RESOURCES_ERROR", e);
         }
     }
 
     @Override
-    public Map<NameOrId, Set<T>> getMyPermissionsOnResources(String userAccessToken)
-            throws IOException {
+    public Map<NameOrId, Set<T>> getMyPermissionsOnResources(String userAccessToken) {
         // TODO check if permissions already encoded inside the access/rpt token.
         HttpUriRequest req = RequestBuilder.create("get")
                 .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
@@ -272,30 +279,36 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
                         .addAll(getPermissionValue.apply(permission.scopeName).implies());
             }
             return ret;
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to get my permissions on resources", "GET_MY_PERMISSIONS_ON_RESOURCES_ERROR", e);
         }
     }
 
     @Override
-    public String createPermissionTicket(NameOrId owner, NameOrId resource, Set<T> permissions)
-            throws IOException {
-        HttpUriRequest req = RequestBuilder.create("post")
-                .setUri(client.getServerConfiguration().getPermissionEndpoint())
-                .addHeader("Authorization", "Bearer " + client.obtainAccessToken())
-                .addHeader("Content-Type", "application/json")
-                .setEntity(new StringEntity(new JsonMapper().writeValueAsString(Map.of(
-                        "resource_id", getResourceId(owner, resource),
-                        "resource_scopes", List.of(permissions)
-                ))))
-                .build();
+    public String createPermissionTicket(NameOrId owner, NameOrId resource, Set<T> permissions) {
+        try {
+            HttpUriRequest req = RequestBuilder.create("post")
+                    .setUri(client.getServerConfiguration().getPermissionEndpoint())
+                    .addHeader("Authorization", "Bearer " + client.obtainAccessToken())
+                    .addHeader("Content-Type", "application/json")
+                    .setEntity(new StringEntity(new JsonMapper().writeValueAsString(Map.of(
+                            "resource_id", getResourceId(owner, resource),
+                            "resource_scopes", List.of(permissions)
+                    ))))
+                    .build();
 
-        // Returns { "ticket": "ticket_id" }
-        try (CloseableHttpResponse response = http.execute(req)) {
-            return JsonMapper.builder().build().readTree(response.getEntity().getContent()).get("ticket").asText();
+            // Returns { "ticket": "ticket_id" }
+            try (CloseableHttpResponse response = http.execute(req)) {
+                // TODO check response.
+                return JsonMapper.builder().build().readTree(response.getEntity().getContent()).get("ticket").asText();
+            }
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to create permission ticket", "CREATE_PERMISSION_TICKET_ERROR", e);
         }
     }
 
     @Override
-    public String getUserId(NameOrId user) throws IOException {
+    public String getUserId(NameOrId user) {
         if (user.isId()) return user.getId();
 
         /*
@@ -339,11 +352,13 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
                     .findFirst()
                     .orElseThrow(() -> new IOException("User not found: " + user.getName()))
                     .get("id");
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to get user id", "GET_USER_ID_ERROR", e);
         }
     }
 
     @Override
-    public String getUserId(String accessToken) throws MalformedURLException {
+    public String getUserId(String accessToken) {
         // unpack token, if it fails, introspect it.
         JWTClaimsSet claims = this.introspectAccessToken(accessToken);
         if (claims != null) return claims.getSubject();
@@ -355,6 +370,8 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
 
     @Override
     public JWTClaimsSet introspectAccessToken(String accessToken) {
+        oidcUtil.decodeAccessToken(accessToken);
+
         HttpUriRequest req = RequestBuilder.create("post")
                 .setUri(client.getServerConfiguration().getIntrospectionEndpoint())
                 .addHeader("Content-Type", "application/x-www-form-urlencoded")
@@ -415,8 +432,7 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
         }
          */
         try (CloseableHttpResponse response = http.execute(req)) {
-            JsonMapper.builder().build().readTree(response.getEntity().getContent());
-
+            // TODO check response
             if (response.getStatusLine().getStatusCode() != 200) {
                 throw new InternalServerError("Failed to introspect access token: " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
             }
@@ -517,47 +533,42 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
      * This works with both an access token and an RPT.
      * It seems the only difference in keycloak is whether you pass the token_type_hint parameter.
      * It returns the normal shape you'd expect for whatever type of token you throw at it.
-     * So you can introspect and RPT as if it were an access token, and vice versa.
+     * So you can introspect any RPT as if it were an access token, and vice versa.
      *
      * @param rpt
      * @return
-     * @throws IOException
      */
-    JWTClaimsSet introspectRpt(String rpt) throws IOException {
-        HttpUriRequest req = RequestBuilder.create("post")
-                .setUri(client.getServerConfiguration().getIntrospectionEndpoint())
-                .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                .setEntity(new UrlEncodedFormEntity(List.of(
-                        new BasicNameValuePair("token", rpt),
-                        new BasicNameValuePair("token_type_hint", "requesting_party_token"),
-                        new BasicNameValuePair("client_id", client.getConfiguration().getResource()),
-                        new BasicNameValuePair("client_secret",
-                                (String) client.getConfiguration().getCredentials().get("secret"))
-                ), "UTF-8"))
-                .build();
+    JWTClaimsSet introspectRpt(String rpt) {
+        try {
+            HttpUriRequest req = RequestBuilder.create("post")
+                    .setUri(client.getServerConfiguration().getIntrospectionEndpoint())
+                    .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                    .setEntity(new UrlEncodedFormEntity(List.of(
+                            new BasicNameValuePair("token", rpt),
+                            new BasicNameValuePair("token_type_hint", "requesting_party_token"),
+                            new BasicNameValuePair("client_id", client.getConfiguration().getResource()),
+                            new BasicNameValuePair("client_secret",
+                                    (String) client.getConfiguration().getCredentials().get("secret"))
+                    ), "UTF-8"))
+                    .build();
 
-        try (CloseableHttpResponse response = http.execute(req)) {
-            JsonMapper.builder().build().readTree(response.getEntity().getContent());
-
-            if (response.getStatusLine().getStatusCode() != 200) {
-                throw new InternalServerError(
-                        "Failed to introspect access token: " + response.getStatusLine().getStatusCode() + " "
-                                + response.getStatusLine().getReasonPhrase());
+            try (CloseableHttpResponse response = http.execute(req)) {
+                // TODO check response
+                return new JsonMapper().readValue(response.getEntity().getContent(), JWTClaimsSet.class);
             }
-            return new JsonMapper().readValue(response.getEntity().getContent(), JWTClaimsSet.class);
         } catch (IOException e) {
             throw new InternalServerError("Failed to introspect access token", "RPT_INTROSPECT_ERROR", e);
         }
     }
 
     @Override
-    public String getResourceId(NameOrId owner, NameOrId resource) throws IOException {
+    public String getResourceId(NameOrId owner, NameOrId resource) {
         if (resource.isId()) return resource.getId();
 
         HttpUriRequest req = RequestBuilder.create("get")
                 .setUri(client.getServerConfiguration().getResourceRegistrationEndpoint())
                 .addHeader("Authorization", "Bearer " + client.obtainAccessToken())
-                .addParameter("owner", owner.get()) // either name or id is okay.
+                .addParameter("owner", owner.getEither()) // either name or id is okay.
                 .addParameter("name", resource.getName())
                 .addParameter("type", RESOURCE_TYPE)
 //                .addParameter("deep", "true") can be used to get the entire resource object, false (default) only returns the ids as a string[]
@@ -567,40 +578,42 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
         try (CloseableHttpResponse response = http.execute(req)) {
             String[] resourceIds = new JsonMapper().readValue(response.getEntity().getContent(), String[].class);
             return resourceIds.length == 0 ? null : resourceIds[0];
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to get resource id", "GET_RESOURCE_ID_ERROR", e);
         }
     }
 
     @Override
-    public String getPermissionId(String userAccessToken, NameOrId owner, NameOrId resource, NameOrId otherUser,
-            T permission) throws IOException {
+    public String getPermissionId(String userAccessToken, NameOrId owner, NameOrId resource, NameOrId otherUser, T permission) {
         HttpUriRequest req = RequestBuilder.create("get")
                 .setUri(client.getServerConfiguration().getPermissionEndpoint() + "/ticket")
                 .addHeader("Authorization", "Bearer " + userAccessToken)
-                .addParameter("owner", owner.get()) // name or id are both fine for this request (it's inconsistent with some other requests)
-                .addParameter("requester", otherUser.get()) // name or id are both fine for this request (it's inconsistent with some other requests)
-                .addParameter(resource.isId() ? "resourceId" : "resource", resource.get()) // this one does however differ between name and id...
+                .addParameter("owner", owner.getEither()) // name or id are both fine for this request (it's inconsistent with some other requests)
+                .addParameter("requester", otherUser.getEither()) // name or id are both fine for this request (it's inconsistent with some other requests)
+                .addParameter(resource.isId() ? "resourceId" : "resource", resource.getEither()) // this one does however differ between name and id...
                 .addParameter("scopeName", permission.toString())
-//                .addParameter("deep", "true") can be used to get the entire resource object, false (default) only returns the ids as a string[]
+//                .addParameter("deep", "true") // can be used to get the entire resource object, false (default) only returns the ids as a string[]
                 .addParameter("exactName", "true")
                 .build();
 
         try (CloseableHttpResponse response = http.execute(req)) {
+            // TODO check response.
             String[] resourceIds = new JsonMapper().readValue(response.getEntity().getContent(), String[].class);
             return resourceIds.length == 0 ? null : resourceIds[0];
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to get permission id", "GET_PERMISSION_ID_ERROR", e);
         }
     }
 
-
     @Override
-    public boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, Set<T> permissions)
-            throws IOException {
-
+    public boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, Set<T> permissions) {
         // TODO check if permissions already encoded inside the access/rpt token.
-        JWTClaimsSet jwt = this.introspectAccessToken(accessToken);
-        if (jwt != null && jwt.getClaim("authorization") != null) {
-            // TODO inspect what object we actually have.
-            System.out.println("jwt.getClaim(\"authorization\") = " + jwt.getClaim("authorization"));
-        }
+//        JWTClaimsSet jwt = this.introspectAccessToken(accessToken);
+//        if (jwt != null && jwt.getClaim("authorization") != null) {
+//            // TODO inspect what object we actually have.
+//            System.out.println("jwt.getClaim(\"authorization\") = " + jwt.getClaim("authorization"));
+//            throw new RuntimeException("Not implemented yet.");
+//        }
 
         // Do we even need this, we can just request all permissions and check if the requested permission is in there.
         // but whatever
@@ -648,6 +661,8 @@ public class UmaResourceActionsKeycloak<T extends PermissionEnum<T>> implements 
             } else {
                 throw new InternalServerError("Failed to check permissions: " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase());
             }
+        } catch (IOException e) {
+            throw new InternalServerError("Failed to check permissions", "CHECK_PERMISSIONS_ERROR", e);
         }
     }
 

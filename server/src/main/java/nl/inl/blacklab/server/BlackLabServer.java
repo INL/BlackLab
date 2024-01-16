@@ -235,9 +235,6 @@ public class BlackLabServer extends HttpServlet {
 
         boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", userRequest.isDebugMode());
 
-        // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
-        searchManager.getAuthSystem().persistUser(userRequest, requestHandler.getUser());
-
         int cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().getCache().getClientCacheTimeSec() : 0;
 
         String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : ResponseStreamer.BLACKLAB_RESPONSE_ROOT_ELEMENT;

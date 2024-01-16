@@ -44,7 +44,7 @@ public class AuthDebugFixed implements AuthMethod {
 
         // Is client on debug IP or on the local network?
         SearchManager searchMan = request.getSearchManager();
-        String ip = request.getRemoteAddr();
+        String ip = request.getContext().getRemoteAddr();
         
         boolean isLocalNetwork = PATT_LOCALSUBNET.matcher(ip).find();
         if (!isLocalNetwork && !searchMan.config().getDebug().isDebugMode(ip) && !searchMan.config().getAuthentication().isOverrideIp(ip)) {

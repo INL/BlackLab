@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.auth;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +31,7 @@ public class AuthRequestAttribute implements AuthMethod {
         }
     }
 
+    /** Sets the attribute name to use for the user id. */
     public AuthRequestAttribute(String attributeName) {
         this.attributeName = attributeName;
     }
@@ -43,33 +45,15 @@ public class AuthRequestAttribute implements AuthMethod {
             return User.anonymous(sessionId);
         }
 
-        // See if there's a logged-in user or not
-        String userId = getUserId(request);
-
-        // Return the appropriate User object
-        if (userId == null || userId.length() == 0) {
-            return User.anonymous(sessionId);
-        }
-        return User.loggedIn(userId, sessionId);
+        return getUserId(request).map(userId -> User.loggedIn(userId, sessionId)).orElseGet(() -> User.anonymous(sessionId));
     }
 
-    protected String getUserId(UserRequest request) {
-
-        String userId = null;
-
+    protected Optional<String> getUserId(UserRequest request) {
         // Overridden in URL?
-        SearchManager searchMan = request.getSearchManager();
-        if (searchMan.config().getAuthentication().isOverrideIp(request.getRemoteAddr()) && request.getParameter("userid") != null) {
-            userId = request.getParameter("userid");
-        }
-
-        if (userId == null) {
-            Object attribute = request.getAttribute(attributeName);
-            if (attribute != null)
-                userId = attribute.toString();
-        }
-
-        return userId;
+        boolean isOverrideIp = request.getSearchManager().config().getAuthentication().isOverrideIp(request.getContext().getRemoteAddr());
+        Optional<String> user = isOverrideIp ? Optional.empty() : request.getContext().getRequestParameter("userid");
+        // If not overridden (or not allowed, return the regular user attribute
+        return user.or(() -> request.getContext().getRequestAttribute(attributeName).map(Object::toString));
     }
 
 }

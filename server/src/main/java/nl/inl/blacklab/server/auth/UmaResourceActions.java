@@ -4,12 +4,39 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 
+
+/**
+ * Some terminology:
+ * <br>
+ * <ul>
+ *     <li>Resource Server: the server that hosts the resources (i.e. BlackLab)</li>
+ *     <li>Authorization Server: the server that hosts the authorization server (i.e. Keycloak)</li>
+ *     <li>Client: the application that wants to access the resources (i.e. corpus-frontend/some other webservice)</li>
+ *     <li>Resource: the resource that is being accessed (i.e. the corpus)</li>
+ *     <li>Resource Owner: the user that owns the resources (i.e. the corpus owner)</li>
+ *     <li>Requesting Party: the user that wants to access the resources (i.e. the user that wants to search the corpus)</li>
+ *     <li>Permission: the permission(s)(+the resource on which) that is being requested (i.e. read, write, etc.)</li>
+ *
+ *     <li>Access Token: a token that represents everything the Requesting Party (the non-owner user) is currently allowed to do</li>
+ *     <li>Permission Ticket: A special security token type representing a permission request.
+ *          It (opaquely) holds which new permissions are being requested on behalf of a (non-owner) user to be added to their Access Token,
+ *          if the Access Token does not currently contain the correct permissions.
+ *          It needs to be exchanged for a new updated Access Token at the Token Endpoint. After this step, the Access Token is called a Requesting Party Token (RPT).
+ *          In keycloak, this is optional. As keycloak allows specifying the requested permissions directly using the "permission" (form-content/body) parameter.
+ *          We are responsible for generating these (through the AS) and returning them to the client.
+ *     </li>
+ *     <li>Requesting Party Token (RPT): alias for the Access Token received by exchanging a Permission Ticket.
+ *          The Client is responsible for processing our PT into an RPT.
+ *     </li>
+ *     <li>PAT - Protection API Access Token: a token that is required to access the Resource system (on behalf of the resource owner) in keycloak. I.e. create/delete resources, update who has access to it, etc.
+ *          It's not required to retrieve current permissions on behalf of another user.
+ *     </li>
+ */
 public interface UmaResourceActions<T extends PermissionEnum<T>> {
     /**
      * Create/register a new resource in the UMA server.
@@ -92,26 +119,12 @@ public interface UmaResourceActions<T extends PermissionEnum<T>> {
     boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, Set<T> permissions)
             throws IOException;
 
-    default boolean isJwt(String token) {
-        try {
-            JWTParser.parse(token);
-            return true;
-        } catch (ParseException e) {
-            return false;
-        }
-    }
-
-    default JWTClaimsSet decodeRpt(String rpt) {
-        // TODO
-        return null;
-    }
-
     /**
      * What does the application's user ID correspond to in the Authorization Server?
      * This is a bit of interop code, previously we didn't store user's data under the subject claim (the user's ID) in the JWT, but under the username or email.
      * So when we get a token, we need to know what field to read our local user ID from (email/username).
      *
-     * In Keycloak, the user ID is a UUID, in Blacklab it's a username or email.
+     * In Keycloak, the user ID is a UUID, in Blacklab it's an email (or maybe later a username).
      */
     enum UserIdProperty {
         USERNAME,
@@ -124,76 +137,6 @@ public interface UmaResourceActions<T extends PermissionEnum<T>> {
 
         public static UserIdProperty fromString(String s) {
             return s.equals("username") ? USERNAME : EMAIL;
-        }
-    }
-
-    /**
-     * Piece of interop code to convert between the ID and the name of a user or resource.
-     * <br>
-     * The ID is always the item's ID in the Authorization Server, the Name what identifies the item in the application.
-     * These are not always the same, as the ID in the Authorization Server is typically a UUID, so not useful to the application.
-     * We store things under a regular name, for users, an email address, for resources, a name the user picked.
-     * Lots of operations come in with the name, but we need the ID to talk to the Authorization Server.
-     * So we need to be able to convert between the two.
-     */
-    class NameOrId {
-        private final String id;
-        private final String name;
-
-        public NameOrId(String id, String name) {
-            this.id = id;
-            this.name = name;
-            if (id == null && name == null) {
-                throw new IllegalArgumentException("Either id or name must be non-null");
-            }
-        }
-
-        public static NameOrId id(String id) {
-            return new NameOrId(id, null);
-        }
-
-        public static NameOrId name(String name) {
-            return new NameOrId(null, name);
-        }
-
-        public boolean isId() {
-            return id != null;
-        }
-
-        public boolean isName() {
-            return name != null;
-        }
-
-        public String getId() throws NullPointerException {
-            Objects.requireNonNull(id);
-            return id;
-        }
-
-        public String getName() throws NullPointerException {
-            Objects.requireNonNull(name);
-            return name;
-        }
-
-        /**
-         * Get the id if it exists, otherwise the name
-         */
-        public String get() {
-            return isId() ? id : name;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
-            NameOrId nameOrId = (NameOrId) o;
-            return Objects.equals(id, nameOrId.id) && Objects.equals(name, nameOrId.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, name);
         }
     }
 }

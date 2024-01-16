@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.search;
 
 import java.util.Map;
+import java.util.Objects;
 
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -9,11 +10,26 @@ import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
+import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.SessionStore;
+
 /** Represents a request from the user to the webservice.
  * Used to factor out implementation-specific classes like HttpServlet,
  * HttpServletRequest, etc.
  */
 public interface UserRequest {
+
+    /** Pac4j web context, for authentication/authorization purposes. */
+    WebContext getContext();
+
+    /** pac4j session store, for authentication/authorization purposes. */
+    SessionStore getSessionStore();
+
+    default String getSessionId() {
+        // Rather have an exception than a null session, as we rely on the session id to always be present.
+        return getSessionStore().getSessionId(getContext(), true).orElseThrow();
+    }
+
     /**
      * Use the specified authentication method to determine the current user.
      *
@@ -24,62 +40,7 @@ public interface UserRequest {
     SearchManager getSearchManager();
 
     /**
-     * Get our current session id.
-     * @return unique id for the current session
-     */
-    String getSessionId();
-
-    /**
-     * Get the remote address.
-     * @return user's remote address
-     */
-    String getRemoteAddr();
-
-    /**
-     * Return the previously persisted user id, if any.
-     * @return persisted user id, or null if none
-     */
-    String getPersistedUserId();
-
-    /**
-     * Persist the user (if the auth method wants to do that).
-     *
-     * Only used by AuthDebugCookie.
-     *
-     * @param user current user
-     * @param durationSec how long to persist
-     */
-    void persistUser(User user, int durationSec);
-
-    /**
-     * Get the value of a request header.
-     *
-     * @param name header name
-     * @return header value or null if not present
-     */
-    String getHeader(String name);
-
-    /**
-     * Get the value of a request parameter.
-     *
-     * @param name parameter name
-     * @return parameter value or null if not present
-     */
-    String getParameter(String name);
-
-    /** Interop with pac4j. */
-    Map<String, String[]> getParameters();
-
-    /**
-     * Get the value of a request attribute.
-     *
-     * @param name attribute name
-     * @return attribute value or null if not present
-     */
-    Object getAttribute(String name);
-
-    /**
-     * Create parameters object from the request.
+     * Create BlackLab's operation parameters object from the request.
      *
      * @param index index we're querying
      * @param operation operation to perform (if not passed as a parameter)

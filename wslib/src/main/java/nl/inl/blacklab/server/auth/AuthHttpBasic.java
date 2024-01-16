@@ -24,27 +24,21 @@ public class AuthHttpBasic implements AuthMethod {
 
     public AuthHttpBasic(Map<String, Object> param) {
         // doesn't take any parameters
-        if (param.size() > 0)
+        if (!param.isEmpty())
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 
     @Override
     public User determineCurrentUser(UserRequest request) {
-
-        String userId = null;
-        String authHeader = request.getHeader("authorization");
-        if (authHeader != null) {
-            String encodedValue = authHeader.split(" ")[1];
+        return request.getContext().getRequestHeader("authorization")
+        .map(h -> {
+            String encodedValue = h.split(" ")[1];
             String decodedValue = new String(base64Decoder.decode(encodedValue), StandardCharsets.UTF_8);
-            userId = decodedValue.split(":", 2)[0];
-        }
-
+            String userId = decodedValue.split(":", 2)[0];
+            return userId.isEmpty() ? null : userId;
+        })
         // Return the appropriate User object
-        String sessionId = request.getSessionId();
-        if (userId == null || userId.length() == 0) {
-            return User.anonymous(sessionId);
-        }
-        return User.loggedIn(userId, sessionId);
+        .map(id -> User.loggedIn(id, request.getSessionId()))
+        .orElseGet(() -> User.anonymous(request.getSessionId()));
     }
-
 }
