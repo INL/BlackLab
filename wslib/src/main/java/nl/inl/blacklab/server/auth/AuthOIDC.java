@@ -18,6 +18,17 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.UserRequest;
 
+/**
+ * Authenticate a user using an OIDC provider.
+ * <br>
+ * Parameters:
+ * <ul>
+ *     <li>discoveryURI: The URI to the OIDC discovery document. Usually ends in "/.well-known/openid-configuration". Required.</li>
+ *     <li>adminRole: The role that should be considered admin. Defaults to "admin".</li>
+ *     <li>useEmailAsId: If true, use the email address as the user id. If false, use the id from the OIDC provider. Defaults to true.</li>
+ *     <li>useIdAsEmailFallback: Only has effect if useEmailAsId is true. If true, use the user id if their email is not verified. Defaults to false.</li>
+ * </ul>
+ */
 public class AuthOIDC implements AuthMethod {
 
     private final Logger logger = LogManager.getLogger(AuthOIDC.class);
@@ -56,7 +67,7 @@ public class AuthOIDC implements AuthMethod {
         }
 
         OidcConfiguration config = new OidcConfiguration();
-        config.setDiscoveryURI(params.get("discoveryURI"));
+        config.setDiscoveryURI(getProperty(params, "discoveryURI"));
         config.setClientId("unused");
         config.setSecret("unused");
         config.setWithState(false); // Disable CSRF (probably unused since we only use the oidcClient for setup, but just to be sure)

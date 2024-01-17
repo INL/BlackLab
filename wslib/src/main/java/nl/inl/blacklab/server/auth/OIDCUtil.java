@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Optional;
 
+import org.keycloak.authorization.client.AuthzClient;
+
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -26,8 +28,6 @@ import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 
 import nl.inl.blacklab.server.exceptions.InternalServerError;
-
-import org.keycloak.authorization.client.AuthzClient;
 
 public class OIDCUtil {
     AuthzClient client;

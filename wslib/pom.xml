@@ -50,10 +50,36 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- interfaces used all throughout pac4j -->
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-core</artifactId>
             <version>${pac4j.version}</version>
+        </dependency>
+
+        <!-- Basic auth/header/http implementation of pac4j. Required for HeaderClient, which we use for oidc. -->
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-http</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+
+        <!-- oidc (openid connect) implementation of pac4j
+          We use very little of this package, basically just JWT decoding, and extracting the authorization header from the request.
+          Since we only consume access tokens, never produce them, we don't need the rest of the package.
+          It implements a lot of other stuff we don't use such as letting users login, logout, register, etc. but we don't use that and leave it to the OIDC provider (keycloak for now) to handle that.
+        -->
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-oidc</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+
+        <!-- keycloak UMA (user managed access) implementation, i.e. authorization/permission management using keycloak -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-authz-client</artifactId>
+            <version>22.0.5</version>
         </dependency>
 
     </dependencies>

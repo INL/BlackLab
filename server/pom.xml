@@ -41,34 +41,12 @@
             <version>1.5</version>
         </dependency>
 
-
-        <!-- oidc auth -->
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-oidc</artifactId>
-            <version>${pac4j.version}</version>
-        </dependency>
-
-        <!-- Required for HeaderClient -->
-        <!-- Doesn't depend on servlet, but does depend on the Pac4J WebContext interface, which contains almost everything you can do with a HttpServletRequest/Response.
-        It would make more sense to use the WebRequest interface and just rely on pac4j instead of implementing (as we currently do) our own web abstraction layer.
-    -->
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-http</artifactId>
-            <version>${pac4j.version}</version>
-        </dependency>
-
+        <!-- concrete implementation of pac4j interfaces for servlets -->
+        <!-- not included in blacklab-wslib as we try to keep that abstract of the underlying server implementation -->
         <dependency>
             <groupId>org.pac4j</groupId>
             <artifactId>pac4j-javaee</artifactId>
             <version>${pac4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-authz-client</artifactId>
-            <version>22.0.5</version>
         </dependency>
 
     </dependencies>

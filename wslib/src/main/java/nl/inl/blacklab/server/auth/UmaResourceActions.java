@@ -11,6 +11,10 @@ import com.nimbusds.jwt.JWTParser;
 
 
 /**
+ * Allows the application to manage its resources in the Authorization Server.
+ * I.e. which user may access which resource, and with which permissions.
+ * Except the implementation is not specific to the application, but generic.
+ *
  * Some terminology:
  * <br>
  * <ul>

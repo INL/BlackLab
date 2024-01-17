@@ -5,6 +5,10 @@ import java.util.Set;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.User;
 
+/**
+ * A user that checks with the UMA server for permissions.
+ * UMA stands for User Managed Access, i.e. a system where users may manage who and what can access their resources through an external Identity Provider.
+ */
 public class UserUMA implements User {
     UmaResourceActions<BlPermission> uma;
     String token;
