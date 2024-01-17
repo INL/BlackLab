@@ -201,6 +201,9 @@ public class CorpusQueryLanguageParser {
             this.targetVersion = targetVersion == null || targetVersion.isEmpty() ? null : targetVersion;
             this.negate = negate;
             this.isAlignmentOperator = isAlignmentOperator;
+
+            if (isAlignmentOperator && negate)
+                throw new RuntimeException("Alignment operator cannot be negated");
         }
 
         /**

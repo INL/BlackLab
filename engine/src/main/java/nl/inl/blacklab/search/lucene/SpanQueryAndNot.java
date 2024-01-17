@@ -190,7 +190,8 @@ public class SpanQueryAndNot extends BLSpanQuery {
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
         if (this.include.size() == 0 && this.exclude.size() == 0)
             throw new IllegalArgumentException("AND(NOT)/RSPAN query without clauses");
-        checkBaseFieldName();
+        checkAllCompatibleFields(this.include);
+        checkAllCompatibleFields(this.exclude);
 
         List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(this.include);
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
@@ -206,10 +207,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
      */
     public void setRequireUniqueRelations(boolean b) {
         this.requireUniqueRelations = b;
-    }
-
-    private void checkBaseFieldName() {
-        checkAllCompatibleFields(include);
     }
 
     @Override

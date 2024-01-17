@@ -32,10 +32,10 @@ public class TextPatternRelationMatch extends TextPattern {
     }
 
     public static BLSpanQuery createRelMatchQuery(QueryInfo queryInfo, QueryExecutionContext context,
-            List<BLSpanQuery> args) {
-        assert !args.isEmpty();
+            List<BLSpanQuery> clauses) {
+        assert !clauses.isEmpty();
         // Filter out "any n-gram" arguments ([]*) because they don't do anything
-        List<BLSpanQuery> clauses = args.stream()
+        clauses = clauses.stream()
                 .filter(q -> !BLSpanQuery.isAnyNGram(q))    // remove any []* clauses, which don't do anything
                 .collect(Collectors.toList());
 

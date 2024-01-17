@@ -112,11 +112,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         };
     }
 
-    public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
-        this(List.of(first, second));
-    }
-
-    public SpanQuerySequence(BLSpanQuery[] clauses) {
+    public SpanQuerySequence(BLSpanQuery... clauses) {
         this(Arrays.asList(clauses));
     }
 

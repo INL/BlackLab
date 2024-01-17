@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
@@ -200,14 +201,16 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      * doesn't matter which because this value is only ever used to run this check
      * again on a higher level in the query tree.
      *
-     * @param include clauses to check
+     * @param clauses clauses to check
      * @return base field name
      * @throws if clauses search in incompatible fields
      */
-    public static String checkAllCompatibleFields(List<BLSpanQuery> include) {
+    public static String checkAllCompatibleFields(Collection<BLSpanQuery> clauses) {
         String baseFieldNameWithVersion = null;
         String baseFieldName = null;
-        for (BLSpanQuery clause : include) {
+        for (BLSpanQuery clause: clauses) {
+            if (clause == null)
+                continue; // some operations have optional clauses
             // Get base field name (i.e. without annotation and sensitivity suffixes,
             // so "contents" instead of "contents%lemma@i")
             String baseWithVersion = AnnotatedFieldNameUtil.getBaseName(clause.getField());
