@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.lucene.search.spans.FilterSpans;
 
@@ -20,13 +21,57 @@ import org.apache.lucene.search.spans.FilterSpans;
  */
 class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
-    private final BLSpans relations;
+    public static class Target {
 
-    /** Match info name for the list of captured relations */
-    final String captureAs;
+        private final BLSpans relations;
 
-    /** Group index of captureAs */
-    private int captureAsIndex = -1;
+        /** Match info name for the list of captured relations */
+        private final String captureAs;
+
+        /** Group index of captureAs */
+        private int captureAsIndex = -1;
+
+        /** Span the relation targets must be inside of (or null if we don't care) */
+        private final SpansInBucketsPerDocument target;
+
+        public Target(BLSpans relations, BLSpans target, String captureAs) {
+            this.relations = relations;
+            this.captureAs = captureAs;
+            this.target = target == null ? null : new SpansInBucketsPerDocument(target);
+        }
+
+        void setContext(HitQueryContext context) {
+            captureAsIndex = context.registerMatchInfo(captureAs);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            Target target1 = (Target) o;
+            return Objects.equals(relations, target1.relations) && Objects.equals(captureAs,
+                    target1.captureAs) && Objects.equals(target, target1.target);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(relations, captureAs, target);
+        }
+
+        @Override
+        public String toString() {
+            return "Target{" +
+                    "relations=" + relations +
+                    ", captureAs='" + captureAs + '\'' +
+                    ", captureAsIndex=" + captureAsIndex +
+                    ", target=" + target +
+                    '}';
+        }
+    }
+
+    private final List<Target> targets;
 
     /** Our hit query context */
     private HitQueryContext context;
@@ -37,22 +82,15 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
     /** List of relations captured for current hit */
     private List<RelationInfo> capturedRelations = new ArrayList<>();
 
-    /** Span the relation targets must be inside of (or null if we don't care) */
-    private SpansInBucketsPerDocument target;
-
     /**
      * Construct a SpansCaptureRelationsWithinSpan.
      *
      * @param source span the relation sources must be inside of
-     * @param relations relations to capture from
-     * @param target span the relation targets must be inside of (or null if we don't care)
-     * @param captureAs name to capture the list of relations as
+     * @param targets targets of the relations we're capturing
      */
-    public SpansCaptureRelationsBetweenSpans(BLSpans source, BLSpans relations, BLSpans target, String captureAs) {
+    public SpansCaptureRelationsBetweenSpans(BLSpans source, List<Target> targets) {
         super(source);
-        this.relations = relations;
-        this.captureAs = captureAs;
-        this.target = target == null ? null : new SpansInBucketsPerDocument(target);
+        this.targets = targets;
     }
 
     @Override
@@ -69,58 +107,60 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         int sourceStart = startPosition();
         int sourceEnd = endPosition();
 
-        // Capture all relations with source inside this span.
-        capturedRelations.clear();
-        int docId = relations.docID();
-        if (docId < candidate.docID())
-            docId = relations.advance(candidate.docID());
-        if (docId == candidate.docID()) {
-            if (relations.startPosition() < sourceStart)
-                relations.advanceStartPosition(sourceStart);
-            while (relations.startPosition() < sourceEnd) {
-                if (relations.endPosition() < sourceEnd)
-                    capturedRelations.add(relations.getRelationInfo().copy());
-                relations.nextStartPosition();
-            }
-        }
-
-        // Find the smallest target span that covers the most of these captured relations.
-        int targetDocId = target.docID();
-        if (targetDocId < candidate.docID())
-            targetDocId = target.advance(candidate.docID());
-        if (targetDocId == candidate.docID()) {
-            // Target positioned in doc. Find best matching hit.
-            int targetIndex = -1;
-            int targetSpanLength = Integer.MAX_VALUE;
-            int targetRelationsCovered = 0;
-            for (int i = 0; i < target.bucketSize(); i++) {
-                // Check if this is a better target match than we had before.
-                int targetStart = target.startPosition(i);
-                int targetEnd = target.endPosition(i);
-                int relationsCovered = (int)capturedRelations.stream()
-                        .filter(r -> r.getTargetStart() >= targetStart && r.getTargetEnd() <= targetEnd)
-                        .count();
-                int length = targetEnd - targetStart;
-                if (relationsCovered > targetRelationsCovered
-                        || relationsCovered == targetRelationsCovered && length < targetSpanLength) {
-                    targetIndex = i;
-                    targetSpanLength = length;
-                    targetRelationsCovered = relationsCovered;
+        for (Target target: targets) {
+            // Capture all relations with source inside this span.
+            capturedRelations.clear();
+            int docId = target.relations.docID();
+            if (docId < candidate.docID())
+                docId = target.relations.advance(candidate.docID());
+            if (docId == candidate.docID()) {
+                if (target.relations.startPosition() < sourceStart)
+                    target.relations.advanceStartPosition(sourceStart);
+                while (target.relations.startPosition() < sourceEnd) {
+                    if (target.relations.endPosition() < sourceEnd)
+                        capturedRelations.add(target.relations.getRelationInfo().copy());
+                    target.relations.nextStartPosition();
                 }
             }
-            if (targetRelationsCovered == 0) {
-                // A valid hit must have at least one matching relation.
-                return FilterSpans.AcceptStatus.NO;
+
+            // Find the smallest target span that covers the most of these captured relations.
+            int targetDocId = target.target.docID();
+            if (targetDocId < candidate.docID())
+                targetDocId = target.target.advance(candidate.docID());
+            if (targetDocId == candidate.docID()) {
+                // Target positioned in doc. Find best matching hit.
+                int targetIndex = -1;
+                int targetSpanLength = Integer.MAX_VALUE;
+                int targetRelationsCovered = 0;
+                for (int i = 0; i < target.target.bucketSize(); i++) {
+                    // Check if this is a better target match than we had before.
+                    int targetStart = target.target.startPosition(i);
+                    int targetEnd = target.target.endPosition(i);
+                    int relationsCovered = (int) capturedRelations.stream()
+                            .filter(r -> r.getTargetStart() >= targetStart && r.getTargetEnd() <= targetEnd)
+                            .count();
+                    int length = targetEnd - targetStart;
+                    if (relationsCovered > targetRelationsCovered
+                            || relationsCovered == targetRelationsCovered && length < targetSpanLength) {
+                        targetIndex = i;
+                        targetSpanLength = length;
+                        targetRelationsCovered = relationsCovered;
+                    }
+                }
+                if (targetRelationsCovered == 0) {
+                    // A valid hit must have at least one matching relation in each target.
+                    return FilterSpans.AcceptStatus.NO;
+                }
+                // Only keep the relations that match the target span we found.
+                int finalTargetIndex = targetIndex;
+                capturedRelations.removeIf(r -> r.getTargetStart() < target.target.startPosition(finalTargetIndex)
+                        || r.getTargetEnd() > target.target.endPosition(finalTargetIndex));
+                capturedRelations.sort(RelationInfo::compareTo);
+                matchInfo[target.captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
+            } else {
+                // Target document has no matches. No relations to capture.
+                matchInfo[target.captureAsIndex] = RelationListInfo.create(Collections.emptyList(), getOverriddenField());
             }
-            // Only keep the relations that match the target span we found.
-            int finalTargetIndex = targetIndex;
-            capturedRelations.removeIf(r -> r.getTargetStart() < target.startPosition(finalTargetIndex)
-                    || r.getTargetEnd() > target.endPosition(finalTargetIndex));
-            capturedRelations.sort(RelationInfo::compareTo);
-            matchInfo[captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
-        } else {
-            // Target document has no matches. No relations to capture.
-            matchInfo[captureAsIndex] = RelationListInfo.create(Collections.emptyList(), getOverriddenField());
         }
 
         return FilterSpans.AcceptStatus.YES;
@@ -128,14 +168,15 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
     @Override
     public String toString() {
-        return "==>(" + in + ", " + relations + ", " + target + ", " + captureAs + ")";
+        return "==>(" + in + ", " + targets + ")";
     }
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         super.passHitQueryContextToClauses(context);
         this.context = context;
-        this.captureAsIndex = context.registerMatchInfo(captureAs);
+        for (Target target: targets)
+            target.setContext(context);
     }
 
     @Override

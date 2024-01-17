@@ -195,7 +195,8 @@ public class TextPatternSerializerCql {
             TextPatternRelationMatch tp = (TextPatternRelationMatch) pattern;
             if (parenthesizeIfNecessary)
                 b.append("(");
-            serialize(tp.getParent(), b, true, insideTokenBrackets);
+            if (tp.getParent() != null)
+                serialize(tp.getParent(), b, true, insideTokenBrackets);
             boolean first = true;
             for (RelationTarget child: tp.getChildren()) {
                 if (!first)
