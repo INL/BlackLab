@@ -12,7 +12,6 @@ import java.util.Map;
 import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.ChildRelationStruct;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.RelationOperatorInfo;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
@@ -26,6 +25,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
+import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
@@ -454,7 +454,7 @@ if (childRels.isEmpty())
     }
     t = jj_consume_token(ROOT_DEP_OP);
     target = relationQuery();
-RelationOperatorInfo relType = RelationOperatorInfo.fromOperator(t.toString().substring(1));
+RelationOperatorInfo relType = RelationOperatorInfo.fromOperator(t.toString());
         {if ("" != null) return wrapper.rootRelationQuery(new ChildRelationStruct(relType, target, label));}
     throw new Error("Missing return statement in function");
   }

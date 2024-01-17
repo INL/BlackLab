@@ -10,6 +10,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -22,13 +23,26 @@ public class TextPatternRelationMatch extends TextPattern {
 
     private final TextPattern parent;
 
-    private final List<TextPattern> children;
+    private final List<RelationTarget> children;
 
-    public TextPatternRelationMatch(String sourceVersion, TextPattern parent, List<TextPattern> children) {
+    public TextPatternRelationMatch(String sourceVersion, TextPattern parent, List<RelationTarget> children) {
         this.sourceVersion = sourceVersion;
         this.parent = parent;
-        assert children.size() > 0;
-        this.children = children;
+        assert !children.isEmpty();
+        this.children = new ArrayList<>(children);
+
+        // If there's no parent, all children must be root relations
+        // (and really it can only be 1 if parsed from CQL, but we don't check that here)
+        if (parent == null && !children.stream()
+                .allMatch(c -> c.getOperatorInfo().getDirection() == SpanQueryRelations.Direction.ROOT)) {
+            throw new IllegalArgumentException("Relation match has no parent, so all children must be root relations");
+        }
+
+        // All children should either use alignment operators ==> or regular ones -->, but not a mix
+        long numAligment = children.stream().filter(c -> c.getOperatorInfo().isAlignment()).count();
+        if (numAligment > 0 && numAligment < children.size()) {
+            throw new IllegalArgumentException("Relation match has both alignment and regular operators");
+        }
     }
 
     public static BLSpanQuery createRelMatchQuery(QueryInfo queryInfo, QueryExecutionContext context,
@@ -55,9 +69,12 @@ public class TextPatternRelationMatch extends TextPattern {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         List<BLSpanQuery> queries = new ArrayList<>();
-        queries.add(TextPatternDefaultValue.replaceWithAnyToken(parent)
-                .translate(context.withDocVersion(sourceVersion)));
-        for (TextPattern child: children) {
+        if (parent != null) { // might be a root relation operator, which has no parent
+            BLSpanQuery translatedParent = TextPatternDefaultValue.replaceWithAnyToken(parent)
+                    .translate(context.withDocVersion(sourceVersion));
+            queries.add(translatedParent);
+        }
+        for (RelationTarget child: children) {
             queries.add(child.translate(context));
         }
         return createRelMatchQuery(context.queryInfo(), context, queries);
@@ -92,12 +109,12 @@ public class TextPatternRelationMatch extends TextPattern {
         return parent;
     }
 
-    public List<TextPattern> getChildren() {
+    public List<RelationTarget> getChildren() {
         return children;
     }
 
     @Override
     public boolean isRelationsQuery() {
-        return parent.isRelationsQuery() || children.stream().anyMatch(TextPattern::isRelationsQuery);
+        return true;
     }
 }

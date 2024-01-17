@@ -83,7 +83,6 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 relations.nextStartPosition();
             }
         }
-        capturedRelations.sort(RelationInfo::compareTo);
 
         // Find the smallest target span that covers the most of these captured relations.
         int targetDocId = target.docID();
@@ -117,6 +116,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             int finalTargetIndex = targetIndex;
             capturedRelations.removeIf(r -> r.getTargetStart() < target.startPosition(finalTargetIndex)
                     || r.getTargetEnd() > target.endPosition(finalTargetIndex));
+            capturedRelations.sort(RelationInfo::compareTo);
             matchInfo[captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
         } else {
             // Target document has no matches. No relations to capture.

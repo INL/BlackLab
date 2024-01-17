@@ -68,6 +68,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_ADJUST = "adjust";
     private static final String KEY_ADJUST_LEADING = "adjustLeading";
     private static final String KEY_ADJUST_TRAILING = "adjustTrailing";
+    private static final String KEY_ALIGNMENT = "alignment";
     private static final String KEY_ANNOTATION = "annotation";
     private static final String KEY_ARGS = "args";
     private static final String KEY_ATTRIBUTES = "attributes";
@@ -217,17 +218,19 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         });
 
         // Relation target
-        jsonSerializers.put(TextPatternRelationTarget.class, (pattern, writer) -> {
-            TextPatternRelationTarget tp = (TextPatternRelationTarget) pattern;
+        jsonSerializers.put(RelationTarget.class, (pattern, writer) -> {
+            RelationTarget tp = (RelationTarget) pattern;
+            RelationOperatorInfo operatorInfo = tp.getOperatorInfo();
             writer.write(TextPattern.NT_RELATION_TARGET,
-                    KEY_REL_TYPE, tp.getRegex(),
+                    KEY_REL_TYPE, operatorInfo.getTypeRegex(),
                     KEY_CLAUSE, tp.getTarget(),
-                    KEY_NEGATE, nullIf(tp.isNegate(), false),
+                    KEY_NEGATE, nullIf(operatorInfo.isNegate(), false),
                     KEY_REL_SPAN_MODE, nullIf(tp.getSpanMode().getCode(), "source"),
-                    KEY_DIRECTION, nullIf(tp.getDirection().getCode(), "both"),
+                    KEY_DIRECTION, nullIf(operatorInfo.getDirection().getCode(), "both"),
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()),
-                    KEY_SOURCE_VERSION, nullIfEmpty(tp.getSourceVersion()),
-                    KEY_TARGET_VERSION, nullIfEmpty(tp.getTargetVersion()));
+                    KEY_SOURCE_VERSION, nullIfEmpty(operatorInfo.getSourceVersion()),
+                    KEY_TARGET_VERSION, nullIfEmpty(operatorInfo.getTargetVersion()),
+                    KEY_ALIGNMENT, nullIf(operatorInfo.isAlignment(), false));
         });
 
         // Repetition
@@ -447,17 +450,20 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             return new TextPatternRelationMatch(
                     (String)args.getOrDefault(KEY_SOURCE_VERSION, null),
                     (TextPattern) args.get(KEY_PARENT),
-                    (List<TextPattern>) args.get(KEY_CHILDREN));
+                    (List<RelationTarget>) args.get(KEY_CHILDREN));
         case TextPattern.NT_RELATION_TARGET:
-            return new TextPatternRelationTarget(
+            RelationOperatorInfo relOpInfo = new RelationOperatorInfo(
                     (String) args.get(KEY_REL_TYPE),
+                    SpanQueryRelations.Direction.fromCode((String)args.getOrDefault(KEY_DIRECTION, "both")),
+                    (String) args.get(KEY_SOURCE_VERSION),
+                    (String) args.get(KEY_TARGET_VERSION),
                     (boolean) args.getOrDefault(KEY_NEGATE, false),
+                    (boolean) args.getOrDefault(KEY_ALIGNMENT, false)); // @@@ TODO
+            return new RelationTarget(
+                    relOpInfo,
                     (TextPattern) args.get(KEY_CLAUSE),
                     RelationInfo.SpanMode.fromCode((String)args.getOrDefault(KEY_REL_SPAN_MODE, "source")),
-                    SpanQueryRelations.Direction.fromCode((String)args.getOrDefault(KEY_DIRECTION, "both")),
-                    (String) args.get(KEY_CAPTURE),
-                    (String)args.getOrDefault(KEY_SOURCE_VERSION, null),
-                    (String)args.getOrDefault(KEY_TARGET_VERSION, null));
+                    (String) args.get(KEY_CAPTURE));
         case TextPattern.NT_REPEAT:
             return TextPatternRepetition.get(
                     (TextPattern) args.get(KEY_CLAUSE),
