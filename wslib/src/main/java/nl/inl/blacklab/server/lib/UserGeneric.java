@@ -20,6 +20,11 @@ public class UserGeneric implements User {
     }
 
     @Override
+    public boolean isSuperuser() {
+        return false;
+    }
+
+    @Override
     public String getUserId() {
         return userId;
     }

@@ -86,7 +86,7 @@ public class OIDCUtil {
 
     /**
      * Parse the token into a JWTClaimsSet object. Introspect the token if necessary.
-     * (TODO) This will internally cache the token until it expires.
+     * (TODO) internally cache the token until it expires.
      * @param accessToken Token without Bearer prefix
      */
     public Optional<JWTClaimsSet> decodeAccessToken(String accessToken) {

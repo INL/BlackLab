@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.auth;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.pac4j.core.credentials.extractor.BearerAuthExtractor;
@@ -33,24 +34,36 @@ public class AuthOIDC implements AuthMethod {
      */
     final boolean useIdAsEmailFallback;
 
+    UmaResourceActions<BlPermission> uma;
+
     public AuthOIDC(Map<String, String> params) {
         adminRole = Optional.ofNullable(params.get("adminRole")).orElse("admin");
         useEmailAsId = Optional.ofNullable(params.get("useEmailAsId")).map(Boolean::parseBoolean).orElse(true);
         useIdAsEmailFallback = Optional.ofNullable(params.get("useIdAsFallback")).map(Boolean::parseBoolean).orElse(false);
 
+        String umaImplementation = params.get("uma");
+        if ("keycloak".equals(umaImplementation)) {
+            String endpoint = getProperty(params, "uma.keycloak.endpoint");
+            String realm = getProperty(params, "uma.keycloak.realm");
+            String clientId = getProperty(params, "uma.keycloak.clientId");
+            String clientSecret = getProperty(params, "uma.keycloak.clientSecret");
+            UmaResourceActions.UserIdProperty userIdProperty = UmaResourceActions.UserIdProperty.valueOf(getProperty(params, "uma.keycloak.userIdProperty").toUpperCase());
+
+            if (StringUtils.isAnyBlank(endpoint, realm, clientId, clientSecret)) throw new IllegalArgumentException("Missing required parameter(s) for UMA Keycloak implementation.");
+            this.uma = new UmaResourceActionsKeycloak<>(endpoint, realm, clientId, clientSecret, userIdProperty, BlPermission::valueOf, BlPermission::values);
+        } else if (StringUtils.isNotBlank(umaImplementation)) {
+            throw new IllegalArgumentException("Unknown UMA implementation: " + umaImplementation);
+        }
+
         OidcConfiguration config = new OidcConfiguration();
         config.setDiscoveryURI(params.get("discoveryURI"));
-        config.setClientId("unused");//params.get("clientId"));
-        config.setSecret("unused");//params.get("secret"));
-
-        // Disable CSRF
-        // Since we only consume the bearer token (not generate it), there is no way to supply a CSRF token to the client.
-        config.setWithState(false);
-        // unused, but required to pass initialization step of oidcclient.
-        config.setClientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        config.setClientId("unused");
+        config.setSecret("unused");
+        config.setWithState(false); // Disable CSRF (probably unused since we only use the oidcClient for setup, but just to be sure)
+        config.setClientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC); // unused, but required to pass initialization step of oidcClient
 
         OidcClient oidcClient = new OidcClient(config);
-        oidcClient.setCallbackUrl("notused"); // unused, but required to pass init.
+        oidcClient.setCallbackUrl("unused"); // unused, but required to pass init.
         oidcClient.init();
 
         client = new HeaderClient();
@@ -60,6 +73,11 @@ public class AuthOIDC implements AuthMethod {
         client.setProfileCreator(oidcClient.getProfileCreator());
         client.setSaveProfileInSession(true);
         client.setAuthorizationGenerators(oidcClient.getAuthorizationGenerators());
+    }
+
+    /** Get parameter with key, throw an exception if it's missing or empty. */
+    private String getProperty(Map<String, String> params, String key) {
+        return Optional.ofNullable(params.get(key)).orElseThrow(() -> new IllegalArgumentException("Missing required parameter: " + key));
     }
 
     @Override
@@ -87,24 +105,31 @@ public class AuthOIDC implements AuthMethod {
         )
         // Convert the profile to a BlackLab user.
         .map(profile -> {
-            manager.save(true, profile, false);
-
             OidcProfile p = (OidcProfile) profile;
-            if (p.getRoles().contains(adminRole)) return User.superuser(request.getSessionId());
+            manager.save(true, p, false);
 
-            String sessionId = request.getSessionId();
-            if (!useEmailAsId) return User.loggedIn(p.getId(), sessionId);
-            if (p.getEmailVerified()) return User.loggedIn(p.getEmail(), sessionId);
+            final boolean isAdmin = p.getRoles().contains(adminRole) || request.getSearchManager().config().getAuthentication().isOverrideIp(request.getContext().getRemoteAddr());
+            final String sessionId = request.getSessionId();
 
-            boolean empty = p.getEmail() == null || p.getEmail().isBlank();
-            String message = empty ? "Empty" : "Unverified";
-
-            if (useIdAsEmailFallback) {
-                logger.debug(message + " email address for user {}. Using id as fallback.", p.getId(), p.getEmailVerified());
-                return User.loggedIn(p.getId(), sessionId);
+            if (uma != null) {
+                return new UserUMA(uma, ((OidcProfile) profile).getAccessToken().getValue(), sessionId, isAdmin);
             }
-            logger.debug(message + " email address for user {}. Continuing as anonymous.", p.getId());
-            return User.anonymous(sessionId);
+
+            // if not using email: use id
+            String userId;
+            if (!useEmailAsId) userId = p.getId();
+            // using email, make sure it's verified
+            else if (p.getEmailVerified()) userId = p.getEmail();
+            // using email, but not verified, use id as fallback
+            else if (useIdAsEmailFallback) { userId = p.getId(); logger.debug("Email not verified for user {}. Using id as fallback", p.getId()); }
+            // using email, but not verified, and using id as fallback is disabled, don't use any id
+            else { userId = null; logger.debug("Email not verified for user {}. Continuing as anonymous (useIdAsEmailFallback is false).", p.getId()); }
+
+            if (StringUtils.isBlank(userId)) {
+                return User.anonymous(sessionId);
+            }
+
+            return isAdmin ? User.superuser(sessionId) : User.loggedIn(userId, sessionId);
         })
         .orElseGet(() -> User.anonymous(request.getSessionId()));
     }

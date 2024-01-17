@@ -98,7 +98,7 @@ public interface User {
      * The superuser has a higher limit for certain resources, such as the maximum number of owned corpora.
      * We keep that business logic out of the User object, so we need to expose a method to check if a user is a superuser.
      */
-    default boolean isSuperuser() { return false; }
+    boolean isSuperuser();
 
     default boolean mayReadIndex(Index index) { return !index.isUserIndex() || isOwnerOfIndex(index) || index.getShareWithUsers().contains(getUserId()); }
     default boolean mayWriteIndex(Index index) { return isOwnerOfIndex(index); }

@@ -5,12 +5,13 @@ import java.util.Set;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.User;
 
-public class UserOIDC implements User {
+public class UserUMA implements User {
+    UmaResourceActions<BlPermission> uma;
     String token;
     String sessionId;
-    UmaResourceActionsKeycloak<BlPermission> uma;
+    boolean superuser;
 
-    public UserOIDC(UmaResourceActionsKeycloak<BlPermission> uma, String accessToken, String sessionId) {
+    public UserUMA(UmaResourceActions<BlPermission> uma, String accessToken, String sessionId, boolean superuser) {
         this.uma = uma;
         this.token = accessToken;
         this.sessionId = sessionId;
@@ -26,19 +27,27 @@ public class UserOIDC implements User {
         return uma.getUserId(this.token);
     }
 
-
+    @Override
+    public boolean isSuperuser() {
+        return superuser;
+    }
+    @Override
     public boolean mayReadIndex(Index index) {
         return uma.hasPermission(this.token, NameOrId.id(index.getId()), NameOrId.id(index.getUserId()), Set.of(BlPermission.READ));
     }
+    @Override
     public boolean mayWriteIndex(Index index) {
         return uma.hasPermission(this.token, NameOrId.id(index.getId()), NameOrId.id(index.getUserId()), Set.of(BlPermission.WRITE));
     }
+    @Override
     public boolean mayShareIndex(Index index) {
         return uma.hasPermission(this.token, NameOrId.id(index.getId()), NameOrId.id(index.getUserId()), Set.of(BlPermission.SHARE));
     }
+    @Override
     public boolean mayDeleteIndex(Index index) {
         return uma.hasPermission(this.token, NameOrId.id(index.getId()), NameOrId.id(index.getUserId()), Set.of(BlPermission.DELETE));
     }
+    @Override
     public boolean isOwnerOfIndex(Index index) { return index.getUserId().equals(getUserId()); }
 
     // formats don't use permissions currently, only the owner (correct userId may manage)

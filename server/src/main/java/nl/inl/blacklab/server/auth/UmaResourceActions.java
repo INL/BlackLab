@@ -50,13 +50,12 @@ public interface UmaResourceActions<T extends PermissionEnum<T>> {
      * @param resourcePath        the (url) path of the resource. This is the path in the application, not the authentication server. This can be used to identify the resource later, or create rules in the authentication server.
      * @return the ID of the created resource in the Authorization Server.
      */
-    String createResource(NameOrId owner, String resourceName, String resourceDisplayName, String resourcePath) throws IOException;
+    String createResource(NameOrId owner, String resourceName, String resourceDisplayName, String resourcePath);
 
-    void deleteResource(NameOrId owner, NameOrId resource) throws IOException;
+    void deleteResource(NameOrId owner, NameOrId resource);
 
     /** Grant or revoke permissions as the owner of a resource. */
-    void updatePermissions(String ownerAccessToken, NameOrId resource, NameOrId otherUser, boolean grant,
-            Set<T> permissions) throws IOException;
+    void updatePermissions(String ownerAccessToken, NameOrId resource, NameOrId otherUser, boolean grant, Set<T> permissions);
 
     /**
      * Grant permission to a user on a resource owned by another user.
@@ -66,17 +65,13 @@ public interface UmaResourceActions<T extends PermissionEnum<T>> {
      * This is specific to Keycloak, as there is no transitive permission granting mechanism defined for base UMA.
      * For this, the client's Service Account should have the "impersonation" role (from the 'realm-management' client).
      */
-    void updatePermissionsAsApplication(NameOrId owner, NameOrId resource, NameOrId otherUser, boolean grant,
-            Set<T> permissions)
-            throws IOException;
+    void updatePermissionsAsApplication(NameOrId owner, NameOrId resource, NameOrId otherUser, boolean grant, Set<T> permissions);
 
     /** Returns { [resource]: { [user]: permission[] } } */
-    Map<NameOrId, Map<NameOrId, Set<T>>> getPermissionsOnMyResources(String ownerAccessToken)
-            throws IOException, ParseException;
+    Map<NameOrId, Map<NameOrId, Set<T>>> getPermissionsOnMyResources(String ownerAccessToken);
 
     /** Return { [resource]: permission[] } */
-    Map<NameOrId, Set<T>> getMyPermissionsOnResources(String userAccessToken)
-            throws IOException;
+    Map<NameOrId, Set<T>> getMyPermissionsOnResources(String userAccessToken);
 
     /**
      * @param owner       the owner of the resource.
@@ -85,20 +80,19 @@ public interface UmaResourceActions<T extends PermissionEnum<T>> {
      * @return the ticket.
      * @throws IOException
      */
-    String createPermissionTicket(NameOrId owner, NameOrId resource, Set<T> permissions)
-            throws IOException;
+    String createPermissionTicket(NameOrId owner, NameOrId resource, Set<T> permissions);
 
     /** Get the user ID in the Authorization Server for the given user in the application. */
-    String getUserId(NameOrId user) throws IOException;
+    String getUserId(NameOrId user);
 
     /** Get the user ID in the Authorization Server for the given user's access token in the application. */
-    String getUserId(String accessToken) throws MalformedURLException;
+    String getUserId(String accessToken);
 
     /** Parse the access token into a JWT, or use the server to introspect it if it's an opaque token. */
     JWTClaimsSet introspectAccessToken(String accessToken);
 
     /** Get the resource ID in the Authorization Server for the given resource in the application. */
-    String getResourceId(NameOrId owner, NameOrId resource) throws IOException;
+    String getResourceId(NameOrId owner, NameOrId resource);
 
     /**
      * Get the ID of a specific permission for a specific resource for a specific user.
@@ -111,13 +105,11 @@ public interface UmaResourceActions<T extends PermissionEnum<T>> {
      * @param permission      the permission
      * @return the permission ID
      */
-    String getPermissionId(String userAccessToken, NameOrId owner, NameOrId resource, NameOrId otherUser,
-            T permission) throws IOException;
+    String getPermissionId(String userAccessToken, NameOrId owner, NameOrId resource, NameOrId otherUser, T permission);
 
 
     /** Does the access token grant all the given permissions on the given resource? */
-    boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, Set<T> permissions)
-            throws IOException;
+    boolean hasPermission(String accessToken, NameOrId resource, NameOrId owner, Set<T> permissions);
 
     /**
      * What does the application's user ID correspond to in the Authorization Server?
@@ -133,10 +125,6 @@ public interface UmaResourceActions<T extends PermissionEnum<T>> {
         @Override
         public String toString() {
             return this == USERNAME ? "username" : "email";
-        }
-
-        public static UserIdProperty fromString(String s) {
-            return s.equals("username") ? USERNAME : EMAIL;
         }
     }
 }
