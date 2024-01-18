@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 
@@ -30,73 +31,78 @@ public class RelationOperatorInfo {
             "^([a-zA-Z0-9_]*)[-=](.*)[-=]>([a-zA-Z0-9_]*)$");
 
     /**
+     * Create an info struct from the operator string.
+     *
+     * We look at whether it's a root relation operator, a negated relation operator,
+     * an alignment operator, the relation type regex and target version.
+     *
      * Get the relation type and target version regexes from the operator.
      * NOTE: if the operator started with ! or ^, this character must have been removed already!
      * If no type was specified, the type will be ".*" (any relation type). If no target version was specified,
      * the target version will be the empty string (any target version or no target version).
      *
-     * @param relationOperator    relation operator with optional type regex, e.g. "-det->" or "-det->de"
-     * @param negate              is this a negated relation operator? E.g. !-nmod->
-     * @param isAlignmentOperator is this an alignment operator? E.g. ==>
      * @return relation type and target version (intepret both as regexes)
      */
-    private static RelationOperatorInfo parseRelationOperator(String relationOperator, boolean negate,
-            boolean isAlignmentOperator, SpanQueryRelations.Direction direction) {
-        Matcher matcher = PATT_RELATION_OPERATOR.matcher(relationOperator);
+    public static RelationOperatorInfo fromOperator(String op) {
+        // Root operator?
+        // (this determines the relation directions we allow; direction is usually both (i.e. forward and backward),
+        //  but root relations have a special "direction" because they have no source, so using that we ensure we'll
+        //  only find root relations)
+        boolean isRoot = op.charAt(0) == '^';
+        if (isRoot)
+            op = op.substring(1);
+        SpanQueryRelations.Direction direction = isRoot ? SpanQueryRelations.Direction.ROOT :
+                SpanQueryRelations.Direction.BOTH_DIRECTIONS;
+
+        // Alignment operator? E.g. ==> instead of -->
+        // (difference: ==> captures all relations between (part of) source and target spans, e.g. for parallel corpora;
+        //              --> captures a single relation from source to target)
+        boolean isAlignmentOperator = op.contains("=>");
+        if (isRoot && isAlignmentOperator)
+            throw new RuntimeException("Root relation operator cannot be an alignment operator");
+
+        // Negated?
+        // (i.e. no child exists conforming to this filter)
+        boolean negate = false;
+        if (op.charAt(0) == '!') {
+            if (isRoot)
+                throw new RuntimeException("Root relation operator cannot be negated");
+            negate = true;
+            op = op.substring(1);
+        }
+
+        // Now find relation type filter regex, as well as (optional) source and target version
+        // (used for parallel corpora)
+        Matcher matcher = PATT_RELATION_OPERATOR.matcher(op);
         if (!matcher.matches())
-            throw new RuntimeException("Invalid relation operator: " + relationOperator);
+            throw new RuntimeException("Invalid relation operator: " + op);
         String sourceVersion = matcher.group(1);
         String typeRegex = matcher.group(2);
         String targetVersion = matcher.group(3);
         if (StringUtils.isEmpty(typeRegex))
             typeRegex = RelationUtil.ANY_TYPE_REGEX; // any relation type
+
         return new RelationOperatorInfo(typeRegex, direction, sourceVersion, targetVersion, negate,
                 isAlignmentOperator);
     }
 
-    /**
-     * Create an info struct from the operator string.
-     */
-    public static RelationOperatorInfo fromOperator(String op) {
-        boolean negate = false;
-        boolean isRoot = op.charAt(0) == '^';
-        if (isRoot)
-            op = op.substring(1);
-        boolean isAlignmentOperator = op.contains("=>");
-        if (op.charAt(0) == '!') {
-            negate = true;
-            op = op.substring(1);
-        }
-        SpanQueryRelations.Direction direction = isRoot ? SpanQueryRelations.Direction.ROOT :
-                SpanQueryRelations.Direction.BOTH_DIRECTIONS;
-        return parseRelationOperator(op, negate, isAlignmentOperator, direction);
-    }
-
-    /**
-     * Relation type regex
-     */
+    /** Relation type regex. */
     private final String typeRegex;
 
+    /** How to filter relations by direction (forward/backward/both/root). */
     private final SpanQueryRelations.Direction direction;
 
-    /**
-     * Source version we want to search the left side in
-     */
+    /** Source version we want to search the left side in */
     private final String sourceVersion;
 
-    /**
-     * Relation target regex
-     */
+    /** Relation target regex */
     private final String targetVersion;
 
-    /**
-     * Is this a negated relation operator? E.g. !-nmod->
-     */
+    /** Is this a negated relation operator? E.g. !-nmod-> */
     private final boolean negate;
 
-    /**
-     * Is this an alignment operator? E.g. ==>de ("find all alignment relations between spans on left and right")
-     */
+    /** Is this an alignment operator? E.g. ==>de ("find all alignment relations between spans on left and right",
+     *  used for parallel corpora) */
     private final boolean isAlignmentOperator;
 
     public RelationOperatorInfo(String typeRegex, SpanQueryRelations.Direction direction, String sourceVersion,
@@ -154,22 +160,22 @@ public class RelationOperatorInfo {
         return Objects.hash(typeRegex, direction, sourceVersion, targetVersion, negate, isAlignmentOperator);
     }
 
-    //        /**
-//         * Get the full relation type regex, optionally including the target version.
-//         *
-//         * @return
-//         */
-//        public String getFullTypeRegex() {
-//            // Make sure our type regex has a relation class
-//            String regex = RelationUtil.optPrependDefaultClass(typeRegex);
-//            if (targetVersion == null || targetVersion.isEmpty())
-//                return regex;
-//            String[] classAndType = RelationUtil.classAndType(regex);
-//            String relationClass = classAndType[0];
-//            String relationType = classAndType[1];
-//            // A target version was set. Target version must be added to or replaced in type regex.
-//            // Replace or add target version in relation class
-//            relationClass = AnnotatedFieldNameUtil.getParallelFieldVersion(relationClass, targetVersion);
-//            return RelationUtil.fullTypeRegex(relationClass, relationType);
-//        }
+    /**
+     * Get the full relation type regex, optionally including the target version.
+     *
+     * @return
+     */
+    public String getFullTypeRegex() {
+        // Make sure our type regex has a relation class
+        String regex = RelationUtil.optPrependDefaultClass(typeRegex);
+        if (targetVersion == null || targetVersion.isEmpty())
+            return regex;
+        String[] classAndType = RelationUtil.classAndType(regex);
+        String relationClass = classAndType[0];
+        String relationType = classAndType[1];
+        // A target version was set. Target version must be added to or replaced in type regex.
+        // Replace or add target version in relation class
+        relationClass = AnnotatedFieldNameUtil.getParallelFieldVersion(relationClass, targetVersion);
+        return RelationUtil.fullTypeRegex(relationClass, relationType);
+    }
 }
