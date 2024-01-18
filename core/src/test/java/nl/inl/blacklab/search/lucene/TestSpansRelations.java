@@ -10,7 +10,7 @@ import nl.inl.blacklab.mocks.MockSpans;
 public class TestSpansRelations {
 
     private SpansRelations tagRelationQuery(BLSpans a, boolean hasPrimaryValueIndicators) {
-        return new SpansRelations("test", a,
+        return new SpansRelations("contents", "test", a,
                 hasPrimaryValueIndicators, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "");
     }

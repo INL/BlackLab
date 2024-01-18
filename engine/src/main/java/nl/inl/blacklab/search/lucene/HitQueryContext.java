@@ -20,20 +20,28 @@ public class HitQueryContext {
     /** Match info names for our query, in index order */
     List<String> matchInfoNames = new ArrayList<>();
 
+    /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
+    private final String defaultField;
+
     /** If non-null, this part of the query searches a different field (parallel corpora) */
     private final String overriddenField;
 
-    public HitQueryContext(BLSpans spans) {
-        this(spans, null);
+    public HitQueryContext(BLSpans spans, String defaultField) {
+        this(spans, defaultField, null);
     }
 
-    private HitQueryContext(BLSpans spans, String overriddenField) {
+    private HitQueryContext(BLSpans spans, String defaultField, String overriddenField) {
         this.rootSpans = spans;
+        this.defaultField = defaultField;
         this.overriddenField = overriddenField;
     }
 
+    boolean fieldWasOverridden() {
+        return getOverriddenField() != null && !getOverriddenField().equals(getDefaultField());
+    }
+
     public HitQueryContext withSpans(BLSpans spans) {
-        HitQueryContext result = new HitQueryContext(spans, overriddenField);
+        HitQueryContext result = new HitQueryContext(spans, defaultField, overriddenField);
         result.matchInfoNames = matchInfoNames;
         return result;
     }
@@ -41,7 +49,7 @@ public class HitQueryContext {
     public HitQueryContext withField(String overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
-            result = new HitQueryContext(rootSpans, overriddenField);
+            result = new HitQueryContext(rootSpans, defaultField, overriddenField);
             result.matchInfoNames = matchInfoNames;
         }
         return result;
@@ -111,5 +119,9 @@ public class HitQueryContext {
      */
     public String getOverriddenField() {
         return overriddenField;
+    }
+
+    public String getDefaultField() {
+        return defaultField;
     }
 }

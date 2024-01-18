@@ -22,7 +22,7 @@ public class RelationUtil {
     /** Relation class to use for relations if not specified. */
     public static final String CLASS_DEFAULT_INDEX = CLASS_DEPENDENCY;
 
-    /** Default relation class to use when searching (TODO: make configurable; choose smart default based on data?) */
+    /** Default relation class to use when searching */
     public static final String CLASS_DEFAULT_SEARCH = CLASS_DEFAULT_INDEX;
 
     /** Default relation type: any */

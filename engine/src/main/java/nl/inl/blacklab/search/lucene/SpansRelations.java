@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
@@ -10,6 +11,8 @@ import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 
 /**
@@ -54,12 +57,15 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      */
     private final boolean spansMayIncludeRoots = true;
 
+    private final String sourceField;
+
     /**
      * Construct SpansRelations.
      * NOTE: relation payloads contain the location of the other side of the relation. To work with these,
      * we also need to know if there's "is primary value" indicators in (some of) the payloads,
      * so we can skip these. See {@link PayloadUtils}.
      *
+     * @param sourceField                   name of the annotated field that is the source field of the relations
      * @param relationType                  type of relation we're looking for
      * @param relationsMatches              relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
@@ -67,11 +73,12 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param spanMode                      what span to return for the relations found
      * @param captureAs                     name to capture the relation info as, or empty not to capture
      */
-    public SpansRelations(String relationType, BLSpans relationsMatches,
+    public SpansRelations(String sourceField, String relationType, BLSpans relationsMatches,
             boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
             String captureAs) {
         super(relationsMatches,
                 SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
+        this.sourceField = sourceField;
         this.relationType = relationType;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
@@ -81,10 +88,18 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
-        if (relationInfo == null && context.getOverriddenField() != null) {
+        // Find the target field from the relation class (e.g. for class al__de, target field will be something like
+        // contents__de)
+        String relClass = RelationUtil.classAndType(relationType)[0];
+        String version = AnnotatedFieldNameUtil.splitParallelFieldName(relClass)[1];
+        String targetField = StringUtils.isEmpty(version) ? null :
+                AnnotatedFieldNameUtil.getParallelFieldVersion(context.getDefaultField(), version);
+
+        if (context.getOverriddenField() != null || targetField != null) {
             // When capturing relations, remember that we're producing hits in a different field.
             // (used with parallel corpora)
-            relationInfo = RelationInfo.createWithOverriddenField(context.getOverriddenField());
+            boolean isOverridden = !sourceField.equals(context.getDefaultField());
+            relationInfo = RelationInfo.createWithFields(sourceField, isOverridden, targetField);
         }
         // Register our group
         if (!captureAs.isEmpty())

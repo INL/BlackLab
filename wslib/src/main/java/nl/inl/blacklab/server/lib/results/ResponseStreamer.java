@@ -763,7 +763,13 @@ public class ResponseStreamer {
             ds.entry("targetEnd", relationInfo.getTargetEnd());
             ds.entry(KEY_SPAN_START, relationInfo.getSpanStart());
             ds.entry(KEY_SPAN_END, relationInfo.getSpanEnd());
-            optFieldName(ds, relationInfo);
+            // If source and target fields are different than the default field (relation in another field),
+            // or different from each other (cross-field relation), include them in the response
+            // (should only ever happen with parallel corpora)
+            if (relationInfo.getOverriddenField() != null || !relationInfo.getSourceField().equals(relationInfo.getTargetField())) {
+                ds.entry("sourceField", relationInfo.getSourceField());
+                ds.entry("targetField", relationInfo.getTargetField());
+            }
         }
         ds.endMap();
     }

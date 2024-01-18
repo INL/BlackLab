@@ -51,14 +51,14 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         return overriddenField;
     }
 
+    protected String toStringOptFieldName() {
+        return getOverriddenField() == null ? "" : " (" + getOverriddenField() + ")";
+    }
+
     public abstract Type getType();
 
     @Override
     public abstract String toString();
-
-    protected String toStringOptFieldName() {
-        return getOverriddenField() == null ? "" : " (" + getOverriddenField() + ")";
-    }
 
     @Override
     public int compareTo(MatchInfo o) {

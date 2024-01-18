@@ -203,6 +203,10 @@ public class QueryExecutionContext {
         return index;
     }
 
+    public String getDefaultRelationClass() {
+        return defaultRelationClass;
+    }
+
     /**
      * Return the annotated field we're searching.
      * 

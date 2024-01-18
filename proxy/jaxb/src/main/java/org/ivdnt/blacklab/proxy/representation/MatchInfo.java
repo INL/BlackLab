@@ -58,6 +58,14 @@ public class MatchInfo {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String fieldName;
 
+    /** The field this match info is from, if any */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String sourceField;
+
+    /** The field this match info is from, if any */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String targetField;
+
     @Override
     public String toString() {
         return "MatchInfo{" +

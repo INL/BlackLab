@@ -47,7 +47,7 @@ public class HitsFromQuery extends HitsMutable {
     protected final long maxHitsToCount;
 
     // state
-    protected final HitQueryContext hitQueryContext = new HitQueryContext(null); // each spans will get a copy
+    protected final HitQueryContext hitQueryContext;
     protected final Lock ensureHitsReadLock = new ReentrantLock();
     protected final List<SpansReader> spansReaders = new ArrayList<>();
     protected boolean allSourceSpansFullyRead = false;
@@ -55,6 +55,7 @@ public class HitsFromQuery extends HitsMutable {
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo, HitsInternal.create(-1, true, true), null);
+        hitQueryContext = new HitQueryContext(null, sourceQuery.getField()); // each spans will get a copy
         queryInfo.setMatchInfoNames(hitQueryContext.getMatchInfoNames());
         QueryTimings timings = queryInfo().timings();
         timings.start();
