@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.textpattern;
 
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
@@ -52,17 +54,27 @@ public class RelationTarget implements TextPatternStruct {
         return Objects.hash(opInfo, target, spanMode, captureAs);
     }
 
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery targetQuery(QueryExecutionContext context) throws InvalidQuery {
+        assert !opInfo.isAlignment();
+
         // replace _ with any ngram
         TextPattern targetNoDefVal = TextPatternDefaultValue.replaceWithAnyToken(target);
         QueryExecutionContext targetContext = context.withDocVersion(opInfo.getTargetVersion());
+
+        String relationType = opInfo.getFullTypeRegex();
+
+        // Auto-determine capture name if none was given
+        String captureName = captureAs;
+        if (StringUtils.isEmpty(captureName))
+            captureName = XFRelations.determineCaptureAs(context, relationType);
+
         BLSpanQuery translated = XFRelations.createRelationQuery(
                 context.queryInfo(),
                 context,
-                opInfo.getFullTypeRegex(),
+                relationType,
                 targetNoDefVal.translate(targetContext),
                 opInfo.getDirection(),
-                captureAs,
+                captureName,
                 spanMode,
                 targetContext.luceneField()
         );

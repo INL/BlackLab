@@ -44,35 +44,31 @@ public class XFRelations implements ExtensionFunctionClass {
         RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.fromCode((String)args.get(2));
         String captureAs = (String)args.get(3);
         SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.fromCode((String)args.get(4));
-        return createRelationQuery(queryInfo, context, relationType, matchTarget, direction, captureAs, spanMode, null);
+
+        // Make sure relationType has a relation class
+        relationType = RelationUtil.optPrependDefaultClass(relationType);
+
+        // Auto-determine capture name if none was given
+        if (StringUtils.isEmpty(captureAs))
+            captureAs = determineCaptureAs(context, relationType);
+
+        return createRelationQuery(queryInfo, context, relationType, matchTarget, direction, captureAs, spanMode,
+                null);
     }
 
     public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, QueryExecutionContext context, String relationType,
             BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs,
             RelationInfo.SpanMode spanMode, String targetField) {
-
-        // Autodetermine capture name if no explicit name given.
-        // Discard relation class if specified, keep Unicode letters from relationType, and add unique number
-        if (StringUtils.isEmpty(captureAs)) {
-            String captureName = RelationUtil.classAndType(relationType)[1].replaceAll("[^\\p{L}]", "");
-            if (captureName.isEmpty())
-                captureName = FUNC_REL;
-            captureAs = context.ensureUniqueCapture(captureName);
-        }
-
-        // Make sure relationType has a relation class
-        relationType = RelationUtil.optPrependDefaultClass(relationType);
-
         // Do we need to match a target, or don't we care?
+        String field = context.withRelationAnnotation().luceneField();
         if (BLSpanQuery.isAnyNGram(matchTarget))
             matchTarget = null;
-        String field = context.withRelationAnnotation().luceneField();
         if (matchTarget != null) {
             // Ensure relation matches given target, then adjust to the requested span mode
             BLSpanQuery rel = new SpanQueryRelations(queryInfo, field, relationType, null,
                     direction, RelationInfo.SpanMode.TARGET, captureAs, targetField);
             BLSpanQuery relAndTarget = new SpanQueryAnd(List.of(rel, matchTarget));
-            ((SpanQueryAnd)relAndTarget).setRequireUniqueRelations(true); // don't match the same relation twice
+            ((SpanQueryAnd) relAndTarget).setRequireUniqueRelations(true); // don't match the same relation twice
             if (spanMode != RelationInfo.SpanMode.TARGET) {
                 // Not in the target but the source field. Adjust spans accordingly.
                 relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.luceneField());
@@ -85,6 +81,15 @@ public class XFRelations implements ExtensionFunctionClass {
             return new SpanQueryRelations(queryInfo, field, relationType, null,
                     direction, spanMode, captureAs, targetField);
         }
+    }
+
+    public static String determineCaptureAs(QueryExecutionContext context, String relationType) {
+        // Autodetermine capture name if no explicit name given.
+        // Discard relation class if specified, keep Unicode letters from relationType, and add unique number
+        String captureName = RelationUtil.classAndType(relationType)[1].replaceAll("[^\\p{L}]", "");
+        if (captureName.isEmpty())
+            captureName = FUNC_REL;
+        return context.ensureUniqueCapture(captureName);
     }
 
     /**
@@ -119,7 +124,7 @@ public class XFRelations implements ExtensionFunctionClass {
         if (args.isEmpty())
             throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
         List<BLSpanQuery> tps = args.stream().map(o -> (BLSpanQuery)o).collect(Collectors.toList());
-        return TextPatternRelationMatch.createRelMatchQuery(queryInfo, context, tps);
+        return TextPatternRelationMatch.createRelMatchQuery(context, tps);
     }
 
     /**

@@ -5,13 +5,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
+import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Relations operator, matching a source (parent) to one or more targets (children).
@@ -41,8 +44,65 @@ public class TextPatternRelationMatch extends TextPattern {
         }
     }
 
-    public static BLSpanQuery createRelMatchQuery(QueryInfo queryInfo, QueryExecutionContext context,
-            List<BLSpanQuery> clauses) {
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+        if (children.isEmpty())
+            throw new InvalidQuery("Relation match has no children");
+        if (children.get(0).getOperatorInfo().isAlignment()) {
+            // Find all relations between source and target hits (parallel corpora)
+            return createAlignmentQuery(context);
+        } else {
+            // Find a single matching relation.
+            return createRelMatchQuery(context, parent, children);
+        }
+    }
+
+    private BLSpanQuery createAlignmentQuery(QueryExecutionContext context) throws InvalidQuery {
+        BLSpanQuery source = TextPatternDefaultValue.replaceWithAnyToken(parent).translate(context);
+        List<SpanQueryCaptureRelationsBetweenSpans.Target> targets = new ArrayList<>();
+        for (RelationTarget child: children) {
+            targets.add(alignmentTarget(child, context));
+        }
+        return new SpanQueryCaptureRelationsBetweenSpans(source, targets);
+    }
+
+    private static SpanQueryCaptureRelationsBetweenSpans.Target alignmentTarget(RelationTarget target, QueryExecutionContext context)
+            throws InvalidQuery {
+        RelationOperatorInfo opInfo = target.getOperatorInfo();
+        assert opInfo.isAlignment();
+
+        String relationType = opInfo.getFullTypeRegex();
+
+        // Auto-determine capture name from relation type if none was given
+        String captureName = target.getCaptureAs();
+        if (StringUtils.isEmpty(captureName))
+            captureName = XFRelations.determineCaptureAs(context, relationType);
+
+        // replace _ with any ngram
+        TextPattern targetNoDefVal = TextPatternDefaultValue.replaceWithAnyToken(target.getTarget());
+        QueryExecutionContext targetContext = context.withDocVersion(opInfo.getTargetVersion());
+        BLSpanQuery targetQuery = targetNoDefVal.translate(targetContext);
+
+        return SpanQueryCaptureRelationsBetweenSpans.Target.get(
+                context.queryInfo(), context.withRelationAnnotation().luceneField(), targetQuery,
+                captureName, relationType);
+    }
+
+    private BLSpanQuery createRelMatchQuery(QueryExecutionContext context, TextPattern parent, List<RelationTarget> children) throws InvalidQuery {
+        List<BLSpanQuery> clauses = new ArrayList<>();
+        if (parent != null) { // might be a root relation operator, which has no parent
+            BLSpanQuery translatedParent = TextPatternDefaultValue.replaceWithAnyToken(parent)
+                    .translate(context);
+            clauses.add(translatedParent);
+        }
+        for (RelationTarget child: children) {
+            clauses.add(child.targetQuery(context));
+        }
+
+        return createRelMatchQuery(context, clauses);
+    }
+
+    public static BLSpanQuery createRelMatchQuery(QueryExecutionContext context, List<BLSpanQuery> clauses) {
         assert !clauses.isEmpty();
         // Filter out "any n-gram" arguments ([]*) because they don't do anything
         clauses = clauses.stream()
@@ -51,7 +111,7 @@ public class TextPatternRelationMatch extends TextPattern {
 
         if (clauses.isEmpty()) {
             // All clauses were []*; return any n-gram query (good luck with that...)
-            return SpanQueryAnyToken.anyNGram(queryInfo, context);
+            return SpanQueryAnyToken.anyNGram(context.queryInfo(), context);
         }
         if (clauses.size() == 1) {
             // Nothing to match, just return the clause
@@ -60,20 +120,6 @@ public class TextPatternRelationMatch extends TextPattern {
         SpanQueryAnd spanQueryAnd = new SpanQueryAnd(clauses);
         spanQueryAnd.setRequireUniqueRelations(true); // discard match if relation matched twice
         return spanQueryAnd;
-    }
-
-    @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        List<BLSpanQuery> queries = new ArrayList<>();
-        if (parent != null) { // might be a root relation operator, which has no parent
-            BLSpanQuery translatedParent = TextPatternDefaultValue.replaceWithAnyToken(parent)
-                    .translate(context);
-            queries.add(translatedParent);
-        }
-        for (RelationTarget child: children) {
-            queries.add(child.translate(context));
-        }
-        return createRelMatchQuery(context.queryInfo(), context, queries);
     }
 
     @Override

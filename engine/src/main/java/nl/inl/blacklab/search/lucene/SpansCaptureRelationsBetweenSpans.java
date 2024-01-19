@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -16,8 +15,9 @@ import org.apache.lucene.search.spans.FilterSpans;
  *
  * @@@ PROBLEM: right now, subsequent spans from the source spans may not overlap!
  *   If they do overlap, some relations may be skipped over.
- *   We should cache some relations from the source span so we can be sure we return all
- *   of them, even if the source spans overlap.
+ *   We should cache (some) relations from the source span so we can be sure we return all
+ *   of them, even if the source spans overlap. Use SpansInBuckets or maybe a rewindable
+ *   Spans view on top of that class?
  */
 class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
@@ -110,23 +110,40 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         for (Target target: targets) {
             // Capture all relations with source inside this span.
             capturedRelations.clear();
+            int targetPosMin = Integer.MAX_VALUE;
+            int targetPosMax = Integer.MIN_VALUE;
             int docId = target.relations.docID();
             if (docId < candidate.docID())
                 docId = target.relations.advance(candidate.docID());
             if (docId == candidate.docID()) {
+                // @@@ TODO: make rewindable Spans view on top of SpansInBucketsPerDocument for this?
+                // if (target.relations.startPosition() > sourceStart)
+                //     target.relations.rewindStartPosition(sourceStart);
                 if (target.relations.startPosition() < sourceStart)
                     target.relations.advanceStartPosition(sourceStart);
                 while (target.relations.startPosition() < sourceEnd) {
-                    if (target.relations.endPosition() < sourceEnd)
-                        capturedRelations.add(target.relations.getRelationInfo().copy());
+                    if (target.relations.endPosition() <= sourceEnd) {
+                        // Source of this relation is inside our source hit.
+                        RelationInfo relInfo = target.relations.getRelationInfo().copy();
+                        capturedRelations.add(relInfo);
+                        // Keep track of the min and max target positions so we can quickly reject targets below.
+                        targetPosMin = Math.min(targetPosMin, relInfo.getTargetStart());
+                        targetPosMax = Math.max(targetPosMax, relInfo.getTargetEnd());
+                    }
                     target.relations.nextStartPosition();
                 }
             }
 
-            // Find the smallest target span that covers the most of these captured relations.
+            // @@@ TODO: if target query was "any n-gram", just accept [targetPosMin, targetPosmax) as the target span.
+            //           also take into account that we may want to capture the target query even if it's any n-gram,
+            //           because we want to find the equivalent of the source span in the target doc version.
+
+            // Find the smallest target span that covers the highest number of the relations we just captured.
             int targetDocId = target.target.docID();
-            if (targetDocId < candidate.docID())
+            if (targetDocId < candidate.docID()) {
                 targetDocId = target.target.advance(candidate.docID());
+                target.target.nextBucket();
+            }
             if (targetDocId == candidate.docID()) {
                 // Target positioned in doc. Find best matching hit.
                 int targetIndex = -1;
@@ -136,6 +153,12 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                     // Check if this is a better target match than we had before.
                     int targetStart = target.target.startPosition(i);
                     int targetEnd = target.target.endPosition(i);
+                    if (targetPosMin > targetEnd || targetPosMax < targetStart) {
+                        // The targets of the relations we captured our outside this target span. Reject it.
+                        continue;
+                    }
+                    // There is some overlap between the target span and the relations we captured.
+                    // Find out which relations are inside this target span, so we can pick the best target span.
                     int relationsCovered = (int) capturedRelations.stream()
                             .filter(r -> r.getTargetStart() >= targetStart && r.getTargetEnd() <= targetEnd)
                             .count();
@@ -158,8 +181,8 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 capturedRelations.sort(RelationInfo::compareTo);
                 matchInfo[target.captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
             } else {
-                // Target document has no matches. No relations to capture.
-                matchInfo[target.captureAsIndex] = RelationListInfo.create(Collections.emptyList(), getOverriddenField());
+                // Target document has no matches. Reject this hit.
+                return FilterSpans.AcceptStatus.NO;
             }
         }
 
