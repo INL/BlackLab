@@ -75,6 +75,13 @@
             <version>${pac4j.version}</version>
         </dependency>
 
+        <!-- includes the jwt authenticator (i.e. check token isn't expired, signature matches etc. -->
+        <dependency>
+            <groupId>org.pac4j</groupId>
+            <artifactId>pac4j-jwt</artifactId>
+            <version>${pac4j.version}</version>
+        </dependency>
+
         <!-- keycloak UMA (user managed access) implementation, i.e. authorization/permission management using keycloak -->
         <dependency>
             <groupId>org.keycloak</groupId>

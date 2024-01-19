@@ -115,4 +115,8 @@ public class OIDCUtil {
     public Optional<JWTClaimsSet> decodeRPT(String rpt) throws IOException {
         return decodeAccessToken(rpt); // seems to work the same in keycloak.
     }
+
+    public boolean validateAccessToken(String accessToken) {
+        return decodeAccessToken(accessToken).isPresent();
+    }
 }
