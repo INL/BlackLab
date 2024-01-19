@@ -134,23 +134,17 @@ public class CorpusQueryLanguageParser {
 
     TextPattern relationQuery(TextPattern parent, List<ChildRelationStruct> childRels) {
         List<RelationTarget> children = new ArrayList<>();
-        String sourceVersion = null;
         for (ChildRelationStruct childRel: childRels) {
-            if (childRel.type.getSourceVersion() != null) {
-                if (sourceVersion != null && !sourceVersion.equals(childRel.type.getSourceVersion()))
-                    throw new RuntimeException("Cannot combine different source versions in one relation query");
-                sourceVersion = childRel.type.getSourceVersion();
-            }
             RelationTarget child = new RelationTarget(childRel.type, childRel.target,
                     RelationInfo.SpanMode.SOURCE, childRel.captureAs);
             children.add(child);
         }
-        return new TextPatternRelationMatch(sourceVersion, parent, children);
+        return new TextPatternRelationMatch(parent, children);
     }
 
     TextPattern rootRelationQuery(ChildRelationStruct childRel) {
         assert !childRel.type.isNegate() : "Cannot negate root query";
-        return new TextPatternRelationMatch(null, null,
+        return new TextPatternRelationMatch(null,
                 List.of(new RelationTarget(childRel.type, childRel.target,
                 RelationInfo.SpanMode.TARGET, childRel.captureAs)));
     }

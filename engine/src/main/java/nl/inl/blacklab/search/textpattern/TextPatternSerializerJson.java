@@ -94,7 +94,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_REL_SPAN_MODE = "spanmode";
     private static final String KEY_REL_TYPE = "reltype";
     private static final String KEY_SENSITIVITY = "sensitivity";
-    private static final String KEY_SOURCE_VERSION = "sourceVersion";
     private static final String KEY_START = "start";
     private static final String KEY_TARGET_VERSION = "targetVersion";
     private static final String KEY_TRAILING_EDGE = "trailingEdge";
@@ -212,7 +211,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         jsonSerializers.put(TextPatternRelationMatch.class, (pattern, writer) -> {
             TextPatternRelationMatch tp = (TextPatternRelationMatch) pattern;
             writer.write(TextPattern.NT_RELATION_MATCH,
-                    KEY_SOURCE_VERSION, tp.getSourceVersion(),
                     KEY_PARENT, tp.getParent(),
                     KEY_CHILDREN, tp.getChildren());
         });
@@ -228,7 +226,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_REL_SPAN_MODE, nullIf(tp.getSpanMode().getCode(), "source"),
                     KEY_DIRECTION, nullIf(operatorInfo.getDirection().getCode(), "both"),
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()),
-                    KEY_SOURCE_VERSION, nullIfEmpty(operatorInfo.getSourceVersion()),
                     KEY_TARGET_VERSION, nullIfEmpty(operatorInfo.getTargetVersion()),
                     KEY_ALIGNMENT, nullIf(operatorInfo.isAlignment(), false));
         });
@@ -448,14 +445,12 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     optArgSensitivity(args));
         case TextPattern.NT_RELATION_MATCH:
             return new TextPatternRelationMatch(
-                    (String)args.getOrDefault(KEY_SOURCE_VERSION, null),
                     (TextPattern) args.get(KEY_PARENT),
                     (List<RelationTarget>) args.get(KEY_CHILDREN));
         case TextPattern.NT_RELATION_TARGET:
             RelationOperatorInfo relOpInfo = new RelationOperatorInfo(
                     (String) args.get(KEY_REL_TYPE),
                     SpanQueryRelations.Direction.fromCode((String)args.getOrDefault(KEY_DIRECTION, "both")),
-                    (String) args.get(KEY_SOURCE_VERSION),
                     (String) args.get(KEY_TARGET_VERSION),
                     (boolean) args.getOrDefault(KEY_NEGATE, false),
                     (boolean) args.getOrDefault(KEY_ALIGNMENT, false)); // @@@ TODO

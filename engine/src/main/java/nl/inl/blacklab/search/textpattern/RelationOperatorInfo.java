@@ -28,7 +28,7 @@ public class RelationOperatorInfo {
      * Examples: --> ; -nmod-> ; nl==>de
      */
     private static final Pattern PATT_RELATION_OPERATOR = Pattern.compile(
-            "^([a-zA-Z0-9_]*)[-=](.*)[-=]>([a-zA-Z0-9_]*)$");
+            "^[-=](.*)[-=]>([a-zA-Z0-9_]*)$");
 
     /**
      * Create an info struct from the operator string.
@@ -76,13 +76,12 @@ public class RelationOperatorInfo {
         Matcher matcher = PATT_RELATION_OPERATOR.matcher(op);
         if (!matcher.matches())
             throw new RuntimeException("Invalid relation operator: " + op);
-        String sourceVersion = matcher.group(1);
-        String typeRegex = matcher.group(2);
-        String targetVersion = matcher.group(3);
+        String typeRegex = matcher.group(1);
+        String targetVersion = matcher.group(2);
         if (StringUtils.isEmpty(typeRegex))
             typeRegex = RelationUtil.ANY_TYPE_REGEX; // any relation type
 
-        return new RelationOperatorInfo(typeRegex, direction, sourceVersion, targetVersion, negate,
+        return new RelationOperatorInfo(typeRegex, direction, targetVersion, negate,
                 isAlignmentOperator);
     }
 
@@ -91,9 +90,6 @@ public class RelationOperatorInfo {
 
     /** How to filter relations by direction (forward/backward/both/root). */
     private final SpanQueryRelations.Direction direction;
-
-    /** Source version we want to search the left side in */
-    private final String sourceVersion;
 
     /** Relation target regex */
     private final String targetVersion;
@@ -105,12 +101,11 @@ public class RelationOperatorInfo {
      *  used for parallel corpora) */
     private final boolean isAlignmentOperator;
 
-    public RelationOperatorInfo(String typeRegex, SpanQueryRelations.Direction direction, String sourceVersion,
+    public RelationOperatorInfo(String typeRegex, SpanQueryRelations.Direction direction,
             String targetVersion, boolean negate,
             boolean isAlignmentOperator) {
         this.typeRegex = typeRegex;
         this.direction = direction;
-        this.sourceVersion = sourceVersion == null || sourceVersion.isEmpty() ? null : sourceVersion;
         this.targetVersion = targetVersion == null || targetVersion.isEmpty() ? null : targetVersion;
         this.negate = negate;
         this.isAlignmentOperator = isAlignmentOperator;
@@ -125,10 +120,6 @@ public class RelationOperatorInfo {
 
     public SpanQueryRelations.Direction getDirection() {
         return direction;
-    }
-
-    public String getSourceVersion() {
-        return sourceVersion;
     }
 
     public String getTargetVersion() {
@@ -151,13 +142,13 @@ public class RelationOperatorInfo {
             return false;
         RelationOperatorInfo that = (RelationOperatorInfo) o;
         return negate == that.negate && isAlignmentOperator == that.isAlignmentOperator && Objects.equals(
-                typeRegex, that.typeRegex) && direction == that.direction && Objects.equals(sourceVersion,
-                that.sourceVersion) && Objects.equals(targetVersion, that.targetVersion);
+                typeRegex, that.typeRegex) && direction == that.direction && Objects.equals(targetVersion,
+                that.targetVersion);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(typeRegex, direction, sourceVersion, targetVersion, negate, isAlignmentOperator);
+        return Objects.hash(typeRegex, direction, targetVersion, negate, isAlignmentOperator);
     }
 
     /**

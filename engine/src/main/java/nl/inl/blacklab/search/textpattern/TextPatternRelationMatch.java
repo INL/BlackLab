@@ -18,15 +18,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class TextPatternRelationMatch extends TextPattern {
 
-    /** What doocument version to find source in, or null if this is not a parallel corpus. */
-    private final String sourceVersion;
-
     private final TextPattern parent;
 
     private final List<RelationTarget> children;
 
-    public TextPatternRelationMatch(String sourceVersion, TextPattern parent, List<RelationTarget> children) {
-        this.sourceVersion = sourceVersion;
+    public TextPatternRelationMatch(TextPattern parent, List<RelationTarget> children) {
         this.parent = parent;
         assert !children.isEmpty();
         this.children = new ArrayList<>(children);
@@ -71,7 +67,7 @@ public class TextPatternRelationMatch extends TextPattern {
         List<BLSpanQuery> queries = new ArrayList<>();
         if (parent != null) { // might be a root relation operator, which has no parent
             BLSpanQuery translatedParent = TextPatternDefaultValue.replaceWithAnyToken(parent)
-                    .translate(context.withDocVersion(sourceVersion));
+                    .translate(context);
             queries.add(translatedParent);
         }
         for (RelationTarget child: children) {
@@ -87,22 +83,18 @@ public class TextPatternRelationMatch extends TextPattern {
         if (o == null || getClass() != o.getClass())
             return false;
         TextPatternRelationMatch that = (TextPatternRelationMatch) o;
-        return Objects.equals(sourceVersion, that.sourceVersion) && Objects.equals(parent, that.parent)
+        return Objects.equals(parent, that.parent)
                 && Objects.equals(children, that.children);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sourceVersion, parent, children);
+        return Objects.hash(parent, children);
     }
 
     @Override
     public String toString() {
-        return "RMATCH(" + (sourceVersion == null ? "" : sourceVersion + ", ") + parent + ", " + children + ")";
-    }
-
-    public String getSourceVersion() {
-        return sourceVersion;
+        return "RMATCH(" + parent + ", " + children + ")";
     }
 
     public TextPattern getParent() {

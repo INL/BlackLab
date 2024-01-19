@@ -58,7 +58,7 @@ public class RelationTarget implements TextPatternStruct {
         QueryExecutionContext targetContext = context.withDocVersion(opInfo.getTargetVersion());
         BLSpanQuery translated = XFRelations.createRelationQuery(
                 context.queryInfo(),
-                context.withDocVersion(opInfo.getSourceVersion()), // relations are always indexed in source version
+                context,
                 opInfo.getFullTypeRegex(),
                 targetNoDefVal.translate(targetContext),
                 opInfo.getDirection(),
