@@ -342,18 +342,6 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
     }
 
     @Override
-    public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        return true;
-    }
-
-    @Override
-    public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        return new SpanQueryCaptureRelationsBetweenSpans(
-                SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, onTheRight),
-                targets);
-    }
-
-    @Override
     public long reverseMatchingCost(IndexReader reader) {
         return clauses.stream().mapToLong(clause -> clause.reverseMatchingCost(reader)).sum();
     }
