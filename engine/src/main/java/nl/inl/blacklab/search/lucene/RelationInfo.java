@@ -218,8 +218,12 @@ public class RelationInfo extends MatchInfo {
         this.sourceField = sourceField;
         this.targetField = targetField;
         this.onlyHasTarget = onlyHasTarget;
-        if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd)) {
-            throw new IllegalArgumentException("By convention, root relations should have a 'fake source' that coincides with their target " +
+        if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd) && (sourceStart != targetStart || sourceEnd != targetStart)) {
+            // Root relations must have a fake source (position where they are indexed).
+            // Either source must equal target (older convention, remove eventually), e.g. 2-3 -> 2-3, OR
+            // source must start at the same position as target and have length 0, e.g. 2-2 -> 2-3
+            // (new convention, slightly more space efficient when indexing)
+            throw new IllegalArgumentException("By convention, root relations should have a 'fake source' of length 0 that starts at the same position as the target " +
                     "(values here are SRC " + sourceStart + ", " + sourceEnd + " - TGT " + targetStart + ", " + targetEnd + ").");
         }
         this.sourceStart = sourceStart;

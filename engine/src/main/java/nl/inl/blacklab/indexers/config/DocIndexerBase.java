@@ -594,8 +594,15 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         case RELATION:
             // Relation: index with the full source and target spans
             boolean onlyHasTarget = !Span.isValid(position); // standoff root annotation
-            payload = PayloadUtils.relationPayload(onlyHasTarget,
-                    position.start(), position.end(),
+
+            // Root relations have no source, so we index them at their target position.
+            // In this case we set source start/end to target start, so it is indexed there and
+            // source length does not need to be stored (because 0 is the default value, see
+            // RelationInfo.serializeRelation).
+            int sourceStart = indexAtPosition;
+            int sourceEnd = onlyHasTarget ? indexAtPosition : position.end();
+
+            payload = PayloadUtils.relationPayload(onlyHasTarget, sourceStart, sourceEnd,
                     spanEndOrRelTarget.start(), spanEndOrRelTarget.end());
             break;
         }
