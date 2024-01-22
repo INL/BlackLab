@@ -86,8 +86,19 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 
         private TargetWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
             BLSpanWeight relationsWeight = relations.createWeight(searcher, scoreMode, boost);
-            BLSpanWeight targetWeight = target == null ? null : target.createWeight(searcher, scoreMode, boost);
-            return new TargetWeight(relationsWeight, targetWeight, captureAs);
+            BLSpanWeight targetWeight = null;
+            String captureTargetAs = null;
+            String targetField = null;
+            if (target instanceof SpanQueryCaptureGroup &&
+                    BLSpanQuery.isAnyNGram(((SpanQueryCaptureGroup)target).getClause())) {
+                // Special case: target is e.g. A:[]*. Don't actually search for all n-grams, just ignore
+                // target while matching relations and capture the relation targets as A.
+                captureTargetAs = ((SpanQueryCaptureGroup)target).getCaptureName();
+                targetField = target.getField(); // so we can set the field properly when we capture target
+            } else {
+                targetWeight = target == null || BLSpanQuery.isAnyNGram(target) ? null : target.createWeight(searcher, scoreMode, boost);
+            }
+            return new TargetWeight(relationsWeight, targetWeight, captureAs, captureTargetAs, targetField);
         }
 
         private Target rewrite(IndexReader reader) throws IOException {
@@ -133,12 +144,21 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Match info name for the list of captured relations */
         private final String captureAs;
 
+        /** Match info name for the target span (if target == null, and if desired) */
+        private final String captureTargetAs;
+
+        /** If target == null and captureTargetAs is set, this gives the target field for capture. */
+        private final String targetField;
+
         /** Span the relation targets must be inside of (or null if we don't care) */
         private final BLSpanWeight target;
 
-        public TargetWeight(BLSpanWeight relations, BLSpanWeight target, String captureAs) {
+        public TargetWeight(BLSpanWeight relations, BLSpanWeight target, String captureAs, String captureTargetAs,
+                String targetField) {
             this.relations = relations;
             this.captureAs = captureAs;
+            this.captureTargetAs = captureTargetAs;
+            this.targetField = targetField;
             this.target = target;
         }
 
@@ -179,7 +199,8 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             if (relationsSpans == null)
                 return null;
             BLSpans targetSpans = target == null ? null : target.getSpans(context, requiredPostings);
-            return new SpansCaptureRelationsBetweenSpans.Target(relationsSpans, targetSpans, captureAs);
+            return new SpansCaptureRelationsBetweenSpans.Target(relationsSpans, targetSpans, captureAs,
+                    captureTargetAs, targetField);
         }
 
         private void extractTermStates(Map<Term, TermStates> contexts) {
@@ -206,12 +227,13 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
                 return false;
             TargetWeight that = (TargetWeight) o;
             return Objects.equals(relations, that.relations) && Objects.equals(captureAs, that.captureAs)
+                    && Objects.equals(captureTargetAs, that.captureTargetAs)
                     && Objects.equals(target, that.target);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(relations, captureAs, target);
+            return Objects.hash(relations, captureAs, captureTargetAs, target);
         }
     }
 

@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.spans.FilterSpans;
 
 /**
@@ -34,14 +35,33 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         /** Span the relation targets must be inside of (or null if we don't care) */
         private final SpansInBucketsPerDocument target;
 
-        public Target(BLSpans relations, BLSpans target, String captureAs) {
+        /** If target == null, we may still want to capture the relation targets.
+         *  E.g. <code>(...some source query...) ==> A:[]*</code>
+         *  In that case, this gives the capture name for that. */
+        private final String captureTargetAs;
+
+        /** Group index of captureTargetAs */
+        private int captureTargetAsIndex = -1;
+
+        /** If target == null and captureTargetAs is set, this gives the target field for capture. */
+        private final String targetField;
+
+        public Target(BLSpans relations, BLSpans target, String captureAs, String captureTargetAs, String targetField) {
             this.relations = relations;
             this.captureAs = captureAs;
             this.target = target == null ? null : new SpansInBucketsPerDocument(target);
+            this.captureTargetAs = captureTargetAs;
+            this.targetField = targetField;
+            if (target != null && !StringUtils.isEmpty(captureTargetAs))
+                throw new IllegalArgumentException("Can't specify captureTargetAs if target is not null");
         }
 
         void setContext(HitQueryContext context) {
             captureAsIndex = context.registerMatchInfo(captureAs);
+            if (!StringUtils.isEmpty(captureTargetAs))
+                captureTargetAsIndex = context.registerMatchInfo(captureTargetAs);
+            if (target != null)
+                target.setHitQueryContext(context);
         }
 
         @Override
@@ -52,12 +72,13 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 return false;
             Target target1 = (Target) o;
             return Objects.equals(relations, target1.relations) && Objects.equals(captureAs,
-                    target1.captureAs) && Objects.equals(target, target1.target);
+                    target1.captureAs) && Objects.equals(captureTargetAs,
+                    target1.captureTargetAs) && Objects.equals(target, target1.target);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(relations, captureAs, target);
+            return Objects.hash(relations, captureAs, captureTargetAs, target);
         }
 
         @Override
@@ -65,7 +86,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             return "Target{" +
                     "relations=" + relations +
                     ", captureAs='" + captureAs + '\'' +
-                    ", captureAsIndex=" + captureAsIndex +
+                    ", captureTargetAs='" + captureTargetAs + '\'' +
                     ", target=" + target +
                     '}';
         }
@@ -117,6 +138,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 docId = target.relations.advance(candidate.docID());
             if (docId == candidate.docID()) {
                 // @@@ TODO: make rewindable Spans view on top of SpansInBucketsPerDocument for this?
+                //           (otherwise we might miss relations if the source spans overlap)
                 // if (target.relations.startPosition() > sourceStart)
                 //     target.relations.rewindStartPosition(sourceStart);
                 if (target.relations.startPosition() < sourceStart)
@@ -134,9 +156,24 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 }
             }
 
-            // @@@ TODO: if target query was "any n-gram", just accept [targetPosMin, targetPosmax) as the target span.
-            //           also take into account that we may want to capture the target query even if it's any n-gram,
-            //           because we want to find the equivalent of the source span in the target doc version.
+            if (capturedRelations.isEmpty()) {
+                // If no relations match, there is no match.
+                return FilterSpans.AcceptStatus.NO;
+            }
+
+            if (target.target == null) {
+                // No target span specified (or e.g. A:[]* ); just accept the relations we captured.
+                matchInfo[target.captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
+
+                // If target query was e.g. A:[]*, capture [targetPosMin, targetPosmax) into A.
+                if (target.captureTargetAsIndex >= 0) {
+
+                    matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetPosMin, targetPosMax,
+                            target.targetField);
+                }
+
+                continue;
+            }
 
             // Find the smallest target span that covers the highest number of the relations we just captured.
             int targetDocId = target.target.docID();
@@ -180,6 +217,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                         || r.getTargetEnd() > target.target.endPosition(finalTargetIndex));
                 capturedRelations.sort(RelationInfo::compareTo);
                 matchInfo[target.captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
+                target.target.getMatchInfo(finalTargetIndex, matchInfo); // also perform captures on the target
             } else {
                 // Target document has no matches. Reject this hit.
                 return FilterSpans.AcceptStatus.NO;
