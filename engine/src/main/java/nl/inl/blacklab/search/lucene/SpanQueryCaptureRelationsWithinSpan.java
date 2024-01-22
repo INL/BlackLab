@@ -25,6 +25,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
 
     /** Name of match info to capture relations from, e.g. "s" to capture relations inside the sentence captured as "s".
+     * (if not set, capture all relations in current clause hit)
      */
     final String captureRelsInside;
 
@@ -37,6 +38,8 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
      * The query might be something like <code>'dog' within &lt;s/&gt;</code>.
      * In that case, captureRelsInside would be "s" (name of the capture containing the
      * sentence spans, automatically assigned).
+     *
+     * (if captureRelsInside is not set, capture all relations in current clause hit)
      *
      * @param queryInfo query info
      * @param relationFieldName field where relations where indexed

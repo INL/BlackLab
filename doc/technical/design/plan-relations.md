@@ -272,17 +272,16 @@ This operation is the same as a regular AND (NOT) operation with these clauses, 
 
 We can capture all relations occurring inside a span using `rcapture`:
 
-    rcapture(query, toCapture, captureAs, relationType = '.*')
+    rcapture(query, captureAs, relationType = '.*')
 
 This is useful for e.g. finding all dependency relations in a sentence.
 
 Parameters:
 - `query` is the query we're operating on. `rcapture` does not affect the matches, other than adding a match info with the relations captured.
-- `toCapture` is the name of the match info to capture relations in, e.g. `s`. The referenced `query` must have captured this match info.
 - `captureAs` is the name of the match info to store the captured relations in.
 - `relationType` is a regular expression matching the relation types to capture. The default is `.*`, i.e. all relations of the default relation class (`dep` by default). See `rel()` for more details about matching relation types.
 
-The relations are captured as a list-of-relations match info type. This will be returned in the BLS response as `relationsInsideSpan`.
+The relations are captured as a list-of-relations match info type.
 
 #### rtype
 
