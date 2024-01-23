@@ -166,7 +166,7 @@ public class AuthOIDC implements AuthMethod {
             OidcProfile p = (OidcProfile) profile;
 //            manager.save(true, p, false);
 
-            final boolean isAdmin = p.getRoles().contains(adminRole) || request.getSearchManager().config().getAuthentication().isOverrideIp(request.getContext().getRemoteAddr());
+            final boolean isAdmin = p.getRoles().contains(adminRole);
             final String sessionId = request.getSessionId();
 
             if (uma != null) {
