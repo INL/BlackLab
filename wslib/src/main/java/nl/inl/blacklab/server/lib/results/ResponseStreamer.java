@@ -340,6 +340,9 @@ public class ResponseStreamer {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
             }
+            List<String> matchInfoNames = summaryFields.getMatchInfoNames();
+            if (!matchInfoNames.isEmpty())
+                ds.entry("matchInfoNames", matchInfoNames);
             ds.endMap().endEntry();
         }
 

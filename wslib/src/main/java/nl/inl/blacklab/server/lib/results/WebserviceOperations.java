@@ -765,8 +765,8 @@ public class WebserviceOperations {
     }
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
-            SearchTimings timings, ResultGroups<?> groups, WindowStats window) {
-        return new ResultSummaryCommonFields(params, indexStatus, timings, groups, window);
+            SearchTimings timings, List<String> matchInfoNames, ResultGroups<?> groups, WindowStats window) {
+        return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoNames,groups, window);
     }
 
     public static ResultUserInfo userInfo(WebserviceParams params) {
