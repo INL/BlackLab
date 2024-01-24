@@ -742,6 +742,9 @@ public class WebserviceParamsImpl implements WebserviceParams {
     public boolean getRelSeparateSpans() { return params.getRelSeparateSpans(); }
 
     @Override
+    public long getLimitValues() { return params.getLimitValues(); }
+
+    @Override
     public boolean isCalculateCollocations() {
         return params.isCalculateCollocations();
     }

@@ -34,9 +34,7 @@ public interface MetadataField extends Field {
     @Deprecated
 	UnknownCondition unknownCondition();
 
-	Map<String, Integer> valueDistribution();
-
-	ValueListComplete isValueListComplete();
+    MetadataFieldValues values(long maxValues);
 
     /**
      * @deprecated use {@link #custom()} and .get("displayValues", Collections.emptyMap()) instead

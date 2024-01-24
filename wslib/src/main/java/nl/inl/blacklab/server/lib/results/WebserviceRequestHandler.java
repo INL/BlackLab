@@ -20,6 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
+import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
@@ -59,7 +60,7 @@ public class WebserviceRequestHandler {
         } else {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
-            ResultMetadataField metadataField = WebserviceOperations.metadataField(fieldDesc, params.getCorpusName());
+            ResultMetadataField metadataField = WebserviceOperations.metadataField(params, fieldDesc, params.getCorpusName());
             rs.metadataField(metadataField, includeCustomInfo);
         }
     }
@@ -337,7 +338,7 @@ public class WebserviceRequestHandler {
         AnnotatedField field = StringUtils.isEmpty(fieldName) ?
                 index.mainAnnotatedField() :
                 index.annotatedField(fieldName);
-        RelationsStats stats = index.getRelationsStats(field);
+        RelationsStats stats = index.getRelationsStats(field, params.getLimitValues());
         Map<String, RelationsStats.ClassStats> classesMap = stats.getClasses();
         Collection<String> relClasses = params.getRelClasses().isEmpty() ? classesMap.keySet() :
                 new HashSet<>(Arrays.asList(params.getRelClasses().split(",")));
@@ -388,21 +389,28 @@ public class WebserviceRequestHandler {
                 ds.startDynEntry(typeName).startMap();
                 {
                     ds.entry("count", typeStats.getCount());
-                    ds.startEntry("attributes").startMap();
-                    {
-                        Map<String, Map<String, Long>> attributes = typeStats.getAttributes();
-                        for (Map.Entry<String, Map<String, Long>> attrEntry: attributes.entrySet()) {
-                            ds.startDynEntry(attrEntry.getKey()).startMap();
-                            {
-                                Map<String, Long> values = attrEntry.getValue();
-                                for (Map.Entry<String, Long> valueEntry: values.entrySet()) {
-                                    ds.dynEntry(valueEntry.getKey(), valueEntry.getValue());
+                    Map<String, TruncatableFreqList> attributes = typeStats.getAttributes();
+                    if (!attributes.isEmpty()) {
+                        ds.startEntry("attributes").startMap();
+                        {
+                            for (Map.Entry<String, TruncatableFreqList> attrEntry: attributes.entrySet()) {
+                                ds.startDynEntry(attrEntry.getKey()).startMap();
+                                {
+                                    TruncatableFreqList values = attrEntry.getValue();
+                                    ds.startEntry("values").startMap();
+                                    {
+                                        for (Map.Entry<String, Long> valueEntry: values.getValues().entrySet()) {
+                                            ds.dynEntry(valueEntry.getKey(), valueEntry.getValue());
+                                        }
+                                    }
+                                    ds.endMap().endEntry();
+                                    ds.entry("valueListComplete", !values.isTruncated());
                                 }
+                                ds.endMap().endDynEntry();
                             }
-                            ds.endMap().endDynEntry();
                         }
+                        ds.endMap().endEntry();
                     }
-                    ds.endMap().endEntry();
                 }
                 ds.endMap().endDynEntry();
             }

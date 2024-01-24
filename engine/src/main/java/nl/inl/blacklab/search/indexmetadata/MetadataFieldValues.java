@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -10,22 +8,24 @@ import com.fasterxml.jackson.databind.JsonNode;
  * This is either stored in the index metadata file, or
  * determined from the Lucene index via DocValues.
  */
-interface MetadataFieldValues {
+public interface MetadataFieldValues {
+
+    MetadataFieldValues truncate(long maxValues);
+
+    boolean canTruncateTo(long maxValues);
 
     @FunctionalInterface
     interface Factory {
-        MetadataFieldValues create(String fieldName, FieldType fieldType);
+        MetadataFieldValues create(String fieldName, FieldType fieldType, long limitValues);
     }
 
     boolean shouldAddValuesWhileIndexing();
 
-    Map<String, Integer> distribution();
-
-    ValueListComplete isComplete();
+    TruncatableFreqList valueList();
 
     void setValues(JsonNode values);
 
-    void setComplete(ValueListComplete complete);
+    void setComplete(boolean complete);
 
     void addValue(String value);
 

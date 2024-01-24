@@ -41,7 +41,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
-import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -779,11 +779,10 @@ public class ResponseStreamer {
         String indexName = metadataField.getIndexName();
         MetadataField fd = metadataField.getFieldDesc();
         boolean listValues = metadataField.isListValues();
-        Map<String, Integer> fieldValuesInOrder = metadataField.getFieldValues();
+        Map<String, Long> fieldValuesInOrder = metadataField.getFieldValues();
+        boolean isValueListComplete = metadataField.isValueListComplete();
 
         ds.startMap();
-        // (we report false for ValueListComplete.UNKNOWN - this usually means there's no values either way)
-        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES);
 
         // Assemble response
         if (indexName != null)
@@ -821,11 +820,13 @@ public class ResponseStreamer {
             // If not all values are mentioned in display order, show the rest at the end,
             // sorted by their displayValue (or regular value if no displayValue specified)
             ds.startEntry("fieldValues").startMap();
-            for (Map.Entry<String, Integer> e: fieldValuesInOrder.entrySet()) {
+            for (Map.Entry<String, Long> e: fieldValuesInOrder.entrySet()) {
                 ds.attrEntry("value", "text", e.getKey(), e.getValue());
             }
             ds.endMap().endEntry();
-            ds.entry(KEY_VALUE_LIST_COMPLETE, valueListComplete);
+
+            // (we report false for ValueListComplete.UNKNOWN - this usually means there's no values either way)
+            ds.entry(KEY_VALUE_LIST_COMPLETE, isValueListComplete);
         }
         ds.endMap();
     }
@@ -866,9 +867,9 @@ public class ResponseStreamer {
         }
 
         ds.startEntry("annotations").startMap();
-        for (Map.Entry<String, ResultAnnotationInfo> e: annotInfos.entrySet()) {
-            ds.startAttrEntry("annotation", "name", e.getKey()).startMap();
-            ResultAnnotationInfo ai = e.getValue();
+        for (Map.Entry<String, ResultAnnotationInfo> annotEntry: annotInfos.entrySet()) {
+            ds.startAttrEntry("annotation", "name", annotEntry.getKey()).startMap();
+            ResultAnnotationInfo ai = annotEntry.getValue();
             Annotation annotation = ai.getAnnotation();
             AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
             String offsetsAlternative = offsetsSensitivity == null ? "" :
@@ -890,12 +891,24 @@ public class ResponseStreamer {
                     .entry("offsetsAlternative", offsetsAlternative)
                     .entry("isInternal", annotation.isInternal());
             if (ai.isShowValues()) {
-                ds.startEntry("values").startList();
-                for (String term: ai.getTerms()) {
-                    ds.item("value", term);
+                TruncatableFreqList terms = ai.getTerms();
+                if (modernizeApi) {
+                    // Return both terms AND their frequencies
+                    ds.startEntry("terms").startMap();
+                    for (Map.Entry<String, Long> termEntry: terms.getValues().entrySet()) {
+                        ds.dynEntry(termEntry.getKey(), termEntry.getValue());
+                    }
+                    ds.endMap().endEntry();
                 }
-                ds.endList().endEntry();
-                ds.entry(KEY_VALUE_LIST_COMPLETE, ai.isValueListComplete());
+                if (!isNewApi) {
+                    // Return the list of terms
+                    ds.startEntry("values").startList();
+                    for (String term: terms.getValues().keySet()) {
+                        ds.item("value", term);
+                    }
+                    ds.endList().endEntry();
+                }
+                ds.entry(KEY_VALUE_LIST_COMPLETE, !terms.isTruncated());
             }
             if (!annotation.subannotationNames().isEmpty()) {
                 ds.startEntry("subannotations").startList();

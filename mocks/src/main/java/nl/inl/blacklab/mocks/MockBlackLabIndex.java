@@ -285,12 +285,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public RelationsStats getRelationsStats(AnnotatedField field) {
+    public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
         throw new UnsupportedOperationException();
     }
 }

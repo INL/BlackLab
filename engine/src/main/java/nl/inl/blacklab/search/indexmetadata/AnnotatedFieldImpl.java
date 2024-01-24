@@ -31,6 +31,12 @@ import nl.inl.util.LuceneUtil;
 @JsonPropertyOrder({ "custom", "mainAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
+    /** Max. number of values per e.g. tag attribute to cache.
+     *  Set fairly low because we don't want e.g. unique id attributes eating up a ton of memory.
+     *  Higher values of limitValues still work fine, they just take longer because they're not cached.
+     */
+    public static final double MAX_LIMIT_VALUES_TO_CACHE = 10000;
+
     public final class AnnotationsImpl implements Annotations {
         @Override
         public Annotation main() {
@@ -104,7 +110,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     private boolean relationsInitialized = false;
 
     /** The available relation classes, types and their frequencies, plus attribute info. */
-    private RelationsStats relationsStats;
+    private RelationsStats cachedRelationsStats;
 
     // For JAXB deserialization
     @SuppressWarnings("unused")
@@ -311,52 +317,44 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         }
     }
 
-    public synchronized RelationsStats getRelationsStats(BlackLabIndex index) {
-        if (relationsStats == null) {
+    /**
+     * Get information about relations in this corpus.
+     *
+     * Includes classes and types of relations that occur, the frequency for each,
+     * and any attributes and their values.
+     *
+     * @param index the index
+     * @param limitValues truncate lists/maps of values to this length
+     * @return information about relations in this corpus
+     */
+    public RelationsStats getRelationsStats(BlackLabIndex index, long limitValues) {
+        RelationsStats results;
+        synchronized (this) {
+            results = cachedRelationsStats;
+        }
+        if (results == null || results.getLimitValues() < limitValues) {
+            // We either don't have cached relationsStats, or the limitValues value is too low.
             boolean oldStyleStarttag = index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
-            relationsStats = new RelationsStats(oldStyleStarttag);
+            results = new RelationsStats(oldStyleStarttag, limitValues);
             String annotName = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
             String luceneField = annotation(annotName).sensitivity(MatchSensitivity.SENSITIVE)
                     .luceneField();
             LuceneUtil.getFieldTerms(index.reader(), luceneField,
-                    null, relationsStats::addIndexedTerm);
+                    null, results::addIndexedTerm);
         }
-        return relationsStats;
-    }
-
-    public Map<String, Map<String, Long>> getRelationsMap(BlackLabIndex index) {
-        synchronized (relations) {
-            if (!relationsInitialized) {
-                boolean oldStyleStarttag = index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
-                String annotName = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
-                String luceneField = annotation(annotName).sensitivity(MatchSensitivity.SENSITIVE)
-                        .luceneField();
-                LuceneUtil.getFieldTerms(index.reader(), luceneField,
-                        null, (term, freq) -> {
-                    if (term.isEmpty())
-                        return true; // empty terms are added if no relations are found at a position (?)
-                    if (oldStyleStarttag && term.startsWith("@"))
-                        return true; // attribute value
-                    String relationClass, relationType;
-                    if (oldStyleStarttag) {
-                        // Old external index. No relations, only tags. Make sure the response is the same as for new.
-                        relationClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
-                        relationType = term;
-                    } else {
-                        // New integrated index with spans indexed as relations as well.
-                        String fullType = RelationUtil.fullTypeFromIndexedTerm(term);
-                        String[] classAndType = RelationUtil.classAndType(fullType);
-                        relationClass = classAndType[0];  // e.g. dep for dependency relations
-                        relationType = classAndType[1];   // e.g. nobj for nominal object
-                    }
-                    relations.computeIfAbsent(relationClass, k -> new HashMap<>())
-                            .merge(relationType, freq, Long::sum);
-                    return true;
-                });
-                relationsInitialized = true;
+        // Should we cache these results?
+        synchronized (this) {
+            if (results != cachedRelationsStats && limitValues < MAX_LIMIT_VALUES_TO_CACHE) {
+                // Reasonable enough to cache.
+                cachedRelationsStats = results;
             }
-            return relations;
         }
+        if (limitValues < results.getLimitValues()) {
+            // We have cached relationsStats, but the limitValues value is too low.
+            // We can reuse the data, but we need to limit the number of values.
+            results = results.withLimit(limitValues);
+        }
+        return results;
     }
 
 }

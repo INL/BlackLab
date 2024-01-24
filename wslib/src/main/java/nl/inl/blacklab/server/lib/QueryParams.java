@@ -143,6 +143,8 @@ public interface QueryParams {
 
     boolean getRelSeparateSpans();
 
+    long getLimitValues();
+
     boolean isCalculateCollocations();
 
     String getAnnotationName();

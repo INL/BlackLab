@@ -1,19 +1,21 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import nl.inl.util.LimitUtil;
+
 /**
- * Relations stats for an index, including classes, types and attributes.
+ * Relations stats for a corpus, including classes, types and attributes.
  */
 public class RelationsStats {
 
     /**
      * Information about a relation type (under a class) and the attributes that occur with it.
      */
-    public static class TypeStats {
+    public class TypeStats implements LimitUtil.Limitable<TypeStats> {
+
         /**
          * How often this relation type occurs
          */
@@ -22,14 +24,16 @@ public class RelationsStats {
         /**
          * What attributes occur and with what values
          */
-        private Map<String, Map<String, Long>> attributesAndValues = new TreeMap<>();
+        private Map<String, TruncatableFreqList> attributesAndValues = new TreeMap<>();
 
         void add(String term, long freq) {
             count += freq;
             Map<String, String> termAttr = RelationUtil.attributesFromIndexedTerm(term);
             termAttr.forEach((attr, value) -> {
-                Map<String, Long> attrValues = attributesAndValues.computeIfAbsent(attr, k -> new HashMap<>());
-                attrValues.compute(value, (k, v) -> freq + (v == null ? 0 : v));
+                // Add the attribute
+                TruncatableFreqList attrValues = attributesAndValues.computeIfAbsent(attr,
+                        k -> new TruncatableFreqList(limitValues));
+                attrValues.add(value, freq);
             });
         }
 
@@ -37,15 +41,33 @@ public class RelationsStats {
             return count;
         }
 
-        public Map<String, Map<String, Long>> getAttributes() {
+        public Map<String, TruncatableFreqList> getAttributes() {
             return Collections.unmodifiableMap(attributesAndValues);
+        }
+
+        @Override
+        public TypeStats withLimit(long limitValues) {
+            if (limitValues == RelationsStats.this.limitValues)
+                return this;
+            if  (limitValues > RelationsStats.this.limitValues) {
+                // Are all our lists complete? Then this is okay.
+                if (attributesAndValues.values().stream().noneMatch(TruncatableFreqList::isTruncated))
+                    return this;
+                throw new IllegalArgumentException("Cannot increase limitValues from " + RelationsStats.this.limitValues + " to " + limitValues);
+            }
+
+            // Re-limit this type
+            TypeStats result = new TypeStats();
+            result.count = count;
+            result.attributesAndValues = LimitUtil.limit(attributesAndValues, limitValues);
+            return result;
         }
     }
 
     /**
      * Statistics about a relation class and its types of relations and their attributes.
      */
-    public static class ClassStats {
+    public class ClassStats implements LimitUtil.Limitable<ClassStats> {
         /**
          * What relation types occur and with what attributes
          */
@@ -54,13 +76,20 @@ public class RelationsStats {
         void add(String term, long freq) {
             String[] classAndType = RelationUtil.classAndType(RelationUtil.fullTypeFromIndexedTerm(term));
             String relationType = classAndType[1];
-            TypeStats typeStats = relationTypes.computeIfAbsent(relationType,
-                    k -> new TypeStats());
+            // Add the relation type
+            TypeStats typeStats = relationTypes.computeIfAbsent(relationType, k -> new TypeStats());
             typeStats.add(term, freq);
         }
 
         public Map<String, TypeStats> getRelationTypes() {
             return Collections.unmodifiableMap(relationTypes);
+        }
+
+        @Override
+        public ClassStats withLimit(long limitValues) {
+            ClassStats result = new ClassStats();
+            result.relationTypes = LimitUtil.limit(relationTypes, limitValues);
+            return result;
         }
     }
 
@@ -69,13 +98,35 @@ public class RelationsStats {
      */
     private boolean oldStyleStarttag;
 
+    private long limitValues;
+
     /**
      * What relation classes occur and with what types and attributes
      */
     private Map<String, ClassStats> classes = new TreeMap<>();
 
-    RelationsStats(boolean oldStyleStarttag) {
+    RelationsStats(boolean oldStyleStarttag, long limitValues) {
         this.oldStyleStarttag = oldStyleStarttag;
+        this.limitValues = limitValues;
+    }
+
+    public RelationsStats withLimit(long limitValues) {
+        if (limitValues == this.limitValues)
+            return this;
+        if (limitValues > this.limitValues) //@@@ could be okay if no lists are truncated
+            throw new IllegalArgumentException("Cannot increase limitValues from " + this.limitValues + " to " + limitValues);
+
+        RelationsStats result = new RelationsStats(oldStyleStarttag, limitValues);
+        result.classes = LimitUtil.limit(classes, limitValues);
+        return result;
+    }
+
+    /** What limitValues value was used while collecting relationsStats?
+     *  (we do this to limit memory usage, but we can only reuse the data
+     *   for limitValues <= this value)
+     */
+    public long getLimitValues() {
+        return limitValues;
     }
 
     public Map<String, ClassStats> getClasses() {

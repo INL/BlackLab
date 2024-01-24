@@ -26,9 +26,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
-import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.InputFormatWithConfig;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
@@ -271,12 +270,12 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             fi.put("analyzer", f.analyzerName());
             fi.put("unknownValue", f.unknownValue());
             fi.put("unknownCondition", unknownCondition.toString());
-            if (f.isValueListComplete() != ValueListComplete.UNKNOWN)
-                fi.put("valueListComplete", f.isValueListComplete().equals(ValueListComplete.YES));
-            Map<String, Integer> values = f.valueDistribution();
+            TruncatableFreqList metaFieldValues = f.values(MetadataFieldImpl.maxMetadataValuesToStore()).valueList();
+            fi.put("valueListComplete", !metaFieldValues.isTruncated());
+            Map<String, Long> values = metaFieldValues.getValues();
             if (values != null) {
                 ObjectNode jsonValues = fi.putObject("values");
-                for (Map.Entry<String, Integer> e: values.entrySet()) {
+                for (Map.Entry<String, Long> e: values.entrySet()) {
                     jsonValues.put(e.getKey(), e.getValue());
                 }
             }
@@ -609,8 +608,10 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     fieldDesc.setDisplayValues(fieldConfig.get("displayValues"));
                 if (fieldConfig.has("displayOrder"))
                     fieldDesc.putCustom("displayOrder", Json.getListOfStrings(fieldConfig, "displayOrder"));
-                if (fieldConfig.has("valueListComplete"))
+                MetadataFieldValues values = fieldDesc.values(MetadataFieldImpl.maxMetadataValuesToStore());
+                if (fieldConfig.has("valueListComplete") && !values.valueList().isTruncated()) {
                     fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
+                }
                 metadataFields.put(fieldName, fieldDesc);
             }
 

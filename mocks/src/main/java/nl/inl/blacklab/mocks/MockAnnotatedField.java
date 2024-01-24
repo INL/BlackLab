@@ -106,12 +106,7 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public Map<String, Map<String, Long>> getRelationsMap(BlackLabIndex index) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public RelationsStats getRelationsStats(BlackLabIndex index) {
+    public RelationsStats getRelationsStats(BlackLabIndex index, long limitValues) {
         throw new UnsupportedOperationException();
     }
 }

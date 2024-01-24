@@ -25,11 +25,14 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     public QueryParamsBlackLabServer(String corpusName, SearchManager searchMan, User user, HttpServletRequest request, WebserviceOperation operation) {
         super(corpusName, searchMan, user);
-        for (WebserviceParameter par: WebserviceParameter.values()) {
-            String value = ServletUtil.getParameter(request, par.value(), "");
-            if (value.length() == 0)
-                continue;
-            map.put(par, value);
+        for (String name: request.getParameterMap().keySet()) {
+            WebserviceParameter par = WebserviceParameter.fromValue(name).orElse(null);
+            if (par != null) {
+                String value = ServletUtil.getParameter(request, name, "");
+                if (value.length() == 0)
+                    continue;
+                map.put(par, value);
+            }
         }
         map.put(WebserviceParameter.CORPUS_NAME, corpusName);
         if (operation != null && operation != WebserviceOperation.NONE)
