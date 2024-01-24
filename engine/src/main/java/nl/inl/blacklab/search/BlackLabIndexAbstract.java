@@ -49,6 +49,7 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -750,5 +751,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     public Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field) {
         return field.getRelationsMap(this);
+    }
+
+    public RelationsStats getRelationsStats(AnnotatedField field) {
+        return field.getRelationsStats(this);
     }
 }

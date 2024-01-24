@@ -32,6 +32,8 @@ public interface AnnotatedField extends Field {
 
     Map<String, Map<String, Long>> getRelationsMap(BlackLabIndex index);
 
+    RelationsStats getRelationsStats(BlackLabIndex index);
+
     String tokenLengthField();
 
     @Override

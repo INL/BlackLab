@@ -103,6 +103,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     private boolean relationsInitialized = false;
 
+    /** The available relation classes, types and their frequencies, plus attribute info. */
+    private RelationsStats relationsStats;
+
     // For JAXB deserialization
     @SuppressWarnings("unused")
     AnnotatedFieldImpl() {
@@ -306,6 +309,19 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
             entry.getValue().fixAfterDeserialization(index, this, entry.getKey());
         }
+    }
+
+    public synchronized RelationsStats getRelationsStats(BlackLabIndex index) {
+        if (relationsStats == null) {
+            boolean oldStyleStarttag = index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
+            relationsStats = new RelationsStats(oldStyleStarttag);
+            String annotName = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
+            String luceneField = annotation(annotName).sensitivity(MatchSensitivity.SENSITIVE)
+                    .luceneField();
+            LuceneUtil.getFieldTerms(index.reader(), luceneField,
+                    null, relationsStats::addIndexedTerm);
+        }
+        return relationsStats;
     }
 
     public Map<String, Map<String, Long>> getRelationsMap(BlackLabIndex index) {

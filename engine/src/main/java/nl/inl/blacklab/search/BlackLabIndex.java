@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -525,4 +526,6 @@ public interface BlackLabIndex extends AutoCloseable {
     String name();
 
     Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field);
+
+    RelationsStats getRelationsStats(AnnotatedField field);
 }

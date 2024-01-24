@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
@@ -336,10 +337,11 @@ public class WebserviceRequestHandler {
         AnnotatedField field = StringUtils.isEmpty(fieldName) ?
                 index.mainAnnotatedField() :
                 index.annotatedField(fieldName);
-        Map<String, Map<String, Long>> relations = index.getRelationsMap(field);
-        Set<String> relClasses = params.getRelClasses().isEmpty() ? relations.keySet() :
+        RelationsStats stats = index.getRelationsStats(field);
+        Map<String, RelationsStats.ClassStats> classesMap = stats.getClasses();
+        Collection<String> relClasses = params.getRelClasses().isEmpty() ? classesMap.keySet() :
                 new HashSet<>(Arrays.asList(params.getRelClasses().split(",")));
-        String spansClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
+        final String spansClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
         if (params.getRelOnlySpans()) {
             relClasses = Set.of(spansClass);
         }
@@ -350,23 +352,16 @@ public class WebserviceRequestHandler {
         DataStream ds = rs.getDataStream();
         ds.startMap();
         {
-            boolean separateSpansResponse = separateSpans && relations.containsKey(spansClass) &&
+            boolean separateSpansResponse = separateSpans && classesMap.containsKey(spansClass) &&
                     relClasses.contains(spansClass);
             if (separateSpansResponse) {
-                ds.startEntry("spans").startMap();
-                {
-                    Map<String, Long> values = relations.get(spansClass);
-                    for (Map.Entry<String, Long> e: values.entrySet()) {
-                        ds.dynEntry(e.getKey(), e.getValue());
-                    }
-                }
-                ds.endMap().endEntry();
+                outputClass(ds, "spans", classesMap.get(spansClass));
             }
             if (!onlySpans) {
                 ds.startEntry("relations").startMap();
                 {
-                    for (Map.Entry<String, Map<String, Long>> rc: relations.entrySet()) {
-                        String relClass = rc.getKey();
+                    for (Map.Entry<String, RelationsStats.ClassStats> e: classesMap.entrySet()) {
+                        String relClass = e.getKey();
                         if (!relClasses.isEmpty() && !relClasses.contains(relClass)) {
                             // Not a relation class we're interested in
                             continue;
@@ -375,19 +370,43 @@ public class WebserviceRequestHandler {
                             // Already handled above
                             continue;
                         }
-                        ds.startDynEntry(relClass).startMap();
-                        {
-                            Map<String, Long> relTypes = rc.getValue();
-                            for (Map.Entry<String, Long> rt: relTypes.entrySet()) {
-                                ds.dynEntry(rt.getKey(), rt.getValue());
-                            }
-                        }
-                        ds.endMap().endDynEntry();
+                        outputClass(ds, relClass, e.getValue());
                     }
                 }
                 ds.endMap().endEntry();
             }
         }
         ds.endMap();
+    }
+
+    private static void outputClass(DataStream ds, String relClass, RelationsStats.ClassStats classStats) {
+        ds.startDynEntry(relClass).startMap();
+        {
+            for (Map.Entry<String, RelationsStats.TypeStats> relTypeEntry: classStats.getRelationTypes().entrySet()) {
+                String typeName = relTypeEntry.getKey();
+                RelationsStats.TypeStats typeStats = relTypeEntry.getValue();
+                ds.startDynEntry(typeName).startMap();
+                {
+                    ds.entry("count", typeStats.getCount());
+                    ds.startEntry("attributes").startMap();
+                    {
+                        Map<String, Map<String, Long>> attributes = typeStats.getAttributes();
+                        for (Map.Entry<String, Map<String, Long>> attrEntry: attributes.entrySet()) {
+                            ds.startDynEntry(attrEntry.getKey()).startMap();
+                            {
+                                Map<String, Long> values = attrEntry.getValue();
+                                for (Map.Entry<String, Long> valueEntry: values.entrySet()) {
+                                    ds.dynEntry(valueEntry.getKey(), valueEntry.getValue());
+                                }
+                            }
+                            ds.endMap().endDynEntry();
+                        }
+                    }
+                    ds.endMap().endEntry();
+                }
+                ds.endMap().endDynEntry();
+            }
+        }
+        ds.endMap().endDynEntry();
     }
 }

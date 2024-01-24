@@ -34,6 +34,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -285,6 +286,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RelationsStats getRelationsStats(AnnotatedField field) {
         throw new UnsupportedOperationException();
     }
 }

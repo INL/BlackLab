@@ -175,7 +175,7 @@ public class XFRelations implements ExtensionFunctionClass {
             throw new IllegalArgumentException("rcapture() requires at least a query");
         BLSpanQuery query = (BLSpanQuery)args.get(0);
         String captureAs = context.ensureUniqueCapture((String)args.get(1));
-        String relationType = RelationUtil.optPrependDefaultClass((String) args.get(2));
+        String relationType = optPrependDefaultType((String) args.get(2));
         String field = context.withRelationAnnotation().luceneField();
         return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, null, captureAs, relationType);
     }
