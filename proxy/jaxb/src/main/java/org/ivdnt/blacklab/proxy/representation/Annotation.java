@@ -41,7 +41,7 @@ public class Annotation implements Cloneable {
     @XmlElement(name = "value")
     @JsonInclude(Include.NON_NULL)
     @JsonProperty("values")
-    public List<String> values;
+    public List<String> values;   ///@@@@ UPDATE: new API has "terms", including frequencies
 
     @JsonInclude(Include.NON_NULL)
     public Boolean valueListComplete;
