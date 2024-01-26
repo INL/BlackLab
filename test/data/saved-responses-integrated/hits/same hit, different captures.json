@@ -640,7 +640,10 @@
           }
         ],
         "type": "sequence"
-      }
+      },
+      "matchInfoNames": [
+        "A"
+      ]
     },
     "requestedWindowSize": 50,
     "searchParam": {
