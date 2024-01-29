@@ -29,7 +29,7 @@ public class Kwic {
      *
      * @param annotations What annotations are stored in what order for this Kwic
      *            (e.g. word, lemma, pos)
-     * @param tokens the contents
+     * @param tokens tokens (per word: the token string for each annotation)
      * @param matchStart where the match starts, in word positions
      * @param matchEnd where the match ends, in word positions
      */

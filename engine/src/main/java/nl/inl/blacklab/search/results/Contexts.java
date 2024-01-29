@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.results;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -70,39 +69,34 @@ public class Contexts {
             return;
         assert !forwardIndexes.isEmpty();
 
-        // Get contexts
-        List<int[][]> annotContexts = forwardIndexes.stream().map(
-                afi -> getContextWordsSingleDocument(hits.getInternalHits(), 0, hits.size(),
-                        contextSize, List.of(afi), hits.matchInfoNames()))
-                .collect(Collectors.toList());
-
-        // Make the concordances from the context
+        // Get the contexts (arrays of term ids) and make the KWICs by looking up the terms
+        int[][] contexts = getContextWordsSingleDocument(hits.getInternalHits(), 0, hits.size(),
+                contextSize, forwardIndexes, hits.matchInfoNames());
         int numberOfAnnotations = forwardIndexes.size();
         List<Annotation> annotations = forwardIndexes.stream()
                 .map(afi -> afi.annotation())
                 .collect(Collectors.toList());
-        List<Terms> annotTerms = forwardIndexes.stream()
+        List<Terms> annotationTerms = forwardIndexes.stream()
                 .map(afi -> afi.terms())
                 .collect(Collectors.toList());
-        int[][] wordContexts = annotContexts.get(numberOfAnnotations - 1);
         int hitIndex = 0;
         for (Hit h: hits) {
-            int[] wordContext = wordContexts[hitIndex];
-            int contextLength = wordContext[Contexts.LENGTH_INDEX];
+            int[] hitContext = contexts[hitIndex];
+            int contextLength = hitContext[Contexts.LENGTH_INDEX];
             List<String> tokens = new ArrayList<>(contextLength * numberOfAnnotations);
             // For each word in the context...
             for (int indexInContext = Contexts.NUMBER_OF_BOOKKEEPING_INTS;
                  indexInContext < contextLength + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
                     indexInContext++) {
                 // For each annotation...
-                Iterator<int[][]> contextIt = annotContexts.iterator();
-                for (Terms terms: annotTerms) {
-                    int[][] context = contextIt.next();
-                    tokens.add(terms.get(context[hitIndex][indexInContext]));
+                int annotIndex = indexInContext;
+                for (Terms terms: annotationTerms) {
+                    tokens.add(terms.get(hitContext[annotIndex]));
+                    annotIndex += contextLength; // jmup to next annotation in context array
                 }
             }
-            kwics.put(h, new Kwic(annotations, tokens, wordContext[Contexts.HIT_START_INDEX],
-                    wordContext[Contexts.RIGHT_START_INDEX]));
+            kwics.put(h, new Kwic(annotations, tokens, hitContext[Contexts.HIT_START_INDEX],
+                    hitContext[Contexts.RIGHT_START_INDEX]));
             hitIndex++;
         }
     }
