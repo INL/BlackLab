@@ -212,7 +212,7 @@ public class WebserviceRequestHandler {
      */
     public static void opDocSnippet(WebserviceParams params, ResponseStreamer rs) {
         ResultDocSnippet result = WebserviceOperations.docSnippet(params);
-        rs.hitOrFragmentInfo(result);
+        rs.snippet(result);
     }
 
     /**

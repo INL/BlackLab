@@ -529,16 +529,16 @@ public class ResponseStreamer {
             ds.startItem("hit");
             {
                 String docPid = result.getDocIdToPid().get(hit.doc());
-                Map<String, MatchInfo> capturedGroups = null;
+                Map<String, MatchInfo> matchInfos = null;
                 if (hits.hasMatchInfo()) {
-                    capturedGroups = hits.getMatchInfoMap(hit, params.getOmitEmptyCaptures());
-                    if (capturedGroups == null && logger != null)
+                    matchInfos = hits.getMatchInfoMap(hit, params.getOmitEmptyCaptures());
+                    if (matchInfos == null && logger != null)
                         logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, capturedGroups, params.contextSettings().size(), result.getConcordanceContext(), result.getAnnotationsToWrite()
-                );
+                hit(docPid, hit, matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                        result.getAnnotationsToWrite());
             }
             ds.endItem();
         }
@@ -558,7 +558,7 @@ public class ResponseStreamer {
      *
      * @param result hit to output
      */
-    public void hitOrFragmentInfo(ResultDocSnippet result) {
+    public void snippet(ResultDocSnippet result) {
         String docPid = result.getParams().getDocPid();
         Hits hits = result.getHits();
         if (!hits.hitsStats().processedAtLeast(1))
@@ -579,7 +579,7 @@ public class ResponseStreamer {
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, Hit hit, Map<String, MatchInfo> matchInfo,
+    private void outputHitOrSnippet(String docPid, Hit hit, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;
@@ -594,7 +594,7 @@ public class ResponseStreamer {
         // If any groups were captured, include them in the response
         // (legacy, replaced by matchInfos)
         if (!isNewApi) {
-            Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfo, MatchInfo.Type.SPAN);
+            Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfos, MatchInfo.Type.SPAN);
             if (!capturedGroups.isEmpty()) {
                 ds.startEntry("captureGroups").startList();
                 for (Map.Entry<String, MatchInfo> capturedGroup: capturedGroups) {
@@ -608,12 +608,13 @@ public class ResponseStreamer {
 
         // If there's any match info, include it here
         if (modernizeApi) {
-            if (matchInfo != null && !matchInfo.isEmpty()) {
+            if (matchInfos != null && !matchInfos.isEmpty()) {
                 ds.startEntry("matchInfos").startMap();
-                for (Map.Entry<String, MatchInfo> e: matchInfo.entrySet()) {
-                    if (e.getValue() != null) {
+                for (Map.Entry<String, MatchInfo> e: matchInfos.entrySet()) {
+                    MatchInfo matchInfo = e.getValue();
+                    if (matchInfo != null) {
                         ds.startElEntry(e.getKey());
-                        matchInfo(ds, e.getValue());
+                        matchInfo(ds, matchInfo);
                         ds.endElEntry();
                     }
                 }
@@ -647,6 +648,26 @@ public class ResponseStreamer {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
                 } else {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
+                }
+            }
+            if (isNewApi) {
+                Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
+                if (foreignKwics != null) {
+                    ds.startEntry("otherFields").startMap();
+                    for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
+                        String field = e.getKey();
+                        Kwic kwic = e.getValue();
+                        ds.startDynEntry(field).startMap();
+                        {
+                            ds.entry(KEY_SPAN_START, kwic.fragmentStartInDoc());
+                            ds.entry(KEY_SPAN_END, kwic.fragmentEndInDoc());
+                            ds.startEntry(KEY_DOC_SNIPPET);
+                            ds.contextList(kwic.annotations(), annotationsToList, kwic.tokens());
+                            ds.endEntry();
+                        }
+                        ds.endMap().endDynEntry();
+                    }
+                    ds.endMap().endEntry();
                 }
             }
         }

@@ -128,10 +128,6 @@ public class ContextSize {
      */
     private final int maxSnippetLength;
 
-    private ContextSize(int before, int after, boolean includeHit, String matchInfoName) {
-        this(before, after, includeHit, matchInfoName, Integer.MAX_VALUE);
-    }
-
     private ContextSize(int before, int after, boolean includeHit, String matchInfoName, int maxSnippetLength) {
         super();
         assert before >= 0;
@@ -302,5 +298,9 @@ public class ContextSize {
 
     public boolean isInlineTag() {
         return matchInfoName != null;
+    }
+
+    public int getMaxSnippetLength() {
+        return maxSnippetLength;
     }
 }

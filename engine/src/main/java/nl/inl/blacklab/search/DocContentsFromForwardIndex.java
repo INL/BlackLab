@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search;
 
-import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,16 +60,6 @@ public class DocContentsFromForwardIndex extends DocContents {
         return Collections.unmodifiableList(tokens);
     }
 
-    /**
-     * Get the tokens of a specific annotation
-     * 
-     * @param annotation annotation to get the tokens for
-     * @return the tokens
-     */
-    public List<String> tokens(Annotation annotation) {
-        return singlePropertyContext(annotation);
-    }
-
     @Override
     public String xml() {
         int valuesPerWord = annotations.size();
@@ -95,29 +84,7 @@ public class DocContentsFromForwardIndex extends DocContents {
         return b.toString();
     }
 
-    /**
-     * Get the context of a specific annotation from the complete context list.
-     *
-     * @param annotation the annotation to get the context for
-     * @return the context for this annotation
-     */
-    private List<String> singlePropertyContext(Annotation annotation) {
-        final int nProp = annotations.size();
-        final int size = tokens.size() / nProp;
-        final int annotIndex = annotations.indexOf(annotation);
-        if (annotIndex == -1)
-            return null;
-        return new AbstractList<>() {
-            @Override
-            public String get(int index) {
-                return tokens.get(annotIndex + nProp * index);
-            }
-
-            @Override
-            public int size() {
-                return size;
-            }
-        };
+    public int length() {
+        return tokens.size() / annotations.size();
     }
-
 }

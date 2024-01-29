@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
@@ -57,13 +58,13 @@ public class Contexts {
      * @param hits hits in this one document
      * @param forwardIndexes forward indexes for the annotations
      * @param contextSize number of words left and right of hit to fetch
-     * @param kwics where to add the KWICs
+     * @param kwicConsumer where to add the KWICs
      */
     static void makeKwicsSingleDocForwardIndex(
             Hits hits,
             List<AnnotationForwardIndex> forwardIndexes,
             ContextSize contextSize,
-            Map<Hit, Kwic> kwics
+            BiConsumer<Hit, Kwic> kwicConsumer
     ) {
         if (hits.size() == 0)
             return;
@@ -95,8 +96,8 @@ public class Contexts {
                     annotIndex += contextLength; // jmup to next annotation in context array
                 }
             }
-            kwics.put(h, new Kwic(annotations, tokens, hitContext[Contexts.HIT_START_INDEX],
-                    hitContext[Contexts.RIGHT_START_INDEX]));
+            kwicConsumer.accept(h, new Kwic(annotations, tokens, hitContext[Contexts.HIT_START_INDEX],
+                    hitContext[Contexts.RIGHT_START_INDEX], h.start()));
             hitIndex++;
         }
     }
