@@ -60,7 +60,7 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         if (matchInfo == null) {
-            matchInfo = new MatchInfo[context.getMatchInfoNames().size()];
+            matchInfo = new MatchInfo[context.numberOfMatchInfos()];
         } else {
             Arrays.fill(matchInfo, null);
         }

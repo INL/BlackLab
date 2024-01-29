@@ -364,7 +364,7 @@ public class ResultHits {
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(),
                 params.getWaitForTotal(), searchTimings, null, totalTokens);
-        List<String> matchInfoNames = hits.queryInfo().matchInfoNames();
+        List<String> matchInfoNames = hits.matchInfoNames();
         summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
                 getIndexStatus(), searchTimings, matchInfoNames, null, window.windowStats());
         listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),

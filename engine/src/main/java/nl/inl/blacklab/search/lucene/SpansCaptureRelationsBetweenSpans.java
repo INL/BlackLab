@@ -118,7 +118,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         // Prepare matchInfo so we can add captured relations to it
         if (matchInfo == null) {
-            matchInfo = new MatchInfo[context.getMatchInfoNames().size()];
+            matchInfo = new MatchInfo[context.numberOfMatchInfos()];
         } else {
             Arrays.fill(matchInfo, null);
         }

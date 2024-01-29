@@ -56,7 +56,6 @@ public class HitsFromQuery extends HitsMutable {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo, HitsInternal.create(-1, true, true), null);
         hitQueryContext = new HitQueryContext(null, sourceQuery.getField()); // each spans will get a copy
-        queryInfo.setMatchInfoNames(hitQueryContext.getMatchInfoNames());
         QueryTimings timings = queryInfo().timings();
         timings.start();
         final BlackLabIndex index = queryInfo.index();
