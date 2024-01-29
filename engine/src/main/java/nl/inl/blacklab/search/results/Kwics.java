@@ -1,10 +1,12 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -48,7 +50,6 @@ public class Kwics {
         return kwics.get(h);
     }
 
-    
     /**
      * Retrieve KWICs for a (sub)list of hits.
      *
@@ -62,63 +63,40 @@ public class Kwics {
      * @return the KWICs
      */
     private static Map<Hit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
-        // Group hits per document
-//        MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
-//        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
-//            EphemeralHit key = it.next();
-//            List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
-//            if (hitsInDoc == null) {
-//                hitsInDoc = new ArrayList<>();
-//                hitsPerDocument.put(key.doc(), hitsInDoc);
-//            }
-//            hitsInDoc.add(key);
-//        }
-
-        // All FIs except word and punct are attributes
-        BlackLabIndex index = hits.index();
-        Annotation wordAnnot = field.mainAnnotation();
-        AnnotationForwardIndex wordForwardIndex = index.annotationForwardIndex(wordAnnot);
-        Annotation punctAnnot = field.annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        AnnotationForwardIndex punctForwardIndex = index.annotationForwardIndex(punctAnnot);
-        Map<Annotation, AnnotationForwardIndex> attrForwardIndices = new HashMap<>();
+        // Collect FIs, with punct being the first and the main annotation (e.g. word) being the last.
+        // (this convention originates from how we write our XML structure)
+        ForwardIndex forwardIndex = hits.index().forwardIndex(field);
+        List<AnnotationForwardIndex> forwardIndexes = new ArrayList<>(field.annotations().size());
+        forwardIndexes.add(forwardIndex.get(field.annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)));
         for (Annotation annotation: field.annotations()) {
             if (annotation.hasForwardIndex() && !annotation.equals(field.mainAnnotation()) && !annotation.name().equals(
                     AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
-                attrForwardIndices.put(annotation, index.annotationForwardIndex(annotation));
+                forwardIndexes.add(forwardIndex.get(annotation));
             }
         }
+        forwardIndexes.add(forwardIndex.get(field.mainAnnotation()));
 
-        Map<Hit, Kwic> conc1 = new HashMap<>();
-        
-        /*
-         * if doc not is last doc 
-         *  process section if needed
-         *  save start of new section
-         *  
-         * process end section
-         */
+        // Iterate over hits and fetch KWICs per document
         int lastDocId = -1;
         int firstIndexWithCurrentDocId = 0;
+        Map<Hit, Kwic> kwics = new HashMap<>();
         for (int i = 0; i < hits.size(); ++i) {
             int curDocId = hits.doc(i);
-            if (lastDocId == -1)
-                lastDocId = curDocId;
-            if (curDocId != lastDocId) {
-                if (firstIndexWithCurrentDocId != i) {
-                    Contexts.makeKwicsSingleDocForwardIndex(
-                        hits.window(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId), 
-                        wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
-                }
-                firstIndexWithCurrentDocId = i;
+            if (lastDocId != -1 && curDocId != lastDocId) {
+                // We've reached a new document, so process the previous one
+                Contexts.makeKwicsSingleDocForwardIndex(
+                        hits.window(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId),
+                        forwardIndexes, contextSize, kwics);
+                firstIndexWithCurrentDocId = i; // remember start of the new document
             }
             lastDocId = curDocId;
         }
-        // last part
+        // Last document
         Contexts.makeKwicsSingleDocForwardIndex(
-            hits.window(firstIndexWithCurrentDocId, hits.size() - firstIndexWithCurrentDocId), 
-            wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
-        
-        return conc1;
+                hits.window(firstIndexWithCurrentDocId, hits.size() - firstIndexWithCurrentDocId),
+                forwardIndexes, contextSize, kwics);
+
+        return kwics;
     }
     
 }
