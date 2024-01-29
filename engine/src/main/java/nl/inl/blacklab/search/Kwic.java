@@ -41,19 +41,6 @@ public class Kwic {
         assert hitEnd * fragment.annotations.size() <= tokens.size();
     }
 
-    /**
-     * Construct a Kwic object
-     *
-     * @param fragment the content fragment to make the Kwic from
-     * @param matchStart where the match starts, in word positions
-     * @param matchEnd where the match ends, in word positions
-     */
-    public Kwic(DocContentsFromForwardIndex fragment, int matchStart, int matchEnd) {
-        this.fragment = fragment;
-        this.hitStart = matchStart;
-        this.hitEnd = matchEnd;
-    }
-
     public List<String> left() {
         return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.annotations.size()));
     }

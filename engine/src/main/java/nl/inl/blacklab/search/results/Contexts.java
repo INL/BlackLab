@@ -242,8 +242,7 @@ public class Contexts implements Iterable<int[]> {
     private final BigList<int[]> contexts;
 
     /**
-     * If we have context information, this specifies the annotation(s) (i.e. word,
-     * lemma, pos) the context came from. Otherwise, it is null.
+     * The annotation(s) (i.e. word, lemma, pos) the contexts came from.
      */
     private final List<Annotation> annotations;
 
