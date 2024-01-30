@@ -71,7 +71,7 @@ public class XFRelations implements ExtensionFunctionClass {
             ((SpanQueryAnd) relAndTarget).setRequireUniqueRelations(true); // don't match the same relation twice
             if (spanMode != RelationInfo.SpanMode.TARGET) {
                 // Not in the target but the source field. Adjust spans accordingly.
-                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.luceneField());
+                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.field().name());
 
                 // @@@ TODO ensure the correct field is returned (source field)
             }

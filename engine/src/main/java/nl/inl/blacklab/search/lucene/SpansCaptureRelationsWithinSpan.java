@@ -114,8 +114,8 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
         super.passHitQueryContextToClauses(context);
         this.context = context;
         if (!StringUtils.isEmpty(toCapture))
-            this.toCaptureIndex = context.registerMatchInfo(toCapture);
-        this.captureAsIndex = context.registerMatchInfo(captureAs);
+            this.toCaptureIndex = context.registerMatchInfo(toCapture, null);
+        this.captureAsIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.LIST_OF_RELATIONS);
     }
 
     @Override

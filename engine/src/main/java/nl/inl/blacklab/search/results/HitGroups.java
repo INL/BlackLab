@@ -143,7 +143,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             PropertyValue groupId = e.getKey();
             HitsInternal hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
-            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.matchInfoNames(), groupSize);
+            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.matchInfoDefs(), groupSize);
             groups.put(groupId, group);
             results.add(group);
         }

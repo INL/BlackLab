@@ -29,6 +29,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -364,9 +365,10 @@ public class ResultHits {
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(),
                 params.getWaitForTotal(), searchTimings, null, totalTokens);
-        List<String> matchInfoNames = hits.matchInfoNames();
+        List<MatchInfo.Def> matchInfoDefs = hits.matchInfoDefs();
         summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
-                getIndexStatus(), searchTimings, matchInfoNames, null, window.windowStats());
+                getIndexStatus(), searchTimings, matchInfoDefs, null, window.windowStats(),
+                hits.field().name());
         listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
                 getDocIdToPid());
 

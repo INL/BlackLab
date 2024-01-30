@@ -62,7 +62,7 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         super.passHitQueryContextToClauses(context);
-        this.groupIndex = context.registerMatchInfo(name);
+        this.groupIndex = context.registerMatchInfo(name, MatchInfo.Type.SPAN);
     }
 
     @Override

@@ -94,7 +94,7 @@ public class Concordances {
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1; // last word (inclusive)
 
-            wordsAroundHit.getSnippetStartEnd(hit, hits.matchInfoNames(), true, startsOfWords, startEndArrayIndex, endsOfWords, startEndArrayIndex + 1);
+            wordsAroundHit.getSnippetStartEnd(hit, hits.matchInfoDefs(), true, startsOfWords, startEndArrayIndex, endsOfWords, startEndArrayIndex + 1);
 //            // Above call replaces this:
 //            int start = wordsAroundHit.snippetStart(hit, hits.matchInfoNames());
 //            int end = wordsAroundHit.snippetEnd(hit, hits.matchInfoNames()) - 1; // last word (inclusive)
@@ -145,7 +145,7 @@ public class Concordances {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (HitsInternal l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = Hits.list(queryInfo, l, hits.matchInfoNames());
+            Hits hitsInThisDoc = Hits.list(queryInfo, l, hits.matchInfoDefs());
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }
         return conc;

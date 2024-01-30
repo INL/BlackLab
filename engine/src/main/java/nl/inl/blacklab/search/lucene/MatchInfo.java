@@ -15,7 +15,17 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         SPAN,
         RELATION,
         LIST_OF_RELATIONS,
-        INLINE_TAG
+        INLINE_TAG;
+
+        public String jsonName() {
+            switch (this) {
+            case SPAN: return "span";
+            case RELATION: return "relation";
+            case LIST_OF_RELATIONS: return "list";
+            case INLINE_TAG: return "tag";
+            default: throw new RuntimeException("Unknown match info type: " + this);
+            }
+        }
     }
 
     /**
@@ -79,5 +89,48 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
 
     public boolean isSpanEmpty() {
         return getSpanStart() == getSpanEnd();
+    }
+
+    /** Match info definition: name, type, (optionally) overridden field */
+    public static class Def {
+        /** This group's index in the captured group array */
+        private int index;
+
+        /** This group's name */
+        private String name;
+
+        /** What type of match info is this? (span, tag, relation, list of relations) */
+        private Type type;
+
+        /** Is this match info for another field (parallel corpora)? Will be null if not. */
+        private String overriddenField;
+
+        public Def(int index, String name, Type type, String overriddenField) {
+            this.index = index;
+            this.name = name;
+            this.type = type;
+            this.overriddenField = overriddenField;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Type getType() {
+            return type;
+        }
+
+        public String getOverriddenField() {
+            return overriddenField;
+        }
+
+        public void updateType(Type type) {
+            assert this.type == null || type == this.type;
+            this.type = type;
+        }
     }
 }

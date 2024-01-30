@@ -99,11 +99,12 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             // When capturing relations, remember that we're producing hits in a different field.
             // (used with parallel corpora)
             boolean isOverridden = !sourceField.equals(context.getDefaultField());
+            assert !isOverridden; // we don't allow this at the moment, but might want to in the future
             relationInfo = RelationInfo.createWithFields(sourceField, isOverridden, targetField);
         }
         // Register our group
         if (!captureAs.isEmpty())
-            this.groupIndex = context.registerMatchInfo(captureAs);
+            this.groupIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.RELATION, sourceField);
     }
 
     @Override

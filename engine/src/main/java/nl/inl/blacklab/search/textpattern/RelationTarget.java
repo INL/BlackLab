@@ -76,7 +76,7 @@ public class RelationTarget implements TextPatternStruct {
                 opInfo.getDirection(),
                 captureName,
                 spanMode,
-                targetContext.luceneField()
+                targetContext.field().name()
         );
         if (opInfo.isNegate())
             translated = new SpanQueryNot(translated);

@@ -139,7 +139,7 @@ public class HitsFromQuery extends HitsMutable {
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
                     if (hitQueryContextForThisSpans.numberOfMatchInfos() > 0) {
-                        matchInfoNames = hitQueryContextForThisSpans.getMatchInfoNames();
+                        matchInfoDefs = hitQueryContextForThisSpans.getMatchInfoDefs();
                     }
 
                     hasInitialized = true;

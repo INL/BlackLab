@@ -24,6 +24,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * Some annotation context(s) belonging to a list of hits.
@@ -72,7 +73,7 @@ public class Contexts {
 
         // Get the contexts (arrays of term ids) and make the KWICs by looking up the terms
         int[][] contexts = getContextWordsSingleDocument(hits.getInternalHits(), 0, hits.size(),
-                contextSize, forwardIndexes, hits.matchInfoNames());
+                contextSize, forwardIndexes, hits.matchInfoDefs());
         int numberOfAnnotations = forwardIndexes.size();
         List<Annotation> annotations = forwardIndexes.stream()
                 .map(afi -> afi.annotation())
@@ -111,8 +112,8 @@ public class Contexts {
      * @param contextSize how many words of context we want
      * @param contextSources forward indices to get context from
      */
-    private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end, ContextSize contextSize,
-                                                         List<AnnotationForwardIndex> contextSources, List<String> matchInfoNames) {
+    private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end,
+            ContextSize contextSize, List<AnnotationForwardIndex> contextSources, List<MatchInfo.Def> matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
@@ -125,7 +126,7 @@ public class Contexts {
         for (long i = start; i < end; ++i) {
             hits.getEphemeral(i, hit);
             int j = (int)(i - start);
-            contextSize.getSnippetStartEnd(hit, matchInfoNames, false, startsOfSnippets, j, endsOfSnippets, j);
+            contextSize.getSnippetStartEnd(hit, matchInfoDefs, false, startsOfSnippets, j, endsOfSnippets, j);
         }
 
         int fiNumber = 0;
@@ -182,7 +183,7 @@ public class Contexts {
 
         // Make sure all hits have been read and get access to internal hits
         HitsInternal ha = hits.getInternalHits();
-        List<String> matchInfoNames = hits.matchInfoNames();
+        List<MatchInfo.Def> matchInfoDefs = hits.matchInfoDefs();
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
@@ -217,7 +218,7 @@ public class Contexts {
                 if (curDoc != prevDoc) {
                     try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
-                    int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, matchInfoNames);
+                    int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, matchInfoDefs);
                     Collections.addAll(contexts, docContextArray);
                     // start a new document
                     prevDoc = curDoc;
@@ -225,7 +226,7 @@ public class Contexts {
                 }
             }
             // Process hits in final document
-            int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, matchInfoNames);
+            int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, matchInfoDefs);
             Collections.addAll(contexts, docContextArray);
         }
         return contexts;

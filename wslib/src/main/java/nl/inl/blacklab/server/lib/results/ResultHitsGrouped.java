@@ -119,7 +119,7 @@ public class ResultHitsGrouped {
 
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
         summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus,
-                timings, null, getGroups(), getWindow());
+                timings, null, getGroups(), getWindow(), groups.field().name());
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize(), -1);
 
