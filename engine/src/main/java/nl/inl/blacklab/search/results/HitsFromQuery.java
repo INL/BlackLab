@@ -53,7 +53,11 @@ public class HitsFromQuery extends HitsMutable {
     protected boolean allSourceSpansFullyRead = false;
 
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        super(queryInfo, HitsInternal.create(-1, true, true)); // explicitly construct HitsInternal so they're writeable
+        // NOTE: we explicitly construct HitsInternal so they're writeable
+        super(queryInfo, HitsInternal.create(-1, true, true), null);
+        queryInfo.setMatchInfoNames(hitQueryContext.getMatchInfoNames());
+        QueryTimings timings = queryInfo().timings();
+        timings.start();
         final BlackLabIndex index = queryInfo.index();
         final IndexReader reader = index.reader();
         BLSpanQuery optimizedQuery;
@@ -91,16 +95,16 @@ public class HitsFromQuery extends HitsMutable {
                 if (traceOptimization)
                     logger.debug("Query after rewrite(): " + optimizedQuery);
 
-                optimizedQuery = BLSpanQuery.ensureSortedUnique(optimizedQuery);
-
                 // Restore previous FI match threshold
                 if (searchSettings.fiMatchFactor() != -1) {
                     ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);
                 }
             }
+            timings.record("rewrite");
 
             // This call can take a long time
             BLSpanWeight weight = optimizedQuery.createWeight(index.searcher(), ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+            timings.record("createWeight");
 
             // We must always initialize one spansReader upfront, so global state for Capture Groups and context are created.
             // We then store get these global objects from the initialized SpansReader, and pass them to the rest of the (stil uninitialized) SpansReaders.
@@ -112,8 +116,7 @@ public class HitsFromQuery extends HitsMutable {
                     leafReaderContext,
                     this.hitQueryContext,
                     this.hitsInternalMutable,
-                    this.capturedGroupsMutable,
-                    this.globalDocsProcessed,
+                        this.globalDocsProcessed,
                     this.globalDocsCounted,
                     this.globalHitsProcessed,
                     this.globalHitsCounted,
@@ -135,9 +138,8 @@ public class HitsFromQuery extends HitsMutable {
 
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
-                    if (hitQueryContextForThisSpans.getCaptureRegisterNumber() > 0) {
-                        capturedGroups = capturedGroupsMutable = new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames());
-                        spansReader.setCapturedGroups(capturedGroupsMutable);
+                    if (hitQueryContextForThisSpans.getMatchInfoRegisterNumber() > 0) {
+                        matchInfoNames = hitQueryContextForThisSpans.getMatchInfoNames();
                     }
 
                     hasInitialized = true;
@@ -160,8 +162,11 @@ public class HitsFromQuery extends HitsMutable {
         }
 
         // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
-        this.requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
+        // NOTE: we first update to process, then to count. If we do it the other way around, and spansReaders
+        //       are running, they might check in between the two statements and conclude that they don't need to save
+        //       hits anymore, only count them.
         this.requestedHitsToProcess.getAndUpdate(c -> Math.max(Math.min(clampedNumber, maxHitsToProcess), c)); // update process
+        this.requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
 
         boolean hasLock = false;
         List<Future<?>> pendingResults = null;

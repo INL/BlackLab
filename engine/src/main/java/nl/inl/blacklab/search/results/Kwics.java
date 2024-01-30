@@ -26,8 +26,8 @@ public class Kwics {
     /**
      */
     protected Kwics(Hits hits, ContextSize contextSize) {
-        if (contextSize.left() < 0 || contextSize.right() < 0)
-            throw new IllegalArgumentException("contextSize cannot be negative");
+        if (contextSize.before() < 0 || contextSize.after() < 0)
+            throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
     
         // Get the concordances
         kwics = retrieveKwics(hits, contextSize, hits.field());
@@ -99,8 +99,10 @@ public class Kwics {
          */
         int lastDocId = -1;
         int firstIndexWithCurrentDocId = 0;
-        for (int i = 1; i < hits.size(); ++i) {
+        for (int i = 0; i < hits.size(); ++i) {
             int curDocId = hits.doc(i);
+            if (lastDocId == -1)
+                lastDocId = curDocId;
             if (curDocId != lastDocId) {
                 if (firstIndexWithCurrentDocId != i) {
                     Contexts.makeKwicsSingleDocForwardIndex(
@@ -108,8 +110,8 @@ public class Kwics {
                         wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
                 }
                 firstIndexWithCurrentDocId = i;
-                lastDocId = curDocId;
             }
+            lastDocId = curDocId;
         }
         // last part
         Contexts.makeKwicsSingleDocForwardIndex(

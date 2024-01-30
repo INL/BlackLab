@@ -1,0 +1,277 @@
+package nl.inl.blacklab.resultproperty;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.util.PropertySerializeUtil;
+
+/**
+ * A hit property for sorting on a number of tokens before a hit.
+ */
+public class HitPropertyContextPart extends HitPropertyContextBase {
+
+    public static final int MAX_CONTEXT_PART_LENGTH = 20;
+
+    static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
+        return deserializeProp(HitPropertyContextPart.class, index, field, info);
+    }
+
+    static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, String info) {
+        String[] parts = PropertySerializeUtil.splitParts(info);
+        String propName = parts[0];
+        if (propName.length() == 0)
+            propName = field.mainAnnotation().name();
+        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
+        Annotation annotation = field.annotation(propName);
+        return contextWords(index, annotation, sensitivity, parts.length > 2 ? parts[2] : "H1-");
+    }
+
+    public static HitProperty contextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String wordSpec) {
+        List<HitProperty> parts = new ArrayList<>();
+        for (String partSpec: wordSpec.split("\\s*;\\s*")) {
+            parts.add(new HitPropertyContextPart(index, annotation, sensitivity, partSpec));
+        }
+        if (parts.isEmpty())
+            throw new RuntimeException("No context parts specified: " + wordSpec);
+        if (parts.size() == 1)
+            return parts.get(0);
+        return new HitPropertyMultiple(parts);
+    }
+
+    /**
+     * A stretch of words from the (surroundings of) the matched text.
+     */
+    private static class ContextPart {
+
+        /** Do we start counting from the end of the hit instead of the start?
+         * This determines what token corresponds to index 0: if false, the first
+         * token of the hit. If true, the first token AFTER the hit. */
+        final boolean fromHitEnd;
+
+        /** Direction: 1 = forward, -1 = backward. */
+        final int direction;
+
+        /** What's the first token we're interested in? */
+        final int first;
+
+        /** What's the last token we're interested in? */
+        final int last;
+
+        /** Can we only take context from the hit itself, or outside of it as well? */
+        final boolean confineToHit;
+
+        private ContextPart(boolean fromHitEnd, int direction, int first, int last, boolean confineToHit) {
+            assert Math.abs(direction) == 1;
+            assert first >= 0;
+            assert last >= 0;
+            this.fromHitEnd = fromHitEnd;
+            this.direction = direction;
+            this.first = first;
+            this.last = last;
+            this.confineToHit = confineToHit;
+        }
+
+        private static ContextPart forString(String param) {
+            boolean fromHitEnd = false;
+            int direction = 1;
+            boolean confineToHit = false;
+            switch (param.charAt(0)) {
+            case 'L':
+                direction = -1;
+                break;
+            case 'E':
+                fromHitEnd = true;
+                direction = -1;
+                confineToHit = true;
+                break;
+            case 'R':
+                fromHitEnd = true;
+                break;
+            case 'H':
+            default:
+                confineToHit = true;
+                break;
+            }
+            int firstWord = 0;
+            int lastWord = Integer.MAX_VALUE; // == "as much as possible"
+            if (param.length() > 1) {
+                if (param.contains("-")) {
+                    // Two numbers, or a number followed by a dash ("until end of part")
+                    String[] numbers = param.substring(1).split("-");
+                    try {
+                        firstWord = Integer.parseInt(numbers[0]) - 1;
+                        if (numbers.length > 1)
+                            lastWord = Integer.parseInt(numbers[1]) - 1;
+                    } catch (NumberFormatException e) {
+                        // ignore and accept the defaults
+                    }
+                } else {
+                    // Single number: single word
+                    firstWord = lastWord = Integer.parseInt(param.substring(1)) - 1;
+                }
+            }
+            if (direction == -1) {
+                // We want to start left of the hit or from the last token inside the hit
+                firstWord++;
+                lastWord++;
+            }
+            return new ContextPart(fromHitEnd, direction, firstWord, lastWord, confineToHit);
+        }
+
+        @Override
+        public String toString() {
+            String anchor = fromHitEnd ? (direction == 1 ? "R" : "E") : (direction == 1 ? "H" : "L");
+            int from = first + (direction == 1 ? 1 : 0); // (1-based)
+            int to = last + (direction == 1 ? 1 : 0);
+            if (from == to)
+                return anchor + from;
+            return anchor + from + "-" + (to == -1 ? "" : to);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof ContextPart))
+                return false;
+            ContextPart that = (ContextPart) o;
+            return fromHitEnd == that.fromHitEnd && direction == that.direction && first == that.first
+                    && last == that.last
+                    && confineToHit == that.confineToHit;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(fromHitEnd, direction, first, last, confineToHit);
+        }
+
+        /** When we get the fragment of context, do we compare it from the start to the end (normal, false) or the
+         *  end to the start (in reverse, true)?
+         * @return true if we need to start comparing from the end of the context fragment, false otherwise
+         */
+        public boolean compareInReverse() {
+            return direction == 1 ? first > last : first < last;
+        }
+    }
+
+    /** Description of the context to use (starting point, direction, start/end index) */
+    private ContextPart part;
+
+    HitPropertyContextPart(HitPropertyContextPart prop, Hits hits, boolean invert) {
+        super(prop, hits, invert);
+        this.part = prop.part;
+    }
+
+    // Used by HitPropertyContextBase.deserializeProp() via reflection
+    @SuppressWarnings("unused")
+    public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
+        this(index, annotation, sensitivity, (ContextPart)null);
+    }
+
+    public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String partSpec) {
+        this(index, annotation, sensitivity, ContextPart.forString(partSpec));
+    }
+
+    public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextPart part) {
+        super("context part", "ctx", index, annotation, sensitivity, false);
+        this.part = part;
+        this.compareInReverse = part != null && part.compareInReverse();
+    }
+
+    @Override
+    void deserializeParam(String param) {
+        part = ContextPart.forString(param);
+        compareInReverse = part.direction == -1;
+    }
+
+    @Override
+    public List<String> serializeParts() {
+        List<String> result = new ArrayList<>(super.serializeParts());
+        result.add(part.toString());
+        return result;
+    }
+
+    @Override
+    public HitProperty copyWith(Hits newHits, boolean invert) {
+        return new HitPropertyContextPart(this, newHits, invert);
+    }
+
+    @Override
+    public void fetchContext() {
+        int smaller = part.first < part.last ? part.first : part.last;
+        int larger = part.first < part.last ? part.last : part.first;
+        StartEndSetter func;
+        if (part.fromHitEnd) {
+            if (part.direction == 1) {
+                // From hit end forwards.
+                func = (int[] starts, int[] ends, int j, Hit h) -> {
+                    starts[j] = h.end() + smaller;
+                    ends[j] = h.end() + larger + 1;
+                };
+            } else {
+                // From hit end backwards.
+                if (part.confineToHit) {
+                    func = (int[] starts, int[] ends, int j, Hit h) -> {
+                        starts[j] = Math.max(h.start(), h.end() - larger);
+                        ends[j] = Math.max(h.start(), h.end() - smaller + 1);
+                    };
+                } else {
+                    func = (int[] starts, int[] ends, int j, Hit h) -> {
+                        starts[j] = Math.max(0, h.end() - larger);
+                        ends[j] = Math.max(0, h.end() - smaller + 1);
+                    };
+                }
+            }
+        } else {
+            if (part.direction == 1) {
+                // From hit start forwards.
+                if (part.confineToHit) {
+                    func = (int[] starts, int[] ends, int j, Hit h) -> {
+                        starts[j] = Math.min(h.end(), h.start() + smaller);
+                        ends[j] = Math.min(h.end(), h.start() + larger + 1);
+                    };
+                } else {
+                    func = (int[] starts, int[] ends, int j, Hit h) -> {
+                        starts[j] = h.start() + smaller;
+                        ends[j] = h.start() + larger + 1;
+                    };
+                }
+            } else {
+                func = (int[] starts, int[] ends, int j, Hit h) -> {
+                    starts[j] = Math.max(0, h.start() - larger);
+                    ends[j] = Math.max(0, h.start() - smaller + 1);
+                };
+            }
+        }
+        fetchContext(func);
+    }
+
+    @Override
+    public boolean isDocPropOrHitText() {
+        return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
+        HitPropertyContextPart that = (HitPropertyContextPart) o;
+        return part.equals(that.part);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), part);
+    }
+}

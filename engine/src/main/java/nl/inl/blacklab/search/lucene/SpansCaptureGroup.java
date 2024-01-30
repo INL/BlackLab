@@ -2,9 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.SpanCollector;
-
-import nl.inl.blacklab.search.Span;
+import org.apache.lucene.search.spans.FilterSpans;
 
 /**
  * Captures its clause as a captured group.
@@ -12,10 +10,7 @@ import nl.inl.blacklab.search.Span;
  * Registers itself with the HitQueryContext so others can access its start()
  * and end() when they want to.
  */
-class SpansCaptureGroup extends BLSpans {
-
-    /** clause to capture as a group */
-    private final BLSpans clause;
+class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
 
     /** group name */
     private final String name;
@@ -42,107 +37,45 @@ class SpansCaptureGroup extends BLSpans {
 
     /**
      * Constructs a SpansCaptureGroup.
-     * 
+     *
      * @param clause the clause to capture
      * @param name group name
      */
     public SpansCaptureGroup(BLSpans clause, String name, int leftAdjust, int rightAdjust) {
-        this.clause = clause;
+        super(clause);
         this.name = name;
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
     }
 
-    /**
-     * @return the Lucene document id of the current hit
-     */
     @Override
-    public int docID() {
-        return clause.docID();
-    }
-
-    /**
-     * @return start position of current hit
-     */
-    @Override
-    public int startPosition() {
-        return clause.startPosition();
-    }
-
-    /**
-     * @return end position of current hit
-     */
-    @Override
-    public int endPosition() {
-        return clause.endPosition();
-    }
-
-    @Override
-    public int nextDoc() throws IOException {
-        return clause.nextDoc();
-    }
-
-    @Override
-    public int nextStartPosition() throws IOException {
-        return clause.nextStartPosition();
-    }
-
-    @Override
-    public int advanceStartPosition(int target) throws IOException {
-        return clause.advanceStartPosition(target);
-    }
-
-    /**
-     * Skip to the specified document (or the first document after it containing
-     * hits).
-     *
-     * @param doc the doc number to skip to (or past)
-     * @return true if we're still pointing to a valid hit, false if we're done
-     */
-    @Override
-    public int advance(int doc) throws IOException {
-        return clause.advance(doc);
+    protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
+        return FilterSpans.AcceptStatus.YES;
     }
 
     @Override
     public String toString() {
         String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
-        return "CAPTURE(" + clause + ", " + name + adj + ")";
-    }
-
-    @Override
-    public void setHitQueryContext(HitQueryContext context) {
-        super.setHitQueryContext(context);
-        this.groupIndex = context.registerCapturedGroup(name);
+        return "CAPTURE(" + in + ", " + name + adj + ")";
     }
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
-        clause.setHitQueryContext(context);
+        super.passHitQueryContextToClauses(context);
+        this.groupIndex = context.registerMatchInfo(name);
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
-        if (childClausesCaptureGroups)
-            clause.getCapturedGroups(capturedGroups);
-
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        super.getMatchInfo(matchInfo);
         // Place our start and end position at the correct index in the array
-        capturedGroups[groupIndex] = new Span(startPosition() + leftAdjust, endPosition() + rightAdjust);
+        int start = startPosition() + leftAdjust;
+        int end = endPosition() + rightAdjust;
+        matchInfo[groupIndex] = new SpanInfo(start, end);
     }
 
     @Override
-    public int width() {
-        return clause.width();
+    public boolean hasMatchInfo() {
+        return true;
     }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        clause.collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return clause.positionsCost();
-    }
-
 }

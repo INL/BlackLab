@@ -17,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
@@ -40,7 +39,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -48,7 +46,9 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -65,7 +65,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
+import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
@@ -96,17 +96,12 @@ public class WebserviceOperations {
         BlackLabIndex index = params.blIndex();
         MetadataFields fields = index.metadataFields();
         Collection<String> requestedFields = params.getListMetadataValuesFor();
+        boolean includeAllFields = requestedFields.isEmpty();
         Set<MetadataField> ret = new HashSet<>();
-        ret.add(optCustomField(index.metadata(), "authorField"));
-        ret.add(optCustomField(index.metadata(), "dateField"));
-        ret.add(optCustomField(index.metadata(), "titleField"));
-        ret.add(fields.pidField());
-        for (MetadataField field  : fields) {
-            if (requestedFields.isEmpty() || requestedFields.contains(field.name())) {
+        for (MetadataField field: fields) {
+            if (includeAllFields || requestedFields.contains(field.name()))
                 ret.add(field);
-            }
         }
-        ret.remove(null); // for missing special fields.
         return ret;
     }
 
@@ -170,7 +165,7 @@ public class WebserviceOperations {
         Map<String, String> docFields = new LinkedHashMap<>();
         MetadataField pidField = indexMetadata.metadataFields().pidField();
         if (pidField != null)
-            docFields.put("pidField", pidField.name());
+            docFields.put(MetadataFields.SPECIAL_FIELD_SETTING_PID, pidField.name());
         for (String propName: List.of("titleField", "authorField", "dateField")) {
             String fieldName = indexMetadata.custom().get(propName, "");
             if (!fieldName.isEmpty())
@@ -327,10 +322,9 @@ public class WebserviceOperations {
      * @return collocations
      */
     public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        ContextSize contextSize = ContextSize.get(params.getWordsAroundHit());
+        ContextSize contextSize = ContextSize.get(params.getWordsAroundHit(), Integer.MAX_VALUE);
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        return hits.collocations(hits.field().mainAnnotation(), contextSize,
-                sensitivity);
+        return hits.collocations(hits.field().mainAnnotation(), contextSize, sensitivity);
     }
 
     /**
@@ -342,7 +336,7 @@ public class WebserviceOperations {
      */
     public static void addUserFileFormat(WebserviceParams params, String fileName, InputStream fileContents) {
         SearchManager searchMan = params.getSearchManager();
-        DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
+        FinderInputFormatUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_CREATE_INDEX ",
                     "Could not create/overwrite format. The server is not configured with support for user content.");
@@ -358,14 +352,14 @@ public class WebserviceOperations {
      * @param fd field to get values for
      * @return properly sorted values
      */
-    public static Map<String, Integer> getFieldValuesInOrder(MetadataField fd) {
+    public static Map<String, Long> getFieldValuesInOrder(MetadataField fd, MetadataFieldValues values) {
         Map<String, String> displayValues = fd.custom().get("displayValues", Collections.emptyMap());
 
         // Show values in display order (if defined)
         // If not all values are mentioned in display order, show the rest at the end,
         // sorted by their displayValue (or regular value if no displayValue specified)
-        Map<String, Integer> fieldValues = new LinkedHashMap<>();
-        Map<String, Integer> valueDistribution = fd.valueDistribution();
+        Map<String, Long> fieldValues = new LinkedHashMap<>();
+        Map<String, Long> valueDistribution = values.valueList().getValues();
         Set<String> valuesLeft = new HashSet<>(valueDistribution.keySet());
         for (String value : fd.custom().get("displayOrder", Collections.<String>emptyList())) {
             fieldValues.put(value, valueDistribution.get(value));
@@ -415,39 +409,34 @@ public class WebserviceOperations {
      *
      * @param index index
      * @param annotation annotation to get values for
-     * @param valueListComplete (out) [0] indicates whether the value list is complete or not
+     * @param limitValues maximum number of values to return
      * @return values for this annotation
      */
-    public static Set<String> getAnnotationValues(BlackLabIndex index, Annotation annotation, boolean[] valueListComplete) {
-        boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
-        final Set<String> terms = new TreeSet<>();
+    public static TruncatableFreqList getAnnotationValues(BlackLabIndex index, Annotation annotation, long limitValues) {
+        final TruncatableFreqList terms = new TruncatableFreqList(limitValues < 0 ? MAX_FIELD_VALUES_TO_RETURN : limitValues);
         MatchSensitivity sensitivity = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
                 MatchSensitivity.INSENSITIVE :
                 MatchSensitivity.SENSITIVE;
         AnnotationSensitivity as = annotation.sensitivity(sensitivity);
         String luceneField = as.luceneField();
-        if (isInlineTagAnnotation) {
+        if (annotation.isRelationAnnotation()) {
+            // FIXME doesn't work with _relation annotation
+
+            // TODO: get rid of this weird quirk?
+            //   (getting just the tag names should be a specific operation,
+            //    not a special case in getAnnotationValues(); this method should do what it says
+            //    and return all the annotation values)
             // Tags. Skip attribute values, only show elements.
-            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
-                if (!term.startsWith("@") && !terms.contains(term)) {
-                    if (terms.size() >= MAX_FIELD_VALUES_TO_RETURN) {
-                        valueListComplete[0] = false;
-                        return false;
-                    }
-                    terms.add(term);
+            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, (term, freq) -> {
+                if (!term.startsWith("@")) {
+                    terms.add(term, freq);
                 }
                 return true;
             });
         } else {
             // Regular annotated field.
-            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
-                if (!terms.contains(term)) {
-                    if (terms.size() >= MAX_FIELD_VALUES_TO_RETURN) {
-                        valueListComplete[0] = false;
-                        return false;
-                    }
-                    terms.add(term);
-                }
+            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, (term, freq) -> {
+                terms.add(term, freq);
                 return true;
             });
         }
@@ -525,6 +514,8 @@ public class WebserviceOperations {
         BlackLabIndex blIndex = params.blIndex();
         AnnotatedField cfd = blIndex.mainAnnotatedField();
         String annotName = params.getAnnotationName();
+        if (annotName.isEmpty())
+            annotName = cfd.mainAnnotation().name();
         Annotation annotation = cfd.annotation(annotName);
         MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
@@ -542,7 +533,7 @@ public class WebserviceOperations {
             long number = params.getNumberOfResultsToShow();
             DefaultMax pageSize = params.getSearchManager().config().getParameters().getPageSize();
             if (number < 0 || number > pageSize.getMax())
-                number = pageSize.getDefaultValue();
+                number = pageSize.getMax();
             long last = first + number;
             if (last > tfl.size())
                 last = tfl.size();
@@ -560,6 +551,23 @@ public class WebserviceOperations {
         if (!index.userMayRead(user))
             throw new NotAuthorized("You are not authorized to access this index.");
         return index.getShareWithUsers();
+    }
+
+    public static List<String> getCorporaSharedWithMe(WebserviceParams params) {
+        IndexManager indexMan = params.getIndexManager();
+        User user = params.getUser();
+        List<String> results = new ArrayList<>();
+        // BUG: because private user indices aren't all loaded by default, we may
+        //      miss unloaded corpora shared with you. To fix this, we should probably
+        //      find all corpora and which users they're shared with on startup,
+        //      but not open them until they're actually used.
+        indexMan.getAvailablePublicIndices(); // trigger loading of all user corpora (kinda hacky)
+        for (Index index: indexMan.getAllLoadedCorpora()) {
+            if (index.sharedWith(user)) {
+                results.add(index.getId());
+            }
+        }
+        return results;
     }
 
     public static void setUsersToShareWith(WebserviceParams params, String[] users) {
@@ -673,7 +681,7 @@ public class WebserviceOperations {
 
     public static void deleteUserFormat(WebserviceParams params, String formatIdentifier) {
         IndexManager indexMan = params.getIndexManager();
-        DocIndexerFactoryUserFormats formatMan = indexMan.getUserFormatManager();
+        FinderInputFormatUserFormats formatMan = indexMan.getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_DELETE_INDEX ",
                     "Could not delete format. The server is not configured with support for user content.");
@@ -697,7 +705,7 @@ public class WebserviceOperations {
         Collection<String> listValuesFor = params.getListValuesFor();
         for (Annotation annotation: fieldDesc.annotations()) {
             ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation,
-                    listValuesFor.contains(annotation.name()));
+                    listValuesFor.contains(annotation.name()), params.getLimitValues());
             annotInfos.put(annotation.name(), ai);
         }
         return new ResultAnnotatedField(includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);
@@ -732,24 +740,26 @@ public class WebserviceOperations {
         return new ResultListOfHits(params, window, concordanceContext, docIdToPid);
     }
 
-    public static ResultMetadataField metadataField(MetadataField fieldDesc, String indexName) {
-        Map<String, Integer> fieldValues = getFieldValuesInOrder(fieldDesc);
-        return new ResultMetadataField(indexName, fieldDesc, true, fieldValues);
+    public static ResultMetadataField metadataField(WebserviceParams params, MetadataField fieldDesc, String indexName) {
+        MetadataFieldValues values = fieldDesc.values(params.getLimitValues());
+        Map<String, Long> fieldValues = getFieldValuesInOrder(fieldDesc, values);
+        return new ResultMetadataField(indexName, fieldDesc, true, fieldValues,
+                !values.valueList().isTruncated());
     }
 
     public static ResultSummaryNumDocs numResultsSummaryDocs(boolean isViewGroup, DocResults docResults,
-            boolean countFailed, CorpusSize subcorpusSize) {
-        return new ResultSummaryNumDocs(isViewGroup, docResults, countFailed, subcorpusSize);
+            SearchTimings timings, CorpusSize subcorpusSize) {
+        return new ResultSummaryNumDocs(isViewGroup, docResults, timings, subcorpusSize);
     }
 
     public static ResultSummaryNumHits numResultsSummaryHits(ResultsStats hitsStats, ResultsStats docsStats,
-            boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
-        return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, countFailed, subcorpusSize);
+            boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize, long totalTokens) {
+        return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, timings, subcorpusSize, totalTokens);
     }
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
-            SearchTimings timings, ResultGroups<?> groups, WindowStats window) {
-        return new ResultSummaryCommonFields(params, indexStatus, timings, groups, window);
+            SearchTimings timings, List<String> matchInfoNames, ResultGroups<?> groups, WindowStats window) {
+        return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoNames,groups, window);
     }
 
     public static ResultUserInfo userInfo(WebserviceParams params) {
@@ -775,7 +785,7 @@ public class WebserviceOperations {
         }
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
-            mfs.add(metadataField(f, null));
+            mfs.add(metadataField(params, f, null));
         }
 
         Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(

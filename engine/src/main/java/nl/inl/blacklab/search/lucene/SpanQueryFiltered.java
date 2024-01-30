@@ -34,6 +34,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
     public SpanQueryFiltered(BLSpanQuery source, Query filter) {
         super(source);
         this.filter = filter;
+        this.guarantees = source.guarantees();
     }
 
     @Override
@@ -56,46 +57,6 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery noEmpty() {
         return new SpanQueryFiltered(clauses.get(0).noEmpty(), filter);
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return clauses.get(0).hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return clauses.get(0).hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return clauses.get(0).hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return clauses.get(0).hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return clauses.get(0).hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return clauses.get(0).hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return clauses.get(0).hitsAreUnique();
     }
 
     @Override
@@ -132,6 +93,11 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         }
 
         @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return weight.isCacheable(ctx);
+        }
+
+        @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
             weight.extractTermStates(contexts);
         }
@@ -159,11 +125,6 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
     @Override
     public int forwardMatchingCost() {
         return clauses.get(0).forwardMatchingCost();
-    }
-
-   @Override
-    public boolean isSingleAnyToken() {
-        return clauses.stream().allMatch(BLSpanQuery::isSingleAnyToken);
     }
 
     @Override

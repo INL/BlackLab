@@ -2,16 +2,16 @@
 home: true
 #heroImage: /hero.png
 heroText: "BlackLab corpus search"
-tagline: fast, feature-rich searching for patterns in annotated text
+tagline: Powerful search for large, annotated text corpora
 actionText: Learn more →
 actionLink: /guide/
 features:
-- title: Easily publish your corpora
-  details: Use one of the supported formats or simply configure your own.
+- title: Publish your corpora
+  details: Many common formats supported. Easily configure your own.
+- title: Find your matches
+  details: Rich querying for token annotations or dependency relations.
 - title: Fast and scalable
-  details: "Built on Apache Lucene, a solid and performant foundation."
-- title: Flexible and powerful
-  details: A growing list of search options for your ever-growing corpora.
+  details: Uses Apache Lucene as a rock-solid foundation.
 #footer: Apache license | Copyright © 2016-present Dutch Language Institute
 ---
 

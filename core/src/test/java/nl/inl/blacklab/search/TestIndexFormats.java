@@ -4,7 +4,6 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -29,7 +28,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.testutil.TestIndex;
 
 /**
@@ -50,7 +49,7 @@ public class TestIndexFormats {
     int numberOfTerms() {
         // HACK. 28 is the "correcter" value (including secondary values that are not stored in the forward index)
         //   but the external index excludes the two secondary values.
-        return testIndex.indexFormat() == BlackLabIndex.IndexType.EXTERNAL_FILES ? 26 : 28;
+        return testIndex.getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES ? 26 : 28;
     }
 
     private static BlackLabIndex index;
@@ -133,8 +132,10 @@ public class TestIndexFormats {
     }
 
     int getToken(AnnotationForwardIndex afi, int docId, int pos) {
-        List<int[]> parts = afi.retrievePartsInt(docId, new int[] { pos }, new int[] { pos + 1 });
-        return parts.get(0)[0];
+        int[] context = afi.retrievePart(docId, pos, pos + 1);
+        if (context.length == 0)
+            throw new IllegalArgumentException("Token offset out of range");
+        return context[0];
     }
 
     @Test
@@ -177,12 +178,13 @@ public class TestIndexFormats {
     public void testMetadataMetadataField() {
         MetadataField field = index.metadata().metadataFields().get("pid");
         Assert.assertEquals(FieldType.TOKENIZED, field.type());
-        Assert.assertEquals(ValueListComplete.YES, field.isValueListComplete());
-        Map<String, Integer> map = field.valueDistribution();
+        MetadataFieldValues values = field.values(100);
+        Assert.assertEquals(false, values.valueList().isTruncated());
+        Map<String, Long> map = values.valueList().getValues();
         int expectedNumberOfDocuments = TestIndex.DOC_LENGTHS_TOKENS.length;
         Assert.assertEquals(expectedNumberOfDocuments, map.size());
         for (int i = 0; i < expectedNumberOfDocuments; i++)
-            Assert.assertEquals(1, (int)map.get(Integer.toString(i)));
+            Assert.assertEquals(1, (long)map.get(Long.toString(i)));
         Assert.assertEquals(TestIndex.DOC_LENGTHS_TOKENS.length, index.metadata().documentCount());
     }
 
@@ -191,8 +193,9 @@ public class TestIndexFormats {
         AnnotatedField field = index.metadata().annotatedFields().get("contents");
         Assert.assertTrue(field.hasXmlTags());
         Assert.assertTrue(field.hasContentStore());
-        Set<String> expectedAnnotations = new HashSet<>(Arrays.asList("word", "lemma", "pos",
-                AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
+        Set<String> expectedAnnotations =
+                new HashSet<>(Arrays.asList("word", "lemma", "pos",
+                AnnotatedFieldNameUtil.relationAnnotationName(index.getType()), AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
         Set<String> actualAnnotations = field.annotations().stream().map(Annotation::name).collect(Collectors.toSet());
         Assert.assertEquals(expectedAnnotations, actualAnnotations);
         Assert.assertEquals("word", field.mainAnnotation().name());

@@ -15,7 +15,7 @@ import org.ivdnt.blacklab.proxy.representation.DocInfo;
 import org.ivdnt.blacklab.proxy.representation.MetadataValues;
 
 /**
- * Helps us to (de)serialize autocomplete response in XML.
+ * Helps us to (de)serialize DocInfo in XML.
  */
 public class DocInfoAdapter extends XmlAdapter<DocInfoAdapter.DocInfoWrapper, DocInfo> {
 

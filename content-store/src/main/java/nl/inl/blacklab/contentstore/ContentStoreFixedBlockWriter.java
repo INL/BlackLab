@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.zip.Deflater;
 
 import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -81,10 +82,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     /**
      * Keeps track of the block ids we've stored parts the current file in so far
      */
-    private final IntArrayList blockIndicesWhileStoring;
+    private final MutableIntList blockIndicesWhileStoring;
 
     /** Keeps track of the char offsets of the blocks of the current file so far */
-    private final IntArrayList blockCharOffsetsWhileStoring;
+    private final MutableIntList blockCharOffsetsWhileStoring;
 
     /** If true, the toc file should be updated dat the end */
     private boolean tocModified = false;
@@ -302,8 +303,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * Store part of a piece of large content. This may be called several times to
      * store chunks of content, but MUST be *finished* by calling the "normal"
      * store() method. You may call store() with the empty string if you wish.
-     * If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
-     * as it will prevent having to make a temporary string copy of your data just for the store procedure.
      *
      * @param content the content to store
      */
@@ -321,9 +320,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      *
      * Parts of the document may already have been stored before. This is the final part and will
      * assign and return the document's content id.
-     *
-     * NOTE: If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
-     * as it will prevent having to make a temporary string copy of your data just for the store procedure.
      *
      * @param content the content to store
      * @return the id assigned to the content

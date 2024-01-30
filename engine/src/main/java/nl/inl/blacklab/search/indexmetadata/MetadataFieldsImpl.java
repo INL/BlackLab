@@ -1,7 +1,10 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import static nl.inl.blacklab.search.indexmetadata.MetadataFields.SPECIAL_FIELD_SETTING_PID;
+
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -26,7 +29,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
  * The metadata fields in an index.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({ "defaultAnalyzer", "pidField", "throwOnMissingField", "fields" })
+@JsonPropertyOrder({ "defaultAnalyzer", SPECIAL_FIELD_SETTING_PID, "throwOnMissingField", "fields" })
 class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
@@ -170,7 +173,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
                 .get("metadataFieldGroups", new ArrayList<Map<String, Object>>());
         Map<String, MetadataFieldGroupImpl> result = metadataFieldGroups.stream()
                 .map( MetadataFieldGroupImpl::fromCustom)
-                .collect(Collectors.toMap(MetadataFieldGroupImpl::name, Function.identity()));
+                .collect(Collectors.toMap(MetadataFieldGroupImpl::name, Function.identity(),
+                        (u, v) -> {
+                            throw new IllegalStateException(String.format("Duplicate key %s", u));
+                        },
+                        LinkedHashMap::new));
         return result;
     }
 

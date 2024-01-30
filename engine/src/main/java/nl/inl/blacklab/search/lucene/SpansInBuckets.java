@@ -2,9 +2,9 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
-
-import nl.inl.blacklab.search.Span;
 
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets")
@@ -27,40 +27,25 @@ import nl.inl.blacklab.search.Span;
  * Note that SpansInBuckets assumes all hits in a bucket are from a single
  * document.
  */
-public interface SpansInBuckets {
+public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGuaranteeGiver {
     
     /** What initial capacity to reserve for lists to avoid too much reallocation */
-    int LIST_INITIAL_CAPACITY = 1000;
-    
-    /** Load factor determines when a HashMap is rehashed to increase its size (percentage filled) */
-    double HASHMAP_DEFAULT_LOAD_FACTOR = 0.75;
-    
-    /** Initial capacity for HashMap to avoid too much reallocation */
-    int HASHMAP_INITIAL_CAPACITY = (int)(LIST_INITIAL_CAPACITY / HASHMAP_DEFAULT_LOAD_FACTOR);
+    public static final int LIST_INITIAL_CAPACITY = 1000;
 
-    /** Should we reallocate lists/maps if they grow larger than COLLECTION_REALLOC_THRESHOLD?
-     * If no, we potentially use too much memory while searching.
-     * If yes, we potentially create a lot of garbage and fragment the heap.
-     */
-    boolean REALLOCATE_IF_TOO_LARGE = false;
-    
-    /** When to reallocate lists/maps to avoid holding on to too much memory */
-    int COLLECTION_REALLOC_THRESHOLD = 30_000;
-    
-    int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
+    public static final int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
     /**
      * Document id of current bucket
      *
      * @return Document id of current bucket
      */
-    int docID();
+    public abstract int docID();
 
-    int bucketSize();
+    public abstract int bucketSize();
 
-    int startPosition(int index);
+    public abstract int startPosition(int index);
 
-    int endPosition(int index);
+    public abstract int endPosition(int index);
 
     /**
      * Go to the next document.
@@ -69,7 +54,7 @@ public interface SpansInBuckets {
      *
      * @return docID if we're at the next valid doc, NO_MORE_DOCS if we're done
      */
-    int nextDoc() throws IOException;
+    public abstract int nextDoc() throws IOException;
 
     /**
      * Go to the next bucket in this doc.
@@ -77,7 +62,20 @@ public interface SpansInBuckets {
      * @return docID if we're at the next valid bucket, NO_MORE_BUCKETS if we're
      *         done
      */
-    int nextBucket() throws IOException;
+    public abstract int nextBucket() throws IOException;
+
+    /**
+     * Go to the next bucket at or beyond the specified start point.
+     *
+     * Always at least advances to the next bucket, even if we were already at or
+     * beyond the specified target.
+     *
+     * Note that this will only work correctly if the underlying Spans is startpoint-sorted.
+     *
+     * @param targetPos the target start point
+     * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
+     */
+    public abstract int advanceBucket(int targetPos) throws IOException;
 
     /**
      * Skip to specified document id.
@@ -87,22 +85,101 @@ public interface SpansInBuckets {
      * @param target document id to skip to
      * @return docID if we're at a valid document, NO_MORE_DOCS if we're done
      */
-    int advance(int target) throws IOException;
+    public abstract int advance(int target) throws IOException;
 
     /**
      * Pass the hit query context to the underlying BLSpans.
      *
      * @param context the hit query context
      */
-    void setHitQueryContext(HitQueryContext context);
+    public abstract void setHitQueryContext(HitQueryContext context);
 
     /**
      * Get the captured groups information for the current hit.
      *
      * @param indexInBucket what hit in the current bucket to get the information
      *            for
-     * @param capturedGroups where to add the captured group information
+     * @param matchInfo where to add the captured group information
      */
-    void getCapturedGroups(int indexInBucket, Span[] capturedGroups);
+    public abstract void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo);
 
+    /**
+     * Does any of our descendants capture match info?
+     *
+     * This will recursively call this method on all subclauses.
+     * Can be used before hit query context is set. After that, it's
+     * more efficient to just remember whether any clauses added capture groups.
+     *
+     * @return true if any of our subclauses capture match info
+     */
+    public abstract boolean hasMatchInfo();
+
+    /**
+     * Get the "active" relation info.
+     * <p>
+     * A query that finds and combines several relations always has one
+     * active relation. This relation is used when we call rspan(),
+     * or if we combine the query with another relation query, e.g. using the
+     * &amp; operator.
+     *
+     * @return the relation info, or null if active relation available
+     */
+    public RelationInfo getRelationInfo(int indexInBucket) {
+        return null;
+    }
+
+    public abstract TwoPhaseIterator asTwoPhaseIterator();
+
+    public abstract long cost();
+
+    protected static TwoPhaseIterator getTwoPhaseIterator(BLSpans source) {
+        TwoPhaseIterator inner = source.asTwoPhaseIterator();
+        if (inner != null) {
+            return new TwoPhaseIterator(inner.approximation()) {
+                @Override
+                public boolean matches() throws IOException {
+                    if (!inner.matches())
+                        return false;
+                    assert source.docID() >= 0 && source.docID() != NO_MORE_DOCS;
+                    int startPos = source.nextStartPosition(); // start gathering at the first hit
+                    assert startPos >= 0 && startPos != Spans.NO_MORE_POSITIONS;
+                    return true;
+                }
+
+                @Override
+                public float matchCost() {
+                    return inner.matchCost();
+                }
+
+                @Override
+                public String toString() {
+                    return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ", iter=" + inner + ")";
+                }
+            };
+        } else {
+            return new TwoPhaseIterator(source) {
+                @Override
+                public boolean matches() throws IOException {
+                    assert source.docID() >= 0 && source.docID() != NO_MORE_DOCS;
+                    int startPos = source.nextStartPosition(); // start gathering at the first hit
+                    assert startPos >= 0 && startPos != Spans.NO_MORE_POSITIONS;
+                    return true;
+                }
+
+                @Override
+                public float matchCost() {
+                    return source.positionsCost(); // overestimate
+                }
+
+                @Override
+                public String toString() {
+                    return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ")";
+                }
+            };
+        }
+    }
+
+    public abstract float positionsCost();
+
+    public abstract int width();
 }

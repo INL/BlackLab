@@ -7,16 +7,19 @@ import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
+import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
+import it.unimi.dsi.fastutil.objects.ObjectBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that does no locking and can handle huge result sets.
- *
+ * <p>
  * This means it is safe to fill this object in one thread, then
  * use it from many threads as long as it is not modified anymore.
- *
- * A test calling {@link #add(int, int, int)} millions of times came out to be about 11% faster than
+ * <p>
+ * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about 11% faster than
  * {@link HitsInternalLock}. That is not representative of real-world usage of course, but on huge
  * resultsets this will likely save a few seconds.
  */
@@ -24,7 +27,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
 
     /**
      * Class to iterate over hits.
-     *
+     * <p>
      * NOTE: contrary to expectation, implementing this class using iterators
      * over docs, starts and ends makes it slower.
      */
@@ -38,84 +41,91 @@ class HitsInternalNoLock implements HitsInternalMutable {
 
         @Override
         public boolean hasNext() {
-            return HitsInternalNoLock.this.docs.size64() > this.pos;
+            return HitsInternalNoLock.this.docs.size64() > pos;
         }
 
         @Override
         public EphemeralHit next() {
-            this.hit.doc = HitsInternalNoLock.this.docs.getInt(pos);
-            this.hit.start = HitsInternalNoLock.this.starts.getInt(pos);
-            this.hit.end = HitsInternalNoLock.this.ends.getInt(pos);
+            hit.doc = HitsInternalNoLock.this.docs.getInt(pos);
+            hit.start = HitsInternalNoLock.this.starts.getInt(pos);
+            hit.end = HitsInternalNoLock.this.ends.getInt(pos);
+            hit.matchInfo = HitsInternalNoLock.this.matchInfos.isEmpty() ? null :
+                    HitsInternalNoLock.this.matchInfos.get(pos);
             ++this.pos;
-            return this.hit;
-        }
-
-        public int doc() {
-            return this.hit.doc;
-        }
-
-        public int start() {
-            return this.hit.start;
-        }
-
-        public int end() {
-            return this.hit.end;
+            return hit;
         }
     }
 
     protected final IntBigList docs;
     protected final IntBigList starts;
     protected final IntBigList ends;
+    protected final ObjectBigList<MatchInfo[]> matchInfos;
 
     HitsInternalNoLock(long initialCapacity) {
         if (initialCapacity < 0) {
             // Use default initial capacities
-            this.docs = new IntBigArrayBigList();
-            this.starts = new IntBigArrayBigList();
-            this.ends = new IntBigArrayBigList();
+            docs = new IntBigArrayBigList();
+            starts = new IntBigArrayBigList();
+            ends = new IntBigArrayBigList();
+            matchInfos = new ObjectBigArrayBigList<>();
         } else {
-            this.docs = new IntBigArrayBigList(initialCapacity);
-            this.starts = new IntBigArrayBigList(initialCapacity);
-            this.ends = new IntBigArrayBigList(initialCapacity);
+            docs = new IntBigArrayBigList(initialCapacity);
+            starts = new IntBigArrayBigList(initialCapacity);
+            ends = new IntBigArrayBigList(initialCapacity);
+            matchInfos = new ObjectBigArrayBigList<>(initialCapacity);
         }
     }
 
-    public void add(int doc, int start, int end) {
+    public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
+        assert HitsInternal.debugCheckReasonableHit(doc, start, end);
         docs.add(doc);
         starts.add(start);
         ends.add(end);
+        if (matchInfo != null)
+            matchInfos.add(matchInfo);
     }
 
     /**
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
     public void add(EphemeralHit hit) {
+        assert HitsInternal.debugCheckReasonableHit(hit);
         docs.add(hit.doc);
         starts.add(hit.start);
         ends.add(hit.end);
+        if (hit.matchInfo != null)
+            matchInfos.add(hit.matchInfo);
     }
 
     /**
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
     public void add(Hit hit) {
+        assert HitsInternal.debugCheckReasonableHit(hit);
         docs.add(hit.doc());
         starts.add(hit.start());
         ends.add(hit.end());
+        if (hit.matchInfo() != null)
+            matchInfos.add(hit.matchInfo());
     }
 
     public void addAll(HitsInternalNoLock hits) {
+        assert HitsInternal.debugCheckAllReasonable(hits);
         docs.addAll(hits.docs);
         starts.addAll(hits.starts);
         ends.addAll(hits.ends);
+        matchInfos.addAll(hits.matchInfos);
     }
 
     public void addAll(HitsInternal hits) {
         hits.withReadLock(hr -> {
             for (EphemeralHit h : hits) {
+                assert HitsInternal.debugCheckReasonableHit(h);
                 docs.add(h.doc);
                 starts.add(h.start);
                 ends.add(h.end);
+                if (h.matchInfo != null)
+                    matchInfos.add(h.matchInfo);
             }
         });
     }
@@ -127,6 +137,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
         docs.clear();
         starts.clear();
         ends.clear();
+        matchInfos.clear();
     }
 
     public void withReadLock(Consumer<HitsInternal> cons) {
@@ -134,7 +145,8 @@ class HitsInternalNoLock implements HitsInternalMutable {
     }
 
     public Hit get(long index) {
-        return new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index));
+        MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(index);
+        return new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index), matchInfo);
     }
 
     /**
@@ -155,6 +167,8 @@ class HitsInternalNoLock implements HitsInternalMutable {
         h.doc = docs.getInt(index);
         h.start = starts.getInt(index);
         h.end = ends.getInt(index);
+        h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(index);
+        assert HitsInternal.debugCheckReasonableHit(h);
     }
 
     public int doc(long index) {
@@ -168,6 +182,9 @@ class HitsInternalNoLock implements HitsInternalMutable {
     public int end(long index) {
         return this.ends.getInt(index);
     }
+
+    @Override
+    public MatchInfo[] matchInfo(long index) { return this.matchInfos.isEmpty() ? null : this.matchInfos.get(index); }
 
     public long size() {
         return docs.size64();
@@ -214,8 +231,14 @@ class HitsInternalNoLock implements HitsInternalMutable {
             // Now use the sorted indices to fill a new HitsInternal with the actual hits
             r = HitsInternal.create(size, true, false);
             for (final long[] segment: indices) {
-                for (long l: segment) {
-                    r.add(docs.getInt(l), starts.getInt(l), ends.getInt(l));
+                if (matchInfos.isEmpty()) {
+                    for (long l: segment) {
+                        r.add(docs.getInt(l), starts.getInt(l), ends.getInt(l), null);
+                    }
+                } else {
+                    for (long l: segment) {
+                        r.add(docs.getInt(l), starts.getInt(l), ends.getInt(l), matchInfos.get(l));
+                    }
                 }
             }
         } else {
@@ -227,8 +250,14 @@ class HitsInternalNoLock implements HitsInternalMutable {
             IntArrays.quickSort(indices, p::compare);
 
             r = HitsInternal.create(size, false, false);
-            for (int index : indices) {
-                r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index));
+            if (matchInfos.isEmpty()) {
+                for (int index: indices) {
+                    r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index), null);
+                }
+            } else {
+                for (int index: indices) {
+                    r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index), matchInfos.get(index));
+                }
             }
         }
         return r;

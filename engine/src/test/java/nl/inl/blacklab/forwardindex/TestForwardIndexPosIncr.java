@@ -55,16 +55,12 @@ public class TestForwardIndexPosIncr {
         testDir.close();
     }
 
-    public int[] retrievePart(int id, int start, int end) {
-        return fi.retrievePartsInt(id, new int[] { start }, new int[] { end }).get(0);
-    }
-
     @Test
     public void testRetrieve() {
         // Retrieve strings
         String[] expected = { "How", "much", "", "", "wood" };
 
-        int[] retrieved = retrievePart(0, -1, -1);
+        int[] retrieved = fi.retrievePart(0, -1, -1);
         for (int j = 0; j < retrieved.length; j++) {
             Assert.assertEquals(expected[j], fi.terms().get(retrieved[j]));
         }

@@ -2,7 +2,9 @@ package nl.inl.util;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -182,10 +184,9 @@ public class XmlHighlighter {
     private UnbalancedTagsStrategy unbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
 
     /**
-     * The outer (usually, only) highlight tag we're inside of, or null if we're not
-     * highlighting.
+     * The highlight tags we're inside of, indexed by their start position.
      */
-    private TagLocation outerHighlightTag = null;
+    Map<Integer, TagLocation> openHighlightTags = new HashMap<>();
 
     /**
      * Given XML content and a sorted list of existing tags and highlight tags to be
@@ -239,7 +240,7 @@ public class XmlHighlighter {
         }
         b.append(xmlContent.substring(positionInContent));
         final String optionalEllipsis = wasCut ? "..." : "";
-        return b.toString().trim() + optionalEllipsis;
+        return StringUtil.trimWhitespace(b.toString()) + optionalEllipsis;
     }
 
     /**
@@ -257,7 +258,7 @@ public class XmlHighlighter {
             existingTag(tag, xmlContent.substring(tag.start, tag.end));
             break;
         case HIGHLIGHT_END:
-            endHighlight();
+            endHighlight(tag);
             break;
         case FIX_START:
             existingTag(tag, "<" + tag.name + ">");
@@ -279,17 +280,19 @@ public class XmlHighlighter {
     private void startHighlight(TagLocation tag) {
         if (inHighlightTag == 0) {
             b.append(startHighlightTag);
-            outerHighlightTag = tag;
         }
+        openHighlightTags.put(tag.start, tag);
         inHighlightTag++;
+        assert openHighlightTags.size() == inHighlightTag;
     }
 
     /** Decrement depth; End highlight if we're at level 0 */
-    private void endHighlight() {
+    private void endHighlight(TagLocation tag) {
         inHighlightTag--;
+        openHighlightTags.remove(tag.matchingTagStart);
+        assert openHighlightTags.size() == inHighlightTag;
         if (inHighlightTag == 0) {
             b.append(endHighlightTag);
-            outerHighlightTag = null;
         }
     }
 
@@ -305,10 +308,11 @@ public class XmlHighlighter {
 
         if (inHighlightTag > 0) {
             // We should possibly suspend highlighting for this tag to maintain well-formedness.
-            // Check the current (outer) highlighting span and see if our matching tag is inside or outside this highlighting span.
-            if (outerHighlightTag.start > tag.matchingTagStart
-                    || outerHighlightTag.matchingTagStart <= tag.matchingTagStart) {
-                // Matching tag is outside the highlighting span; highlighting must be suspended to maintain well-formedness.
+            // Check the current (outer) highlighting span and see if our matching tag is inside or outside the highlighting spans.
+            boolean matchingTagOutsideHighlight = openHighlightTags.values().stream()
+                    .allMatch(hl -> hl.start > tag.matchingTagStart || hl.matchingTagStart <= tag.matchingTagStart);
+            if (matchingTagOutsideHighlight) {
+                // Matching tag is outside this highlighting span; highlighting must be suspended to maintain well-formedness.
                 suspendHighlighting = true;
             }
         }
@@ -380,22 +384,28 @@ public class XmlHighlighter {
         // Regex for finding all XML tags.
         // Group 1 indicates if this is an open or close tag
         // Group 2 is the tag name
-        Pattern xmlTags = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>");
+        Pattern xmlTagsAndComments = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*-->");
 
-        Matcher m = xmlTags.matcher(elementContent);
+        Matcher matcher = xmlTagsAndComments.matcher(elementContent);
         List<TagLocation> openTagStack = new ArrayList<>(); // keep track of open tags
         int fixStartTagObjectNum = -1; // when adding start tags to fix well-formedness, number backwards (for correct sorting)
-        while (m.find()) {
-            TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, m.start(), m.end());
+        int findFrom = 0;
+        while (matcher.find(findFrom)) {
+            findFrom = matcher.end();
+            if (matcher.group(0).startsWith("<!--")) {
+                // This is a comment. Skip it, so we don't match something that looks like a tag inside it.
+                continue;
+            }
+            TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, matcher.start(), matcher.end());
 
             // Keep track of open tags, so we know if the tags are matched
-            boolean isOpenTag = m.group(1).length() == 0;
-            boolean isSelfClosing = isOpenTag && isSelfClosing(m.group());
+            boolean isOpenTag = matcher.group(1).length() == 0;
+            boolean isSelfClosing = isOpenTag && isSelfClosing(matcher.group());
             if (isOpenTag) {
                 if (!isSelfClosing) {
                     // Open tag. Add to the stack.
                     openTagStack.add(tagLocation);
-                    tagLocation.name = m.group(2); // remember in case there's no close tag
+                    tagLocation.name = matcher.group(2); // remember in case there's no close tag
                 } else {
                     // Self-closing tag. Don't add to stack, link to self
                     tagLocation.matchingTagStart = tagLocation.start;
@@ -404,7 +414,7 @@ public class XmlHighlighter {
                 // Close tag. Did we encounter a matching open tag?
                 TagLocation openTag = null;
                 if (!openTagStack.isEmpty()) {
-                    // Yes, this tag is matched. Find matching tag and link them.
+                    // Yes, this tag is matched. Remove matching tag.
                     openTag = openTagStack.remove(openTagStack.size() - 1);
                     openTag.name = null; // no longer necessary to remember tag name
                 } else {
@@ -416,7 +426,7 @@ public class XmlHighlighter {
                         // Insert a dummy open tag at the start
                         // of the content to maintain well-formedness
                         openTag = new TagLocation(TagType.FIX_START, 0, 0);
-                        openTag.name = m.group(2); // we need to know what tag to insert
+                        openTag.name = matcher.group(2); // we need to know what tag to insert
                         openTag.objectNum = fixStartTagObjectNum; // to fix sorting
                         fixStartTagObjectNum--;
                         tags.add(openTag);

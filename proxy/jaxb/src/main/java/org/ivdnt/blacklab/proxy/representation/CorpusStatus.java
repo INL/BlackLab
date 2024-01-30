@@ -13,16 +13,18 @@ public class CorpusStatus implements Cloneable {
 
     public String indexName = "";
 
-    public String displayName = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String displayName;
 
-    public String description = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String description;
 
     public String status = "available";
 
     public String documentFormat = "";
 
-    @JsonInclude(Include.NON_EMPTY)
-    public String timeModified = "";
+    @JsonInclude(Include.NON_NULL)
+    public String timeModified;
 
     public long tokenCount = 0;
 

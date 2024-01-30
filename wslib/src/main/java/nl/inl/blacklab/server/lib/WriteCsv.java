@@ -39,6 +39,7 @@ import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.ResultHitsCsv;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceParameter;
@@ -51,9 +52,11 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  */
 public class WriteCsv {
 
-    private final static ArrayList<String> writeRowTemp = new ArrayList<>();
+    private static final List<String> writeRowTemp = new ArrayList<>();
 
-    public static String hitsGroupsResponse(ResultHitsCsv resultHitsCsv) throws BlsException {
+    public static final String CSV_VALUE_UNKNOWN = "[unknown]";
+
+    public static String hitsGroupsResponse(ResultHitsCsv resultHitsCsv, ResponseStreamer rs) throws BlsException {
         HitGroups groups = resultHitsCsv.getGroups();
         Hits inputHitsForGroups = resultHitsCsv.getHits();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
@@ -67,13 +70,14 @@ public class WriteCsv {
             row.add("count");
 
             if (metadataGroupProperties != null) {
-                row.add("numberOfDocs");
-                row.add("subcorpusSize.documents");
-                row.add("subcorpusSize.tokens");
+                row.add(ResponseStreamer.KEY_NUMBER_OF_DOCS);
+                row.add(ResponseStreamer.KEY_SUBCORPUS_SIZE + "." + rs.KEY_SUBCORPUS_SIZE_DOCUMENTS);
+                row.add(ResponseStreamer.KEY_SUBCORPUS_SIZE + "." + rs.KEY_SUBCORPUS_SIZE_TOKENS);
             }
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                summaryCsvHits(params, printer, row.size(), inputHitsForGroups, groups, subcorpusResults.subcorpusSize());
+                summaryCsvHits(params, printer, row.size(), inputHitsForGroups, groups,
+                        subcorpusResults.subcorpusSize(), rs);
             }
 
             // write the groups
@@ -89,8 +93,10 @@ public class WriteCsv {
                     long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Long.toString(numberOfDocsInGroup));
-                    row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
-                    row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize .getTokens()) : "[unknown]");
+                    row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize.getDocuments()) :
+                            CSV_VALUE_UNKNOWN);
+                    row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) :
+                            CSV_VALUE_UNKNOWN);
                 }
 
                 printer.printRecord(row);
@@ -103,7 +109,7 @@ public class WriteCsv {
         }
     }
 
-    public static String hitsResponse(ResultHitsCsv resultHitsCsv) throws BlsException {
+    public static String hitsResponse(ResultHitsCsv resultHitsCsv, ResponseStreamer rs) throws BlsException {
         WebserviceParams params = resultHitsCsv.getParams();
         BlackLabIndex index = params.blIndex();
         Hits hits = resultHitsCsv.getHits();
@@ -114,16 +120,18 @@ public class WriteCsv {
             // Build the table headers
             // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.
 
-            ArrayList<String> row = new ArrayList<>(Arrays.asList("docPid", "left_context", "context", "right_context"));
+            String headerContext = "context";
+            String headerBefore = rs.KEY_BEFORE + "_" + headerContext; // e.g. before_context (API v5)
+            String headerAfter = rs.KEY_AFTER + "_" + headerContext;   // e.g. after_context  (API v5)
+            List<String> row = new ArrayList<>(Arrays.asList(ResponseStreamer.KEY_DOC_PID, headerBefore, headerContext, headerAfter));
             for (Annotation a: resultHitsCsv.getAnnotationsToWrite()) {
                 row.add(a.name());
             }
             // Only output metadata if explicitly passed, do not print all fields if the parameter was omitted like the
-            // normal hit response does
-            // Since it results in a MASSIVE amount of repeated data.
-            List<MetadataField> metadataFieldsToWrite = !params.getListMetadataValuesFor().isEmpty() ?
-                    new ArrayList<>(WebserviceOperations.getMetadataToWrite(params)) :
-                    Collections.emptyList();
+            // normal hit response does (because that can result in a MASSIVE amount of repeated data)
+            boolean noMetadataRequested = params.getListMetadataValuesFor().isEmpty();
+            List<MetadataField> metadataFieldsToWrite = noMetadataRequested ? Collections.emptyList() :
+                    new ArrayList<>(WebserviceOperations.getMetadataToWrite(params));
             for (MetadataField f : metadataFieldsToWrite) {
                  row.add(f.name());
             }
@@ -131,7 +139,8 @@ public class WriteCsv {
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
                 hits.hitsStats().countedTotal(); // block for a bit
-                summaryCsvHits(params, printer, row.size(), hits, groups, subcorpusResults.subcorpusSize());
+                summaryCsvHits(params, printer, row.size(), hits, groups, subcorpusResults.subcorpusSize(),
+                        rs);
             }
 
             Map<Integer, Document> luceneDocs = new HashMap<>();
@@ -144,8 +153,7 @@ public class WriteCsv {
                 }
                 String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), doc);
                 writeHit(kwics.get(hit), doc, mainTokenProperty,
-                        resultHitsCsv.getAnnotationsToWrite(), docPid, metadataFieldsToWrite, row);
-                printer.printRecord(row);
+                        resultHitsCsv.getAnnotationsToWrite(), docPid, metadataFieldsToWrite, printer);
             }
             printer.flush();
             return printer.getOut().toString();
@@ -167,9 +175,8 @@ public class WriteCsv {
             List<Annotation> otherTokenProperties,
             String docPid,
             List<MetadataField> metadataFieldsToWrite,
-            ArrayList<String> row
-    ) {
-        row.clear();
+            CSVPrinter printer
+    ) throws IOException {
 
 
         /*
@@ -180,66 +187,53 @@ public class WriteCsv {
          */
         // Only kwic supported, original document output not supported in csv currently.
         Annotation punct = mainTokenProperty.field().annotations().punct();
-        row.add(docPid);
-        row.add(StringUtils.join(interleave(kwic.left(punct), kwic.left(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(interleave(kwic.match(punct), kwic.match(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(interleave(kwic.right(punct), kwic.right(mainTokenProperty)).toArray()));
+        printer.print(docPid);
+        printer.print(interleave(kwic.left(punct), kwic.left(mainTokenProperty)));
+        printer.print(interleave(kwic.match(punct), kwic.match(mainTokenProperty)));
+        printer.print(interleave(kwic.right(punct), kwic.right(mainTokenProperty)));
 
         // Add all other properties in this word
         for (Annotation otherProp : otherTokenProperties)
-            row.add(StringUtils.join(kwic.match(otherProp), " "));
+            printer.print(StringUtils.join(kwic.match(otherProp), " "));
 
         // other fields in order of appearance
         for (MetadataField field : metadataFieldsToWrite)
-            row.add(escape(doc.getValues(field.name())));
+            printer.print(escape(doc.getValues(field.name())));
+        printer.println();
     }
 
-    private static List<String> interleave(List<String> a, List<String> b) {
-        List<String> out = new ArrayList<>();
+    private static String interleave(List<String> a, List<String> b) {
+        StringBuilder result = new StringBuilder();
 
         List<String> smallest = a.size() < b.size() ? a : b;
         List<String> largest = a.size() > b.size() ? a : b;
         for (int i = 0; i < smallest.size(); ++i) {
-            out.add(a.get(i));
-            out.add(b.get(i));
+            result.append(a.get(i));
+            result.append(b.get(i));
         }
 
         for (int i = largest.size() - 1; i >= smallest.size(); --i)
-            out.add(largest.get(i));
+            result.append(largest.get(i));
 
-        return out;
+        return result.toString();
     }
 
     /*
-     * We must support multiple values in a single csv cell.
-     * We must also support values containing quotes/whitespace/commas.
+     * Create a single string value from (potentially) multiple input values.
      *
-     * This mean we must delimit individual values, we do this by surrounding them by quotes and separating them with a single space
-     *
-     * Existing quotes will be escaped by doubling them as per the csv escaping conventions
-     * Essentially transform
-     *      a value containing "quotes"
-     *      a "value" containing , as well as "quotes"
-     * into
-     *      "a value containing ""quotes"""
-     *      "a ""value"" containing , as well as ""quotes"""
-     *
-     * Decoders must split the value on whitespace outside quotes, then strip outside quotes, then replace the doubled quotes with singular quotes
-    */
-    private static String escape(String[] strings) {
-        StringBuilder sb = new StringBuilder();
-        boolean firstValue = true;
-        for (String value : strings) {
-            if (!firstValue) {
-                sb.append(" ");
-            }
-            sb.append('"');
-            sb.append(value.replace("\n", "").replace("\r", "").replace("\"", "\"\""));
-            sb.append('"');
-            firstValue = false;
-        }
-
-        return sb.toString();
+     * Multiple values are concatenated by a pipe symbol.
+     * Pipe symbols, newlines and carriage returns in the input values are
+     * escaped with a backslash.
+     * Any other required escaping should be taken care of by Commons CSV.
+     */
+    static String escape(String[] strings) {
+        return Arrays.stream(strings)
+                .map(value -> value
+                        .replaceAll("\\\\", "\\\\\\\\")
+                        .replaceAll("\n", "\\\\n")
+                        .replaceAll("\r", "\\\\r")
+                        .replaceAll("\\|", "\\\\|"))
+                .collect(Collectors.joining("|"));
     }
 
     static synchronized void writeRow(CSVPrinter printer, int numColumns, Object... values) {
@@ -272,31 +266,35 @@ public class WriteCsv {
             int numColumns,
             WebserviceParams searchParam,
             ResultGroups<T> groups,
-            CorpusSize subcorpusSize
+            CorpusSize subcorpusSize,
+            ResponseStreamer rs
     ) {
+        String summ = ResponseStreamer.KEY_SUMMARY + ".";
         for (Map.Entry<WebserviceParameter, String> param : searchParam.getParameters().entrySet()) {
             WebserviceParameter par = param.getKey();
             if (par == WebserviceParameter.LIST_VALUES_FOR_ANNOTATIONS ||
                     par == WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS)
                 continue;
-            writeRow(printer, numColumns, "summary.searchParam." + par, param.getValue());
+            writeRow(printer, numColumns, summ + rs.KEY_PARAMS + "." + par, param.getValue());
         }
 
-        writeRow(printer, numColumns, "summary.subcorpusSize.documents", subcorpusSize.getDocuments());
-        writeRow(printer, numColumns, "summary.subcorpusSize.tokens", subcorpusSize.getTokens());
+        String subcorpSize = summ + ResponseStreamer.KEY_SUBCORPUS_SIZE + ".";
+        writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_DOCUMENTS, subcorpusSize.getDocuments());
+        writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_TOKENS, subcorpusSize.getTokens());
 
         if (groups != null) {
-            writeRow(printer, numColumns, "summary.numberOfGroups", groups.size());
-            writeRow(printer, numColumns, "summary.largestGroupSize", groups.largestGroupSize());
+            writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_GROUPS, groups.size());
+            writeRow(printer, numColumns, summ + ResponseStreamer.KEY_LARGEST_GROUP_SIZE, groups.largestGroupSize());
         }
 
         SampleParameters sample = searchParam.sampleSettings();
         if (sample != null) {
-            writeRow(printer, numColumns, "summary.sampleSeed", sample.seed());
-            if (sample.isPercentage())
-                writeRow(printer, numColumns, "summary.samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
-            else
-                writeRow(printer, numColumns, "summary.sampleSize", sample.numberOfHitsSet());
+            writeRow(printer, numColumns, summ + ResponseStreamer.KEY_SAMPLE_SEED, sample.seed());
+            if (sample.isPercentage()) {
+                double percentage = Math.round(sample.percentageOfHits() * 100 * 100) / 100.0;
+                writeRow(printer, numColumns, summ + ResponseStreamer.KEY_SAMPLE_PERCENTAGE, percentage);
+            } else
+                writeRow(printer, numColumns, summ + ResponseStreamer.KEY_SAMPLE_SIZE, sample.numberOfHitsSet());
         }
     }
 
@@ -308,10 +306,12 @@ public class WriteCsv {
      * @param groups (optional) if grouped
      * @param subcorpusSize (optional) if available
      */
-    private static void summaryCsvHits(WebserviceParams params, CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
-        addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize);
-        writeRow(printer, numColumns, "summary.numberOfHits", hits.size());
-        writeRow(printer, numColumns, "summary.numberOfDocs", hits.docsStats().countedSoFar());
+    private static void summaryCsvHits(WebserviceParams params, CSVPrinter printer, int numColumns, Hits hits,
+            ResultGroups<Hit> groups, CorpusSize subcorpusSize, ResponseStreamer rs) {
+        addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize, rs);
+        String summ = ResponseStreamer.KEY_SUMMARY + ".";
+        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS, hits.size());
+        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_DOCS, hits.docsStats().countedSoFar());
     }
 
     /**
@@ -326,28 +326,32 @@ public class WriteCsv {
             int numColumns,
             DocResults docResults,
             DocGroups groups,
-            CorpusSize subcorpusSize
+            CorpusSize subcorpusSize,
+            ResponseStreamer rs
     ) {
-        addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize);
-        writeRow(printer, numColumns, "summary.numberOfDocs", docResults.size());
-        writeRow(printer, numColumns, "summary.numberOfHits", docResults.stream().mapToLong(Group::size).sum());
+        addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize, rs);
+        String summ = ResponseStreamer.KEY_SUMMARY + ".";
+        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_DOCS, docResults.size());
+        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS,
+                docResults.stream().mapToLong(Group::size).sum());
     }
 
-    public static String docGroups(WebserviceParams params, DocResults inputDocsForGroups, DocGroups groups, DocResults subcorpusResults) throws BlsException {
+    public static String docGroups(WebserviceParams params, DocResults inputDocsForGroups, DocGroups groups,
+            DocResults subcorpusResults, ResponseStreamer rs) throws BlsException {
         try {
             // Write the header
             List<String> row = new ArrayList<>(groups.groupCriteria().propNames());
-            row.add("size"); // size of the group in documents
-            row.add("numberOfTokens"); // tokens across all documents with hits in group
+            row.add(ResponseStreamer.KEY_GROUP_SIZE); // size of the group in documents
+            row.add(rs.KEY_NUMBER_OF_TOKENS); // tokens across all documents with hits in group
             // tokens across all document in group including docs without hits
             // might be equal to size+numberOfTokens, if the query didn't include a cql query
             // but don't bother omitting this data.
-            row.add("subcorpusSize.tokens");
-            row.add("subcorpusSize.documents");
+            row.add(ResponseStreamer.KEY_SUBCORPUS_SIZE + "." + rs.KEY_SUBCORPUS_SIZE_TOKENS);
+            row.add(ResponseStreamer.KEY_SUBCORPUS_SIZE + "." + rs.KEY_SUBCORPUS_SIZE_DOCUMENTS);
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                summaryCsvDocs(params, printer, row.size(), inputDocsForGroups, groups, subcorpusResults.subcorpusSize());
+                summaryCsvDocs(params, printer, row.size(), inputDocsForGroups, groups, subcorpusResults.subcorpusSize(), rs);
             }
 
             // write the groups
@@ -360,8 +364,10 @@ public class WriteCsv {
                 if (params.hasPattern()) {
                     PropertyValue docPropValues = group.identity();
                     CorpusSize groupSubcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpusResults.query(), groups.groupCriteria(), docPropValues);
-                    row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
-                    row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
+                    row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) :
+                            CSV_VALUE_UNKNOWN);
+                    row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize.getDocuments()) :
+                            CSV_VALUE_UNKNOWN);
                 } else {
                     row.add(Long.toString(group.storedResults().subcorpusSize().getTokens()));
                     row.add(Long.toString(group.storedResults().subcorpusSize().getDocuments()));
@@ -377,7 +383,8 @@ public class WriteCsv {
         }
     }
 
-    public static String docs(WebserviceParams params, DocResults docs, DocGroups fromGroups, DocResults globalSubcorpusSize) throws BlsException {
+    public static String docs(WebserviceParams params, DocResults docs, DocGroups fromGroups,
+            DocResults globalSubcorpusSize, ResponseStreamer rs) throws BlsException {
         try {
             BlackLabIndex index = params.blIndex();
             IndexMetadata indexMetadata = index.metadata();
@@ -386,22 +393,23 @@ public class WriteCsv {
 
             // Build the header; 2 columns for pid and length, then 1 for each metadata field
             List<String> row = new ArrayList<>();
-            row.add("docPid");
-            row.add("numberOfHits");
+            row.add(ResponseStreamer.KEY_DOC_PID);
+            row.add(ResponseStreamer.KEY_NUMBER_OF_HITS);
             if (tokenLengthField != null)
-                row.add("lengthInTokens");
+                row.add(ResponseStreamer.KEY_DOC_LENGTH_TOKENS);
 
             Collection<String> metadataFieldIds = WebserviceOperations.getMetadataToWrite(params).stream()
                     .map(Field::name)
                     .collect(Collectors.toList());
-            metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
-            metadataFieldIds.remove("lengthInTokens");
-            metadataFieldIds.remove("mayView");
+            metadataFieldIds.remove(ResponseStreamer.KEY_DOC_PID); // already included as first column (see above)
+            // never show these values even if they exist as actual fields, they're internal/calculated
+            metadataFieldIds.remove(ResponseStreamer.KEY_DOC_LENGTH_TOKENS); // already included, not a regular metadata field
+            metadataFieldIds.remove(ResponseStreamer.KEY_DOC_MAY_VIEW);
 
             row.addAll(metadataFieldIds); // NOTE: use the raw field IDs for headers, not the display names, CSVPrinter can't handle duplicate names
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
-            summaryCsvDocs(params, printer, row.size(), docs, fromGroups, globalSubcorpusSize.subcorpusSize());
+            summaryCsvDocs(params, printer, row.size(), docs, fromGroups, globalSubcorpusSize.subcorpusSize(), rs);
 
             StringBuilder sb = new StringBuilder();
 

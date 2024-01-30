@@ -37,8 +37,6 @@ public class ResultHitsGrouped {
 
     private final WindowStats window;
 
-    private final SearchTimings timings;
-
     private final ResultsStats hitsStats;
 
     private ResultsStats docsStats;
@@ -76,14 +74,13 @@ public class ResultHitsGrouped {
         final long first = Math.max(windowSettings.first(), 0);
         DefaultMax pageSize = params.getSearchManager().config().getParameters().getPageSize();
         final long requestedWindowSize = windowSettings.size() < 0
-                || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
+                || windowSettings.size() > pageSize.getMax() ? pageSize.getDefault()
                 : windowSettings.size();
         long totalResults = groups.size();
         final long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                 : requestedWindowSize;
         window = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize,
                 actualWindowSize);
-        timings = new SearchTimings(search.timer().time(), 0);
 
         hitsStats = groups.hitsStats();
         docsStats = groups.docsStats();
@@ -114,16 +111,17 @@ public class ResultHitsGrouped {
         }
 
         docInfos = null;
-        if (params.includeGroupContents()) {
+        if (params.getIncludeGroupContents()) {
             BlackLabIndex index = params.blIndex();
             Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
             docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataToWrite);
         }
 
+        SearchTimings timings = new SearchTimings(search.timer().time(), 0);
         summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus,
-                getTimings(), getGroups(), getWindow());
+                timings, null, getGroups(), getWindow());
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
-                getHitsStats(), getDocsStats(), true, false, getSubcorpusSize());
+                getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize(), -1);
 
     }
 
@@ -133,10 +131,6 @@ public class ResultHitsGrouped {
 
     public WindowStats getWindow() {
         return window;
-    }
-
-    public SearchTimings getTimings() {
-        return timings;
     }
 
     public ResultsStats getHitsStats() {

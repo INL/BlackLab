@@ -1,15 +1,18 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import nl.inl.blacklab.search.Span;
+import java.util.List;
+
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterEquals extends MatchFilter {
 
-    final MatchFilter a;
-    final MatchFilter b;
+    private final MatchFilter a;
+
+    private final MatchFilter b;
 
     private final MatchSensitivity sensitivity;
 
@@ -64,9 +67,9 @@ public class MatchFilterEquals extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
-        ConstraintValue ra = a.evaluate(fiDoc, capturedGroups);
-        ConstraintValue rb = b.evaluate(fiDoc, capturedGroups);
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
+        ConstraintValue ra = a.evaluate(fiDoc, matchInfo);
+        ConstraintValue rb = b.evaluate(fiDoc, matchInfo);
         if (ra instanceof ConstraintValueString && rb instanceof ConstraintValueString) {
             return ((ConstraintValueString) ra).stringEquals((ConstraintValueString) rb, sensitivity);
         }
@@ -106,6 +109,14 @@ public class MatchFilterEquals extends MatchFilter {
         if (x != a || y != b)
             return new MatchFilterEquals(x, y, sensitivity);
         return this;
+    }
+
+    public List<MatchFilter> getClauses() {
+        return List.of(a, b);
+    }
+
+    public MatchSensitivity getSensitivity() {
+        return sensitivity;
     }
 
 }

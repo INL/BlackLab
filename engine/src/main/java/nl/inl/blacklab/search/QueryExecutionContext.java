@@ -1,9 +1,14 @@
 package nl.inl.blacklab.search;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Represents the current "execution context" for executing a TextPattern query.
@@ -12,30 +17,16 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * object is passed to the translation methods and keeps track of this context.
  */
 public class QueryExecutionContext {
-    /**
-     * Get a simple execution context for a field. Used for testing/debugging
-     * purposes.
-     *
-     * @param index the index
-     * @param field field to get an execution context for
-     * @return the context
-     */
-    public static QueryExecutionContext simple(BlackLabIndex index, AnnotatedField field) {
-        return new QueryExecutionContext(index, field.mainAnnotation(), MatchSensitivity.INSENSITIVE);
-    }
 
     /** The index object, representing the BlackLab index */
     private final BlackLabIndex index;
 
-    /** What to prefix values with (for "subproperties", like PoS features, etc.) */
-    private final String subpropPrefix = "";
-
     /** The sensitivity variant of our annotation we'll search. */
     private final AnnotationSensitivity sensitivity;
-    
+
     /** The originally requested match sensitivity.
-     * 
-     *  This might be different from the AnnotationSensitivity we search, because not all 
+     *
+     *  This might be different from the AnnotationSensitivity we search, because not all
      *  fields support all sensitivities. */
     private final MatchSensitivity requestedSensitivity;
 
@@ -55,16 +46,38 @@ public class QueryExecutionContext {
     }
 
     public QueryExecutionContext withAnnotation(Annotation annotation) {
-        return new QueryExecutionContext(index, annotation, requestedSensitivity);
+        return withAnnotationAndSensitivity(annotation, null);
     }
 
-    public QueryExecutionContext withSensitive(MatchSensitivity matchSensitivity) {
-        return new QueryExecutionContext(index, sensitivity.annotation(), matchSensitivity);
+    public QueryExecutionContext withSensitivity(MatchSensitivity matchSensitivity) {
+        return withAnnotationAndSensitivity((Annotation)null, matchSensitivity);
     }
 
+    public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
+        if (annotation == null)
+            annotation = sensitivity.annotation();
+        if (matchSensitivity == null)
+            matchSensitivity = requestedSensitivity;
+        return new QueryExecutionContext(index, annotation, matchSensitivity);
+    }
+
+    public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity) {
+        Annotation annotation = annotationName == null ? null : field().annotation(annotationName);
+        return withAnnotationAndSensitivity(annotation, matchSensitivity);
+    }
+
+    public QueryExecutionContext withRelationAnnotation() {
+        if (!field().hasXmlTags())
+            throw new RuntimeException("Field has no relation annotation!");
+        String name = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
+        if (field().annotation(name) == null)
+            throw new RuntimeException("Field has no relation annotation named " + name + "!");
+        return withAnnotation(field().annotation(name));
+    }
+
+    @Deprecated
     public QueryExecutionContext withXmlTagsAnnotation() {
-        Annotation annotation = sensitivity.annotation().field().tagsAnnotation();
-        return new QueryExecutionContext(index, annotation, requestedSensitivity);
+        return withRelationAnnotation();
     }
 
     public String optDesensitize(String value) {
@@ -72,12 +85,17 @@ public class QueryExecutionContext {
     }
     
     /**
-     * Return sensitivity to use
+     * Return sensitivity to use.
      *
+     * Because not all annotations have all sensitivities, we may have to fall back to a different one.
+     *
+     * @param annotation annotation to search
+     * @param requestedSensitivity what sensitivity we'd ideally like
      * @return sensitivity to use
      */
-    private static AnnotationSensitivity getAppropriateSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
-        switch (matchSensitivity) {
+    private static AnnotationSensitivity getAppropriateSensitivity(Annotation annotation,
+            MatchSensitivity requestedSensitivity) {
+        switch (requestedSensitivity) {
         case INSENSITIVE:
             // search insensitive if available
             if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE))
@@ -117,19 +135,6 @@ public class QueryExecutionContext {
         return sensitivity.luceneField();
     }
 
-    /**
-     * What to prefix values with (for "subannotations", like PoS features, etc.)
-     *
-     * Subannotations are indexed with this prefix before every value. When
-     * searching, we also prefix our search string with this value.
-     *
-     * @return prefix what to prefix search strings with to find the right
-     *         subannotation value
-     */
-    public String subannotPrefix() {
-        return subpropPrefix;
-    }
-
     public BlackLabIndex index() {
         return index;
     }
@@ -143,4 +148,20 @@ public class QueryExecutionContext {
         return sensitivity.annotation().field();
     }
 
+    public QueryInfo queryInfo() {
+        return QueryInfo.create(index(), field());
+    }
+
+    Set<String> captures = new HashSet<>();
+
+    public String ensureUniqueCapture(String captureBaseName) {
+        String capture = captureBaseName;
+        int i = 2;
+        while (captures.contains(capture)) {
+            capture = captureBaseName + i;
+            i++;
+        }
+        captures.add(capture);
+        return capture;
+    }
 }

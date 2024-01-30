@@ -17,6 +17,13 @@ public class ConstraintValueUndefined extends ConstraintValue {
     }
 
     @Override
+    public int compareTo(ConstraintValue other) {
+        if (other instanceof ConstraintValueUndefined)
+            return -1; // undefined is never equal to itself
+        throw new IllegalArgumentException("Can only compare equal types! Tried to compare undefined to " + other.getClass().getName());
+    }
+
+    @Override
     public boolean isTruthy() {
         return false;
     }

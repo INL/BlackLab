@@ -1,107 +1,91 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.Objects;
+
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Contexts;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on a matched group.
  */
 public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
-    protected static final ContextSize CONTEXT_SIZE = ContextSize.get(0,0,true);
-
-    static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, String info, String groupName) {
+    static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         HitPropertyCaptureGroup hp = deserializeProp(HitPropertyCaptureGroup.class, index, field, info);
-        hp.groupName = groupName;
-        return hp;
-    }
 
-    private static int findGroupIndex(Hits hits, String groupName) {
-        int groupIndex = groupName.isEmpty() ? 0 : hits.capturedGroups().names().indexOf(groupName);
-        if (groupIndex < 0)
-            throw new IllegalArgumentException("Unknown group name '" + groupName + "'");
-        return groupIndex;
+        // Decode group name
+        String[] parts = PropertySerializeUtil.splitParts(info);
+        hp.groupName = parts.length > 2 ? parts[2] : "";
+
+        return hp;
     }
 
     String groupName;
 
-    int groupIndex;
+    int groupIndex = -1;
 
-    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, Contexts contexts, boolean invert) {
-        super(prop, hits, contexts, invert);
+    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, boolean invert) {
+        super(prop, hits, invert);
         groupName = prop.groupName;
-        groupIndex = prop.groupIndex;
+
+        // Determine group index. We don't use the one from prop (if any), because
+        // index might be different for different hits object.
+        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoNames().indexOf(groupName);
+        if (groupIndex < 0)
+            throw new IllegalArgumentException("Unknown group name '" + groupName + "'");
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() (see above)
+    // Used by HitPropertyContextBase.deserializeProp() via reflection
     @SuppressWarnings("unused")
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         this(index, annotation, sensitivity, "");
     }
 
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName) {
-        super("hit text", "hit", index, annotation, sensitivity);
+        super("captured group", "capture", index, annotation, sensitivity, false);
         this.groupName = groupName;
-        groupIndex = findGroupIndex(hits, groupName);
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
-        HitPropertyCaptureGroup hp = new HitPropertyCaptureGroup(this, newHits, contexts, invert);
-        hp.groupIndex = findGroupIndex(newHits, groupName); // index might be different for different hits object!
-        return hp;
+    public HitProperty copyWith(Hits newHits, boolean invert) {
+        return new HitPropertyCaptureGroup(this, newHits, invert);
     }
 
     @Override
-    public PropertyValueContextWords get(long hitIndex) {
-        // Determine group start/end
-        Hit hit = hits.get(hitIndex);
-        Span[] capturedGroups = hits.capturedGroups().get(hit);
-        Span group = capturedGroups[groupIndex];
-        int start = group.start();
-        int end = group.end();
-        int startOfGroupWithinHit = start - hit.start();
-        int endOfGroupWithinHit = end - hit.start();
-
-        // Find context and the indexes we need
-        int[] context = contexts.get(hitIndex);
-        int startOfHitWithinContext = context[Contexts.HIT_START_INDEX];
-        int contextLength = context[Contexts.LENGTH_INDEX];
-
-        // Copy the desired part of the context
-        int n = endOfGroupWithinHit - startOfGroupWithinHit;
-        if (n <= 0)
-            return new PropertyValueContextWords(index, annotation, sensitivity, new int[0], false);
-        int[] dest = new int[n];
-        int contextStart = contextLength * contextIndices.getInt(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
-        System.arraycopy(context, contextStart + startOfHitWithinContext + startOfGroupWithinHit, dest, 0, n);
-        return new PropertyValueContextWords(index, annotation, sensitivity, dest, false);
-    }
-
-    @Override
-    public int compare(long indexA, long indexB) {
-        return get(indexA).compareTo(get(indexB));
+    public void fetchContext() {
+        fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
+            MatchInfo group = hit.matchInfo()[groupIndex];
+            starts[indexInArrays] = group.getSpanStart();
+            ends[indexInArrays] = group.getSpanEnd();
+        });
     }
 
     @Override
     public boolean isDocPropOrHitText() {
-        return true;
+        // we cannot guarantee that we don't use any surrounding context!
+        return false;
     }
-    
+
     @Override
-    public ContextSize needsContextSize(BlackLabIndex index) {
-        return ContextSize.get(0, 0, true);
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
+        HitPropertyCaptureGroup that = (HitPropertyCaptureGroup) o;
+        return Objects.equals(groupName, that.groupName);
     }
-    
+
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + CONTEXT_SIZE.hashCode();
+        return Objects.hash(super.hashCode(), groupName);
     }
 }

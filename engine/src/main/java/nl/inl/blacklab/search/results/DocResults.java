@@ -11,6 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.index.DocValues;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -19,6 +20,7 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -179,6 +181,8 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     private CorpusSize corpusSize = null;
 
+    private List<String> matchInfoNames = null;
+
     /**
      * Construct an empty DocResults.
      * @param queryInfo query info
@@ -196,7 +200,8 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
-        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
+        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, false);
+        this.matchInfoNames = hits.matchInfoNames();
         this.sourceHitsIterator = hits.iterator();
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
@@ -292,7 +297,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
-                            Hits hits = Hits.list(queryInfo(), docHits, null);
+                            Hits hits = Hits.list(queryInfo(), docHits, matchInfoNames);
                             long size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
@@ -314,7 +319,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
-                        Hits hits = Hits.list(queryInfo(), docHits, null);
+                        Hits hits = Hits.list(queryInfo(), docHits, matchInfoNames);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
@@ -357,7 +362,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
 
-        String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().tokenLengthField();
+        String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().name();
         DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(queryInfo().index(), tokenLengthFieldName);
 
         for (DocResult r : this) {
@@ -367,7 +372,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
             Long groupTokenSize = groupTokenSizes.get(groupId);
-            long docLengthTokens = fieldLengthProp.get(r.identity().value()) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            long docLengthTokens = fieldLengthProp.get(r.identity().value()); // already excludes dummy closing token!
             if (groupSize == null) {
                 groupSize = 1;
                 groupTokenSize = docLengthTokens;
@@ -532,19 +537,25 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
                     Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+                    String tokenLengthField = queryInfo().index().mainAnnotatedField().tokenLengthField();
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
+                        LeafReader reader = r.reader();
+                        Bits liveDocs = reader.getLiveDocs();
                         Scorer scorer = weight.scorer(r);
                         if (scorer != null) {
                             DocIdSetIterator it = scorer.iterator();
-                            NumericDocValues tokenLengthValues = countTokens ? DocValues.getNumeric(r.reader(), queryInfo().index().mainAnnotatedField().tokenLengthField()) : null;
+                            NumericDocValues tokenLengthValues = countTokens ? DocValues.getNumeric(reader, tokenLengthField) : null;
                             while (true) {
                                 int docId = it.nextDoc();
                                 if (docId == DocIdSetIterator.NO_MORE_DOCS)
                                     break;
-                                numberOfDocuments++;
-                                if (countTokens){
-                                	tokenLengthValues.advanceExact(docId);
-                                    numberOfTokens += tokenLengthValues.longValue() - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                                if (liveDocs == null || liveDocs.get(docId)) {
+                                    numberOfDocuments++;
+                                    if (countTokens) {
+                                        tokenLengthValues.advanceExact(docId);
+                                        numberOfTokens += tokenLengthValues.longValue()
+                                                - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                                    }
                                 }
                             }
                         }
@@ -554,6 +565,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 }
             } else {
                 // Slow approach: get the stored field value from each Document
+                // (note that DocPropertyAnnotatedFieldLength already excludes the dummy closing token)
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
 //                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
                 String fieldName = queryInfo().index().mainAnnotatedField().name();

@@ -5,8 +5,8 @@ import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.server.exceptions.NotFound;
 
@@ -14,13 +14,12 @@ public class ResultInputFormat {
     private ConfigInputFormat config;
 
     ResultInputFormat(String formatName) {
-        Format format = DocumentFormats.getFormat(formatName);
-        if (format == null)
-            throw new NotFound("NOT_FOUND", "The format '" + formatName + "' does not exist.");
-        if (!format.isConfigurationBased())
-            throw new NotFound("NOT_FOUND", "The format '" + formatName
+        InputFormat inputFormat = DocumentFormats.getFormat(formatName).orElseThrow(
+                () -> new NotFound("NOT_FOUND", "Format '" + formatName + "' does not exist."));
+        if (!inputFormat.isConfigurationBased())
+            throw new NotFound("NOT_FOUND", "Format '" + formatName
                     + "' is not configuration-based, and therefore cannot be displayed.");
-        config = format.getConfig();
+        config = inputFormat.getConfig();
     }
 
     public ConfigInputFormat getConfig() {

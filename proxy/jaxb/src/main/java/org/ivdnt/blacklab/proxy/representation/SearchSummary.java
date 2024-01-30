@@ -18,9 +18,14 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchSummary implements Cloneable {
 
-    //public SearchParam searchParam = new SearchParam();
     @JsonInclude(Include.NON_NULL)
+    @XmlJavaTypeAdapter(MapAdapter.class)
+    @JsonSerialize(using = SerializationUtil.StringMapSerializer.class)
+    @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
     public Map<String, String> searchParam;
+
+    @JsonInclude(Include.NON_NULL)
+    public SummaryTextPattern pattern;
 
     public long searchTime;
 

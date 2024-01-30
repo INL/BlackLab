@@ -8,15 +8,18 @@ Returns frequencies per term, sorted by descending frequency.
 
 #### Parameters
 
-| Parameter    | Description                                                                                                                                                                                       |
-|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `annotation` | Annotation to get term frequencies for. Default: main annotation (usually `word`)                                                                                                                 |
-| `sensitive`  | Whether or not to list terms case/diacritics sensitively. Default: `false`                                                                                                                        |
-| `first`      | First result to return. Default: `20`                                                                                                                                                             |
-| `number`     | Maximum number to return. Default: `20`.<br/>**NOTE:** this value is limited by the [`parameters.pageSize.max` setting](/server/configuration.md#complete-config-file) in `blacklab-server.yaml`. |
-| `filter`     | [Lucene Query Language](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description) document filter query                    |
-| `terms`      | comma-separated list of terms for which to get the frequencies. Default: all terms                                                                                                                |
+| Parameter    | Description                                                                                                                                                                                                                                                     |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `annotation` | annotation to get term frequencies for. Default: main annotation (usually `word`)                                                                                                                                                                               |
+| `sensitive`  | whether or not to list terms case/diacritics sensitively. If not (which is the default), capital letters and diacritics are ignored when counting frequencies, so `Het`, `hét` en `het` will be lumped together and the total reported as `het`. Default: `false` |
+| `first`      | first result (0-based) to return. Use this to get a page of results from the total set. Default: `0`                                                                                                                                                            |
+| `number`     | maximum number to return. Default: `20`.<br/>**NOTE:** this value is limited by the [`parameters.pageSize.max` setting](/server/configuration.md#complete-config-file) in `blacklab-server.yaml`. Pass `-1` to get the maximum allowed.                         |
+| `filter`     | [Lucene Query Language](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description) document filter query                                                                                  |
+| `terms`      | comma-separated list of terms for which to get the frequencies. Default: all terms                                                                                                                                                                              |
 
+**NOTE:** this operation always has to find the frequencies for all terms, even if it only needs to return one page.
+Hence there is no `waitfortotal` parameter like some other operations have (you always have to wait). Results
+are cached though, so after the first page is returned, using multiple requests to page through the results should be fast.
 
 ## Success Response
 
@@ -53,6 +56,6 @@ Returns frequencies per term, sorted by descending frequency.
 
 ## Notes
 
-Regular grouped hits could be used as well and should be equally fast, thanks to an optimization that recognizes this type of query (`patt` = any token (`[]`), group by match) and uses a faster path.
+Regular grouped hits could be used as well and should be decently fast, thanks to an optimization that recognizes this type of query (`patt` = any token (`[]`), group by match) and uses a faster path. However, that operation uses the forward index to find term frequencies, whereas this one uses Lucene's term dictionary. We should test for any differences and if there are none (which there shouldn't be), always use the fastest implementation.
 
-That makes this endpoint redundant and it may be removed in a future version.
+After that, we could consider removing this endpoint, or we could keep it for convenience and backwards compatibility.

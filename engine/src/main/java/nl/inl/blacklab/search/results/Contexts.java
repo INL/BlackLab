@@ -3,11 +3,15 @@ package nl.inl.blacklab.search.results;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
+import org.eclipse.collections.api.tuple.primitive.IntIntPair;
+import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
@@ -16,10 +20,13 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Some annotation context(s) belonging to a list of hits.
@@ -29,21 +36,21 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class Contexts implements Iterable<int[]> {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
-    public final static int NUMBER_OF_BOOKKEEPING_INTS = 3;
+    private final static int NUMBER_OF_BOOKKEEPING_INTS = 3;
 
     /**
      * In context arrays, what index after the bookkeeping units indicates the hit
      * start?
      */
-    public final static int HIT_START_INDEX = 0;
+    private final static int HIT_START_INDEX = 0;
 
     /**
      * In context arrays, what index indicates the hit end (start of right part)?
      */
-    public final static int RIGHT_START_INDEX = 1;
+    private final static int RIGHT_START_INDEX = 1;
 
     /** In context arrays, what index indicates the length of the context? */
-    public final static int LENGTH_INDEX = 2;
+    private final static int LENGTH_INDEX = 2;
 
     /**
      * Retrieves the KWIC information (KeyWord In Context: left, hit and right
@@ -71,13 +78,14 @@ public class Contexts implements Iterable<int[]> {
         if (hits.size() == 0)
             return;
         HitsInternal hitsInternal = hits.getInternalHits();
+        List<String> matchInfoNames = hits.matchInfoNames();
 
         // OPT: more efficient to get all contexts with one getContextWords() call!
 
         // Get punctuation context
         int[][] punctContext = null;
         if (punctForwardIndex != null) {
-            punctContext = getContextWordsSingleDocument(hitsInternal, 0, hitsInternal.size(), wordsAroundHit, List.of(punctForwardIndex));
+            punctContext = getContextWordsSingleDocument(hitsInternal, 0, hitsInternal.size(), wordsAroundHit, List.of(punctForwardIndex), matchInfoNames);
         }
         Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
 
@@ -96,13 +104,13 @@ public class Contexts implements Iterable<int[]> {
                 attrName[i] = e.getKey();
                 attrFI[i] = e.getValue();
                 attrTerms[i] = attrFI[i].terms();
-                attrContext[i] = getContextWordsSingleDocument(hitsInternal, 0, hitsInternal.size(), wordsAroundHit, List.of(attrFI[i]));
+                attrContext[i] = getContextWordsSingleDocument(hitsInternal, 0, hitsInternal.size(), wordsAroundHit, List.of(attrFI[i]), matchInfoNames);
                 i++;
             }
         }
 
         // Get word context
-        int[][] wordContext = getContextWordsSingleDocument(hitsInternal, 0, hitsInternal.size(), wordsAroundHit, List.of(forwardIndex));
+        int[][] wordContext = getContextWordsSingleDocument(hitsInternal, 0, hitsInternal.size(), wordsAroundHit, List.of(forwardIndex), matchInfoNames);
         Terms terms = forwardIndex.terms();
 
         // Make the concordances from the context
@@ -164,7 +172,7 @@ public class Contexts implements Iterable<int[]> {
      * @param contextSources forward indices to get context from
      */
     private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end, ContextSize contextSize,
-                                                         List<AnnotationForwardIndex> contextSources) {
+                                                         List<AnnotationForwardIndex> contextSources, List<String> matchInfoNames) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
@@ -176,8 +184,8 @@ public class Contexts implements Iterable<int[]> {
         EphemeralHit hit = new EphemeralHit();
         for (long i = start; i < end; ++i) {
             hits.getEphemeral(i, hit);
-            startsOfSnippets[(int)(i - start)] = Math.max(0, hit.start - contextSize.left());
-            endsOfSnippets[(int)(i - start)] = hit.end + contextSize.right();
+            int j = (int)(i - start);
+            contextSize.getSnippetStartEnd(hit, matchInfoNames, false, startsOfSnippets, j, endsOfSnippets, j);
         }
 
         int fiNumber = 0;
@@ -206,8 +214,9 @@ public class Contexts implements Iterable<int[]> {
                     // Allocate context array and set hit and right start and context length
                     contexts[i] = new int[NUMBER_OF_BOOKKEEPING_INTS
                             + theseWords.length * contextSources.size()];
-                    contexts[i][HIT_START_INDEX] = hit.start - firstWordIndex;
-                    contexts[i][RIGHT_START_INDEX] = hit.end - firstWordIndex;
+                    // Math.min() so we don't go beyond actually retrieved snippet (which may have been limited because of config)!
+                    contexts[i][HIT_START_INDEX] = Math.min(theseWords.length, hit.start - firstWordIndex);
+                    contexts[i][RIGHT_START_INDEX] = Math.min(theseWords.length, hit.end - firstWordIndex);
                     contexts[i][LENGTH_INDEX] = theseWords.length;
                 }
                 // Copy the context we just retrieved into the context array
@@ -247,12 +256,13 @@ public class Contexts implements Iterable<int[]> {
      * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
      */
-    public Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize) {
+    private Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize) {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
         // Make sure all hits have been read and get access to internal hits
         HitsInternal ha = hits.getInternalHits();
+        List<String> matchInfoNames = hits.matchInfoNames();
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
@@ -274,7 +284,7 @@ public class Contexts implements Iterable<int[]> {
                 if (curDoc != prevDoc) {
                     try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
-                    int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis);
+                    int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, matchInfoNames);
                     Collections.addAll(contexts, docContextArray);
                     // start a new document
                     prevDoc = curDoc;
@@ -282,7 +292,7 @@ public class Contexts implements Iterable<int[]> {
                 }
             }
             // Process hits in final document
-            int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis);
+            int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, matchInfoNames);
             Collections.addAll(contexts, docContextArray);
         }
 
@@ -290,26 +300,75 @@ public class Contexts implements Iterable<int[]> {
     }
 
     /**
+     * Count occurrences of context words around hit.
+     *
+     * @param hits hits to get collocations for
+     * @param annotation annotation to use for the collocations, or null if default
+     * @param contextSize how many words around hits to use
+     * @param sensitivity what sensitivity to use
+     * @param sort whether or not to sort the list by descending frequency
+     *
+     * @return the frequency of each occurring token
+     */
+    public synchronized static TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
+        BlackLabIndex index = hits.index();
+        if (annotation == null)
+            annotation = index.mainAnnotatedField().mainAnnotation();
+        if (contextSize == null)
+            contextSize = index.defaultContextSize();
+        if (sensitivity == null)
+            sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
+
+        List<Annotation> annotations = List.of(annotation);
+        Contexts contexts = new Contexts(hits, annotations, contextSize);
+        MutableIntIntMap countPerWord = IntIntMaps.mutable.empty();
+        for (int[] context: contexts) {
+            // Count words
+            int contextHitStart = context[HIT_START_INDEX];
+            int contextRightStart = context[RIGHT_START_INDEX];
+            int contextLength = context[LENGTH_INDEX];
+            int indexInContent = NUMBER_OF_BOOKKEEPING_INTS;
+            for (int i = 0; i < contextLength; i++, indexInContent++) {
+                if (i >= contextHitStart && i < contextRightStart)
+                    continue; // don't count words in hit itself, just around [option..?]
+                int wordId = context[indexInContent];
+                int count;
+                if (!countPerWord.containsKey(wordId))
+                    count = 1;
+                else
+                    count = countPerWord.get(wordId) + 1;
+                countPerWord.put(wordId, count);
+            }
+        }
+
+        // Get the actual words from the sort positions
+        Terms terms = index.annotationForwardIndex(contexts.annotations().get(0)).terms();
+        Map<String, Integer> wordFreq = new HashMap<>();
+        for (IntIntPair e : countPerWord.keyValuesView()) {
+            int wordId = e.getOne();
+            int count = e.getTwo();
+            String word = sensitivity.desensitize(terms.get(wordId));
+            // Note that multiple ids may map to the same word (because of sensitivity settings)
+            // Here, those groups are merged.
+            Integer mergedCount = wordFreq.get(word);
+            if (mergedCount == null) {
+                mergedCount = 0;
+            }
+            mergedCount += count;
+            wordFreq.put(word, mergedCount);
+        }
+
+        // Transfer from map to list
+        return new TermFrequencyList(hits.queryInfo(), wordFreq, sort);
+    }
+
+    /**
      * Get the field our current concordances were retrieved from
      *
      * @return the field name
      */
-    public List<Annotation> annotations() {
+    List<Annotation> annotations() {
         return annotations;
-    }
-
-    /**
-     * Return the context(s) for the specified hit number
-     *
-     * @param index which hit we want the context(s) for
-     * @return the context(s)
-     */
-    public int[] get(long index) {
-        return contexts.get(index);
-    }
-
-    public long size() {
-        return contexts.size64();
     }
 
     /**

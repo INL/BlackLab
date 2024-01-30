@@ -19,11 +19,16 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryNoHits extends BLSpanQuery {
 
+    public static SpanGuarantees createGuarantees() {
+        return SpanGuarantees.TERM;
+    }
+
     private final String luceneField;
 
     public SpanQueryNoHits(QueryInfo queryInfo, String luceneField) {
         super(queryInfo);
         this.luceneField = luceneField;
+        this.guarantees = createGuarantees();
     }
 
     @Override
@@ -39,6 +44,11 @@ public class SpanQueryNoHits extends BLSpanQuery {
             @Override
             public void extractTerms(Set<Term> terms) {
                 // No terms
+            }
+
+            @Override
+            public boolean isCacheable(LeafReaderContext ctx) {
+                return true;
             }
 
             @Override
@@ -91,46 +101,6 @@ public class SpanQueryNoHits extends BLSpanQuery {
     @Override
     public BLSpanQuery inverted() {
         return new SpanQueryAnyToken(queryInfo, 1, 1, luceneField);
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return 1;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return 1;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return hitsAllSameLength();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return true;
     }
 
     @Override

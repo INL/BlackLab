@@ -9,7 +9,7 @@ rm -rf /data/user-index
 mkdir /data/index
 mkdir /data/user-index
 
-cd /usr/local/lib/blacklab-tools
+cd /usr/local/lib/blacklab-tools || exit
 java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/index/test '/test-data/input/*.xml' voice-tei
 #cd /usr/local/tomcat && catalina.sh jpda run
 cd /usr/local/tomcat && catalina.sh run

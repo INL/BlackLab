@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.store.AlreadyClosedException;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -33,9 +34,9 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
             throw new IllegalArgumentException("Value(s) out of range, start = " + snippetStart
                     + ", end = " + snippetEnd + ", content length = " + docLength);
         }
-        if (snippetEnd <= snippetStart) {
+        if (snippetStart > snippetEnd) {
             throw new IllegalArgumentException(
-                    "Tried to read empty or negative length snippet (from " + snippetStart
+                    "Tried to read negative length snippet (from " + snippetStart
                             + " to " + snippetEnd + ")");
         }
     }
@@ -66,7 +67,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
             executorService.execute(() -> {
                 try {
                     afi.initialize();
-                } catch (InterruptedSearch e) {
+                } catch (AlreadyClosedException|InterruptedSearch e) {
                     // Initialization was interrupted. Ignore.
                     // This can happen if e.g. a commandline utility completes
                     // before the full initialization is done. The running threads

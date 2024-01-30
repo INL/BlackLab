@@ -37,6 +37,8 @@ public class Kwic {
         fragment = new DocContentsFromForwardIndex(annotations, tokens);
         this.hitStart = matchStart;
         this.hitEnd = matchEnd;
+        assert hitStart * fragment.annotations.size() <= tokens.size();
+        assert hitEnd * fragment.annotations.size() <= tokens.size();
     }
 
     /**
@@ -67,8 +69,9 @@ public class Kwic {
     }
 
     public List<String> match() {
-        return Collections.unmodifiableList(
-                fragment.tokens.subList(hitStart * fragment.annotations.size(), hitEnd * fragment.annotations.size()));
+        int from = hitStart * fragment.annotations.size();
+        int to = hitEnd * fragment.annotations.size();
+        return Collections.unmodifiableList(fragment.tokens.subList(from, to));
     }
 
     /**

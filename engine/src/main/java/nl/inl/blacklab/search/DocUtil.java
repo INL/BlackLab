@@ -235,7 +235,7 @@ public class DocUtil {
                     d = index.reader().document(docId, Set.of(fieldName));
                 return d.get(fieldName).substring(startAtChar, endAtChar);
             } else {
-                if (d == null && index instanceof BlackLabIndexExternal)
+                if (d == null && index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES)
                     d = index.reader().document(docId, Set.of(field.contentIdField()));
                 return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startAtChar }, new int[] { endAtChar })[0];
             }
@@ -301,9 +301,7 @@ public class DocUtil {
                 return content;
             } else {
                 // Content accessor set. Use it to retrieve the content.
-                if (d == null && index instanceof BlackLabIndexExternal) {
-                    d = index.reader().document(docId, Set.of(field.contentIdField()));
-                }
+                d = fetchDocumentIfRequired(index, docId, d, field);
                 return index.contentAccessor(field).getSubstringsFromDocument(docId, d, starts, ends);
             }
         } catch (IOException e) {
@@ -391,15 +389,30 @@ public class DocUtil {
                     throw new IllegalArgumentException("Field not found: " + field.name());
                 return content;
             } else {
-                if (d == null && index instanceof BlackLabIndexExternal) {
-                    // We need the document (classic index format so we need to look op content store id)
-                    d = index.reader().document(docId, Set.of(field.contentIdField()));
-                }
+                d = fetchDocumentIfRequired(index, docId, d, field);
                 int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
                 return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * For the classic external index format, we need the Lucene doc to look up the content store id.
+     *
+     * @param index our index
+     * @param docId document id
+     * @param d Lucene document if already fetched, otherwise null
+     * @param field field to get content for
+     * @return Lucene document
+     */
+    private static Document fetchDocumentIfRequired(BlackLabIndex index, int docId, Document d, Field field)
+            throws IOException {
+        if (d == null && index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+            // We need the document (classic index format so we need to look op content store id)
+            d = index.reader().document(docId, Set.of(field.contentIdField()));
+        }
+        return d;
     }
 }

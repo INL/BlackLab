@@ -9,15 +9,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -29,15 +25,26 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.FileUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * An indexer for tabular file formats, such as tab-separated or comma-separated
  * values.
  */
-public class DocIndexerTabular extends DocIndexerConfig {
+public class DocIndexerTabular extends DocIndexerTabularBase {
+
+    // Tabular fileTypeOption keys
+    public static final String FT_OPT_TYPE = "type";
+    public static final String FT_OPT_EXPECT_COLUMN_NAMES = "columnNames";
+    public static final String FT_OPT_DELIMITER = "delimiter";
+    public static final String FT_OPT_QUOTE = "quote";
+    public static final String FT_OPT_ALLOW_SEPARATORS_AFTER_INLINE_TAGS = "allowSeparatorsAfterInlineTags";
+    public static final String FT_OPT_HAS_INLINE_TAGS = "inlineTags";
+    public static final String FT_OPT_HAS_GLUE_TAGS = "glueTags";
+    public static final String FT_OPT_MULTIPLE_VALUES_SEPARATOR = "multipleValuesSeparator";
 
     /** Tabular types we support */
-    enum Type {
+    private enum Type {
         CSV,
         TSV;
 
@@ -50,43 +57,13 @@ public class DocIndexerTabular extends DocIndexerConfig {
             }
             return valueOf(str.toUpperCase());
         }
-
-        public String stringValue() {
-            return toString().toLowerCase();
-        }
     }
 
-    /**
-     * Regex for recognizing open or close tag and capturing tag name and attributes
-     * part
-     */
-    final static Pattern REGEX_TAG = Pattern.compile("^\\s*<\\s*(/\\s*)?(\\w+)((\\b[^>]+)?)>\\s*$");
+    private Iterable<CSVRecord> records;
 
-    /** Single- or double-quoted attribute in a tag */
-    static final Pattern REGEX_ATTR = Pattern.compile("\\b(\\w+)\\s*=\\s*(\"[^\"]*\"|'[^']*')");
+    private CSVFormat tabularFormat = CSVFormat.EXCEL;
 
-    private static Map<String, String> getAttr(String group) {
-        if (group == null)
-            return Collections.emptyMap();
-        String strAttrDef = group.trim();
-        Matcher m = REGEX_ATTR.matcher(strAttrDef);
-        Map<String, String> attributes = new LinkedHashMap<>();
-        while (m.find()) {
-            String key = m.group(1);
-            String value = m.group(2);
-            value = value.substring(1, value.length() - 1); // chop quotes
-            attributes.put(key, value);
-        }
-        return attributes;
-    }
-
-    private static final Object GLUE_TAG_NAME = "g";
-
-    Iterable<CSVRecord> records;
-
-    CSVFormat tabularFormat = CSVFormat.EXCEL;
-
-    StringBuilder csvData;
+    private StringBuilder csvData;
 
     private boolean hasInlineTags;
 
@@ -99,9 +76,11 @@ public class DocIndexerTabular extends DocIndexerConfig {
      */
     private boolean allowSeparatorsAfterInlineTags;
 
-    private String multipleValuesSeparator = ";";
-
     private BufferedReader inputReader;
+
+    public DocIndexerTabular() {
+        super(";");
+    }
 
     @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
@@ -109,7 +88,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
             throw new InvalidInputFormatConfig("Tabular type can only have 1 annotated field");
         super.setConfigInputFormat(config);
         Map<String, String> opt = config.getFileTypeOptions();
-        Type type = opt.containsKey("type") ? Type.fromStringValue(opt.get("type")) : Type.CSV;
+        Type type = opt.containsKey(FT_OPT_TYPE) ? Type.fromStringValue(opt.get(FT_OPT_TYPE)) : Type.CSV;
         //ConfigTabularOptions tab = config.getTabularOptions();
         switch (type) {
         case TSV:
@@ -119,22 +98,22 @@ public class DocIndexerTabular extends DocIndexerConfig {
             tabularFormat = CSVFormat.EXCEL;
             break;
         default:
-            throw new InvalidInputFormatConfig("Unknown tabular type " + opt.get("type") + " (use csv or tsv)");
+            throw new InvalidInputFormatConfig("Unknown tabular type " + opt.get(FT_OPT_TYPE) + " (use csv or tsv)");
         }
-        if (opt.containsKey("columnNames") && opt.get("columnNames").equalsIgnoreCase("true"))
+        if (opt.containsKey(FT_OPT_EXPECT_COLUMN_NAMES) && opt.get(FT_OPT_EXPECT_COLUMN_NAMES).equalsIgnoreCase("true"))
             tabularFormat = tabularFormat.withFirstRecordAsHeader();
-        if (opt.containsKey("delimiter") && opt.get("delimiter").length() > 0)
-            tabularFormat = tabularFormat.withDelimiter(opt.get("delimiter").charAt(0));
-        if (opt.containsKey("quote") && opt.get("quote").length() > 0)
-            tabularFormat = tabularFormat.withQuote(opt.get("quote").charAt(0));
+        if (opt.containsKey(FT_OPT_DELIMITER) && opt.get(FT_OPT_DELIMITER).length() > 0)
+            tabularFormat = tabularFormat.withDelimiter(opt.get(FT_OPT_DELIMITER).charAt(0));
+        if (opt.containsKey(FT_OPT_QUOTE) && opt.get(FT_OPT_QUOTE).length() > 0)
+            tabularFormat = tabularFormat.withQuote(opt.get(FT_OPT_QUOTE).charAt(0));
         else
             tabularFormat = tabularFormat.withQuote(null); // disable quotes altogether
-        allowSeparatorsAfterInlineTags = opt.containsKey("allowSeparatorsAfterInlineTags")
-                && opt.get("allowSeparatorsAfterInlineTags").equalsIgnoreCase("true");
-        hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
-        hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
-        if (opt.containsKey("multipleValuesSeparator"))
-            multipleValuesSeparator = opt.get("multipleValuesSeparator");
+        allowSeparatorsAfterInlineTags = opt.containsKey(FT_OPT_ALLOW_SEPARATORS_AFTER_INLINE_TAGS)
+                && opt.get(FT_OPT_ALLOW_SEPARATORS_AFTER_INLINE_TAGS).equalsIgnoreCase("true");
+        hasInlineTags = opt.containsKey(FT_OPT_HAS_INLINE_TAGS) && opt.get(FT_OPT_HAS_INLINE_TAGS).equalsIgnoreCase("true");
+        hasGlueTags = opt.containsKey(FT_OPT_HAS_GLUE_TAGS) && opt.get(FT_OPT_HAS_GLUE_TAGS).equalsIgnoreCase("true");
+        if (opt.containsKey(FT_OPT_MULTIPLE_VALUES_SEPARATOR))
+            multipleValuesSeparatorRegex = opt.get(FT_OPT_MULTIPLE_VALUES_SEPARATOR);
     }
 
     @Override
@@ -179,6 +158,15 @@ public class DocIndexerTabular extends DocIndexerConfig {
         csvData.delete(0, csvData.length());
     }
 
+    /**
+     * Regex for recognizing open or close tag and capturing tag name and attributes
+     * part
+     */
+    private static final Pattern REGEX_TAG = Pattern.compile("^\\s*<\\s*(/\\s*)?(\\w+)((\\b[^>]+)?)>\\s*$");
+
+    /** Glue tag (if present) */
+    private static final String GLUE_TAG_NAME = "g";
+
     @Override
     public void index() throws MalformedInputFile, PluginException, IOException {
         super.index();
@@ -215,7 +203,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             // It's a document tag, an inline tag or a glue tag
                             boolean isOpenTag = m.group(1) == null;
                             String tagName = m.group(2);
-                            String rest = m.group(3).trim();
+                            String rest = StringUtil.trimWhitespace(m.group(3));
                             boolean selfClosing = rest.endsWith("/");
                             if (!isOpenTag && selfClosing)
                                 throw new MalformedInputFile("Close tag must not also end with /: " + tagName);
@@ -234,7 +222,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                     // Start a new document and add attributes as metadata fields
                                     inDocument = true;
                                     startDocument();
-                                    for (Entry<String, String> e : attributes.entrySet()) {
+                                    for (Map.Entry<String, String> e : attributes.entrySet()) {
                                         String value = processMetadataValue(e.getKey(), e.getValue());
                                         addMetadataField(e.getKey(), value);
                                     }
@@ -247,7 +235,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                 if (!attributes.isEmpty())
                                     warn("Glue tag has attributes: " + attributes);
                                 setPreventNextDefaultPunctuation();
-                            } else {
+                            } else if (inDocument) {
                                 inlineTag(tagName, isOpenTag, attributes);
                                 if (selfClosing)
                                     inlineTag(tagName, false, null);
@@ -264,7 +252,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
                     // For each annotation
                     for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
-                        // Either column number of name
+                        // Either column number or name
                         String value;
                         if (annotation.isValuePathInteger()) {
                             int i = annotation.getValuePathInt() - 1;
@@ -278,23 +266,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             else
                                 value = "";
                         }
-                        value = processString(value, annotation.getProcess(), null);
-                        if (annotation.isMultipleValues()) {
-                            // Multiple values possible. Split on multipleValuesSeparator.
-                            boolean first = true;
-                            List<String> values = Arrays.asList(value.split(multipleValuesSeparator, -1));
-                            if (!annotation.isAllowDuplicateValues()) {
-                                // Discard any duplicate values from the list
-                                values = values.stream().distinct().collect(Collectors.toList());
-                            }
-                            for (String v : values) {
-                                annotation(annotation.getName(), v, first ? 1 : 0, null);
-                                first = false;
-                            }
-                        } else {
-                            // Single value.
-                            annotation(annotation.getName(), value, 1, null);
-                        }
+                        indexValue(annotation, value);
                     }
                     endWord();
                 }
@@ -303,6 +275,29 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
         if (!lookForDocumentTags)
             endDocument();
+    }
+
+    /** Single- or double-quoted attribute in a tag */
+    private static final Pattern REGEX_ATTR = Pattern.compile("\\b(\\w+)\\s*=\\s*(\"[^\"]*\"|'[^']*')");
+
+    /**
+     * Get attributes from part of an XML tag.
+     * @param group the attributes part of the tag
+     * @return attributes map
+     */
+    private static Map<String, String> getAttr(String group) {
+        if (group == null)
+            return Collections.emptyMap();
+        String strAttrDef = StringUtil.trimWhitespace(group);
+        Matcher m = REGEX_ATTR.matcher(strAttrDef);
+        Map<String, String> attributes = new LinkedHashMap<>();
+        while (m.find()) {
+            String key = m.group(1);
+            String value = m.group(2);
+            value = value.substring(1, value.length() - 1); // chop quotes
+            attributes.put(key, value);
+        }
+        return attributes;
     }
 
     @Override

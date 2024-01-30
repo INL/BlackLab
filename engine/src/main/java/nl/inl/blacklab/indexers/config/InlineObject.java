@@ -28,9 +28,6 @@ class InlineObject implements Comparable<InlineObject> {
 
     private final InlineObjectType type;
 
-    /** The close tag to this open tag, or vice versa */
-    private InlineObject matchingTag;
-
     private Map<String, String> attributes;
 
     /** An open tag's token id, for if we want to capture e.g. tei:anchor positions to refer to later
@@ -66,14 +63,6 @@ class InlineObject implements Comparable<InlineObject> {
         return type;
     }
 
-    public void setMatchingTag(InlineObject matchingTag) {
-        this.matchingTag = matchingTag;
-    }
-
-    public InlineObject getMatchingTag() {
-        return matchingTag;
-    }
-
     public Map<String, String> getAttributes() {
         return attributes;
     }
@@ -107,7 +96,6 @@ class InlineObject implements Comparable<InlineObject> {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-        result = prime * result + ((matchingTag == null) ? 0 : matchingTag.hashCode());
         result = prime * result + offset;
         result = prime * result + ((text == null) ? 0 : text.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
@@ -127,11 +115,6 @@ class InlineObject implements Comparable<InlineObject> {
             if (other.attributes != null)
                 return false;
         } else if (!attributes.equals(other.attributes))
-            return false;
-        if (matchingTag == null) {
-            if (other.matchingTag != null)
-                return false;
-        } else if (!matchingTag.equals(other.matchingTag))
             return false;
         if (offset != other.offset)
             return false;

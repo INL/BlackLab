@@ -4,6 +4,8 @@ import java.io.Reader;
 import java.io.Writer;
 
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.Plugin;
 
 public interface TagPlugin extends Plugin {
@@ -21,7 +23,7 @@ public interface TagPlugin extends Plugin {
 
     /**
      * Get the name of the format this plugin tags into. This should match a
-     * {@link nl.inl.blacklab.index.DocIndexerFactory.Format} so that the tagged
+     * {@link InputFormat} so that the tagged
      * data can then be indexed by a {@link DocIndexer}
      *
      * @return the formatIdentifier

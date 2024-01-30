@@ -3,76 +3,164 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.Spans;
-
-import nl.inl.blacklab.search.Span;
+import org.apache.lucene.search.spans.TermSpans;
 
 /**
- * Will be the base class for all our own Spans classes. Is able to give extra
- * guarantees about the hits in this Spans object, such as if every hit is equal
- * in length, if there may be duplicates, etc. This information will help us
- * optimize certain operations, such as sequence queries, in certain cases.
- *
+ * Base class for all our own Spans classes.
+ * <p>
  * The default implementation is appropriate for Spans classes that return only
  * single-term hits.
- *
+ * <p>
  * Note that Spans will iterate through a Lucene index segment in a single thread,
  * therefore Spans and subclasses don't need to be thread-safe.
  */
-public abstract class BLSpans extends Spans {
+public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
 
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 
-    /**
-     * Should we ask our clauses for captured groups? If the clauses don't capture
-     * any groups, this will be set to false to improve performance.
-     */
-    protected boolean childClausesCaptureGroups = true;
+    private static BLSpans ensureSortedUnique(BLSpans srcSpans, boolean removeDuplicates) {
+        if (srcSpans == null)
+            throw new IllegalArgumentException("srcSpans cannot be null");
+
+        // Make sure we don't do any unnecessary work (sort/unique)
+        SpanGuarantees g = srcSpans.guarantees();
+        removeDuplicates = removeDuplicates && !g.hitsHaveUniqueStartEndAndInfo();
+        if (g.hitsStartPointSorted()) {
+            // No need to sort again; just remove duplicates if requested
+            return removeDuplicates ? new SpansUnique(srcSpans) : srcSpans;
+        }
+        return new PerDocumentSortedSpans(srcSpans, true, removeDuplicates);
+    }
+
 
     /**
-     * Give the BLSpans tree a way to access captured groups, and the capture groups
-     * themselves a way to register themselves..
+     * Ensure that given spans are sorted and unique.
+     * <p>
+     * It is assumed that they are already document-sorted, or at least
+     * all hits from one document are contiguous.
      *
-     * subclasses should override this method, pass the context to their child
-     * clauses (if any), and either: - register the captured group they represent
-     * with the context (SpansCaptureGroup does this), OR - store the context so
-     * they can later use it to access captured groups (SpansBackreference does
-     * this)
-     *
-     * @param context the hit query context, that e.g. keeps track of captured
-     *            groups
+     * @param srcSpans         spans that may not be startpoint sorted
+     * @return startpoint sorted spans
      */
-    public void setHitQueryContext(HitQueryContext context) {
-        int before = context.getCaptureRegisterNumber();
+    public static BLSpans ensureSortedUnique(BLSpans srcSpans) {
+        return ensureSortedUnique(srcSpans, true);
+    }
+
+    /**
+     * Ensure that given spans are startpoint-sorted within documents.
+     * <p>
+     * It is assumed that they are already document-sorted, or at least
+     * all hits from one document are contiguous.
+     * <p>
+     * Just uses PerDocumentSortedSpans for now, but could be perhaps be
+     * optimized to only look at startpoints within the document.
+     *
+     * @param spans spans that may not be startpoint sorted
+     * @return startpoint sorted spans
+     */
+    public static BLSpans ensureSorted(BLSpans spans) {
+        return ensureSortedUnique(spans, false);
+    }
+
+    /**
+     * Wrap a TermSpans in a BLSpans object.
+     *
+     * @param clause the clause to wrap
+     * @return the wrapped clause
+     */
+    public static BLSpans wrapTermSpans(TermSpans clause) {
+        return new TermSpansWrapper(clause);
+    }
+
+    /**
+     * For efficiency while matching, this will store the result of hasMatchInfo().
+     * Only valid after setHitQueryContext() has been called.
+     */
+    protected boolean childClausesCaptureMatchInfo = true;
+
+    /** We will delegate our guarantee methods to this. */
+    protected SpanGuarantees guarantees;
+
+    public BLSpans() {
+        this(null);
+    }
+
+    public BLSpans(SpanGuarantees guarantees) {
+        this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
+    }
+
+    @Override
+    public abstract int nextDoc() throws IOException;
+
+    @Override
+    public abstract int advance(int target) throws IOException;
+
+    @Override
+    public abstract int nextStartPosition() throws IOException;
+
+    /**
+     * Give the BLSpans tree a way to access match info (captured groups etc.),
+     * and the classes that capture match info a way to register themselves.
+     * <p>
+     * Subclasses should override this method, pass the context to their child
+     * clauses (if any), and either:
+     *
+     * <ul>
+     *   <li>register the match info they represent with the context (SpansCaptureGroup, SpansRelations do this), OR</li>
+     *   <li>store the context so they can later use it to access match info (although this can be problematic
+     *       as it may not be available during matching)</li>
+     * </ul>
+     *
+     * As an alternative, they can also only override {@link #passHitQueryContextToClauses(HitQueryContext)}.
+     *
+     * @param context the hit query context, that e.g. keeps track of captured groups
+     */
+    public final void setHitQueryContext(HitQueryContext context) {
+        childClausesCaptureMatchInfo = hasMatchInfo();
         passHitQueryContextToClauses(context);
-        if (context.getCaptureRegisterNumber() == before) {
-            // Our clauses don't capture any groups; optimize
-            childClausesCaptureGroups = false;
-        }
     }
 
     /**
      * Called by setHitQueryContext() to pass the context to child clauses.
+     * <p>
+     * Subclasses can override this to avoid having to override {@link #setHitQueryContext(HitQueryContext)}.
      *
      * @param context the hit query context, that e.g. keeps track of captured
      *            groups
      */
-    abstract protected void passHitQueryContextToClauses(HitQueryContext context);
+    protected abstract void passHitQueryContextToClauses(HitQueryContext context);
 
     /**
-     * Get the start and end position for the captured groups contained in this
+     * Get the match infos (captured groups, relations) contained in this
      * BLSpans (sub)tree.
      *
-     * @param capturedGroups an array the size of the total number of groups in the
-     *            query; the start and end positions for the groups in this subtree
-     *            will be placed in here.
+     * @param matchInfo an array the size of the total number of match info in the
+     *            query; the current match info for this subtree will be copied here.
      */
-    abstract public void getCapturedGroups(Span[] capturedGroups);
+    public abstract void getMatchInfo(MatchInfo[] matchInfo);
+
+    /**
+     * Does any of our descendants capture match info?
+     *
+     * This will recursively call this method on all subclauses.
+     * Can be used before hit query context is set. After that, it's
+     * more efficient to just remember whether any clauses added capture groups.
+     *
+     * @return true if any of our subclauses capture match info
+     */
+    public abstract boolean hasMatchInfo();
 
     /**
      * Advance the start position in the current doc to target or beyond.
-     *
+     * <p>
      * Always at least advances to the next hit, even if the current start position
      * is already at or beyond the target.
+     * <p>
+     * <b>CAUTION:</b> if your spans are not start point sorted, this method can
+     * not guarantee to skip over all hits that start before the target.
+     * Any class that uses this method should be aware of this.
+     * {@link BLSpans#ensureSorted(BLSpans)} can be used to ensure
+     * that the spans are start point sorted.
      *
      * @param target target start position to advance to
      * @return new start position, or Spans.NO_MORE_POSITIONS if we're done with
@@ -80,11 +168,26 @@ public abstract class BLSpans extends Spans {
      * @throws IOException on error
      */
     public int advanceStartPosition(int target) throws IOException {
+        assert target > startPosition();
         // Naive implementations; subclasses may provide a faster version.
+        return naiveAdvanceStartPosition(this, target);
+    }
+
+    /**
+     * Advance the start position by calling nextStartPosition() repeatedly.
+     * <p>
+     * Useful for twice-derived classes that don't have a more efficient way to advance.
+     *
+     * @param spans spans to advance
+     * @param target target start position to advance to
+     * @return new start position, or Spans.NO_MORE_POSITIONS
+     */
+    public static int naiveAdvanceStartPosition(Spans spans, int target) throws IOException {
         int pos;
         do {
-            pos = nextStartPosition();
-        } while (pos < target && pos != NO_MORE_POSITIONS);
+            pos = spans.nextStartPosition();
+        } while (pos < target); // also covers NO_MORE_POSITIONS
+        assert pos != -1;
         return pos;
     }
 
@@ -95,37 +198,55 @@ public abstract class BLSpans extends Spans {
         return 100;
     }
 
-    static String inf(int max) {
-        return BLSpanQuery.inf(max);
+    /**
+     * Get the "active" relation info for this BLSpans object.
+     * <p>
+     * A query that finds and combines several relations always has one
+     * active relation. This relation is used when we call rspan(),
+     * or if we combine the query with another relation query, e.g. using the
+     * &amp; operator.
+     *
+     * @return the relation info, or null if no active relation available
+     */
+    public abstract RelationInfo getRelationInfo();
+
+    @Override
+    public SpanGuarantees guarantees() {
+        // (Eventually guarantees may live in a separate object)
+        return guarantees;
     }
 
     /**
-     * Ensure that given spans are startpoint-sorted within documents.
+     * Assert that we're currently positioned in a document.
      *
-     * It is assumed that they are already document-sorted, or at least
-     * all hits from one document are contiguous.
+     * Does not imply that we're at a hit; we may not have started hit iteration,
+     * or it may have already been exhausted.
      *
-     * Just uses PerDocumentSortedSpans for now, but could be perhaps be
-     * optimized to only look at startpoints within the document.
+     * Call this from an assert statement so it will be optimized away in a release build.
      *
-     * @param spans spans that may not be startpoint sorted
-     * @return startpoint sorted spans
+     * @return true
      */
-    public static BLSpans ensureStartPointSorted(BLSpans spans) {
-        return optSortUniq(spans, true, false);
+    protected boolean positionedInDoc() {
+        int docID = docID();
+        return docID >= 0 && docID != NO_MORE_DOCS;
     }
 
-    public static BLSpans optSortUniq(BLSpans spans, boolean sort, boolean removeDuplicates) {
-        if (spans == null)
-            return null;
-        if (!sort && removeDuplicates) {
-            // Make already-sorted spans unique. 
-            return new SpansUnique(spans);
-        }
-        if (sort) {
-            // Sort spans by document and start point, then optionally make them unique too.
-            return PerDocumentSortedSpans.startPoint(spans, removeDuplicates);
-        }
-        return spans;
+    /**
+     * Assert that we're currently positioned at a hit.
+     *
+     * Also implies we're position in a doc, of course.
+     *
+     * Also checks that the hit is valid, that is, start position is not greater than end position.
+     *
+     * Call this from an assert statement so it will be optimized away in a release build.
+     *
+     * @return true
+     */
+    protected boolean positionedAtHit() {
+        if (!positionedInDoc())
+            return false;
+        int startPos = startPosition();
+        assert startPosition() <= endPosition();
+        return startPos >= 0 && startPos != NO_MORE_POSITIONS;
     }
 }

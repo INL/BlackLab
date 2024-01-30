@@ -112,7 +112,7 @@ parameters:
         default: 50
         max: 3000
 
-    # Context around match ("wordsaroundhit" parameter)
+    # Context around match ("context" parameter)
     # (higher values might cause copyright issues and may stress the server)
     # Set to 0 to omit the left and right context altogether.
     contextSize:
@@ -120,24 +120,24 @@ parameters:
         max: 20
 
     #  Default pattern language to use.
-    #  The pattlang GET parameter override this value.
-    patternLanguage: corpusql
+    #  The pattlang URL parameter override this value.
+    patternLanguage: bcql
 
     #  Default filter language to use.
-    #  The filterlang GET parameter override this value.
+    #  The filterlang URL parameter override this value.
     filterLanguage: luceneql
 
     # By default, should we include the grouped hits in
     # grouped responses? If false, just include group 
     # identity and size. Defaults to false. Can be overridden 
-    # using the "includegroupcontents" parameter.
+    # using the "includegroupcontents" URL parameter.
     writeHitsAndDocsInGroupedHits: false
 
     # If we're capturing part of our matches, should
     # we include empty captures? This can happen when the
     # clause to capture is optional, e.g. A:[]?
     # Defaults to false. Can be overridden using the 
-    # "omitemptycaptures" parameter.
+    # "omitemptycaptures" URL parameter.
     omitEmptyCaptures: false
 
     # What REST API version to attempt compatibility with.

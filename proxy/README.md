@@ -16,20 +16,10 @@ This is a work in progress. Still to do:
 
 ## API versions (v3 / v4)
 
-The Solr component and this proxy introduce version 4.0 of the BlackLab webservice protocol (API version numbers match the BlackLab version they were released with)
+The Solr component and this proxy introduce version 4.0 of the BlackLab webservice API, with a few minor improvements. Pass `api=3` to get the old behaviour.
 
-Changes:
-- New key added to server info page (`/`): `apiVersion` (valid values: `3.0` and `4.0`; assume `3.0` if missing)
-- Two keys were renamed on the corpus info page (`/CORPUSNAME`) to be more consistent: in the `versionInfo` block, 
-  `blacklabVersion` and `blacklabBuildTime` are now spelled with a lowercase `l`, just like on the server info page. 
-- The `/hits` and `/docs` responses don't include the `docFields` and `metadataFieldDisplayNames` keys anymore.
-  This information can be found on the corpus info page (`/CORPUSNAME`) and need not be sent with each hit request.
-- Similarly, the document info page (`/docs/DOC_PID`) no longer includes `docFields`, `metadataFieldDisplayNames` or 
-  `metadataFieldGroups` by default.
+See [API versions](https://inl.github.io/BlackLab/server/rest-api/api-versions.html) for details.
 
-For all of these changes, you can add `api=3` to produce the old behaviour. You can also specify 
-`parameters.api=3` in `blacklab-server.yaml` (or `blacklab-webservice.yaml` for Solr).
-This is meant as a transitional measure, and v3 compatibility will eventually be removed.
 
 ## Configuration
 

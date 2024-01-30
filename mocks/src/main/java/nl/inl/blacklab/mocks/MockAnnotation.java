@@ -84,10 +84,10 @@ public class MockAnnotation implements Annotation {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof MockAnnotation))
+        if (o == null || getClass() != o.getClass())
             return false;
         MockAnnotation that = (MockAnnotation) o;
-        return field.equals(that.field) && name.equals(that.name);
+        return Objects.equals(field, that.field) && Objects.equals(name, that.name);
     }
 
     @Override

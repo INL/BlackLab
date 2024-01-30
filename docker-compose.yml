@@ -6,7 +6,7 @@ version: '3.9'
 services:
 
   server:
-    image: instituutnederlandsetaal/blacklab:${IMAGE_VERSION}
+    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-latest}
     build:
         context: .
         dockerfile: docker/Dockerfile
@@ -22,7 +22,7 @@ services:
 
   # Creates new index
   indexer:
-    image: instituutnederlandsetaal/blacklab:${IMAGE_VERSION}
+    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-latest}
     profiles: [ "tools" ]
     build:
         context: .
@@ -30,7 +30,7 @@ services:
     command: >-
         /bin/bash -c 
         "cd /usr/local/lib/blacklab-tools &&
-        java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/index/${INDEX_NAME} /input ${INDEX_FORMAT}"
+        java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/index/${INDEX_NAME:-indexname} /input ${INDEX_FORMAT:-indexformat}"
     volumes:
       - "${BLACKLAB_FORMATS_DIR:-./formats}:/etc/blacklab/formats"
       - "${INDEX_INPUT_DIR:-./input}:/input"
@@ -40,7 +40,7 @@ services:
   # BlackLab as a Solr component
   solr:
     profiles: [ "tools" ]
-    image: instituutnederlandsetaal/blacklab-solr:${IMAGE_VERSION}
+    image: instituutnederlandsetaal/blacklab-solr:${VERSION:-latest}
     build:
       context: .
       dockerfile: solr/Dockerfile
@@ -49,7 +49,7 @@ services:
   # Reverse proxy to Solr or BLS
   proxy:
     profiles: [ "tools" ]
-    image: instituutnederlandsetaal/blacklab-proxy:${IMAGE_VERSION}
+    image: instituutnederlandsetaal/blacklab-proxy:${VERSION:-latest}
     build:
       context: .
       dockerfile: proxy/Dockerfile

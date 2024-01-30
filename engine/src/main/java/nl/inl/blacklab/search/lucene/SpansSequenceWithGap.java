@@ -1,10 +1,13 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.List;
 
+import org.apache.lucene.search.ConjunctionDISI;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
-
-import nl.inl.blacklab.search.Span;
+import org.apache.lucene.search.spans.Spans;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the
@@ -13,7 +16,11 @@ import nl.inl.blacklab.search.Span;
  *
  * There are different Spans classes that deal with variations of this problem;
  * this one deals with clauses with a "gap" in the middle, and doesn't sort the 
- * left clause by endpoint, making it potentially faster than other versions.
+ * first clause by endpoint, making it potentially faster than other versions.
+ *
+ * (it doesn't need to sort the first clause by end point because it keeps track
+ *  of the first index in the bucket for the second clause where a match could
+ *  connect)
  *
  * It has to take the following problem into account, which might arise with
  * more complex sequences with overlapping hits ("1234" are token positions in
@@ -47,275 +54,243 @@ import nl.inl.blacklab.search.Span;
  * matches per document and eliminates duplicates.
  */
 class SpansSequenceWithGap extends BLSpans {
-    
-    /** Allowable gap size between parts of a sequence. */
-    public static class Gap {
-        
-        public static final Gap NONE = fixed(0);
-        
-        public static final Gap ANY = atLeast(0);
-        
-        public static Gap atLeast(int minSize) {
-            return new Gap(minSize, MAX_UNLIMITED);
-        }
-        
-        public static Gap atMost(int maxSize) {
-            return new Gap(0, maxSize);
-        }
-        
-        public static Gap fixed(int size) {
-            return new Gap(size, size);
-        }
-        
-        public static Gap variable(int minSize, int maxSize) {
-            return new Gap(minSize, maxSize);
-        }
-        
-        private final int minSize;
-        
-        private final int maxSize;
-    
-        public Gap(int minSize, int maxSize) {
-            super();
-            this.minSize = minSize;
-            this.maxSize = maxSize;
-        }
-    
-        public int minSize() {
-            return minSize;
-        }
 
-        public int maxSize() {
-            return maxSize;
-        }
+    private static SpanGuarantees createGuarantees(SpanGuarantees first, SequenceGap gap, SpanGuarantees second) {
+        return new SpanGuarantees() {
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return first.hitsHaveUniqueStartEnd() && gap.isFixed() && second.hitsHaveUniqueStart();
+            }
 
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + maxSize;
-            result = prime * result + minSize;
-            return result;
-        }
-    
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return first.hitsHaveUniqueEnd() && gap.isFixed() && second.hitsHaveUniqueStartEnd();
+            }
+
+            @Override
+            public boolean isSingleAnyToken() {
+                return false;
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
                 return true;
-            if (obj == null)
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return first.hitsEndPointSorted() && gap.isFixed() && second.hitsAllSameLength();
+            }
+
+            @Override
+            public boolean okayToInvertForOptimization() {
                 return false;
-            if (getClass() != obj.getClass())
+            }
+
+            @Override
+            public boolean isSingleTokenNot() {
                 return false;
-            Gap other = (Gap) obj;
-            if (maxSize != other.maxSize)
-                return false;
-            if (minSize != other.minSize)
-                return false;
-            return true;
-        }
-        
-        @Override
-        public String toString() {
-            return minSize + "-" + maxSize;
-        }
-        
+            }
+
+            @Override
+            public boolean hitsAllSameLength() {
+                return first.hitsAllSameLength() && gap.isFixed() && second.hitsAllSameLength();
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return first.hitsLengthMin() + gap.minSize() + second.hitsLengthMin();
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return first.hitsLengthMax() + gap.maxSize() + second.hitsLengthMax();
+            }
+        };
     }
 
-    private final BLSpans left;
+    /** First clause matches, sorted by start point.
+     *  (you would think this needs to be sorted by end point, but we take this into account, see above) */
+    private final BLSpans first;
     
     /** Gap between the two clauses. */
-    private final Gap gap;
+    private final SequenceGap gap;
 
-    /** Right clause matches, collected for the whole document, sorted by startpoint. */
-    private final SpansInBucketsPerDocument right;
+    /** Second clause matches, collected for the whole document, sorted by startpoint. */
+    private final SpansInBucketsPerDocument second;
 
-    /** 
-     * First index in the right bucket that we could possibly match to a span with the current
-     * start position.
+    /** Approximation for two-phase iterator */
+    private final DocIdSetIterator conjunction;
+
+    /**
+     * First index in the second clause bucket that we could possibly connect to a span from the first
+     * clause with the current start position.
      * 
-     * This is based on the *start* position of the left clause, not the end position, because
+     * This is based on the *start* position of the first clause, not the end position, because
      * the start position is guaranteed to always rise, but the end position could go down between
      * two spans (e.g. if a short span follows a long span, and the short span is actually contained
      * by the long span).
      * 
-     * We will remember this index and iterate forward to see if multiple spans from the right
-     * clause can be matched with a given left span. Then we will start from this index again
-     * for the next left match, etc.
+     * We will remember this index and iterate forward to see if multiple spans from the second
+     * clause can be matched with a given span from the first. Then we will start from this index again
+     * for the next match from the first clause, etc.
      */
-    int indexInBucket = -2; // -2 == not started yet; -1 == just started a bucket
+    int indexFirstPossibleSecondClauseMatch = -1;
 
     /**
-     * First index in the right bucket that we could match to the end of the current left span.
+     * Index in the second clause's bucket that we've match to the end of the current span from the first clause.
      */
-    int indexInBucketLeftEnd = -2; // -2 == not started yet; -1 == just started a bucket
-    
-    int currentDoc = -1;
+    int indexCurrentSecondClauseMatch = -1;
 
-    int leftStart = -1;
+    /** Start of current match in first clause */
+    int firstStart = -1;
 
-    int rightEnd = -1;
+    /** End of current match in second clause */
+    int secondEnd = -1;
 
     /**
      * Are we already a the first match in the document, even if
      * .nextStartPosition() hasn't been called? Required because we need to test for
      * matches in the document in .nextDoc()/.advance().
      */
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
-    private int rightStartLast;
+    /** Highest acceptable value for start of second clause match given the current
+     *  first clause end and allowable gap. */
+    private int secondStartLast;
 
     /**
      * Construct SpansSequenceWithGap.
      *
-     * @param left (startpoint-sorted) left clause
+     * @param first first clause
      * @param gap allowable gap between the clauses
-     * @param right (startpoint-sorted) right clause
+     * @param second second clause
      */
-    public SpansSequenceWithGap(BLSpans left, Gap gap, BLSpans right) {
-        this.left = left;
+    SpansSequenceWithGap(BLSpans first, SequenceGap gap, BLSpans second) {
+        super(createGuarantees(first.guarantees(), gap, second.guarantees()));
+
+        this.first = BLSpans.ensureSorted(first);
         this.gap = gap;
-        this.right = new SpansInBucketsPerDocument(right);
+        this.second = SpansInBucketsPerDocument.sorted(second);
+        this.conjunction = ConjunctionDISI.intersectIterators(List.of(this.first, this.second));
     }
 
     @Override
     public int docID() {
-        return currentDoc;
+        return conjunction.docID();
     }
 
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet
-        return rightEnd;
+        return secondEnd;
     }
 
     @Override
     public int nextDoc() throws IOException {
-        alreadyAtFirstMatch = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            currentDoc = left.nextDoc();
-            leftStart = -1;
-            if (currentDoc != NO_MORE_DOCS) {
-                right.nextDoc();
-                right.nextBucket();
-                indexInBucket = -1;
-                indexInBucketLeftEnd = -1;
-                rightEnd = -1;
-                realignDoc();
-            }
+        assert docID() != NO_MORE_DOCS;
+        atFirstInCurrentDoc = false;
+        int doc = conjunction.nextDoc();
+        while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
+            doc = conjunction.nextDoc();
         }
-        return currentDoc;
+        return doc;
+    }
+
+    @Override
+    public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
+        atFirstInCurrentDoc = false;
+        int doc = conjunction.advance(target);
+        while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
+            doc = conjunction.nextDoc();
+        }
+        return doc;
+    }
+
+    private boolean twoPhaseCurrentDocMatches() throws IOException {
+        atFirstInCurrentDoc = false;
+        assert positionedInDoc();
+        // Does this doc have any matches?
+        assert first.startPosition() == -1;
+        firstStart = first.nextStartPosition();
+        assert firstStart >= 0;
+        second.nextBucket();
+        indexFirstPossibleSecondClauseMatch = -1;
+        indexCurrentSecondClauseMatch = -1;
+        secondEnd = -1;
+        realignPos();
+        if (firstStart != NO_MORE_POSITIONS) {
+            // Yes. Remember that we're already on the first match
+            atFirstInCurrentDoc = true;
+            assert firstStart >= 0;
+            return true;
+        }
+        return false;
     }
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         
         // Preconditions:
-        // - left and right are in the same document
-        // - left span is valid
-        // - right bucket is available, indexInBucket and indexInBucketLeftEnd have been set
+        // - first and second are in the same document
+        // - first clause is at a valid span
+        // - second clause has a bucket available; indexFirstPossibleSecondClauseMatch and
+        //   indexCurrentSecondClauseMatch have been set
         
         // Did we already find the first match?
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
-            return leftStart;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
+            assert firstStart >= 0;
+            return firstStart;
         }
 
         // Are we done with this document?
-        if (leftStart == NO_MORE_POSITIONS) {
-            leftStart = rightEnd = NO_MORE_POSITIONS;
+        if (firstStart == NO_MORE_POSITIONS) {
+            secondEnd = NO_MORE_POSITIONS;
             return NO_MORE_POSITIONS;
         }
         
         /*
          * Go to the next match.
          * 
-         * A match is the current left span combined with a span from the right bucket whose startpoint
-         * matches the endpoint of the current left span.
+         * A match is the current first clause span combined with a span from the second clause's bucket whose
+         * startpoint matches the endpoint of the current first clause span.
          * 
          * Going to the next match therefore means:
-         * - going to the next span in the right clause bucket (if that matches the endpoint of the current left span), OR
-         * - going to the next left span and seeing if that has any matches in the right bucket
+         * - going to the next span in the second clause bucket (if that matches the endpoint of the current first
+         *   clause span), OR
+         * - going to the next first clause span and seeing if that has any matches in the second clause bucket
          */
         
-        // See if there's another match with the same left span and a new right span.
-        indexInBucketLeftEnd++;
-        if (indexInBucketLeftEnd < right.bucketSize()) {
-            // At next span in right clause bucket. Does this match?
-            if (right.startPosition(indexInBucketLeftEnd) <= rightStartLast) {
+        // See if there's another match with the same first clause span and a new second clause span.
+        indexCurrentSecondClauseMatch++;
+        if (indexCurrentSecondClauseMatch < second.bucketSize()) {
+            // At next span in the bucket. Does this match?
+            if (second.startPosition(indexCurrentSecondClauseMatch) <= secondStartLast) {
                 // Yes! Report the new match.
-                rightEnd = right.endPosition(indexInBucketLeftEnd);
-                return leftStart;
+                secondEnd = second.endPosition(indexCurrentSecondClauseMatch);
+                return firstStart;
             }
         }
         // No more matches, end of bucket, or no bucket yet.
-        // Find a new left span and corresponding right span(s).
-        leftStart = left.nextStartPosition();
+        // Find a new first clause span and corresponding second clause span(s).
+        firstStart = first.nextStartPosition();
         realignPos();
-        return leftStart;
+        return firstStart;
     }
 
     /**
-     * Puts both spans in the next doc (possibly the current one) that has a match
-     * in it.
-     *
-     * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
-     */
-    private int realignDoc() throws IOException {
-        while (true) {
-            // Put in same doc if necessary
-            while (currentDoc != right.docID()) {
-                while (currentDoc < right.docID()) {
-                    currentDoc = left.advance(right.docID());
-                    if (currentDoc == NO_MORE_DOCS) {
-                        leftStart = rightEnd = NO_MORE_POSITIONS;
-                        return NO_MORE_DOCS;
-                    }
-                    leftStart = -1;
-                    rightEnd = -1;
-                }
-                while (right.docID() < currentDoc) {
-                    int rightDoc = right.advance(currentDoc);
-                    if (rightDoc == NO_MORE_DOCS) {
-                        currentDoc = NO_MORE_DOCS;
-                        leftStart = rightEnd = NO_MORE_POSITIONS;
-                        return NO_MORE_DOCS;
-                    }
-                    right.nextBucket();
-                    rightEnd = -1;
-                    indexInBucket = 0;
-                    indexInBucketLeftEnd = -1;
-                }
-            }
-
-            // Does this doc have any matches?
-            leftStart = left.nextStartPosition();
-            realignPos();
-            if (leftStart != NO_MORE_POSITIONS) {
-                // Yes. Remember that we're already on the first match and return the doc id.
-                alreadyAtFirstMatch = true;
-                return currentDoc;
-            }
-            
-            // No matches in this doc; on to the next
-            currentDoc = left.nextDoc();
-            if (currentDoc == NO_MORE_DOCS) {
-                // We're out of docs.
-                leftStart = rightEnd = NO_MORE_POSITIONS;
-                return NO_MORE_DOCS;
-            }
-        }
-    }
-
-    /**
-     * Restores the property that the current left match ends where the current
-     * right matches begin.
+     * Restores the property that the current first clause match ends where the current
+     * second clause matches begin.
      *
      * The spans are assumed to be already in the same doc. It is also assumed that 
-     * the left clause has just been advanced to a new position.
+     * the first clause has just been advanced to a new position.
      * 
-     * We will start by seeing if the right bucket contains matches for this new left
-     * clause span. If not, we will advance the left clause and repeat until we've
+     * We will start by seeing if the second clause bucket contains matches for this new first
+     * clause span. If not, we will advance the first clause and repeat until we've
      * found a match, or are out of matches.
      * 
      * After this function, we're on the first valid match found, or we're out of
@@ -324,62 +299,48 @@ class SpansSequenceWithGap extends BLSpans {
      */
     private void realignPos() throws IOException {
         while (true) {
-            if (leftStart == NO_MORE_POSITIONS) {
-                rightEnd = NO_MORE_POSITIONS;
+            if (firstStart == NO_MORE_POSITIONS) {
+                secondEnd = NO_MORE_POSITIONS;
                 return;
             }
             
-            // Where should the right clause start?
-            int leftStartFirst = leftStart + gap.minSize();
-            int rightStartFirst = left.endPosition() + gap.minSize();
-            rightStartLast = gap.maxSize() == MAX_UNLIMITED ? MAX_UNLIMITED : left.endPosition() + gap.maxSize();
+            // Where should the second clause start?
+            // - firstPossibleSecondClauseMatchPosition: we never need to look at matches in second clause that start
+            //                                           before this position
+            int firstPossibleSecondClauseMatchPosition = firstStart + gap.minSize();
+            // - currentSecondClauseMatchPosition: for current first clause match, this is the start position in the
+            //                                     second clause
+            int currentSecondClauseMatchPosition = first.endPosition() + gap.minSize();
+            secondStartLast = gap.maxSize() == MAX_UNLIMITED ? MAX_UNLIMITED : first.endPosition() + gap.maxSize();
             
-            // Do we need to advance the starting point in the right bucket?
-            // First, position indexInBucket according to leftStartFirst.
-            // (because left.endPosition() is not guaranteed to always rise, but leftStart is)
-            while (indexInBucket < right.bucketSize() && (indexInBucket < 0 || right.startPosition(indexInBucket) < leftStartFirst)) {
-                indexInBucket++;
+            // Do we need to advance the starting point in the second clause's bucket?
+            // First, position indexFirstPossibleSecondClauseMatch according to firstPossibleSecondClauseMatchPosition.
+            // (because first.endPosition() is not guaranteed to always rise, but first.startPosition() is)
+            while (indexFirstPossibleSecondClauseMatch < second.bucketSize() && (
+                    indexFirstPossibleSecondClauseMatch < 0 || second.startPosition(indexFirstPossibleSecondClauseMatch) < firstPossibleSecondClauseMatchPosition)) {
+                indexFirstPossibleSecondClauseMatch++;
             }
-            if (indexInBucket < right.bucketSize()) {
+            if (indexFirstPossibleSecondClauseMatch < second.bucketSize()) {
                 // Found a valid position for indexInBucket.
-                // Next, position indexInBucketLeftEnd according to rightStartFirst.
-                // (This represents the actual first span in the bucket that can match our current left span)
-                indexInBucketLeftEnd = indexInBucket;
-                while (indexInBucketLeftEnd < right.bucketSize() && right.startPosition(indexInBucketLeftEnd) < rightStartFirst) {
-                    indexInBucketLeftEnd++;
+                // Next, position indexCurrentSecondClauseMatch according to indexFirstPossibleSecondClauseMatch.
+                // (This represents the actual first span in the second clause's bucket that can match our current
+                //  first clause span)
+                indexCurrentSecondClauseMatch = indexFirstPossibleSecondClauseMatch;
+                while (indexCurrentSecondClauseMatch < second.bucketSize() && second.startPosition(
+                        indexCurrentSecondClauseMatch) < currentSecondClauseMatchPosition) {
+                    indexCurrentSecondClauseMatch++;
                 }
-                if (indexInBucketLeftEnd < right.bucketSize() && right.startPosition(indexInBucketLeftEnd) <= rightStartLast) {
-                    // Found the first matching right span for this left span. Return the sequence span.
-                    rightEnd = right.endPosition(indexInBucketLeftEnd);
+                if (indexCurrentSecondClauseMatch < second.bucketSize() && second.startPosition(
+                        indexCurrentSecondClauseMatch) <= secondStartLast) {
+                    // Found the first matching second clause span for this first clause span. Return the sequence span.
+                    secondEnd = second.endPosition(indexCurrentSecondClauseMatch);
                     return;
                 }
             }
             
-            // Advance the left clause.
-            leftStart = left.nextStartPosition();
+            // Advance the first clause.
+            firstStart = first.nextStartPosition();
         }
-    }
-
-    @Override
-    public int advance(int doc) throws IOException {
-        alreadyAtFirstMatch = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            currentDoc = left.advance(doc);
-            if (currentDoc != NO_MORE_DOCS) {
-                leftStart = -1;
-                int rightDoc = right.advance(doc);
-                if (rightDoc == NO_MORE_DOCS)
-                    currentDoc = NO_MORE_DOCS;
-                else {
-                    right.nextBucket();
-                    rightEnd = -1;
-                    indexInBucket = 0;
-                    indexInBucketLeftEnd = -1;
-                    realignDoc();
-                }
-            }
-        }
-        return currentDoc;
     }
 
     /**
@@ -387,45 +348,81 @@ class SpansSequenceWithGap extends BLSpans {
      */
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet
-        return leftStart;
+        return firstStart;
     }
 
     @Override
     public String toString() {
-        return "SeqGap(" + left + ", " + gap + ", " + right + ")";
+        return "SeqGap(" + first + ", " + gap + ", " + second + ")";
     }
 
     @Override
     public void passHitQueryContextToClauses(HitQueryContext context) {
-        left.setHitQueryContext(context);
-        right.setHitQueryContext(context);
+        first.setHitQueryContext(context);
+        second.setHitQueryContext(context);
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
-        if (!childClausesCaptureGroups)
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        if (!childClausesCaptureMatchInfo)
             return;
-        left.getCapturedGroups(capturedGroups);
-        right.getCapturedGroups(indexInBucketLeftEnd, capturedGroups);
+        first.getMatchInfo(matchInfo);
+        second.getMatchInfo(indexCurrentSecondClauseMatch, matchInfo);
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return first.hasMatchInfo() || second.hasMatchInfo();
+    }
+
+    @Override
+    public RelationInfo getRelationInfo() {
+        RelationInfo info = first.getRelationInfo();
+        return info == null ? second.getRelationInfo(indexCurrentSecondClauseMatch) : info;
     }
 
     @Override
     public int width() {
-        return left.width(); // should be + right.width(); but not implemented for now and we don't use .width()
+        return first.width() + second.width();
     }
 
     @Override
     public void collect(SpanCollector collector) throws IOException {
-        left.collect(collector);
-        //right.collect(collector); should probably be called as well, but not implemented, and not necessary for now
-        // (we only use payloads in SpansTags)
+        first.collect(collector);
+        //second.collect(collector); should probably be called as well, but not implemented, and not necessary for now
+        // (we only use payloads in SpansRelations)
     }
 
     @Override
     public float positionsCost() {
-        return left.positionsCost();
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
     }
 
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        float totalMatchCost = 0;
+        // Compute the matchCost as the total matchCost/positionsCostant of the sub spans.
+        for (DocIdSetIterator iter : List.of(first, second)) {
+            TwoPhaseIterator tpi = iter instanceof Spans ? ((Spans) iter).asTwoPhaseIterator() : null;
+            if (tpi != null) {
+                totalMatchCost += tpi.matchCost();
+            } else {
+                totalMatchCost += iter instanceof Spans ? ((Spans)iter).positionsCost() : iter.cost();
+            }
+        }
+        final float matchCost = totalMatchCost;
+        return new TwoPhaseIterator(conjunction) {
+            @Override
+            public boolean matches() throws IOException {
+                return twoPhaseCurrentDocMatches();
+            }
+
+            @Override
+            public float matchCost() {
+                return matchCost;
+            }
+        };
+    }
 }

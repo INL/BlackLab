@@ -1,10 +1,16 @@
 # New API examples
 
+::: warning OLDER CONTENT
+This page contains ideas that are partially obsolete.
+See [API versions](../../server/rest-api/api-versions.md) for the current state of the API.
+:::
+
 Here's some requests and (commented) JSON responses to illustrate 
 a possible new REST API for Blacklab.
 
-All new requests would get a `/v2/` prefix, and the old requests 
-could still be supported for a while until eventually being removed.
+There would be a way to choose the API, probably using the `api` parameter that already exists. Another option would be to expose the new API on a different path, e.g. `/v2/`.
+
+The older API would eventually be removed, after a transition period.
 
 Any information not generated or used by BlackLab, such as `displayName`, `description`, 
 `documentFormat`, `textDirection`, `uiType`, etc. was moved into `"custom": {}` 
@@ -19,7 +25,8 @@ Generic parameters:
 - when grouping, at least `identityDisplay` should be a list of values, so grouping
   by multiple context parts can be displayed properly. Maybe rethink how these values
   are encoded altogether while we're at it. Standard encodings such as JSON are almost
-  always better than a custom encoding.
+  always better than a custom encoding. Using `~` to mean "no value" is also not great;
+  maybe use `null` instead, or include a flag to indicate the value is missing.
 
 ## Server info
 
@@ -150,9 +157,7 @@ Response:
           "pos",
           "pos_type",
           "pos_subtype",
-          "pos_wordpart",
-          "starttag",
-          "punct"
+          "pos_wordpart"
         ]
       },
       "annotations": {

@@ -13,6 +13,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -23,6 +24,62 @@ import nl.inl.util.LuceneUtil;
  * A SpanQuery matching a number of tokens without any restrictions.
  */
 public class SpanQueryAnyToken extends BLSpanQuery {
+
+    public static SpanGuarantees createGuarantees(int min, int max) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean okayToInvertForOptimization() {
+                // Yes, inverting is actually an improvement
+                return isSingleAnyToken();
+            }
+
+            @Override
+            public boolean hitsAllSameLength() {
+                return min == max;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return min;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return max;
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return hitsAllSameLength();
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEnd() {
+                return true;
+            }
+
+            @Override
+            public boolean isSingleAnyToken() {
+                return min == 1 && max == 1;
+            }
+
+        };
+    }
 
     /** The minimum number of tokens in this stretch. */
     protected final int min;
@@ -37,11 +94,34 @@ public class SpanQueryAnyToken extends BLSpanQuery {
         this.min = min;
         this.max = max;
         this.luceneField = luceneField;
+        this.guarantees = createGuarantees(min, max);
+    }
+
+    /**
+     * A query matching any n-gram ([]*).
+     *
+     * Mostly useful as a "don't care" value that will never be executed.
+     * Actually executing this query will generate a very large number of hits.
+     *
+     * @param queryInfo query info
+     * @param context query execution context
+     * @return the query
+     */
+    public static SpanQueryAnyToken anyNGram(QueryInfo queryInfo, QueryExecutionContext context) {
+        return new SpanQueryAnyToken(queryInfo, 0, MAX_UNLIMITED, context.luceneField());
     }
 
     @Override
     public boolean matchesEmptySequence() {
         return min == 0;
+    }
+
+    public int getMin() {
+        return min;
+    }
+
+    public int getMax() {
+        return max;
     }
 
     @Override
@@ -99,6 +179,11 @@ public class SpanQueryAnyToken extends BLSpanQuery {
             }
 
             @Override
+            public boolean isCacheable(LeafReaderContext ctx) {
+                return true;
+            }
+
+            @Override
             public void extractTermStates(Map<Term, TermStates> contexts) {
                 // No terms
             }
@@ -122,58 +207,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
     @Override
     public BLSpanQuery inverted() {
-        return new SpanQueryNoHits(queryInfo, luceneField); // Just return our clause, dropping the NOT operation
-    }
-
-    @Override
-    protected boolean okayToInvertForOptimization() {
-        // Yes, inverting is actually an improvement
-        return isSingleAnyToken();
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return min == max;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return min;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return max;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return hitsAllSameLength();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return min == max;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return min == max;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return true;
-    }
-
-    @Override
-    public boolean isSingleAnyToken() {
-        return min == 1 && max == 1;
+        return new SpanQueryNoHits(queryInfo, luceneField);
     }
 
     @Override

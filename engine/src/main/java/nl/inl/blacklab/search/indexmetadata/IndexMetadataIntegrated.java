@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,15 +24,12 @@ import org.apache.lucene.search.TermQuery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.BLInputDocument;
-import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
@@ -59,10 +57,19 @@ import nl.inl.util.TimeUtil;
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({
     "custom", "contentViewable", "documentFormat", "versionInfo",
-    "metadataFields", "annotatedFields"
+    "metadataFields", "annotatedFields", "documentFormatConfig", "indexFlags"
 })
 public class IndexMetadataIntegrated implements IndexMetadataWriter {
+
+    /** What is the current index format? */
     public static final String LATEST_INDEX_FORMAT = "4";
+
+    /** Index flag indicating whether we index relations twice, once with and once without attributes,
+     *  and also if attribute names are preceded by RelationUtil.CH_NAME_START.
+     *  ("true" if yes, "" if no)
+     *  (no is for older pre-release versions of relations indexes; this flag will be removed in the future)
+     */
+    public static final String IFL_INDEX_RELATIONS_TWICE = "index_relations_twice";
 
     //private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
 
@@ -76,11 +83,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             } else {
                 // Load and deserialize metadata document.
                 String json = MetadataDocument.getMetadataJson(index.reader(), docId);
-                ObjectMapper mapper = Json.getJsonObjectMapper();
-                JaxbAnnotationModule jaxbAnnotationModule = new JaxbAnnotationModule();
-                mapper.registerModule(jaxbAnnotationModule);
-                metadata = mapper.readValue(new StringReader(json),
-                        IndexMetadataIntegrated.class);
+                metadata = Json.getJaxbReader().readValue(
+                        new StringReader(json), IndexMetadataIntegrated.class);
                 metadata.fixAfterDeserialization(index, docId);
             }
             return metadata;
@@ -170,14 +174,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
 
         private String serializeToJson(IndexMetadataIntegrated metadata) {
-            // Eventually, we'd like to serialize using JAXB annotations instead of a lot of manual code.
-            // The biggest hurdle for now is neatly serializing custom properties for fields and annotations,
-            // which are currently still done through a delegate class instead of CustomPropsMap.
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.registerModule(new JaxbAnnotationModule());
-                ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
-                return writer.writeValueAsString(metadata);
+                return Json.getJaxbWriter().writeValueAsString(metadata);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -284,6 +282,17 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @XmlTransient
     private FreezeStatus frozen = new FreezeStatus();
 
+    /** Free-form flags that indicate how indexing was done.
+     *
+     * This can be used to deal with slight differences in index format,
+     * e.g. whether inline tags are indexed once or twice (once with, once
+     * without attributes) without having to change the index format version.
+     *
+     * Use sparingly, and flags should generally be temporary, to be removed
+     * when it is no longer needed.
+     */
+    private Map<String, String> indexFlags = new HashMap<>();
+
     // For JAXB deserialization
     @SuppressWarnings("unused")
     IndexMetadataIntegrated() {}
@@ -308,6 +317,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         else
             populateFromConfig(config, dir);
 
+        // Indicate that we're indexing relations twice now, once with and once without attributes
+        setIndexFlag(IFL_INDEX_RELATIONS_TWICE, Boolean.TRUE.toString());
+
         documentFormatConfigFileContents = config == null ? "(no config)" : config.getOriginalFileContents();
         if (index.indexMode())
             save(); // save debug file if any
@@ -327,7 +339,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         custom.put("description", corpusConfig.getDescription());
         custom.put("textDirection", corpusConfig.getTextDirection().getCode());
         for (Map.Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
-            if (!e.getKey().equals("pidField"))
+            if (!e.getKey().equals(MetadataFields.SPECIAL_FIELD_SETTING_PID))
                 custom.put(e.getKey(), e.getValue());
         }
         custom.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
@@ -339,8 +351,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         documentFormat = config.getName();
         versionInfo.populateWithDefaults();
         metadataFields.setDefaultAnalyzer(config.getMetadataDefaultAnalyzer());
-        if (corpusConfig.getSpecialFields().containsKey("pidField"))
-            metadataFields.setPidField(corpusConfig.getSpecialFields().get("pidField"));
+        if (corpusConfig.getSpecialFields().containsKey(MetadataFields.SPECIAL_FIELD_SETTING_PID))
+            metadataFields.setPidField(corpusConfig.getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID));
 
         addFieldInfoFromConfig(config);
     }
@@ -363,9 +375,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         // Also (recursively) add metadata and annotated field config from any linked
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            DocIndexerFactory.Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format != null && format.isConfigurationBased()) {
-                addFieldInfoFromConfig(format.getConfig());
+            InputFormat inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
+            if (inputFormat.isConfigurationBased()) {
+                addFieldInfoFromConfig(inputFormat.getConfig());
             }
         }
 
@@ -398,9 +410,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
         // Also (recursively) add groups config from any linked documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            DocIndexerFactory.Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format != null && format.isConfigurationBased())
-                addGroupsInfoFromConfig(format.getConfig());
+            InputFormat inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
+            if (inputFormat.isConfigurationBased())
+                addGroupsInfoFromConfig(inputFormat.getConfig());
         }
     }
 
@@ -415,6 +427,16 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         metadataFields.clearSpecialFields();
         custom.put("annotationGroups", new LinkedHashMap<>());
         custom.put("metadataFieldGroups", new LinkedHashMap<>());
+    }
+
+    @Override
+    public void setIndexFlag(String name, String value) {
+        indexFlags.put(name, value);
+    }
+
+    @Override
+    public String indexFlag(String name) {
+        return indexFlags.getOrDefault(name, "");
     }
 
     @Override
@@ -815,5 +837,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         if (!index.indexMode())
             throw new RuntimeException("Cannot save indexmetadata in search mode!");
         metadataDocument.saveToIndex(indexWriter, metadata);
+    }
+
+    public BlackLabIndex.IndexType getIndexType() {
+        return BlackLabIndex.IndexType.INTEGRATED;
     }
 }

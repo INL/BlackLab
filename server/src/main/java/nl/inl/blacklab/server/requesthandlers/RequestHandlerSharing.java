@@ -5,6 +5,7 @@ import java.util.List;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -38,12 +39,12 @@ public class RequestHandlerSharing extends RequestHandler {
     }
 
     private void dstreamUsersResponse(ResponseStreamer responseWriter, List<String> shareWithUsers) {
+        ApiVersion api = params.apiCompatibility();
         DataStream ds = responseWriter.getDataStream();
-        ds.startMap().startEntry("users[]").startList();
+        ds.startMap().startDynEntry("users[]").startList();
         for (String userId : shareWithUsers) {
             ds.item("user", userId);
         }
-        ds.endList().endEntry().endMap();
+        ds.endList().endDynEntry().endMap();
     }
-
 }

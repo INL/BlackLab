@@ -36,16 +36,27 @@ public interface WebserviceParams extends QueryParams {
 
     Optional<TextPattern> pattern() throws BlsException;
 
+    /**
+     * The pattern, optionally with added within clause for context.
+     *
+     * E.g. if the user has passed context=s, we add within &lt;s/&gt; to the
+     * query so we can capture the relevant sentence span for the requested
+     * context. This is a separate method because we don't want to report
+     * this query with the additional clause in the response.
+     *
+     * @return query with optional within clause added
+     * @throws BlsException
+     */
+    Optional<TextPattern> patternWithinContextTag() throws BlsException;
+
     String getDocPid();
 
     Query filterQuery() throws BlsException;
 
     /**
-     * Set the list of accepted doc ids.
-     * <p>
-     * Instead of using a filter query, this list will be used
+     * Set the document filter query.
      *
-     * @param acceptedDocs global ids of documents to keep (unsorted)
+     * @param query document filter query
      */
     void setFilterQuery(Query query);
 
@@ -55,10 +66,6 @@ public interface WebserviceParams extends QueryParams {
     SearchHits hitsWindow() throws BlsException;
 
     WindowSettings windowSettings();
-
-    boolean includeGroupContents();
-
-    boolean omitEmptyCapture();
 
     HitSortSettings hitsSortSettings();
 

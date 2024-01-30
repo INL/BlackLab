@@ -32,11 +32,11 @@ public class DefaultMax {
         setMax(max);
     }
 
-    public long getDefaultValue() {
+    public long getDefault() {
         return defaultValue;
     }
 
-    public void setDefaultValue(long defaultValue) {
+    public void setDefault(long defaultValue) {
         this.defaultValue = defaultValue;
     }
 

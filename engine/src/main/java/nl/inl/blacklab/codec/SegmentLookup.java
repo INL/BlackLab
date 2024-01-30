@@ -36,7 +36,7 @@ public class SegmentLookup<T> {
     /**
      * Find the segment a given id occurs in.
      *
-     * @param docId (global) docId we're looking for
+     * @param id (global) docId we're looking for
      * @return matching leafReaderContext, which gives us the leaf reader and docBase
      */
     public T forId(int id) {

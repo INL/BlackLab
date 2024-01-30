@@ -128,7 +128,9 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
             throw new BlackLabRuntimeException("Grouping doc results by " + type + " is not yet supported");
 
         case "hit":
+        case "before":
         case "left":
+        case "after":
         case "right":
         case "wordleft":
         case "wordright":

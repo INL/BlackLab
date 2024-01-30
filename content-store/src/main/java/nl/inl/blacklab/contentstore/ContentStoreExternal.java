@@ -6,6 +6,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+import org.apache.lucene.document.Document;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.VersionFile;
 
@@ -101,5 +104,14 @@ public abstract class ContentStoreExternal implements ContentStore {
     public abstract boolean isDeleted(int id);
 
     public abstract void initialize();
+
+    @Override
+    public int getContentId(int docId, Document d, String contentIdField) {
+        // Classic external index format. Read the content store id field.
+        String contentIdStr = d.get(contentIdField);
+        if (contentIdStr == null)
+            throw new BlackLabRuntimeException("Lucene document has no content id: " + d);
+        return Integer.parseInt(contentIdStr);
+    }
 
 }

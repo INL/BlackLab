@@ -2,19 +2,22 @@ package nl.inl.blacklab.search.results;
 
 import java.util.function.Consumer;
 
+import org.apache.lucene.search.spans.Spans;
+
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A list of simple hits.
- *
+ * <p>
  * Contrary to {@link Hits}, this only contains doc, start and end
  * for each hit, so no captured groups information, and no other
  * bookkeeping (hit/doc retrieved/counted stats, hasAscendingLuceneDocIds, etc.).
- *
+ * <p>
  * This is a read-only interface.
  */
 public interface HitsInternal extends Iterable<EphemeralHit> {
@@ -115,6 +118,15 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
      */
     int end(long index);
 
+    /**
+     * Get extra information for a match, such as captured groups and relations.
+     * <p>
+     * Only available if the query captures such information.
+     *
+     * @return extra information for a match, or null if none available
+     */
+    MatchInfo[] matchInfo(long index);
+
     long size();
 
     /**
@@ -151,5 +163,27 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
      */
     interface Iterator extends java.util.Iterator<EphemeralHit> {
 
+    }
+
+    public static boolean debugCheckAllReasonable(HitsInternal hits) {
+        for (EphemeralHit h: hits) {
+            assert debugCheckReasonableHit(h);
+        }
+        return true;
+    }
+
+    public static boolean debugCheckReasonableHit(Hit h) {
+        return debugCheckReasonableHit(h.doc(), h.start(), h.end());
+    }
+
+    public static boolean debugCheckReasonableHit(int doc, int start, int end) {
+        assert doc >= 0 : "Hit doc id must be non-negative, is " + doc;
+        assert doc != Spans.NO_MORE_DOCS : "Hit doc id must not equal NO_MORE_DOCS";
+        assert start >= 0 : "Hit start must be non-negative, is " + start;
+        assert end >= 0 : "Hit end must be non-negative, is " + start;
+        assert start <= end : "Hit start " + start + " > end " + end;
+        assert start != Spans.NO_MORE_POSITIONS : "Hit start must not equal NO_MORE_POSITIONS";
+        assert end != Spans.NO_MORE_POSITIONS : "Hit end must not equal NO_MORE_POSITIONS";
+        return true;
     }
 }

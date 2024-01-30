@@ -148,7 +148,7 @@ public interface Annotation {
         else if (s)
             return AnnotationSensitivities.ONLY_SENSITIVE;
         else
-            throw new IllegalStateException("No sensitivities for annotation " + name());
+            return null; //throw new IllegalStateException("No sensitivities for annotation " + name());
     }
 
     CustomProps custom();
@@ -156,4 +156,8 @@ public interface Annotation {
     boolean isSubannotation();
 
     Annotation parentAnnotation();
+
+    default boolean isRelationAnnotation() {
+        return AnnotatedFieldNameUtil.isRelationAnnotation(name());
+    }
 }

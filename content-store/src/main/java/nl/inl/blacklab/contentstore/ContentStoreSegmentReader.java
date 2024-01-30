@@ -34,8 +34,8 @@ public interface ContentStoreSegmentReader {
      *
      * @param docId document id
      * @param luceneField field to get
-     * @param startChar first character to get. Must be zero or greater.
-     * @param endChar character after the last character to get, or -1 for <code>value.length()</code>.
+     * @param start first character to get. Must be zero or greater.
+     * @param end character after the last character to get, or -1 for <code>value.length()</code>.
      * @return requested part
      */
     String getValueSubstring(int docId, String luceneField, int start, int end);
@@ -45,7 +45,7 @@ public interface ContentStoreSegmentReader {
      *
      * @param docId document id
      * @param luceneField field to get
-     * @param star positions of the first character to get. Must all be zero or greater.
+     * @param start positions of the first character to get. Must all be zero or greater.
      * @param end positions of the character after the last character to get, or -1 for <code>value.length()</code>.
      * @return requested parts
      */

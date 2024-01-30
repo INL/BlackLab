@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
 
 # Tomcat container with the WAR file
 #--------------------------------------
-FROM tomcat:9
+FROM tomcat:9-jre17
 
 # Create config directory
 RUN mkdir /etc/blacklab/

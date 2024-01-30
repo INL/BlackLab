@@ -5,12 +5,24 @@ import java.util.Optional;
 
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
+import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
+import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
@@ -25,7 +37,7 @@ public class ResultDocSnippet {
 
     private boolean isHit;
 
-    private ContextSize wordsAroundHit;
+    private ContextSize context;
 
     private final boolean origContent;
 
@@ -44,33 +56,64 @@ public class ResultDocSnippet {
             throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.",
                     "INTERR_FETCHING_DOCUMENT_SNIPPET");
 
+        // Make sure snippet plus surrounding context don't exceed configured allowable snippet size
+        int maxContextSize = params.getSearchManager().config().getParameters().getContextSize().getMaxInt();
+        int maxSnippetSize = ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize);
+
         int start, end;
         isHit = false;
         Optional<Integer> hitStart = params.getHitStart();
         if (hitStart.isPresent()) {
+            // A hit was given, and we want some context around it
             start = hitStart.get();
             end = params.getHitEnd();
-            wordsAroundHit = ContextSize.get(params.getWordsAroundHit());
+            context = params.getContext();
             isHit = true;
         } else {
+            // Exact start and end positions to return were given
             start = params.getWordStart();
             end = params.getWordEnd();
-            wordsAroundHit = ContextSize.hitOnly();
+            context = ContextSize.get(0, maxSnippetSize);
         }
 
-        if (start < 0 || end < 0 || wordsAroundHit.left() < 0 || wordsAroundHit.right() < 0 || start > end) {
+        if (start < 0 || end < 0 || context.before() < 0 || context.after() < 0 || start > end) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 
-        // Make sure snippet plus surrounding context don't exceed configured allowable snippet size
-        int maxContextSize = params.getSearchManager().config().getParameters().getContextSize().getMaxInt();
-        if (end - start > maxContextSize)
-            end = start + maxContextSize;
-        if (end - start + wordsAroundHit.left() + wordsAroundHit.right() > maxContextSize)
-            wordsAroundHit = ContextSize.get(maxContextSize - (end - start) / 2);
-        
+        if (context.isInlineTag()) {
+            // Make sure we capture the tag so we can use its boundaries for the snippet
+            String captureInlineTagAs = context.inlineTagName();
+            TextPattern pattern = new TextPatternPositionFilter(new TextPatternFixedSpan(start, end),
+                    new TextPatternTags(captureInlineTagAs, null, TextPatternTags.Adjust.FULL_TAG, captureInlineTagAs),
+                    SpanQueryPositionFilter.Operation.WITHIN);
+            // Also capture any relations that are in the tag
+            pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, captureInlineTagAs, "rels"));
+            QueryExecutionContext queryContext = new QueryExecutionContext(index,
+                    index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
+            try {
+                BLSpanQuery query = pattern.translate(queryContext);
+                hits = index.search().find(query).execute();
+            } catch (InvalidQuery e) {
+                throw new BlackLabRuntimeException(e);
+            }
+        } else {
+            // Limit context if necessary
+            // (done automatically as well, but this should ensure equal before/after parts)
+            int snippetSize = end - start + context.before() + context.after();
+            if (snippetSize > maxSnippetSize) {
+                // Snippet too large. Shrink before and after parts to compensate.
+                int overshoot = snippetSize - maxSnippetSize;
+                int beforeAndAfter = Math.max(1, context.before() + context.after());
+                int remainingBeforeAndAfter = beforeAndAfter - overshoot;
+                float factor = (float) Math.max(0, remainingBeforeAndAfter) / beforeAndAfter;
+                int newBefore = (int)(context.before() * factor);
+                int newAfter = (int)(context.after() * factor);
+                context = ContextSize.get(newBefore, newAfter, maxSnippetSize);
+            }
+            hits = Hits.singleton(QueryInfo.create(index), luceneDocId, start, end);
+        }
+
         origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
-        hits = Hits.singleton(QueryInfo.create(index), luceneDocId, start, end);
         annotsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
     }
 
@@ -86,8 +129,8 @@ public class ResultDocSnippet {
         return isHit;
     }
 
-    public ContextSize getWordsAroundHit() {
-        return wordsAroundHit;
+    public ContextSize getContext() {
+        return context;
     }
 
     public boolean isOrigContent() {

@@ -77,13 +77,16 @@ public class AnnotatedField implements Cloneable {
 
     public boolean isAnnotatedField = true;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String displayName = "";
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String description = "";
 
     public boolean hasContentStore;
 
-    public boolean hasXmlTags;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Boolean hasXmlTags;
 
     public String mainAnnotation = "";
 

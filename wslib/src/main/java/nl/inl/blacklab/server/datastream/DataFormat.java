@@ -9,7 +9,6 @@ public enum DataFormat {
      * Returns the desired content type for the output. This is based on the
      * "outputformat" parameter.
      *
-     * @param outputType the request object
      * @return the MIME content type
      */
     public String getContentType() {

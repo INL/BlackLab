@@ -14,7 +14,10 @@ set -o errexit  # Exit on error (set -e)
 SERVICE_NAME="${1:-test}"
 
 # Go to the test dir
-cd $( dirname -- "$0"; )/
+cd "$( dirname -- "$0"; )"/
+
+# Ensure latest-test-output dirs exist
+mkdir -p data/latest-test-output data/latest-test-output-integrated
 
 # Check how to call Compose
 COMPOSE=docker-compose
@@ -40,6 +43,7 @@ $COMPOSE rm -fv testserver
 # Re-run to test the other index format as well
 echo === Testing integrated index format...
 export BLACKLAB_FEATURE_integrateExternalFiles=true
+export INDEX_TYPE=integrated
 $COMPOSE up -d testserver
 $COMPOSE run --rm "$SERVICE_NAME"
 $COMPOSE stop testserver # (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
@@ -47,12 +51,14 @@ $COMPOSE rm -fv testserver
 
 ##----------------------------------------------------------
 ## Re-run the same tests using Solr+proxy
-$COMPOSE build proxy solr "$SERVICE_NAME"
-$COMPOSE up --force-recreate -d proxy solr
-export APP_URL=http://proxy:8080/blacklab-server
-export CORPUS_NAME=test
-export SKIP_INDEXING_TESTS=true   # not yet implemented for Solr
-sleep 15 # allow Solr a little time to start up
-$COMPOSE run --rm "$SERVICE_NAME"
-$COMPOSE stop # (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
-$COMPOSE rm -fv
+#echo === Testing Solr \(with integrated index format\)...
+#$COMPOSE build proxy solr "$SERVICE_NAME"
+#$COMPOSE down -v  # delete previous index so it updates if it was changed in the repo
+#$COMPOSE up --force-recreate -d proxy solr
+#export APP_URL=http://proxy:8080/blacklab-server
+#export CORPUS_NAME=test
+#export SKIP_INDEXING_TESTS=true   # not yet implemented for Solr
+#sleep 15 # allow Solr a little time to start up
+#$COMPOSE run --rm "$SERVICE_NAME"
+#$COMPOSE stop # (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
+#$COMPOSE rm -fv

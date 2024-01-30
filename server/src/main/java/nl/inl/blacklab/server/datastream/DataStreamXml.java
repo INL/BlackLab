@@ -7,7 +7,9 @@ import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 
 /**
  * Class to stream out XML data.
@@ -25,13 +27,16 @@ public class DataStreamXml extends DataStreamAbstract {
     /** Should contextList omit empty annotations if possible? */
     protected boolean omitEmptyAnnotations = false;
 
+    private ApiVersion api;
+
     @Override
     public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
         this.omitEmptyAnnotations = omitEmptyAnnotations;
     }
 
-    public DataStreamXml(PrintWriter out, boolean prettyPrint) {
+    public DataStreamXml(PrintWriter out, boolean prettyPrint, ApiVersion api) {
         super(out, prettyPrint);
+        this.api = api;
     }
 
     public DataStream startOpenEl(String name) {
@@ -47,14 +52,20 @@ public class DataStreamXml extends DataStreamAbstract {
         return print(">").upindent().newline();
     }
 
-    private DataStream openEl(String name) {
+    private DataStreamXml openEl(String name) {
+        // prevent invalid XML for dynamic elements in old API
+        // (e.g. term frequencies, with each term being an element name and the frequency being the value)
+        name = AnnotatedFieldNameUtil.sanitizeXmlElementName(name, false);
+
         startOpenEl(name);
-        return endOpenEl();
+        endOpenEl();
+        return this;
     }
 
-    public DataStreamAbstract closeEl() {
+    public DataStreamXml closeEl() {
         String name = tagStack.remove(tagStack.size() - 1);
-        return downindent().indent().print("</").print(name).print(">").newline();
+        downindent().indent().print("</").print(name).print(">").newline();
+        return this;
     }
 
     @Override
@@ -182,59 +193,232 @@ public class DataStreamXml extends DataStreamAbstract {
 
     @Override
     public DataStream attrEntry(String elementName, String attrName, String key, Object value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-                .endCompact().newline();
+        if (api.getMajor() >= 5) {
+            return elEntry(key, value);
+        } else {
+            return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+                    .endCompact().newline();
+        }
     }
 
     @Override
     public DataStream attrEntry(String elementName, String attrName, String key, long value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-                .endCompact().newline();
+        if (api.getMajor() >= 5) {
+            return elEntry(key, value);
+        } else {
+            return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+                    .endCompact().newline();
+        }
     }
 
     @Override
     public DataStream attrEntry(String elementName, String attrName, String key, String value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-                .endCompact().newline();
+        if (api.getMajor() >= 5) {
+            return elEntry(key, value);
+        } else {
+            return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+                    .endCompact().newline();
+        }
     }
 
     @Override
     public DataStream attrEntry(String elementName, String attrName, String key, int value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-                .endCompact().newline();
+        if (api.getMajor() >= 5) {
+            return elEntry(key, value);
+        } else {
+            return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+                    .endCompact().newline();
+        }
     }
 
     @Override
     public DataStream attrEntry(String elementName, String attrName, String key, double value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-                .endCompact().newline();
+        if (api.getMajor() >= 5) {
+            return elEntry(key, value);
+        } else {
+            return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+                    .endCompact().newline();
+        }
     }
 
     @Override
     public DataStream attrEntry(String elementName, String attrName, String key, boolean value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
-                .endCompact().newline();
+        if (api.getMajor() >= 5) {
+            return elEntry(key, value);
+        } else {
+            return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+                    .endCompact().newline();
+        }
     }
 
     @Override
     public DataStream startAttrEntry(String elementName, String attrName, String key) {
-        startOpenEl(elementName);
-        attr(attrName, key);
-        return endOpenEl();
+        if (api.getMajor() >= 5) {
+            return startElEntry(key);
+        } else {
+            startOpenEl(elementName);
+            attr(attrName, key);
+            return endOpenEl();
+        }
     }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, int key) {
-        return startEntry(Integer.toString(key));
+    public DataStream endAttrEntry() {
+        if (api.getMajor() >= 5)
+            return endElEntry();
+        else
+            return super.endAttrEntry();
     }
 
     @Override
-    public DataStreamAbstract endAttrEntry() {
-        return closeEl();
+    public DataStream elEntry(String key, String value) {
+        indent().startCompact();
+        super.elEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream elEntry(String key, Object value) {
+        indent().startCompact();
+        super.elEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream elEntry(String key, int value) {
+        indent().startCompact();
+        super.elEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream elEntry(String key, long value) {
+        indent().startCompact();
+        super.elEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream elEntry(String key, double value) {
+        indent().startCompact();
+        super.elEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream elEntry(String key, boolean value) {
+        indent().startCompact();
+        super.elEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream startElEntry(String key) {
+        openEl("entry");
+        indent().startCompact().startEntry("key").value(key).endEntry().endCompact().newline();
+        openEl("value");
+        return this;
+    }
+
+    @Override
+    public DataStream endElEntry() {
+        return closeEl().closeEl(); // close value and entry elements
+    }
+
+    @Override
+    public DataStream dynEntry(String key, String value) {
+        indent().startCompact();
+        super.dynEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream dynEntry(String key, Object value) {
+        indent().startCompact();
+        super.dynEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream dynEntry(String key, int value) {
+        indent().startCompact();
+        super.dynEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream dynEntry(String key, long value) {
+        indent().startCompact();
+        super.dynEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream dynEntry(String key, double value) {
+        indent().startCompact();
+        super.dynEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream dynEntry(String key, boolean value) {
+        indent().startCompact();
+        super.dynEntry(key, value);
+        endCompact().newline();
+        return this;
+    }
+
+    @Override
+    public DataStream startDynEntry(String key) {
+        return api.getMajor() >= 5 ? this.startElEntry(key) : this.startEntry(key);
+    }
+
+    @Override
+    public DataStream endDynEntry() {
+        return api.getMajor() >= 5 ? this.endElEntry() : this.endEntry();
     }
 
     @Override
     public DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values) {
+        return api.getMajor() >= 5 ?
+                contextListV5(annotations, annotationsToList, values) :
+                contextListLegacy(annotations, annotationsToList, values);
+    }
+
+    private DataStream contextListV5(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values) {
+        startMap();
+        int valuesPerWord = annotations.size();
+        int numberOfWords = values.size() / valuesPerWord;
+        for (int k = 0; k < annotations.size(); k++) {
+            if (!annotationsToList.contains(annotations.get(k))) {
+                continue;
+            }
+            Annotation annotation = annotations.get(k);
+            startDynEntry(annotation.name()).startList();
+            for (int i = 0; i < numberOfWords; i++) {
+                int vIndex = i * valuesPerWord;
+                String value = values.get(vIndex + k);
+                item("value", value);
+            }
+            endList().endDynEntry();
+        }
+        endMap();
+        return this;
+    }
+
+    private DataStreamAbstract contextListLegacy(List<Annotation> annotations,
+            Collection<Annotation> annotationsToList, List<String> values) {
         upindent();
         int valuesPerWord = annotations.size();
         int numberOfWords = values.size() / valuesPerWord;
@@ -262,13 +446,14 @@ public class DataStreamXml extends DataStreamAbstract {
     }
 
     @Override
-    public DataStream value(String value) {
+    public DataStreamXml value(String value) {
         indent();
         if (value == null)
             print("(null)");
         else
             print(StringEscapeUtils.escapeXml10(value));
-        return newline();
+        newline();
+        return this;
     }
 
     @Override
@@ -296,6 +481,11 @@ public class DataStreamXml extends DataStreamAbstract {
     public DataStream xmlFragment(String fragment) {
         // Because we're outputting XML, we output the fragment plain (unquoted or -escaped)
         return plain(fragment);
+    }
+
+    @Override
+    public String getType() {
+        return "xml";
     }
 
 }

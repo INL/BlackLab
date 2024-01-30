@@ -27,8 +27,8 @@ public interface ForwardIndexSegmentReader {
      *
      * @param luceneField lucene field to retrieve snippet from
      * @param docId segment-local docId of document to retrieve snippet from
-     * @param starts starting token positions
-     * @param ends ending token positions
+     * @param start starting token positions
+     * @param end ending token positions
      * @return snippets (with segment-local term ids)
      */
     int[] retrievePart(String luceneField, int docId, int start, int end);

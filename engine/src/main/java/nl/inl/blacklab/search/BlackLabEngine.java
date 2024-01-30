@@ -12,14 +12,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexObjectFactoryLucene;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.util.VersionFile;
 
 /**
@@ -33,6 +37,8 @@ import nl.inl.util.VersionFile;
  * parameters, such as the number of search thread you want (default 4).
  */
 public final class BlackLabEngine implements AutoCloseable {
+
+    private static final Logger logger = LogManager.getLogger(BlackLabEngine.class);
 
     /** Time to wait for tasks in the pool to finish before terminating them */
     public static final int POOL_GRACEFUL_WAIT_SEC = 10;
@@ -229,10 +235,11 @@ public final class BlackLabEngine implements AutoCloseable {
                 // some other DocIndexer implementation)
                 // this ConfigInputFormat could then still be used as a minimal template to setup the index
                 // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
-                ConfigInputFormat format = DocumentFormats.getConfigInputFormat(formatIdentifier);
+                InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
+                ConfigInputFormat config = inputFormat == null ? null : inputFormat.getConfig();
 
                 // template might still be null, in that case a default will be created
-                indexWriter = openForWriting(directory, true, format, indexType);
+                indexWriter = openForWriting(directory, true, config, indexType);
             } else {
                 // Create index from index template file (legacy)
                 indexWriter = openForWriting(directory, true, indexTemplateFile, indexType);
@@ -392,6 +399,16 @@ public final class BlackLabEngine implements AutoCloseable {
      */
     public BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config, IndexType indexType)
             throws ErrorOpeningIndex {
+
+        if (config != null && config.getCorpusConfig().getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID) == null) {
+            logger.warn("YOUR DOCUMENT IDs ARE NOT PERSISTENT! The input format " + config.getName() + " " +
+                    "does not specify a persistent identifier (pid) field. This will work, but random ids will " +
+                    "be assigned to your documents every time you index. So reindexing may assign totally different " +
+                    "document ids, and any saved links to documents will break. " +
+                    "To fix this, specify a pidField using the corpusConfig.specialFields.pidField setting of your " +
+                    "input format configuration (.blf.yaml file).");
+        }
+
         indexType = determineIndexType(indexDir, createNewIndex, indexType);
         return indexType == IndexType.INTEGRATED ?
                 new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, createNewIndex, config) :

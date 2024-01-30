@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,11 +24,18 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
+import nl.inl.util.LuceneUtil;
 
 /** An annotated field */
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({ "custom", "mainAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
+
+    /** Max. number of values per e.g. tag attribute to cache.
+     *  Set fairly low because we don't want e.g. unique id attributes eating up a ton of memory.
+     *  Higher values of limitValues still work fine, they just take longer because they're not cached.
+     */
+    public static final double MAX_LIMIT_VALUES_TO_CACHE = 10000;
 
     public final class AnnotationsImpl implements Annotations {
         @Override
@@ -96,6 +104,14 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     @XmlTransient
     private final AnnotationsImpl annotations = new AnnotationsImpl();
 
+    /** The map of available relation classes and types and their frequencies. */
+    private final Map<String, Map<String, Long>> relations = new HashMap<>();
+
+    private boolean relationsInitialized = false;
+
+    /** The available relation classes, types and their frequencies, plus attribute info. */
+    private RelationsStats cachedRelationsStats;
+
     // For JAXB deserialization
     @SuppressWarnings("unused")
     AnnotatedFieldImpl() {
@@ -127,7 +143,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     }
 
     @Override
-    public boolean hasXmlTags() {
+    public boolean hasRelationAnnotation() {
         return xmlTags;
     }
 
@@ -184,7 +200,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     
         // Not a bookkeeping field; must be a annotation (alternative).
         AnnotationImpl annotation = getOrCreateAnnotation(annotName);
-        if (annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
+        if (annotation.isRelationAnnotation())
             xmlTags = true;
         if (parts.length > 2) {
             if (parts[2] != null) {
@@ -214,7 +230,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     synchronized void putAnnotation(AnnotationImpl annotDesc) {
         ensureNotFrozen();
         annots.put(annotDesc.name(), annotDesc);
-        if (annotDesc.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
+        if (annotDesc.isRelationAnnotation())
             xmlTags = true;
     }
 
@@ -299,6 +315,46 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
             entry.getValue().fixAfterDeserialization(index, this, entry.getKey());
         }
+    }
+
+    /**
+     * Get information about relations in this corpus.
+     *
+     * Includes classes and types of relations that occur, the frequency for each,
+     * and any attributes and their values.
+     *
+     * @param index the index
+     * @param limitValues truncate lists/maps of values to this length
+     * @return information about relations in this corpus
+     */
+    public RelationsStats getRelationsStats(BlackLabIndex index, long limitValues) {
+        RelationsStats results;
+        synchronized (this) {
+            results = cachedRelationsStats;
+        }
+        if (results == null || results.getLimitValues() < limitValues) {
+            // We either don't have cached relationsStats, or the limitValues value is too low.
+            boolean oldStyleStarttag = index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
+            results = new RelationsStats(oldStyleStarttag, limitValues);
+            String annotName = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
+            String luceneField = annotation(annotName).sensitivity(MatchSensitivity.SENSITIVE)
+                    .luceneField();
+            LuceneUtil.getFieldTerms(index.reader(), luceneField,
+                    null, results::addIndexedTerm);
+        }
+        // Should we cache these results?
+        synchronized (this) {
+            if (results != cachedRelationsStats && limitValues < MAX_LIMIT_VALUES_TO_CACHE) {
+                // Reasonable enough to cache.
+                cachedRelationsStats = results;
+            }
+        }
+        if (limitValues < results.getLimitValues()) {
+            // We have cached relationsStats, but the limitValues value is too low.
+            // We can reuse the data, but we need to limit the number of values.
+            results = results.withLimit(limitValues);
+        }
+        return results;
     }
 
 }

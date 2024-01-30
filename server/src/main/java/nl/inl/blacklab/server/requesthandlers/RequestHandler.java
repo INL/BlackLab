@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
@@ -41,9 +43,39 @@ import nl.inl.blacklab.webservice.WebserviceOperation;
  * subclass.
  */
 public abstract class RequestHandler {
+
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
+
+    public static final String ENDPOINT_AUTOCOMPLETE     = "autocomplete";
+    public static final String ENDPOINT_CACHE_CLEAR      = "cache-clear";
+    public static final String ENDPOINT_CACHE_INFO       = "cache-info";
+    public static final String ENDPOINT_DOCS             = "docs";
+    public static final String ENDPOINT_DOCS_CSV         = "docs-csv";
+    public static final String ENDPOINT_DOCS_GROUPED     = "docs-grouped";
+    public static final String ENDPOINT_DOCS_GROUPED_CSV = "docs-grouped-csv";
+    public static final String ENDPOINT_DOC_CONTENTS     = "doc-contents";
+    public static final String ENDPOINT_DOC_INFO         = "doc-info";
+    public static final String ENDPOINT_DOC_SNIPPET      = "doc-snippet";
+    public static final String ENDPOINT_FIELDS           = "fields";
+    public static final String ENDPOINT_HITS             = "hits";
+    public static final String ENDPOINT_HITS_CSV         = "hits-csv";
+    public static final String ENDPOINT_HITS_GROUPED     = "hits-grouped";
+    public static final String ENDPOINT_HITS_GROUPED_CSV = "hits-grouped-csv";
+    public static final String ENDPOINT_INPUT_FORMATS    = "input-formats";
+    public static final String ENDPOINT_PARSE_PATTERN    = "parse-pattern";
+    public static final String ENDPOINT_RELATIONS        = "relations";
+    public static final String ENDPOINT_SHARED_WITH_ME   = "shared-with-me";
+    public static final String ENDPOINT_SHARING          = "sharing";
+    public static final String ENDPOINT_STATUS           = "status";
+    public static final String ENDPOINT_TERMFREQ         = "termfreq";
+
+    public static final List<String> TOP_LEVEL_ENDPOINTS = Arrays.asList(
+            WebserviceOperation.CACHE_CLEAR.path(),
+            WebserviceOperation.CACHE_INFO.path(),
+            WebserviceOperation.LIST_INPUT_FORMATS.path()
+    );
 
     /** The available request handlers by name */
     static final Map<String, Class<? extends RequestHandler>> availableHandlers;
@@ -51,24 +83,25 @@ public abstract class RequestHandler {
     // Fill the map with all the handler classes
     static {
         availableHandlers = new HashMap<>();
-        availableHandlers.put("docs", RequestHandlerDocs.class);
-        availableHandlers.put("docs-grouped", RequestHandlerDocsGrouped.class);
-        availableHandlers.put("docs-csv", RequestHandlerDocsCsv.class);
-        availableHandlers.put("docs-grouped-csv", RequestHandlerDocsCsv.class);
-        availableHandlers.put("doc-contents", RequestHandlerDocContents.class);
-        availableHandlers.put("doc-snippet", RequestHandlerDocSnippet.class);
-        availableHandlers.put("doc-info", RequestHandlerDocInfo.class);
-        availableHandlers.put("fields", RequestHandlerFieldInfo.class);
-        //availableHandlers.put("help", RequestHandlerBlsHelp.class);
-        availableHandlers.put("hits", RequestHandlerHits.class);
-        availableHandlers.put("hits-grouped", RequestHandlerHitsGrouped.class);
-        availableHandlers.put("hits-csv", RequestHandlerHitsCsv.class);
-        availableHandlers.put("hits-grouped-csv", RequestHandlerHitsCsv.class);
-        availableHandlers.put("status", RequestHandlerIndexStatus.class);
-        availableHandlers.put("termfreq", RequestHandlerTermFreq.class);
-        availableHandlers.put("", RequestHandlerIndexMetadata.class);
-        availableHandlers.put("autocomplete", RequestHandlerAutocomplete.class);
-        availableHandlers.put("sharing", RequestHandlerSharing.class);
+        availableHandlers.put("", RequestHandlerIndexMetadata.class); // empty path after index = show index metadata
+        availableHandlers.put(ENDPOINT_AUTOCOMPLETE,     RequestHandlerAutocomplete.class);
+        availableHandlers.put(ENDPOINT_DOCS,             RequestHandlerDocs.class);
+        availableHandlers.put(ENDPOINT_DOCS_CSV,         RequestHandlerDocsCsv.class);
+        availableHandlers.put(ENDPOINT_DOCS_GROUPED,     RequestHandlerDocsGrouped.class);
+        availableHandlers.put(ENDPOINT_DOCS_GROUPED_CSV, RequestHandlerDocsCsv.class);
+        availableHandlers.put(ENDPOINT_DOC_CONTENTS,     RequestHandlerDocContents.class);
+        availableHandlers.put(ENDPOINT_DOC_INFO,         RequestHandlerDocInfo.class);
+        availableHandlers.put(ENDPOINT_DOC_SNIPPET,      RequestHandlerDocSnippet.class);
+        availableHandlers.put(ENDPOINT_FIELDS,           RequestHandlerFieldInfo.class);
+        availableHandlers.put(ENDPOINT_HITS,             RequestHandlerHits.class);
+        availableHandlers.put(ENDPOINT_HITS_CSV,         RequestHandlerHitsCsv.class);
+        availableHandlers.put(ENDPOINT_HITS_GROUPED,     RequestHandlerHitsGrouped.class);
+        availableHandlers.put(ENDPOINT_HITS_GROUPED_CSV, RequestHandlerHitsCsv.class);
+        availableHandlers.put(ENDPOINT_PARSE_PATTERN,    RequestHandlerParsePattern.class);
+        availableHandlers.put(ENDPOINT_RELATIONS,        RequestHandlerRelations.class);
+        availableHandlers.put(ENDPOINT_SHARING,          RequestHandlerSharing.class);
+        availableHandlers.put(ENDPOINT_STATUS,           RequestHandlerIndexStatus.class);
+        availableHandlers.put(ENDPOINT_TERMFREQ,         RequestHandlerTermFreq.class);
     }
 
     /**
@@ -123,10 +156,16 @@ public abstract class RequestHandler {
         String urlResource = userRequest.getUrlResource();
         String urlPathInfo = userRequest.getUrlPathInfo();
         boolean resourceOrPathGiven = !urlResource.isEmpty() || !urlPathInfo.isEmpty();
+        boolean isNewEndpoint = userRequest.isNewEndpoint(); // /corpora/... in API v4+
+        boolean isNewApi = userRequest.apiVersion().getMajor() >= 5; // Enforce using only the new API?
+        if (!isNewEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi)
+            throw new UnsupportedOperationException("Old API not supported with current settings. Migrate to " +
+                    "new /corpora/... endpoints, or use api=4 for backward compat.");
         String method = request.getMethod();
+        boolean isInputFormatsRequest = !isNewEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);
         if (method.equals("DELETE")) {
             // Index given and nothing else?
-            if (indexName.equals("input-formats")) {
+            if (isInputFormatsRequest) {
                 if (!urlPathInfo.isEmpty())
                     return errorObj.methodNotAllowed("DELETE", null);
                 requestHandler = new RequestHandlerDeleteFormat(userRequest);
@@ -146,7 +185,7 @@ public abstract class RequestHandler {
                 if (indexName.length() == 0 && !resourceOrPathGiven) {
                     // POST to /blacklab-server/ : create private index
                     requestHandler = new RequestHandlerCreateIndex(userRequest);
-                } else if (indexName.equals("cache-clear")) {
+                } else if (!isNewEndpoint && indexName.equals(ENDPOINT_CACHE_CLEAR)) {
                     // Clear the cache
                     if (resourceOrPathGiven) {
                         return errorObj.unknownOperation(indexName);
@@ -156,7 +195,7 @@ public abstract class RequestHandler {
                                 .unauthorized("You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to do this.");
                     }
                     requestHandler = new RequestHandlerClearCache(userRequest);
-                } else if (indexName.equals("input-formats")) {
+                } else if (isInputFormatsRequest) {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You must be logged in to add a format.");
                     requestHandler = new RequestHandlerAddFormat(userRequest);
@@ -164,13 +203,13 @@ public abstract class RequestHandler {
                     // Add document to index
                     if (privateIndex == null || !privateIndex.userMayAddData(user))
                         return errorObj.forbidden("Can only POST to your own private indices.");
-                    if (urlResource.equals("docs") && urlPathInfo.isEmpty()) {
+                    if (urlResource.equals(ENDPOINT_DOCS) && urlPathInfo.isEmpty()) {
                         if (!Index.isValidIndexName(indexName))
                             return errorObj.illegalIndexName(indexName);
 
                         // POST to /blacklab-server/indexName/docs/ : add data to index
                         requestHandler = new RequestHandlerAddToIndex(userRequest);
-                    } else if (urlResource.equals("sharing") && urlPathInfo.isEmpty()) {
+                    } else if (urlResource.equals(ENDPOINT_SHARING) && urlPathInfo.isEmpty()) {
                         if (!Index.isValidIndexName(indexName))
                             return errorObj.illegalIndexName(indexName);
                         // POST to /blacklab-server/indexName/sharing : set list of users to share with
@@ -185,7 +224,7 @@ public abstract class RequestHandler {
                 }
             }
             if (method.equals("GET") || (method.equals("POST") && postAsGet)) {
-                if (indexName.equals("cache-info")) {
+                if (!isNewEndpoint && indexName.equals(ENDPOINT_CACHE_INFO)) {
                     if (resourceOrPathGiven) {
                         return errorObj.unknownOperation(indexName);
                     }
@@ -194,8 +233,12 @@ public abstract class RequestHandler {
                                 "You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to see this information.");
                     }
                     requestHandler = new RequestHandlerCacheInfo(userRequest);
-                } else if (indexName.equals("input-formats")) {
+                } else if (isInputFormatsRequest) {
                     requestHandler = new RequestHandlerListInputFormats(userRequest);
+                } else if (!isNewEndpoint && indexName.equals(ENDPOINT_SHARED_WITH_ME)) {
+                    if (!user.isLoggedIn())
+                        return errorObj.unauthorized("You must be logged in to see corpora shared with you.");
+                    requestHandler = new RequestHandlerSharedWithMe(userRequest);
                 } else if (indexName.length() == 0) {
                     // No index or operation given; server info
                     requestHandler = new RequestHandlerServerInfo(userRequest);
@@ -206,36 +249,40 @@ public abstract class RequestHandler {
 
                         IndexStatus status = indexManager.getIndex(indexName).getStatus();
                         if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug")
-                                && !handlerName.equals("fields") && !handlerName.equals("status")
-                                && !handlerName.equals("sharing")) {
+                                && !handlerName.equals(ENDPOINT_FIELDS) && !handlerName.equals(
+                                ENDPOINT_STATUS)
+                                && !handlerName.equals(ENDPOINT_SHARING)) {
                             return errorObj.unavailable(indexName, status.toString());
                         }
 
                         if (debugMode && !handlerName.isEmpty()
-                                && !Arrays.asList("hits", "hits-csv", "hits-grouped-csv", "docs",
-                                        "docs-csv", "docs-grouped-csv", "fields", "termfreq",
-                                        "status", "autocomplete", "sharing").contains(handlerName)) {
+                                && !Arrays.asList(
+                                ENDPOINT_HITS, ENDPOINT_HITS_CSV, ENDPOINT_HITS_GROUPED_CSV,
+                                ENDPOINT_DOCS, ENDPOINT_DOCS_CSV, ENDPOINT_DOCS_GROUPED_CSV,
+                                ENDPOINT_PARSE_PATTERN, ENDPOINT_RELATIONS, ENDPOINT_FIELDS, ENDPOINT_TERMFREQ,
+                                ENDPOINT_STATUS, ENDPOINT_AUTOCOMPLETE, ENDPOINT_SHARING).contains(handlerName)) {
                             handlerName = "debug";
                         }
 
                         // HACK to avoid having a different url resource for
                         // the lists of (hit|doc) groups: instantiate a different
                         // request handler class in this case.
-                        else if (handlerName.equals("docs") && urlPathInfo.length() > 0) {
-                            handlerName = "doc-info";
+                        else if (handlerName.equals(ENDPOINT_DOCS) && urlPathInfo.length() > 0) {
+                            handlerName = ENDPOINT_DOC_INFO;
                             String p = urlPathInfo;
                             if (p.endsWith("/"))
                                 p = p.substring(0, p.length() - 1);
                             if (urlPathInfo.endsWith("/contents")) {
-                                handlerName = "doc-contents";
+                                handlerName = ENDPOINT_DOC_CONTENTS;
                             } else if (urlPathInfo.endsWith("/snippet")) {
-                                handlerName = "doc-snippet";
+                                handlerName = ENDPOINT_DOC_SNIPPET;
                             } else if (!p.contains("/")) {
                                 // OK, retrieving metadata
                             } else {
                                 return errorObj.unknownOperation(urlPathInfo);
                             }
-                        } else if (handlerName.equals("hits") || handlerName.equals("docs")) {
+                        } else if (handlerName.equals(ENDPOINT_HITS) || handlerName.equals(
+                                ENDPOINT_DOCS)) {
                             if (!StringUtils.isBlank(request.getParameter("group"))) {
                                 String viewgroup = request.getParameter("viewgroup");
                                 if (StringUtils.isEmpty(viewgroup))
@@ -276,7 +323,30 @@ public abstract class RequestHandler {
             return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
                     "INTERR_WRONG_HTTP_METHOD");
         }
+        requestHandler.setIsNewEndpoint(isNewEndpoint);
         return requestHandler;
+    }
+
+    /**
+     * Is this a /corpora/... request?
+     *
+     * @param b true if this is a /corpora/... request
+     */
+    private void setIsNewEndpoint(boolean b) {
+        this.newEndpoint = b;
+    }
+
+    /**
+     * Is this a /corpora/... request?
+     *
+     * These endpoints were added in API v4+ and use a new version of the API.
+     * They replace the old index-related endpoints in API v5.
+     * You can test this already, using api=exp (or set in config file).
+     *
+     * @return true if this is a /corpora/... request
+     */
+    private boolean isNewEndpoint() {
+        return this.newEndpoint;
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {
@@ -299,6 +369,13 @@ public abstract class RequestHandler {
     private UserRequestBls userRequest;
 
     protected boolean debugMode;
+
+    /** Is this a new API request? (/corpora/... in API v4+)
+     * These endpoints were added in API v4+ and use a new version of the API.
+     * They replace the old index-related endpoints in API v5.
+     * You can test this already, using api=exp (or set in config file)
+     */
+    private boolean newEndpoint = false;
 
     /** The servlet object */
     protected BlackLabServer servlet;
@@ -453,6 +530,15 @@ public abstract class RequestHandler {
     public abstract int handle(ResponseStreamer rs) throws BlsException, InvalidQuery;
 
     public ApiVersion apiCompatibility() {
-        return params.apiCompatibility();
+        ApiVersion api = params.apiCompatibility();
+        if (isNewEndpoint() && api.getMajor() <= 4) {
+            // The new /corpora/... endpoints always use the new version of the API.
+            return ApiVersion.EXPERIMENTAL;
+        }
+        return api;
+    }
+
+    public WebserviceParams getParams() {
+        return params;
     }
 }

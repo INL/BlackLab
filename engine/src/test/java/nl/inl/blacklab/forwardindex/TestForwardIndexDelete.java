@@ -59,9 +59,7 @@ public class TestForwardIndexDelete {
 
         if (testRetrieve) {
             // Test retrieve
-            int[] start = { 0 };
-            int[] end = { length };
-            int[] test = fi.retrievePartsInt(fiid, start, end).get(0);
+            int[] test = fi.retrievePart(fiid, 0, length);
             for (int i = 0; i < length; i++) {
                 Assert.assertEquals(i, test[i]);
             }

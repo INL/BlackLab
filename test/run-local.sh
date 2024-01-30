@@ -7,5 +7,5 @@
 # and the response from the server will be saved for future runs.
 # Run this script after adding a new test, then commit the new response file.
 
-$( dirname -- "$0"; )/testrunner.sh test-local
+"$( dirname -- "$0"; )"/testrunner.sh test-local
 exit 0

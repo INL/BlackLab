@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class NfaStateAnd extends NfaState {
 
@@ -145,12 +146,7 @@ public class NfaStateAnd extends NfaState {
 
     @Override
     protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
-        StringBuilder b = new StringBuilder();
-        for (NfaState s : nextStates) {
-            if (b.length() > 0)
-                b.append(",");
-            b.append(dump(s, stateNrs));
-        }
+        String b = nextStates.stream().map(s -> dump(s, stateNrs)).collect(Collectors.joining(","));
         return "AND(" + b + ")";
     }
 

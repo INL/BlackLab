@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 /**
@@ -79,4 +80,8 @@ public interface DocWriter {
     void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentIdFieldName, String contentStoreName);
 
     boolean needsPrimaryValuePayloads();
+
+    default BlackLabIndex.IndexType getIndexType() {
+        return metadata().getIndexType();
+    }
 }

@@ -21,9 +21,9 @@ class ClauseCombinerNot extends ClauseCombiner {
     }
 
     Type getType(BLSpanQuery left, BLSpanQuery right) {
-        if (left.isSingleTokenNot() && right.hitsAllSameLength())
+        if (left.guarantees().isSingleTokenNot() && right.guarantees().hitsAllSameLength())
             return Type.NOT_CONST;
-        if (right.isSingleTokenNot() && left.hitsAllSameLength())
+        if (right.guarantees().isSingleTokenNot() && left.guarantees().hitsAllSameLength())
             return Type.CONST_NOT;
         return null;
     }
@@ -41,19 +41,19 @@ class ClauseCombinerNot extends ClauseCombiner {
         case NOT_CONST:
             // Constant-length child after negative, single-token part.
             // Rewrite to NOTCONTAINING clause, incorporating previous part.
-            int myLen = right.hitsLengthMin();
+            int myLen = right.guarantees().hitsLengthMin();
             container = new SpanQueryExpansion(right, Direction.LEFT, 1, 1);
             posf = new SpanQueryPositionFilter(container, left.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
-            posf.adjustRight(-myLen);
+            posf.adjustTrailing(-myLen);
             return posf;
         case CONST_NOT:
             // Negative, single-token child after constant-length part.
             // Rewrite to NOTCONTAINING clause, incorporating previous part.
-            int prevLen = left.hitsLengthMin();
+            int prevLen = left.guarantees().hitsLengthMin();
             container = new SpanQueryExpansion(left, Direction.RIGHT, 1, 1);
             posf = new SpanQueryPositionFilter(container, right.inverted(),
                     SpanQueryPositionFilter.Operation.CONTAINING, true);
-            posf.adjustLeft(prevLen);
+            posf.adjustLeading(prevLen);
             return posf;
         default:
             throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);

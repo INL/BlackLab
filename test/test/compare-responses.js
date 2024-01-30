@@ -1,12 +1,14 @@
+"use strict";
 const chai = require("chai");
 const expect = chai.expect;
 const fs = require('fs')
 const path = require('path')
 const sanitizeFileName = require("sanitize-filename");
+const stableStringify = require('json-stable-stringify'); // for diffable output
 
 const constants = require('./constants');
 const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
-
+const LATEST_TEST_OUTPUT_PATH = constants.LATEST_TEST_OUTPUT_PATH;
 
 /**
  * Remove variable values such as build time, version, etc. from response.
@@ -14,15 +16,20 @@ const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
  * This enables us to compare responses from tests.
  *
  * @param response response to sanitize
- * @param removeParametersFromResponse if true, also remove summary.searchParam (for comparing different
- *   requests that should have same results) * @return response with variable values replaces with fixed ones
+ * @return response with variable values replaces with fixed ones
  */
-function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
+function sanitizeBlsResponse(response) {
     const keysToMakeConstant = {
         // Server information page
+        apiVersion: true, //'DELETE',
         blacklabBuildTime: true,
         blacklabVersion: true,
-        indices: {
+        corpora: { // API v4/5
+            test: {
+                timeModified: true
+            }
+        },
+        indices: { // API v3/4
             test: {
                 timeModified: true
             }
@@ -31,10 +38,10 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
 
         // Corpus information page
         versionInfo: {
-            blacklabBuildTime: true, // API v3 inconsistent name
-            blacklabVersion: true,   // API v3 inconsistent name
-            blackLabBuildTime: true,
-            blackLabVersion: true,
+            blacklabBuildTime: true, // API v4
+            blacklabVersion: true,   // API v4
+            blackLabBuildTime: true, // API v3 (inconsistent casing)
+            blackLabVersion: true,   // API v3 (inconsistent casing)
             indexFormat: true,
             timeCreated: true,
             timeModified: true
@@ -54,17 +61,25 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
         // Top-level timeModified key on index status page (e.g. /test/status/)
         timeModified: true
     };
-    if (removeParametersFromResponse) {
-        keysToMakeConstant.summary.searchParam = true;
-    }
 
-    const stripDir = (value, key) => {
-        if (key === 'fromInputFile' && typeof value === 'string')
+    const transformValues = (value, key) => {
+        if (key === 'displayName' && value === 'Starttag') {
+            // Renamed to _relation in integrated index format
+            return '_relation';
+        }
+        if (key === 'fromInputFile' && typeof value === 'string') {
+            // Strip directory from fromInputFile field values
             return value.replace(/^.*[/\\]([^/\\]+)$/, "$1");
+        }
         return value;
     };
 
-    return sanitizeResponse(response, keysToMakeConstant, stripDir);
+    const transformKeys = (key) => {
+        // starttag annotation has been renamed to _relation in integrated index format
+        return key === 'starttag' ? '_relation' : key;
+    }
+
+    return sanitizeResponse(response, keysToMakeConstant, transformValues, transformKeys);
 }
 
 /**
@@ -81,13 +96,15 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
  *   strings is also allowed. If null or undefined are specified, an empty object is used.
  * @param transformValueFunc (optional) function to apply to all values copied from the response (i.e. values not
  *   being made constant)
+ * @param transformKeyFunc (optional) function to apply to all keys
  * @return sanitized response
  */
-function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v, k = undefined) => v) ) {
+function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v, k = undefined) => v),
+                          transformKeyFunc = ((k, _) => k )) {
 
     if (Array.isArray(response)) {
         // Process each element in the array recursively
-        return response.map(v => sanitizeResponse(v, keysToMakeConstant, transformValueFunc));
+        return response.map(v => sanitizeResponse(v, keysToMakeConstant, transformValueFunc, transformKeyFunc));
     } else if (!(typeof response === 'object')) {
         // Regular value (probably an array element); just call the transform function and return
         return transformValueFunc(response);
@@ -108,13 +125,14 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
     // Replace any of the keys from keysToMakeConstant with constant values,
     // and perform any other fixes if fixValueFunc was supplied.
     const cleanedData = {};
-    for (let key in response) {
-        const value = response[key];
+    for (let origKey in response) {
+        const value = response[origKey];
+        const key = transformKeyFunc(origKey, value);
         if (keysToMakeConstant.hasOwnProperty(key)) {
             // This is (or contains) a variable value we don't want to compare.
             if (recursive && typeof keysToMakeConstant[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
                 // Subobject; recursively fix this part of the response
-                cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc);
+                cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc, transformKeyFunc);
             } else {
                 // Single value or array. Delete or make fixed value
                 if (keysToMakeConstant[key] !== 'DELETE') {
@@ -125,12 +143,12 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
             // No values to make constant, just regular values we want to compare.
             if (Array.isArray(value)) {
                 // Call ourselves to process the array
-                // Note that we apply transformValueFunc on the result again so we can pass the key for the array,
-                // otherwise key-specific rules won't work.
-                cleanedData[key] = value.map(v => transformValueFunc(sanitizeResponse(v, {}, transformValueFunc), key));
+                // Note that we apply transformValueFunc on the result again so we can pass the origKey for the array,
+                // otherwise origKey-specific rules won't work.
+                cleanedData[key] = value.map(v => transformValueFunc(sanitizeResponse(v, {}, transformValueFunc, transformKeyFunc), key));
             } else if (typeof value === 'object') {
                 // Object; call ourselves recursively to sanitize it
-                cleanedData[key] = sanitizeResponse(value, {}, transformValueFunc);
+                cleanedData[key] = sanitizeResponse(value, {}, transformValueFunc, transformKeyFunc);
             } else {
                 // Regular value; call transform function.
                 cleanedData[key] = transformValueFunc(value, key);
@@ -147,30 +165,55 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
  * @param category test category (e.g. "hits")
  * @param testName name of this test, and file name for the response
  * @param actualResponse webservice response we got (parsed JSON)
- * @param removeParametersFromResponse if true, also remove summary.searchParam (for comparing different
- * requests that should have same results)
  */
-function expectUnchanged(category, testName, actualResponse, removeParametersFromResponse = false) {
+function expectUnchanged(category, testName, actualResponse) {
+    const sanCategory = sanitizeFileName(category);
+    const sanFileName = sanitizeFileName(testName);
+
     // Remove anything that's variable (e.g. search time) from the response.
-    const sanitized = sanitizeBlsResponse(actualResponse, removeParametersFromResponse);
+    const sanitized = sanitizeBlsResponse(actualResponse);
+
+    // Stringify to JSON if we're saving the response to a file
+    let json = '';
+    if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
+        json = stableStringify(sanitized, { space: 2 });
+
+        // Write to latest test path so we can compare (and easily update) in case of changes.
+        if (!fs.existsSync(LATEST_TEST_OUTPUT_PATH))
+            fs.mkdirSync(LATEST_TEST_OUTPUT_PATH);
+        const categoryDir = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory);
+        if (!fs.existsSync(categoryDir))
+            fs.mkdirSync(categoryDir);
+
+        const saveTestOutputFile = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory, `${sanFileName}.json`);
+        fs.writeFileSync(saveTestOutputFile, json, {encoding: 'utf8'});
+    }
 
     // Ensure category dir exists
-    const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category));
+    const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanCategory);
     if (!fs.existsSync(categoryDir))
         fs.mkdirSync(categoryDir);
 
     // Did we have a previous response?
-    const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category), `${sanitizeFileName(testName)}.json`);
+    const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanCategory, `${sanFileName}.json`);
     if (fs.existsSync(savedResponseFile)) {
         // Read previously saved response to compare
         const savedResponse = JSON.parse(fs.readFileSync(savedResponseFile, { encoding: 'utf8' }));
 
         // Compare
         expect(sanitized).to.be.deep.equal(savedResponse);
+
+        /*
+        // DEBUG. Overwrite our new stable JSON response, which we know is identical.
+        if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
+            // Save this response for subsequent tests
+            fs.writeFileSync(savedResponseFile, json, {encoding: 'utf8'});
+        }*/
+
     } else {
         if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
             // Save this response for subsequent tests
-            fs.writeFileSync(savedResponseFile, JSON.stringify(sanitized, null, 2), {encoding: 'utf8'});
+            fs.writeFileSync(savedResponseFile, json, {encoding: 'utf8'});
         } else {
             expect.fail(`Response for ${category}/${testName} not found. Make sure it exists (use run-local.sh to save responses)`);
         }
@@ -178,11 +221,15 @@ function expectUnchanged(category, testName, actualResponse, removeParametersFro
 }
 
 function expectUrlUnchanged(category, testName, url, expectedType = 'application/json') {
-    describe(`${category}: ${testName}`, () => {
+    const params = url.indexOf('api=') >= 0 ? undefined : { api: constants.TEST_API_VERSION };
+    describe(`${category}/${testName}`, () => {
         it('response should match previous', done => {
-            chai
+            const get = chai
                     .request(constants.SERVER_URL)
-                    .get(url)
+                    .get(url);
+            //console.log(`URL=${url}, params=${JSON.stringify(params)}`);
+            const query = params ? get.query(params) : get;
+            query
                     .set('Accept', expectedType)
                     .end((err, res) => {
                         if (err)
@@ -198,6 +245,7 @@ function expectUrlUnchanged(category, testName, url, expectedType = 'application
 
 module.exports = {
     sanitizeResponse,
+    sanitizeBlsResponse,
     expectUnchanged,
     expectUrlUnchanged,
 };

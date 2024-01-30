@@ -35,11 +35,12 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.FileUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * Class to read files in (CHILDES) CHAT format.
  *
- * Ported from Python code by Jan Odijk, see https://github.com/JanOdijk/chamd
+ * Ported from Python code by Jan Odijk, see https://github.com/UUDigitalHumanitieslab/chamd
  */
 public class DocIndexerChat extends DocIndexerConfig {
 
@@ -463,12 +464,12 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     private void addWords(String line) {
-        String[] words = line.trim().split("\\s+");
+        String[] words = line.trim().split(StringUtil.REGEX_WHITESPACE);
         for (String word : words) {
             beginWord();
             for (ConfigAnnotation annot : currentAnnotatedField.getAnnotationsFlattened().values()) {
                 String processed = processString(word, annot.getProcess(), null);
-                annotation(annot.getName(), processed, 1, null);
+                annotationValueAppend(annot.getName(), processed, 1);
             }
             endWord();
         }
@@ -605,7 +606,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     @SuppressWarnings("unchecked")
     private void treatParticipants(List<String> entryList, Map<String, Object> metadata) {
         for (String el : entryList) {
-            String[] ellist = el.split("\\s+", -1);
+            String[] ellist = el.split(StringUtil.REGEX_WHITESPACE, -1);
             //int ctr = 0;
             String code = "";
             String name = "";

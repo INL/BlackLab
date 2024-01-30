@@ -42,6 +42,13 @@ public class ConstraintValueString extends ConstraintValue {
     }
 
     @Override
+    public int compareTo(ConstraintValue other) {
+        if (other instanceof ConstraintValueString)
+            return s.compareTo(((ConstraintValueString) other).s);
+        throw new IllegalArgumentException("Can only compare equal types! Tried to compare string to " + other.getClass().getName());
+    }
+
+    @Override
     public boolean isTruthy() {
         return true;
     }
@@ -57,4 +64,9 @@ public class ConstraintValueString extends ConstraintValue {
         return ConstraintValue.get(a.equals(b));
     }
 
+    public int stringCompareTo(ConstraintValueString rb, MatchSensitivity sensitivity) {
+        String a = sensitivity.desensitize(getValue());
+        String b = sensitivity.desensitize(rb.getValue());
+        return a.compareTo(b);
+    }
 }

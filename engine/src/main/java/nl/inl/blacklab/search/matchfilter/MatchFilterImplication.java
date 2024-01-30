@@ -1,9 +1,11 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import nl.inl.blacklab.search.Span;
+import java.util.List;
+
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterImplication extends MatchFilter {
 
@@ -59,11 +61,11 @@ public class MatchFilterImplication extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
-        ConstraintValue ra = a.evaluate(fiDoc, capturedGroups);
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
+        ConstraintValue ra = a.evaluate(fiDoc, matchInfo);
         if (!ra.isTruthy())
             return ConstraintValue.get(true);
-        return b.evaluate(fiDoc, capturedGroups);
+        return b.evaluate(fiDoc, matchInfo);
     }
 
     @Override
@@ -81,4 +83,7 @@ public class MatchFilterImplication extends MatchFilter {
         return this;
     }
 
+    public List<TextPatternStruct> getClauses() {
+        return List.of(a, b);
+    }
 }

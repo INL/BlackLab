@@ -19,7 +19,7 @@ PARSER_BEGIN(GeneratedContextualQueryLanguageParser)
 
 package nl.inl.blacklab.queryParser.contextql;
 
-import nl.inl.blacklab.search.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 
 @SuppressWarnings("all")
 class GeneratedContextualQueryLanguageParser {

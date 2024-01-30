@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -21,10 +20,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.indexers.config.InputFormatReader.BaseFormatFinder;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
 import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
@@ -41,58 +39,15 @@ public class ConfigInputFormat {
         XML,
         TABULAR, // csv, tsv
         TEXT, // plain text
-        CHAT; // CHILDES CHAT format
+        CHAT, // CHILDES CHAT format
+        CONLL_U; // CoNLL-U format
 
         public static FileType fromStringValue(String str) {
-            return valueOf(str.toUpperCase());
+            return valueOf(str.toUpperCase().replaceAll("-", "_"));
         }
 
         public String stringValue() {
-            return toString().toLowerCase();
-        }
-    }
-
-    /** file type options for a FileType */
-    public enum FileTypeOption {
-
-        VTD(FileType.XML, Constants.PROCESSING),
-        SAXONICA(FileType.XML, Constants.PROCESSING, "saxon");
-
-        private final FileType fileType;
-        private final String key;
-        private final String alternativeName;
-
-        FileTypeOption(FileType fileType, String key) {
-            this(fileType, key, null);
-        }
-
-        FileTypeOption(FileType fileType, String key, String alternativeName) {
-            this.fileType = fileType;
-            this.key = key;
-            this.alternativeName = alternativeName;
-        }
-
-        public String getKey() {
-            return key;
-        }
-
-        public static FileTypeOption byKeyValue(String key, String value) {
-            for (FileTypeOption fto : values()) {
-                if (fto.getKey().equals(key) && (fto.name().equalsIgnoreCase(value) || value.equalsIgnoreCase(fto.alternativeName))) {
-                    return fto;
-                }
-            }
-            return null;
-        }
-
-        public static List<FileTypeOption> fromConfig (ConfigInputFormat config, FileType ft) {
-            return config.getFileTypeOptions().entrySet().stream()
-                    .filter(opt -> byKeyValue(opt.getKey(),opt.getValue()) !=null && byKeyValue(opt.getKey(),opt.getValue()).fileType==ft)
-                    .map(opt -> byKeyValue(opt.getKey(),opt.getValue())).collect(Collectors.toList());
-        }
-
-        public static class Constants {
-            public static final String PROCESSING = "processing";
+            return toString().toLowerCase().replaceAll("_", "-");
         }
     }
 
@@ -116,7 +71,7 @@ public class ConfigInputFormat {
     /**
      * Should this format be marked as hidden? Mirrors
      * {@link DocIndexerLegacy#isVisible(Class)}. Used to set
-     * {@link Format#isVisible()}, to indicate internal formats to client
+     * {@link InputFormat#isVisible()}, to indicate internal formats to client
      * applications, but has no other internal meaning.
      */
     private boolean visible = true;
@@ -206,14 +161,12 @@ public class ConfigInputFormat {
      *
      * @param file the file to read, the name of this file (minus the .blf.*
      *            extension) will be used as this format's name.
-     * @param finder finder to locate the baseFormat of this config, if set, may be
-     *            null if no baseFormat is required
      * @throws IOException on error
      */
-    public ConfigInputFormat(File file, BaseFormatFinder finder) throws IOException {
+    public ConfigInputFormat(File file) throws IOException {
         this.readFromFile = file;
         this.name = ConfigInputFormat.stripExtensions(file.getName());
-        InputFormatReader.read(file, this, finder);
+        InputFormatReader.read(file, this);
     }
 
     /**
@@ -478,11 +431,6 @@ public class ConfigInputFormat {
 
     public void setReadFromFile(File readFromFile) {
         this.readFromFile = readFromFile;
-    }
-
-    public boolean shouldResolveNamedEntityReferences() {
-        return fileType == FileType.XML && fileTypeOptions.containsKey("resolveNamedEntityReferences")
-                && fileTypeOptions.get("resolveNamedEntityReferences").equalsIgnoreCase("true");
     }
 
     public String getHelpUrl() {

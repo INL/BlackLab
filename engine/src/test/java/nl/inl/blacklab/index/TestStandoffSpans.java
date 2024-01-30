@@ -16,9 +16,10 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryTags;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.UtilsForTesting;
@@ -32,10 +33,9 @@ public class TestStandoffSpans {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        DocIndexerFactoryConfig factoryConfig = new DocIndexerFactoryConfig();
-        File file = getFile("standoff/tei-standoff-spans.blf.yaml");
-        factoryConfig.load(TEST_FORMAT_NAME, file).orElseThrow();
-        DocumentFormats.registerFactory(factoryConfig);
+        InputFormatWithConfig inputFormat = new InputFormatWithConfig(TEST_FORMAT_NAME,
+                getFile("standoff/tei-standoff-spans.blf.yaml"));
+        DocumentFormats.add(inputFormat);
     }
 
     @Before
@@ -76,10 +76,11 @@ public class TestStandoffSpans {
     @Test
     public void testStandoffSpans() throws IOException, InvalidQuery {
         SearchEmpty s = testIndex.search();
-        String fieldName = testIndex.mainAnnotatedField().tagsAnnotation().
+
+        AnnotatedField field = testIndex.mainAnnotatedField();
+        String luceneFieldName = field.annotation(AnnotatedFieldNameUtil.relationAnnotationName(testIndex.getType())).
                 sensitivity(MatchSensitivity.SENSITIVE).luceneField();
-        BLSpanQuery query = new SpanQueryTags(s.queryInfo(), fieldName,
-                "character", null);
+        BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), luceneFieldName, "character", null, null);
         Hits results = s.find(query).execute();
         Assert.assertEquals(2, results.size());
         Assert.assertEquals(0, results.get(0).start());

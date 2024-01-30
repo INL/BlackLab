@@ -53,13 +53,27 @@ public interface AnnotationForwardIndex {
     List<int[]> retrievePartsInt(int docId, int[] start, int[] end);
 
     /**
+     * Convenience method for retrieving 1 part of a document.
+     *
+     * If you're retrieving multiple parts from the same document, it's always
+     * faster to use retrievePartsInt() to batch them.
+     *
+     * @param docId Lucene document id
+     * @param start start of the part to retrieve (in words) (-1 for start of document)
+     * @param end   end of the part to retrieve (in words) (-1 for end of document)
+     * @return the part
+     */
+    default int[] retrievePart(int docId, int start, int end) {
+        return retrievePartsInt(docId, new int[] { start }, new int[] { end }).get(0);
+    }
+
+    /**
      * Retrieve token ids for the entire document.
      * @param docId forward index id
      * @return token ids for the entire document.
      */
     default int[] getDocument(int docId) {
-        int[] fullDoc = new int[] { -1 };
-        return retrievePartsInt(docId, fullDoc, fullDoc).get(0);
+        return retrievePart(docId, -1, -1);
     }
 
     /**

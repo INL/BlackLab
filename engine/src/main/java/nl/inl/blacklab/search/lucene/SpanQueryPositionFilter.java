@@ -23,30 +23,39 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  */
 public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
+    public static SpanGuarantees createGuarantees(SpanGuarantees producer) {
+        return new SpanGuaranteesAdapter(producer) {
+            @Override
+            public boolean hitsStartPointSorted() {
+                return true;
+            }
+        };
+    }
+
     /** Filter operation to apply */
-    final SpanQueryPositionFilter.Operation op;
+    final SpanQueryPositionFilter.Operation operation;
 
     /** Return producer spans that DON'T match the filter instead? */
     final boolean invert;
 
-    /** How to adjust the left edge of the producer hits while matching */
-    int leftAdjust;
+    /** How to adjust the leading edge of the producer hits while matching */
+    int adjustLeading;
 
-    /** How to adjust the right edge of the producer hits while matching */
-    int rightAdjust;
+    /** How to adjust the trailing edge of the producer hits while matching */
+    int adjustTrailing;
 
     /**
      * Produce hits that match filter hits.
      *
      * @param producer hits we may be interested in
      * @param filter how we determine what producer hits we're interested in
-     * @param op operation used to determine what producer hits we're interested in
+     * @param operation operation used to determine what producer hits we're interested in
      *            (containing, within, startsat, endsat)
      * @param invert produce hits that don't match filter instead?
      */
-    public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanQueryPositionFilter.Operation op,
+    public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanQueryPositionFilter.Operation operation,
             boolean invert) {
-        this(producer, filter, op, invert, 0, 0);
+        this(producer, filter, operation, invert, 0, 0);
     }
 
     /**
@@ -54,21 +63,22 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
      *
      * @param producer hits we may be interested in
      * @param filter how we determine what producer hits we're interested in
-     * @param op operation used to determine what producer hits we're interested in
+     * @param operation operation used to determine what producer hits we're interested in
      *            (containing, within, startsat, endsat)
      * @param invert produce hits that don't match filter instead?
-     * @param leftAdjust how to adjust the left edge of the producer hits while
+     * @param adjustLeading how to adjust the leading edge of the producer hits while
      *            matching
-     * @param rightAdjust how to adjust the right edge of the producer hits while
+     * @param adjustTrailing how to adjust the trailing edge of the producer hits while
      *            matching
      */
-    public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanQueryPositionFilter.Operation op,
-            boolean invert, int leftAdjust, int rightAdjust) {
+    public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanQueryPositionFilter.Operation operation,
+            boolean invert, int adjustLeading, int adjustTrailing) {
         super(producer, filter);
-        this.op = op;
+        this.operation = operation;
         this.invert = invert;
-        this.leftAdjust = leftAdjust;
-        this.rightAdjust = rightAdjust;
+        this.adjustLeading = adjustLeading;
+        this.adjustTrailing = adjustTrailing;
+        this.guarantees = createGuarantees(producer.guarantees());
     }
 
     @Override
@@ -76,19 +86,20 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         BLSpanQuery producer = clauses.get(0).rewrite(reader);
         BLSpanQuery filter = clauses.get(1).rewrite(reader);
 
-        if (!invert && op != SpanQueryPositionFilter.Operation.STARTS_AT
-                && op != SpanQueryPositionFilter.Operation.ENDS_AT &&
+        if (!invert && operation != SpanQueryPositionFilter.Operation.STARTS_AT
+                && operation != SpanQueryPositionFilter.Operation.ENDS_AT &&
                 producer instanceof SpanQueryAnyToken) {
             // We're filtering "all n-grams of length min-max".
             // Use the special optimized SpanQueryFilterNGrams.
             SpanQueryAnyToken tp = (SpanQueryAnyToken) producer;
-            return new SpanQueryFilterNGrams(filter, op, tp.hitsLengthMin(), tp.hitsLengthMax(), leftAdjust, rightAdjust);
+            return new SpanQueryFilterNGrams(filter, operation, tp.guarantees().hitsLengthMin(),
+                    tp.guarantees().hitsLengthMax(), adjustLeading, adjustTrailing);
         }
 
         if (producer != clauses.get(0) || filter != clauses.get(1)) {
-            SpanQueryPositionFilter result = new SpanQueryPositionFilter(producer, filter, op, invert);
-            result.leftAdjust = leftAdjust;
-            result.rightAdjust = rightAdjust;
+            SpanQueryPositionFilter result = new SpanQueryPositionFilter(producer, filter, operation, invert);
+            result.adjustLeading = adjustLeading;
+            result.adjustTrailing = adjustTrailing;
             return result;
         }
         return this;
@@ -120,6 +131,11 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         }
 
         @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return prodWeight.isCacheable(ctx) && filterWeight.isCacheable(ctx);
+        }
+
+        @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
             prodWeight.extractTermStates(contexts);
             filterWeight.extractTermStates(contexts);
@@ -130,24 +146,13 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
             BLSpans spansProd = prodWeight.getSpans(context, requiredPostings);
             if (spansProd == null)
                 return null;
-            if (!clauses.get(0).hitsStartPointSorted())
-                spansProd = PerDocumentSortedSpans.startPoint(spansProd);
             BLSpans spansFilter = filterWeight.getSpans(context, requiredPostings);
             if (spansFilter == null) {
                 // No filter hits. If it's a positive filter, that means no producer hits can match.
                 // If it's a negative filter, all producer hits match.
                 return invert ? spansProd : null;
             }
-            boolean filterFixedLength = clauses.get(1).hitsAllSameLength();
-            SpansInBuckets filter;
-            if (clauses.get(1).hitsStartPointSorted()) {
-                // Already start point sorted; no need to sort buckets again
-                filter = new SpansInBucketsPerDocument(spansFilter);
-            } else {
-                // Not sorted yet; sort buckets
-                filter = new SpansInBucketsPerDocumentSorted(spansFilter, true);
-            }
-            return new SpansPositionFilter(spansProd, filter, filterFixedLength, op, invert, leftAdjust, rightAdjust);
+            return new SpansPositionFilter(spansProd, spansFilter, operation, invert, adjustLeading, adjustTrailing);
         }
     }
 
@@ -173,41 +178,54 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         CONTAINING_AT_START,
 
         /** Producer hit contains filter hit, at its start */
-        CONTAINING_AT_END
+        CONTAINING_AT_END;
 
+        public static Operation fromStringValue(String s) {
+            for (Operation op : values()) {
+                if (op.name().equalsIgnoreCase(s)) {
+                    return op;
+                }
+            }
+            throw new IllegalArgumentException("Unknown operation: " + s);
+        }
+
+        @Override
+        public String toString() {
+            return name().toLowerCase();
+        }
     }
 
     @Override
     public String toString(String field) {
-        String not = invert ? "NOT" : "";
-        String adj = (leftAdjust != 0 || rightAdjust != 0 ? ", " + leftAdjust + ", " + rightAdjust : "");
-        return "POSFILTER(" + clausesToString(field) + ", " + not + op + adj + ")";
+        String not = invert ? "not" : "";
+        String adj = (adjustLeading != 0 || adjustTrailing != 0 ? ", " + adjustLeading + ", " + adjustTrailing : "");
+        return "POSFILTER(" + clausesToString(field) + ", " + not + operation + adj + ")";
     }
 
     public SpanQueryPositionFilter copy() {
-        return new SpanQueryPositionFilter(clauses.get(0), clauses.get(1), op, invert, leftAdjust, rightAdjust);
+        return new SpanQueryPositionFilter(clauses.get(0), clauses.get(1), operation, invert, adjustLeading, adjustTrailing);
     }
 
     /**
-     * Adjust the left edge of the producer hits for matching only.
+     * Adjust the leading edge of the producer hits for matching only.
      *
      * That is, the original producer hit is returned, not the adjusted one.
      *
      * @param delta how to adjust the edge
      */
-    public void adjustLeft(int delta) {
-        leftAdjust += delta;
+    public void adjustLeading(int delta) {
+        adjustLeading += delta;
     }
 
     /**
-     * Adjust the right edge of the producer hits for matching only.
+     * Adjust the trailing edge of the producer hits for matching only.
      *
      * That is, the original producer hit is returned, not the adjusted one.
      *
      * @param delta how to adjust the edge
      */
-    public void adjustRight(int delta) {
-        rightAdjust += delta;
+    public void adjustTrailing(int delta) {
+        adjustTrailing += delta;
     }
 
     @Override
@@ -217,48 +235,8 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
     @Override
     public BLSpanQuery noEmpty() {
-        return new SpanQueryPositionFilter(clauses.get(0).noEmpty(), clauses.get(1), op, invert, leftAdjust,
-                rightAdjust);
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return clauses.get(0).hitsAllSameLength();
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return clauses.get(0).hitsLengthMin();
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return clauses.get(0).hitsLengthMax();
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return clauses.get(0).hitsEndPointSorted();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return clauses.get(0).hitsHaveUniqueStart();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return clauses.get(0).hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return clauses.get(0).hitsAreUnique();
+        return new SpanQueryPositionFilter(clauses.get(0).noEmpty(), clauses.get(1), operation, invert, adjustLeading,
+                adjustTrailing);
     }
 
     @Override
@@ -273,23 +251,23 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
     @Override
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        return clause.hitsAllSameLength();
+        return clause.guarantees().hitsAllSameLength();
     }
 
     @Override
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean addToRight) {
-        if (!clause.hitsAllSameLength())
+        if (!clause.guarantees().hitsAllSameLength())
             throw new BlackLabRuntimeException("Trying to internalize non-constant-length clause: " + clause);
         // Create a new position filter query with a constant-length clause added to our producer.
-        // leftAdjust and rightAdjust are updated according to the clause's length, so it is not
+        // adjustLeading and adjustTrailing are updated according to the clause's length, so it is not
         // actually filtered.
         BLSpanQuery producer = clauses.get(0);
         SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(producer, clause, addToRight);
         if (addToRight)
-            return new SpanQueryPositionFilter(seq, clauses.get(1), op, invert, leftAdjust,
-                    rightAdjust - clause.hitsLengthMin());
-        return new SpanQueryPositionFilter(seq, clauses.get(1), op, invert, leftAdjust + clause.hitsLengthMin(),
-                rightAdjust);
+            return new SpanQueryPositionFilter(seq, clauses.get(1), operation, invert, adjustLeading,
+                    adjustTrailing - clause.guarantees().hitsLengthMin());
+        return new SpanQueryPositionFilter(seq, clauses.get(1), operation, invert,
+                adjustLeading + clause.guarantees().hitsLengthMin(), adjustTrailing);
     }
 
     @Override
@@ -297,9 +275,9 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + (invert ? 1231 : 1237);
-        result = prime * result + leftAdjust;
-        result = prime * result + ((op == null) ? 0 : op.hashCode());
-        result = prime * result + rightAdjust;
+        result = prime * result + adjustLeading;
+        result = prime * result + ((operation == null) ? 0 : operation.hashCode());
+        result = prime * result + adjustTrailing;
         return result;
     }
 
@@ -314,11 +292,11 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         SpanQueryPositionFilter other = (SpanQueryPositionFilter) obj;
         if (invert != other.invert)
             return false;
-        if (leftAdjust != other.leftAdjust)
+        if (adjustLeading != other.adjustLeading)
             return false;
-        if (op != other.op)
+        if (operation != other.operation)
             return false;
-        if (rightAdjust != other.rightAdjust)
+        if (adjustTrailing != other.adjustTrailing)
             return false;
         return true;
     }

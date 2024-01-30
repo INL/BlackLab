@@ -32,6 +32,19 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
         return "An XML format for the description of text OCR and layout information of pages for digitized material.";
     }
 
+    /** Whitespace and/or punctuation at start or end */
+    private static final Pattern PATT_WS_PUNCT_AT_START_OR_END = Pattern.compile("^[\\p{Punct}\\p{javaSpaceChar}]+|[\\p{Punct}\\p{javaSpaceChar}]+$");
+
+    /**
+     * Remove any punctuation and whitespace at the start and end of input.
+     *
+     * @param input the input string
+     * @return the string without punctuation or whitespace at the edges.
+     */
+    public static String trimWhitespaceAndPunctuation(String input) {
+        return PATT_WS_PUNCT_AT_START_OR_END.matcher(input).replaceAll("");
+    }
+
     /**
      * Contains the image file name found in Description so we can add it to Page
      * (NOTE: do we still use this now that we index the whole XML file?)
@@ -107,7 +120,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
                 // In Alto, punctuation and/or whitespace may be part of the word token.
                 // Strip it off before indexing the word.
                 // (instead of stripping it off, better to add it to punctuation index..?)
-                return StringUtil.trimWhitespaceAndPunctuation(super.getWord());
+                return trimWhitespaceAndPunctuation(super.getWord());
             }
         });
 

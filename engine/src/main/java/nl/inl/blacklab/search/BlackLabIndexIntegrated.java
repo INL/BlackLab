@@ -3,6 +3,7 @@ package nl.inl.blacklab.search;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlTransient;
@@ -21,6 +22,8 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.codec.BlackLab40Codec;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.codec.BlackLab40StoredFieldsReader;
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -31,8 +34,16 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations;
+import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
 /**
  * A BlackLab index with all files included in the Lucene index.
@@ -147,6 +158,13 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         return getIndexMetadata(createNewIndex, (ConfigInputFormat)null);
     }
 
+    @Override
+    protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) {
+        String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
+        ContentStore cs = ContentStoreIntegrated.open(reader(), luceneField);
+        registerContentStore(field, cs);
+    }
+
     public ForwardIndex createForwardIndex(AnnotatedField field) {
         return new ForwardIndexIntegrated(this, field);
     }
@@ -163,6 +181,27 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
         return new ForwardIndexAccessorIntegrated(this, annotatedField(searchField));
+    }
+
+    @Override
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
+        // Note: tags are always indexed as a forward relation (source always occurs before target)
+        RelationInfo.SpanMode spanMode;
+        switch (adjust) {
+        case LEADING_EDGE:  spanMode = RelationInfo.SpanMode.SOURCE;    break;
+        case TRAILING_EDGE: spanMode = RelationInfo.SpanMode.TARGET;    break;
+        default:
+        case FULL_TAG:      spanMode = RelationInfo.SpanMode.FULL_SPAN; break;
+        }
+        return new SpanQueryRelations(queryInfo, luceneField,
+                RelationUtil.inlineTagFullType(tagName), attributes,
+                SpanQueryRelations.Direction.FORWARD, spanMode, captureAs);
+    }
+
+    @Override
+    public IndexType getType() {
+        return IndexType.INTEGRATED;
     }
 
     @Override

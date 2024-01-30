@@ -29,7 +29,6 @@ public class ResultDocsResponse {
     private final Collection<Annotation> annotationsToList;
     private final Collection<MetadataField> metadataFieldsToList;
     private final BlackLabIndex index;
-    private final boolean includeTokenCount;
     private final long totalTokens;
     private final ResultSummaryCommonFields summaryFields;
     private final ResultSummaryNumDocs numResultDocs;
@@ -42,14 +41,13 @@ public class ResultDocsResponse {
     List<ResultDocResult> docResults;
 
     ResultDocsResponse(Collection<Annotation> annotationsToList, Collection<MetadataField> metadataFieldsToList,
-            BlackLabIndex blIndex, boolean includeTokenCount, long totalTokens,
-            ResultSummaryCommonFields summaryFields,
-            ResultSummaryNumDocs numResultDocs, ResultSummaryNumHits numResultHits, DocResults window,
+            BlackLabIndex blIndex, long totalTokens,
+            ResultSummaryCommonFields summaryFields, ResultSummaryNumDocs numResultDocs,
+            ResultSummaryNumHits numResultHits, DocResults window,
             WebserviceParams params) throws InvalidQuery {
         this.annotationsToList = annotationsToList;
         this.metadataFieldsToList = metadataFieldsToList;
         this.index = blIndex;
-        this.includeTokenCount = includeTokenCount;
         this.totalTokens = totalTokens;
         this.summaryFields = summaryFields;
         this.numResultDocs = numResultDocs;
@@ -111,7 +109,7 @@ public class ResultDocsResponse {
             first = 0;
         long number = params.getNumberOfResultsToShow();
         if (number < 0 || number > params.getSearchManager().config().getParameters().getPageSize().getMax())
-            number = params.getSearchManager().config().getParameters().getPageSize().getDefaultValue();
+            number = params.getSearchManager().config().getParameters().getPageSize().getDefault();
         DocResults totalDocResults = docsSorted;
         DocResults window = docsSorted.window(first, number);
 
@@ -170,9 +168,8 @@ public class ResultDocsResponse {
         Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
 
                 BlackLabIndex index = params.blIndex();
-        boolean includeTokenCount = params.getIncludeTokenCount();
         long totalTokens = -1;
-        if (includeTokenCount) {
+        if (params.getIncludeTokenCount()) {
             // Determine total number of tokens in result set
             totalTokens = totalDocResults.subcorpusSize().getTokens();
         }
@@ -183,21 +180,19 @@ public class ResultDocsResponse {
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
         Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus, timings,
-                null, window.windowStats());
-        boolean countFailed = totalTime < 0;
+                null, null, window.windowStats());
         ResultSummaryNumDocs numResultDocs = null;
         ResultSummaryNumHits numResultHits = null;
         if (hitsStats == null) {
             numResultDocs = WebserviceOperations.numResultsSummaryDocs(isViewGroup,
-                    docResults, countFailed, null);
+                    docResults, timings, null);
         } else {
             numResultHits = WebserviceOperations.numResultsSummaryHits(
-                    hitsStats, docsStats, waitForTotal, countFailed, null);
+                    hitsStats, docsStats, waitForTotal, timings, null, totalTokens);
         }
 
         // Search is done; construct the results object
         return new ResultDocsResponse(annotationsToList, metadataFieldsToList, index,
-                includeTokenCount,
                 totalTokens, summaryFields, numResultDocs, numResultHits, window, params);
     }
 
@@ -211,10 +206,6 @@ public class ResultDocsResponse {
 
     public BlackLabIndex getIndex() {
         return index;
-    }
-
-    public boolean isIncludeTokenCount() {
-        return includeTokenCount;
     }
 
     public long getTotalTokens() {

@@ -9,6 +9,7 @@ import java.util.List;
 
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 public interface DocIndexer extends AutoCloseable {
 
@@ -23,6 +24,15 @@ public interface DocIndexer extends AutoCloseable {
      * @return the DocWriter object
      */
     DocWriter getDocWriter();
+
+    /**
+     * Get our index type, classic external or integrated.
+     *
+     * @return index type
+     */
+    default BlackLabIndex.IndexType getIndexType() {
+        return getDocWriter().getIndexType();
+    }
 
     /**
      * Set the DocWriter object.

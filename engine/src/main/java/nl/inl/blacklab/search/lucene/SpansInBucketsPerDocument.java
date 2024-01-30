@@ -18,11 +18,22 @@ class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
         super(source);
     }
 
+    public static SpansInBucketsPerDocument sorted(BLSpans spansFilter) {
+        if (spansFilter.guarantees().hitsStartPointSorted()) {
+            // Already start point sorted; no need to sort buckets again
+            return new SpansInBucketsPerDocument(spansFilter);
+        }
+        // Not sorted yet; sort buckets
+        return new SpansInBucketsPerDocumentSorted(spansFilter, true);
+    }
+
     @Override
     protected void gatherHits() throws IOException {
+        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
         do {
             addHitFromSource();
         } while (source.nextStartPosition() != Spans.NO_MORE_POSITIONS);
+        assert source.startPosition() == Spans.NO_MORE_POSITIONS;
     }
 
 }

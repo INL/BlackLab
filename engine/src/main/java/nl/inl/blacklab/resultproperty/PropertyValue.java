@@ -2,7 +2,6 @@ package nl.inl.blacklab.resultproperty;
 
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -56,21 +55,19 @@ public abstract class PropertyValue implements Comparable<Object> {
         String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
         String type = parts[0].toLowerCase();
         String info = parts.length > 1 ? parts[1] : "";
-        List<String> types = Arrays.asList("cwo", "cws", "cwsr", "dec", "int", "str", "doc");
-        int typeNum = types.indexOf(type);
-        switch (typeNum) {
-        case 0:
-            return PropertyValueContextWord.deserialize(index, field, info);
-        case 1: // cws  (context words)
-        case 2: // cwsr (context words, reverse order. e.g. left context)
+        switch (type) {
+        case "cwo":
+            return PropertyValueContextWords.deserializeSingleWord(index, field, info);
+        case "cws": // cws  (context words)
+        case "cwsr": // cwsr (context words, reverse order. e.g. left context)
             return PropertyValueContextWords.deserialize(index, field, info, type.equals("cwsr"));
-        case 3:
+        case "dec":
             return PropertyValueDecade.deserialize(info);
-        case 4:
+        case "int":
             return PropertyValueInt.deserialize(info);
-        case 5:
+        case "str":
             return PropertyValueString.deserialize(info);
-        case 6:
+        case "doc":
             return PropertyValueDoc.deserialize(index, info);
         }
         logger.debug("Unknown HitPropValue '" + type + "'");

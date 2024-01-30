@@ -153,4 +153,8 @@ public class MockIndexMetadata implements IndexMetadata {
         return frozen.isFrozen();
     }
 
+    @Override
+    public String indexFlag(String name) {
+        return "";
+    }
 }

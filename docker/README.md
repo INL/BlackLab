@@ -2,12 +2,18 @@
 
 This is an experimental Docker image for BlackLab Server.
 
-A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher).
+A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher). Make sure BuildKit is enabled, e.g. by setting the `DOCKER_BUILDKIT` environment variable to `1`.
 
-To build it, run:
+The `make` utility is required if you want to use the included `Makefile` for convenience.
+
+To build the Docker images, from the repository root, run:
 
 ```bash
-DOCKER_BUILDKIT=1 docker build -f Dockerfile -t instituutnederlandsetaal/blacklab ..
+# Using the included Makefile:
+make build
+
+# or, using Docker Compose directly:
+docker compose build
 ```
 
 This image has a default configuration file in `/etc/blacklab/blacklab-server.yaml`; if necessary, you can overwrite this with your own version (using the `$CONFIG_ROOT` environment variable, or by deriving your own image, or some other way).
