@@ -40,8 +40,6 @@ import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
-import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
-import nl.inl.blacklab.search.textpattern.TextPatternSensitive;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCount;
@@ -55,8 +53,8 @@ import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultHits {
@@ -179,9 +177,9 @@ public class ResultHits {
 
         // see if this query matches only singular tokens
         // (we can't enhance multi-token queries such as ngrams yet)
-        TextPattern tp = params.pattern().orElseThrow();
+        TextPattern tp = params.patternWithinContextTag().orElseThrow();
         BlackLabIndex index = params.blIndex();
-        if (!tp.toQuery(QueryInfo.create(index)).producesSingleTokens())
+        if (!tp.toQuery(QueryInfo.create(index)).guarantees().producesSingleTokens())
             return null;
 
         // Alright, the original query for the Hits lends itself to enhancement.
@@ -203,11 +201,10 @@ public class ResultHits {
             if (p instanceof HitPropertyHitText) {
                 String valueForAnnotation = vals.get(i).toString();
                 HitPropertyHitText prop = ((HitPropertyHitText) p);
-                Annotation annot = prop.needsContext().get(0);
-                MatchSensitivity sensitivity = prop.getSensitivities().get(0);
+                Annotation annot = prop.getAnnotation();
+                MatchSensitivity sensitivity = prop.getSensitivity();
 
-                tp = new TextPatternAnd(tp, new TextPatternAnnotation(annot.name(),
-                        new TextPatternSensitive(sensitivity, new TextPatternTerm(valueForAnnotation))));
+                tp = new TextPatternAnd(tp, new TextPatternTerm(valueForAnnotation, annot.name(), sensitivity));
             } else if (p instanceof HitPropertyDoc || p instanceof HitPropertyDocumentId) {
                 Object value = vals.get(i).value();
                 int luceneDocId = value instanceof Integer ?
@@ -340,9 +337,8 @@ public class ResultHits {
             window = hits.window(windowSettings.first(), windowSettings.size());
         }
 
-        boolean includeTokenCount = params.getIncludeTokenCount();
         totalTokens = -1;
-        if (includeTokenCount) {
+        if (params.getIncludeTokenCount()) {
             DocResults perDocResults = hits.perDocResults(Results.NO_LIMIT);
             // Determine total number of tokens in result set
             totalTokens = perDocResults.subcorpusSize().getTokens();
@@ -367,9 +363,10 @@ public class ResultHits {
         SearchTimings searchTimings = getSearchTimings();
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(),
-                params.getWaitForTotal(), searchTimings.getCountTime() < 0, null);
+                params.getWaitForTotal(), searchTimings, null, totalTokens);
+        List<String> matchInfoNames = hits.queryInfo().matchInfoNames();
         summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
-                getIndexStatus(), searchTimings, null, window.windowStats());
+                getIndexStatus(), searchTimings, matchInfoNames, null, window.windowStats());
         listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
                 getDocIdToPid());
 

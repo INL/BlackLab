@@ -33,7 +33,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"summary", "docs", "docGroups", "facets" })
-public class DocsResults implements Cloneable {
+public class DocsResults implements Cloneable, EntityWithSummary {
 
     private static class DocListSerializer extends JsonSerializer<BigList<Doc>> {
         @Override
@@ -67,6 +67,11 @@ public class DocsResults implements Cloneable {
             }
             return hits;
         }
+    }
+
+    @Override
+    public SearchSummary getSummary() {
+        return summary;
     }
 
     public SearchSummary summary;

@@ -1,9 +1,9 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterString extends MatchFilter {
     final ConstraintValueString string;
@@ -18,7 +18,11 @@ public class MatchFilterString extends MatchFilter {
     final int termIndex = -1;
 
     public MatchFilterString(String string) {
-        this.string = new ConstraintValueString(string);
+        this(new ConstraintValueString(string));
+    }
+
+    public MatchFilterString(ConstraintValueString string) {
+        this.string = string;
     }
 
     public String getString() {
@@ -61,7 +65,7 @@ public class MatchFilterString extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
         return string;
     }
 
@@ -81,5 +85,9 @@ public class MatchFilterString extends MatchFilter {
     @Override
     public MatchFilter rewrite() {
         return this;
+    }
+
+    public String getValue() {
+        return string.getValue();
     }
 }

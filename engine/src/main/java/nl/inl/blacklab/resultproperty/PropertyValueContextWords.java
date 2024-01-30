@@ -27,6 +27,10 @@ public class PropertyValueContextWords extends PropertyValueContext {
         this(index.annotationForwardIndex(annotation).terms(), annotation.name(), sensitivity, value, reverseOnDisplay);
     }
 
+    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value, int[] sortOrder, boolean reverseOnDisplay) {
+        this(index.annotationForwardIndex(annotation).terms(), annotation.name(), sensitivity, value, sortOrder, reverseOnDisplay);
+    }
+
     public PropertyValueContextWords(Terms terms, String annotationName, MatchSensitivity sensitivity, int[] value, boolean reverseOnDisplay) {
         super(terms, annotationName);
         this.sensitivity = sensitivity;
@@ -34,6 +38,18 @@ public class PropertyValueContextWords extends PropertyValueContext {
         this.valueSortOrder = new int[value.length];
         terms.toSortOrder(value, valueSortOrder, sensitivity);
         this.reverseOnDisplay = reverseOnDisplay;
+    }
+
+    public PropertyValueContextWords(Terms terms, String annotationName, MatchSensitivity sensitivity, int[] value, int[] sortOrder, boolean reverseOnDisplay) {
+        super(terms, annotationName);
+        this.sensitivity = sensitivity;
+        this.valueTokenId = value;
+        this.valueSortOrder = sortOrder;
+        this.reverseOnDisplay = reverseOnDisplay;
+    }
+
+    public static PropertyValueContextWords empty(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
+        return new PropertyValueContextWords(index, annotation, sensitivity, new int[0], false);
     }
 
     @Override
@@ -66,6 +82,17 @@ public class PropertyValueContextWords extends PropertyValueContext {
             ids[i - 2] = deserializeToken(termsObj, parts[i]);
         }
         return new PropertyValueContextWords(index, annotation, sensitivity, ids, reverseOnDisplay);
+    }
+
+    public static PropertyValue deserializeSingleWord(BlackLabIndex index, AnnotatedField field, String info) {
+        String[] parts = PropertySerializeUtil.splitParts(info);
+        String annotationName = parts[0];
+        Annotation annotation = field.annotation(annotationName);
+        MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
+        String term = parts[2];
+        Terms termsObj = index.annotationForwardIndex(annotation).terms();
+        int termId = deserializeToken(termsObj, term);
+        return new PropertyValueContextWords(index, annotation, sensitivity, new int[] { termId }, false);
     }
 
     // get displayable string version; note that we lowercase this if this is case-insensitive

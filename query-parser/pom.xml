@@ -33,7 +33,7 @@
                                     <pluginExecutionFilter>
                                         <groupId>org.codehaus.mojo</groupId>
                                         <artifactId>javacc-maven-plugin</artifactId>
-                                        <versionRange>[2.6,)</versionRange>
+                                        <versionRange>[3.0.0,)</versionRange>
                                         <goals>
                                             <goal>javacc</goal>
                                         </goals>
@@ -86,7 +86,7 @@
 
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
-            <artifactId>blacklab-text-pattern</artifactId>
+            <artifactId>blacklab-engine</artifactId>
             <version>${project.version}</version>
         </dependency>
         

@@ -22,11 +22,17 @@ import nl.inl.blacklab.search.results.QueryInfo;
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
  * derived from this so we know they will produce BLSpans (which contains extra
- * methods for optimization).
+ * methods necessary for functionality such as capture groups, relatoins, etc.
+ * <p>
+ * Is able to give extra guarantees about the hits this query will produce, such as
+ * if every hit is equal in length, if there may be duplicates, etc. This information
+ * will help us optimize certain operations, such as sequence queries, in certain cases.
  */
-public abstract class BLSpanQuery extends SpanQuery {
+public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGiver {
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
+
+    protected SpanGuarantees guarantees;
 
     public BLSpanQuery(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
@@ -34,7 +40,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     
     /**
      * Rewrite a SpanQuery after rewrite() to a BLSpanQuery equivalent.
-     *
+     * <p>
      * This is used for BLSpanOrQuery and BLSpanMultiTermQueryWrapper: we let Lucene
      * rewrite these for us, but the result needs to be BL-ified so we know we'll
      * get BLSpans (which contain extra methods for optimization).
@@ -61,7 +67,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     /**
      * Add two values for maximum number of repetitions, taking "infinite" into
      * account.
-     *
+     * <p>
      * -1 or Integer.MAX_VALUE means infinite. Adding infinite to any other value
      * produces infinite again (-1 if either value is -1; otherwise,
      * Integer.MAX_VALUE if either value is Integer.MAX_VALUE).
@@ -72,21 +78,25 @@ public abstract class BLSpanQuery extends SpanQuery {
      */
     public static int addMaxValues(int a, int b) {
         if (a < 0 || b < 0)
-            throw new BlackLabRuntimeException(
-                    "max values cannot be negative (possible use of old -1 == max, now BLSpanQuery.MAX_UNLIMITED)");
+            throw new BlackLabRuntimeException("max values cannot be negative");
         // Is either value infinite?
-        if (a == Integer.MAX_VALUE || b == Integer.MAX_VALUE)
-            return Integer.MAX_VALUE; // Yes, result is infinite
+        if (a == MAX_UNLIMITED || b == MAX_UNLIMITED)
+            return MAX_UNLIMITED; // Yes, result is infinite
         // Add regular values
         return a + b;
     }
 
     static <T extends SpanQuery> String clausesToString(String field, List<T> clauses) {
+        return clausesToString(field, clauses, "");
+    }
+
+    static <T extends SpanQuery> String clausesToString(String field, List<T> clauses, String prefix) {
         StringBuilder b = new StringBuilder();
         int n = 0;
         for (T clause : clauses) {
             if (b.length() > 0)
                 b.append(", ");
+            b.append(prefix);
             b.append(clause.toString(field));
             n++;
             if (n > 100) {
@@ -100,22 +110,6 @@ public abstract class BLSpanQuery extends SpanQuery {
     @SafeVarargs
     static <T extends SpanQuery> String clausesToString(String field, T... clauses) {
         return clausesToString(field, Arrays.asList(clauses));
-    }
-
-    public static BLSpanQuery ensureSortedUnique(BLSpanQuery spanQuery) {
-        if (spanQuery.hitsStartPointSorted()) {
-            if (spanQuery.hitsAreUnique())
-                return spanQuery;
-            return new SpanQueryUnique(spanQuery);
-        }
-        return new SpanQuerySorted(spanQuery, false, !spanQuery.hitsAreUnique());
-    }
-
-    public static BLSpanQuery ensureSorted(BLSpanQuery spanQuery) {
-        if (spanQuery.hitsStartPointSorted()) {
-            return spanQuery;
-        }
-        return new SpanQuerySorted(spanQuery, false, false);
     }
 
     public static String inf(int max) {
@@ -140,7 +134,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     /**
      * Called before rewrite() to optimize certain parts of the query before they
      * are rewritten (e.g. match regex terms using NFA instead of OR).
-     *
+     * <p>
      * For now, only SpanQuerySequence overrides this to make sure certain clause
      * combinations are performed before rewrite().
      *
@@ -160,12 +154,12 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     /**
      * Does this query match the empty sequence?
-     *
+     * <p>
      * For example, the query [word="cow"]* matches the empty sequence. We need to
      * know this so we can rewrite to the appropriate queries. A query of the form
      * "AB*" would be translated into "A|AB+", so each component of the query
      * actually generates non-empty matches.
-     *
+     * <p>
      * We default to no because most queries don't match the empty sequence.
      *
      * @return true if this query matches the empty sequence, false otherwise
@@ -195,122 +189,18 @@ public abstract class BLSpanQuery extends SpanQuery {
     }
 
     /**
-     * Is it okay to invert this query for optimization?
-     *
-     * Heuristic used to determine when to optimize a query by inverting one or more
-     * of its subqueries.
-     *
-     * @return true if it is, false if not
-     */
-    boolean okayToInvertForOptimization() {
-        return false;
-    }
-
-    /**
-     * Is this query only a negative clause, producing all tokens that don't satisfy
-     * certain conditions?
-     *
-     * Used for optimization decisions, i.e. in BLSpanOrQuery.rewrite().
-     *
-     * @return true if it's negative-only, false if not
-     */
-    public boolean isSingleTokenNot() {
-        return false;
-    }
-
-    /**
-     * Are all our hits single tokens?
-     * 
-     * @return true if they are, false if not
-     */
-    public boolean producesSingleTokens() {
-        return hitsAllSameLength() && hitsLengthMin() == 1;
-    }
-
-    /**
-     * Do our hits have constant length?
-     * 
-     * @return true if they do, false if not
-     */
-    public abstract boolean hitsAllSameLength();
-
-    /**
-     * How long could our shortest hit be?
-     * 
-     * @return length of the shortest hit possible
-     */
-    public abstract int hitsLengthMin();
-
-    /**
-     * How long could our longest hit be?
-     * 
-     * @return length of the longest hit possible, or Integer.MAX_VALUE if unlimited
-     */
-    public abstract int hitsLengthMax();
-
-    /**
-     * When hit B follows hit A, is it guaranteed that B.end &gt;= A.end? Also, if
-     * A.end == B.end, is B.start &gt; A.start?
-     *
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsEndPointSorted();
-
-    /**
-     * When hit B follows hit A, is it guaranteed that B.start &gt;= A.start? Also,
-     * if A.start == B.start, is B.end &gt; A.end?
-     *
-     * Any query class that can return false here MUST ensure that its BLSpans will
-     * be sorted (using {@link BLSpans#ensureStartPointSorted(BLSpans)}), so that
-     * all BLSpans are guaranteed to be startpoint sorted (which is necessary for
-     * {@link BLSpans#advanceStartPosition(int)} to work correctly).
-     *
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsStartPointSorted();
-
-    /**
-     * Is it guaranteed that no two hits have the same start position?
-     * 
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsHaveUniqueStart();
-
-    /**
-     * Is it guaranteed that no two hits have the same end position?
-     * 
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsHaveUniqueEnd();
-
-    /**
-     * Is it guaranteed that no two hits have the same start and end position?
-     * 
-     * @return true if this is guaranteed, false if not
-     */
-    public abstract boolean hitsAreUnique();
-
-    /**
-     * Is this query a single "any token", e.g. one that matches all individual tokens?
-     * @return true if it is, false if not
-     */
-    public boolean isSingleAnyToken() {
-        return false;
-    }
-
-    /**
      * Can this query "internalize" the given neighbouring clause?
-     *
+     * <p>
      * Internalizing means adding the clause to its children, which is often more
      * efficient because we create longer sequences that match fewer hits and may
      * themselves be further optimized. An example is SpanQueryPosFilter, which can
      * be combined with fixed-length neighbouring clauses (updating the
      * SpanQueryPosFilters' left or right adjustment setting to match) to reduce the
-     * number of hits that have to be filter.
+     * number of hits that have to be filtered.
      *
      * @param clause clause we want to internalize
-     * @param onTheRight if true, clause is a right neighbour of this query; if
-     *            false, a left neighbour
+     * @param onTheRight if true, clause is a following clause of this query; if
+     *            false, a preceding clause
      * @return true iff clause can be internalized
      */
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
@@ -319,7 +209,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     /**
      * Internalize the given clause.
-     *
+     * <p>
      * See canInternalizeNeighbour() for more information.
      *
      * @param clause clause we want to internalize
@@ -349,11 +239,11 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     /**
      * Return an (very rough) indication of how many hits this clause might return.
-     *
+     * <p>
      * Used to decide what parts of the query to match using the forward index.
-     *
+     * <p>
      * Based on term frequency, which are combined using simple rules of thumb.
-     *
+     * <p>
      * Another way to think of this is an indication of how much computation this
      * clause will require when matching using the reverse index.
      *
@@ -366,7 +256,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     /**
      * Return an (very rough) indication of how expensive finding a match for this
      * query using an NFA would be.
-     *
+     * <p>
      * Used to decide what parts of the query to match using the forward index.
      *
      * @return rough estimation of the NFA complexity
@@ -380,9 +270,19 @@ public abstract class BLSpanQuery extends SpanQuery {
     }
 
     public abstract String getRealField();
-    
+
+    /**
+     * Set the query info object.
+     *
+     * @param queryInfo query info object
+     */
     public void setQueryInfo(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
+    }
+
+    @Override
+    public SpanGuarantees guarantees() {
+        return this.guarantees;
     }
 
 }

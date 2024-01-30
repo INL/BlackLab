@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
@@ -163,7 +164,7 @@ public class CompareCollectionsLibs {
         
         List<Integer> javaList = new ArrayList<>();
         
-        IntArrayList ecList = new IntArrayList();
+        MutableIntList ecList = new IntArrayList();
         
         it.unimi.dsi.fastutil.ints.IntArrayList fuList = new it.unimi.dsi.fastutil.ints.IntArrayList();
 

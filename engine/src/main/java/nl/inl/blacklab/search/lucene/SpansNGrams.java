@@ -4,12 +4,12 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.Span;
 
 /**
  * Return all n-grams of certain lengths.
@@ -36,7 +36,7 @@ class SpansNGrams extends BLSpans {
     /** Documents that haven't been deleted */
     private final Bits liveDocs;
 
-    private boolean alreadyAtFirstMatch = false;
+    private boolean atFirstInCurrentDoc = false;
 
     private final int min;
 
@@ -65,6 +65,7 @@ class SpansNGrams extends BLSpans {
      * @param max maximum n-gram length
      */
     public SpansNGrams(LeafReader reader, String fieldName, int min, int max) {
+        super(SpanQueryAnyToken.createGuarantees(min, max));
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiBits.getLiveDocs(reader);
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
@@ -85,20 +86,22 @@ class SpansNGrams extends BLSpans {
      */
     @Override
     public int endPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet by client
         return currentEnd;
     }
 
     @Override
     public int nextDoc() {
-        alreadyAtFirstMatch = false;
+        assert docID() != NO_MORE_DOCS;
+        atFirstInCurrentDoc = false;
         do {
             if (currentDoc >= maxDoc) {
                 currentDoc = NO_MORE_DOCS;
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS;
             }
+            // Go to next nondeleted doc
             boolean currentDocIsDeletedDoc;
             do {
                 currentDoc++;
@@ -111,10 +114,11 @@ class SpansNGrams extends BLSpans {
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS; // no more docs; we're done
             }
+            // Get document length and reset currentStart/currentEnd so we can check if there's actually hits
             currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
-        } while (nextStartPosition() == NO_MORE_POSITIONS);
-        alreadyAtFirstMatch = true;
+        } while (currentDocLength < min || nextStartPosition() == NO_MORE_POSITIONS);
+        atFirstInCurrentDoc = true;
 
         return currentDoc;
     }
@@ -126,8 +130,9 @@ class SpansNGrams extends BLSpans {
      */
     @Override
     public int nextStartPosition() {
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        assert startPosition() != NO_MORE_POSITIONS;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             return currentStart;
         }
 
@@ -154,8 +159,9 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public int advanceStartPosition(int target) {
-        if (alreadyAtFirstMatch) {
-            alreadyAtFirstMatch = false;
+        assert target > startPosition();
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             if (currentStart >= target)
                 return currentStart;
         }
@@ -178,7 +184,8 @@ class SpansNGrams extends BLSpans {
      */
     @Override
     public int advance(int doc) throws IOException {
-        alreadyAtFirstMatch = false;
+        assert doc >= 0 && doc > docID();
+        atFirstInCurrentDoc = false;
         if (currentDoc == NO_MORE_DOCS)
             return NO_MORE_DOCS;
         if (doc >= maxDoc) {
@@ -204,7 +211,7 @@ class SpansNGrams extends BLSpans {
      */
     @Override
     public int startPosition() {
-        if (alreadyAtFirstMatch)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet by client
         return currentStart;
     }
@@ -220,8 +227,18 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] matchInfo) {
         // no clause, no groups
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return false;
+    }
+
+    @Override
+    public RelationInfo getRelationInfo() {
+        return null;
     }
 
     @Override
@@ -236,7 +253,16 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return 0;
+        // we have no clause to derive this from; we should really return a value indicating
+        // how many n-grams are in the entire corpus?
+        // For now we just return a random value that seems fairly high, but maybe look into this more
+        return 10_000;
+    }
+
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        // We have no inner clause and therefore no fast approximation we can use to skip documents.
+        return null;
     }
 
 }

@@ -4,118 +4,46 @@ import java.io.IOException;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.spans.SpanCollector;
-
-import nl.inl.blacklab.search.Span;
+import org.apache.lucene.search.spans.FilterSpans;
 
 /**
- * Apply a Filter to a Spans.
+ * Apply a document Filter to a Spans.
  *
  * This allows us to only consider certain documents (say, only documents in a
  * certain domain) when executing our query.
  */
-class SpansFiltered extends BLSpans {
-
-    /** Hits we're filtering. */
-    final BLSpans spans;
+class SpansFiltered extends BLFilterSpans<BLSpans> {
 
     /** Keep hits from these documents. */
-    final DocIdSetIterator acceptedDocs;
-
-    /** Are there more hits available? */
-    boolean more;
+    private final DocIdSetIterator acceptedDocs;
 
     public SpansFiltered(BLSpans spans, Scorer filterDocs) throws IOException {
         this(spans, filterDocs == null ? null : filterDocs.iterator());
     }
 
     public SpansFiltered(BLSpans spans, DocIdSetIterator acceptedDocs) throws IOException {
-        this.spans = spans;
+        super(spans);
         this.acceptedDocs = acceptedDocs;
-        more = acceptedDocs != null && (acceptedDocs.nextDoc() != NO_MORE_DOCS);
+        if (acceptedDocs != null)
+            acceptedDocs.nextDoc(); // position at first doc, if any
     }
 
-    private int synchronize() throws IOException {
-        while (more && spans.docID() != acceptedDocs.docID()) {
-            if (spans.docID() < acceptedDocs.docID()) {
-                more = spans.advance(acceptedDocs.docID()) != NO_MORE_DOCS;
-            } else if (acceptedDocs.advance(spans.docID()) == NO_MORE_DOCS) {
-                more = false;
+    @Override
+    protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
+        assert candidate.startPosition() >= 0;
+        if (acceptedDocs == null || acceptedDocs.docID() == NO_MORE_DOCS)
+            return FilterSpans.AcceptStatus.NO_MORE_IN_CURRENT_DOC;
+        int docId = candidate.docID();
+        while (docId > acceptedDocs.docID()) {
+            if (acceptedDocs.advance(docId) == NO_MORE_DOCS) {
+                return FilterSpans.AcceptStatus.NO_MORE_IN_CURRENT_DOC;
             }
         }
-        return more ? spans.docID() : NO_MORE_DOCS;
+        return acceptedDocs.docID() == docId ? FilterSpans.AcceptStatus.YES : FilterSpans.AcceptStatus.NO;
     }
 
     @Override
-    public int nextDoc() throws IOException {
-        if (!more)
-            return NO_MORE_DOCS;
-        more = spans.nextDoc() != NO_MORE_DOCS;
-        return synchronize();
+    public String toString() {
+        return "DOCFILTER(" + in + ", " + acceptedDocs + ")";
     }
-
-    @Override
-    public int nextStartPosition() throws IOException {
-        if (!more)
-            return NO_MORE_POSITIONS;
-        return spans.nextStartPosition();
-    }
-
-    @Override
-    public int advanceStartPosition(int target) throws IOException {
-        if (!more)
-            return NO_MORE_POSITIONS;
-        return spans.advanceStartPosition(target);
-    }
-
-    @Override
-    public int advance(int target) throws IOException {
-        if (!more)
-            return NO_MORE_DOCS;
-        more = spans.advance(target) != NO_MORE_DOCS;
-        return synchronize();
-    }
-
-    @Override
-    public int docID() {
-        return spans.docID();
-    }
-
-    @Override
-    public int endPosition() {
-        return spans.endPosition();
-    }
-
-    @Override
-    public int startPosition() {
-        return spans.startPosition();
-    }
-
-    @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        spans.setHitQueryContext(context);
-    }
-
-    @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
-        if (!childClausesCaptureGroups)
-            return;
-        spans.getCapturedGroups(capturedGroups);
-    }
-
-    @Override
-    public int width() {
-        return spans.width();
-    }
-
-    @Override
-    public void collect(SpanCollector collector) throws IOException {
-        spans.collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return spans.positionsCost();
-    }
-
 }

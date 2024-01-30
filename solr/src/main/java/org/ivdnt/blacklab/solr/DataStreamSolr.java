@@ -177,16 +177,6 @@ public class DataStreamSolr implements DataStream {
     }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, int key) {
-        return startAttrEntry(elementName, attrName, key + "");
-    }
-
-    @Override
-    public DataStream endAttrEntry() {
-        return endEntry();
-    }
-
-    @Override
     public DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList,
             List<String> values) {
         startMap();
@@ -267,5 +257,10 @@ public class DataStreamSolr implements DataStream {
         // Solr doesn't easily support custom output formats, so we'll wrap it in a field,
         // which the client should easily be able to extract.
         startMap().entry("xslt", xslt).endMap();
+    }
+
+    @Override
+    public String getType() {
+        return "json";
     }
 }

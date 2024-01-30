@@ -2,6 +2,8 @@ package nl.inl.blacklab.server.datastream;
 
 import java.io.PrintWriter;
 
+import nl.inl.blacklab.server.lib.results.ApiVersion;
+
 /**
  * Class to stream out XML or JSON data.
  *
@@ -10,17 +12,19 @@ import java.io.PrintWriter;
  */
 public abstract class DataStreamAbstract implements DataStream {
     
-    public static DataStream create(DataFormat format, PrintWriter out, boolean prettyPrint) {
+    public static DataStream create(DataFormat format, PrintWriter out, boolean prettyPrint, ApiVersion api) {
         if (format == DataFormat.JSON)
             return new DataStreamJson(out, prettyPrint);
         if (format == DataFormat.CSV)
             return new DataStreamCsv(out, prettyPrint);
-        return new DataStreamXml(out, prettyPrint);
+        return new DataStreamXml(out, prettyPrint, api);
     }
 
     protected final PrintWriter out;
 
     private int indent = 0;
+
+    private int compactLevel = 0;
 
     private boolean prettyPrint;
 
@@ -91,13 +95,18 @@ public abstract class DataStreamAbstract implements DataStream {
 
     @Override
     public DataStreamAbstract endCompact() {
-        prettyPrint = prettyPrintPref;
+        compactLevel--;
+        assert compactLevel >= 0;
+        if (compactLevel == 0)
+            prettyPrint = prettyPrintPref;
         return this;
     }
 
     @Override
     public DataStream startCompact() {
+        assert compactLevel >= 0;
         prettyPrint = false;
+        compactLevel++;
         return this;
     }
 

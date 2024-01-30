@@ -3,20 +3,13 @@ package nl.inl.blacklab.resultproperty;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -42,31 +35,14 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     /** The properties we're combining */
     final List<HitProperty> properties;
-
-    /** All the contexts needed by the criteria */
-    final List<Annotation> contextNeeded;
     
-    /** Sensitivities needed for the criteria in contextNeeded (same order) */
-    final List<MatchSensitivity> sensitivities;
-    
-    /** Which of the contexts do the individual properties need? */
-    final Map<HitProperty, IntArrayList> contextIndicesPerProperty;
-    
-    HitPropertyMultiple(HitPropertyMultiple mprop, Hits newHits, Contexts contexts, boolean invert) {
-        super(mprop, null, null, invert);
+    HitPropertyMultiple(HitPropertyMultiple mprop, Hits newHits, boolean invert) {
+        super(mprop, null, invert);
         int n = mprop.properties.size();
-        this.contextNeeded = mprop.contextNeeded;
-        this.sensitivities = mprop.sensitivities;
         this.properties = new ArrayList<>();
-        this.contextIndicesPerProperty = new HashMap<>();
         for (int i = 0; i < n; i++) {
             HitProperty prop = mprop.properties.get(i);
-            HitProperty nprop = prop.copyWith(newHits, contexts);
-            IntArrayList indices = mprop.contextIndicesPerProperty.get(prop);
-            if (indices != null) {
-                contextIndicesPerProperty.put(nprop, indices);
-                prop.setContextIndices(indices);
-            }
+            HitProperty nprop = prop.copyWith(newHits);
             this.properties.add(nprop);
         }
     }
@@ -113,50 +89,25 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         super();
         this.properties = new ArrayList<>(Arrays.asList(properties));
         this.reverse = reverse;
+    }
 
-        // Determine what context we need for each property, and let the properties know
-        // at what context index/indices they can find the context(s) they need.
-        // Figure out what context(s) we need
-        List<Annotation> result = new ArrayList<>();
-        List<MatchSensitivity> sensitivities = new ArrayList<>();
+    @Override
+    public HitProperty copyWith(Hits newHits, boolean invert) {
+        return new HitPropertyMultiple(this, newHits, invert);
+    }
+
+    @Override
+    public void fetchContext() {
         for (HitProperty prop: properties) {
-            List<Annotation> requiredContext = prop.needsContext();
-            List<MatchSensitivity> propSensitivities = prop.getSensitivities();
-            
-            if (requiredContext == null)
-                continue;
-            
-            for (int i = 0; i < requiredContext.size(); ++i) {
-                final Annotation c = requiredContext.get(i);
-                final MatchSensitivity ms = propSensitivities.get(i);
-                
-                if (!result.contains(c)) {
-                    result.add(c);
-                    sensitivities.add(ms);
-                }
-            }
-        }
-        this.contextNeeded = result.isEmpty() ? null : result;
-        this.sensitivities = sensitivities.isEmpty() ? null : sensitivities; 
-        
-        // Let criteria know what context number(s) they need
-        contextIndicesPerProperty = new HashMap<>();
-        for (HitProperty prop: properties) {
-            List<Annotation> requiredContext = prop.needsContext();
-            if (requiredContext != null) {
-                IntArrayList contextNumbers = new IntArrayList();
-                for (Annotation c: requiredContext) {
-                    contextNumbers.add(contextNeeded.indexOf(c));
-                }
-                contextIndicesPerProperty.put(prop, contextNumbers);
-                prop.setContextIndices(contextNumbers);
-            }
+            prop.fetchContext();
         }
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
-        return new HitPropertyMultiple(this, newHits, contexts, invert);
+    public void disposeContext() {
+        for (HitProperty prop: properties) {
+            prop.disposeContext();
+        }
     }
 
     @Override
@@ -203,22 +154,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public List<Annotation> needsContext() {
-        return contextNeeded;
-    }
-    
-    @Override
-    public List<MatchSensitivity> getSensitivities() {
-        return sensitivities;
-    }
-
-    @Override
-    public ContextSize needsContextSize(BlackLabIndex index) {
-        // Get ContextSize that's large enough for all our properties
-        return properties.stream().map(p -> p.needsContextSize(index)).filter(Objects::nonNull).reduce(ContextSize::union).orElse(null);
-    }
-
-    @Override
     public PropertyValueMultiple get(long hitIndex) {
         PropertyValue[] rv = new PropertyValue[properties.size()];
         int i = 0;
@@ -241,13 +176,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public String name() {
-        StringBuilder b = new StringBuilder();
-        for (HitProperty crit: properties) {
-            if (b.length() > 0)
-                b.append(", ");
-            b.append(crit.name());
-        }
-        return b.toString();
+        return properties.stream().map(HitProperty::name).collect(Collectors.joining(", "));
     }
     
     @Override
@@ -262,10 +191,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public String serialize() {
-        return getString();
-    }
-
-    private String getString() {
         return PropertySerializeUtil.serializeMultiple(reverse, properties);
     }
 

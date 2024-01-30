@@ -17,8 +17,8 @@ public interface Terms {
     /** The value to use meaning "no term" (e.g. if the document ends) */
     int NO_TERM = -1;
 
-    /** Default (only) charset we use for serializing terms. */
-    Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+    /** Charset we use for serializing terms. */
+    Charset TERMS_CHARSET = StandardCharsets.UTF_8;
 
     /**
      * Get the existing index number of a term, or add it to the term list and
@@ -137,7 +137,7 @@ public interface Terms {
      * Convert a single seggment-specific term id to the corresponding global term id.
      *
      * @param ord segment these snippets came from
-     * @param segmentId segment-specific term id
+     * @param segmentTermId segment-specific term id
      * @return segments global term id
      */
     int segmentIdToGlobalId(int ord, int segmentTermId);

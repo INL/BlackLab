@@ -1,7 +1,6 @@
 package nl.inl.blacklab.mocks;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
@@ -10,9 +9,12 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
 
 /**
  * Stub Spans class for testing. Takes arrays and iterates through 'hits' from
@@ -23,7 +25,7 @@ public class MockSpans extends BLSpans {
     private final class MockPostingsEnum extends PostingsEnum {
         private int currentDoc = -1;
         private int currentHit = -1;
-        private boolean alreadyAtFirstMatch = false;
+        private boolean atFirstInCurrentDoc = false;
 
         public MockPostingsEnum() {
             // NOP
@@ -32,7 +34,7 @@ public class MockSpans extends BLSpans {
         @Override
         public int nextDoc() {
             if (currentDoc != NO_MORE_DOCS) {
-                alreadyAtFirstMatch = false;
+                atFirstInCurrentDoc = false;
                 while (currentHit < doc.length && (currentHit == -1 || doc[currentHit] == currentDoc)) {
                     currentHit++;
                 }
@@ -40,7 +42,7 @@ public class MockSpans extends BLSpans {
                     currentDoc = NO_MORE_DOCS;
                     return NO_MORE_DOCS;
                 }
-                alreadyAtFirstMatch = true;
+                atFirstInCurrentDoc = true;
                 currentDoc = doc[currentHit];
             }
             return currentDoc;
@@ -59,7 +61,7 @@ public class MockSpans extends BLSpans {
         @Override
         public int advance(int target) {
             if (currentDoc != NO_MORE_DOCS) {
-                alreadyAtFirstMatch = false;
+                atFirstInCurrentDoc = false;
                 do {
                     currentDoc = nextDoc();
                 } while (currentDoc != NO_MORE_DOCS && currentDoc < target);
@@ -69,7 +71,7 @@ public class MockSpans extends BLSpans {
 
         @Override
         public int startOffset() {
-            if (currentHit < 0 || alreadyAtFirstMatch)
+            if (currentHit < 0 || atFirstInCurrentDoc)
                 return -1;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
                 return NO_MORE_POSITIONS;
@@ -80,8 +82,8 @@ public class MockSpans extends BLSpans {
         public int nextPosition() {
             if (currentDoc == NO_MORE_DOCS)
                 return NO_MORE_POSITIONS;
-            if (alreadyAtFirstMatch) {
-                alreadyAtFirstMatch = false;
+            if (atFirstInCurrentDoc) {
+                atFirstInCurrentDoc = false;
                 return startOffset();
             }
             if (currentHit < 0)
@@ -97,26 +99,27 @@ public class MockSpans extends BLSpans {
         public BytesRef getPayload() {
             if (payloads == null)
                 return null;
-            if (currentHit < 0 || alreadyAtFirstMatch)
+            if (currentHit < 0 || atFirstInCurrentDoc)
                 return null;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
                 return null;
-            return new BytesRef(payloads[currentHit]);
+            return payloads[currentHit];
         }
 
         @Override
         public int freq() {
             // Find start of next document
             int i;
-            for (i = currentHit + 1; i < doc.length && doc[i] == currentDoc; i++) {
-                // NOP
+            i = currentHit + 1;
+            while (i < doc.length && doc[i] == currentDoc) {
+                i++;
             }
             return i - currentHit;
         }
 
         @Override
         public int endOffset() {
-            if (currentHit < 0 || alreadyAtFirstMatch)
+            if (currentHit < 0 || atFirstInCurrentDoc)
                 return -1;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
                 return NO_MORE_POSITIONS;
@@ -124,30 +127,41 @@ public class MockSpans extends BLSpans {
         }
     }
 
-    final int[] doc;
+    private final int[] doc;
 
-    final int[] start;
+    private final int[] start;
 
-    final int[] end;
+    private final int[] end;
 
     private final MockPostingsEnum postings;
 
     private final MyTermSpans spans;
 
+    private int currentHitIndex;
+
     private boolean noMoreDocs = false;
 
     private boolean noMoreHitsInDoc = true;
 
-    byte[][] payloads = null;
+    private BytesRef[] payloads = null;
 
     private int endPos = -1;
 
-    public MockSpans(int[] doc, int[] start, int[] end) {
+    public void setGuarantees(SpanGuarantees guarantees) {
+        this.guarantees = guarantees;
+    }
+
+    public MockSpans(int[] doc, int[] start, int[] end, SpanGuarantees guarantees) {
+        super(guarantees);
         this.doc = doc;
         this.start = start;
         this.end = end;
         postings = new MockPostingsEnum();
         spans = new MyTermSpans(postings, new Term("test", "dummy"), 1);
+    }
+
+    public MockSpans(int[] doc, int[] start, int[] end) {
+        this(doc, start, end, SpanGuarantees.SORTED_UNIQUE);
     }
 
     @Override
@@ -160,26 +174,39 @@ public class MockSpans extends BLSpans {
         return endPos; //spans.endPosition();
     }
 
-    private void setPayloadsInt(int[] aEnd) {
-        this.payloads = new byte[aEnd.length][];
+    private void setPayloadsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+        this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            this.payloads[i] = ByteBuffer.allocate(4).putInt(aEnd[i]).array();
+            BytesRef payload = PayloadUtils.tagEndPositionPayload(aStart[i], aEnd[i],
+                    BlackLabIndex.IndexType.EXTERNAL_FILES);
+            if (aIsPrimary != null)
+                payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
+            this.payloads[i] = payload;
         }
     }
 
-    private void setPayloadsInt(int[] aEnd, boolean[] aIsPrimary) {
-        this.payloads = new byte[aEnd.length][];
+    private void setPayloadsRelationsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+        this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            BytesRef bytesRef = PayloadUtils.tagEndPositionPayload(aEnd[i]);
-            BytesRef withPrimary = PayloadUtils.addIsPrimary(aIsPrimary[i], bytesRef);
-            byte[] b = new byte[withPrimary.length];
-            System.arraycopy(withPrimary.bytes, withPrimary.offset, b, 0, b.length);
-            this.payloads[i] = b;
+            RelationInfo relInfo = new RelationInfo(false, aStart[i], aStart[i], aEnd[i], aEnd[i],
+                    "test", null);
+            BytesRef payload = relInfo.serialize();
+            if (aIsPrimary != null)
+                payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
+            this.payloads[i] = payload;
+        }
+    }
+
+    private void setPayloadsMatchInfo(int[] aStart, int[] aEnd, RelationInfo[] relationInfo) {
+        this.payloads = new BytesRef[aEnd.length];
+        for (int i = 0; i < aEnd.length; i++) {
+            this.payloads[i] = relationInfo[i].serialize();
         }
     }
 
     @Override
     public int nextDoc() throws IOException {
+        assert docID() != NO_MORE_DOCS;
         if (noMoreDocs)
             throw new BlackLabRuntimeException("Called nextDoc() on exhausted spans!");
         endPos = -1;
@@ -188,14 +215,17 @@ public class MockSpans extends BLSpans {
             noMoreDocs = true;
         else
             noMoreHitsInDoc = false;
+        currentHitIndex = -1;
         return docId;
     }
 
     @Override
     public int nextStartPosition() throws IOException {
+        assert startPosition() != NO_MORE_POSITIONS;
         if (noMoreHitsInDoc)
             throw new BlackLabRuntimeException("Called nextStartPosition() on hit-exhausted spans!");
         int startPos = spans.nextStartPosition();
+        currentHitIndex++;
         endPos = startPos == NO_MORE_POSITIONS ? NO_MORE_POSITIONS : postings.endOffset();
         if (startPos == NO_MORE_POSITIONS) {
             noMoreHitsInDoc = true;
@@ -205,6 +235,7 @@ public class MockSpans extends BLSpans {
 
     @Override
     public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
         if (noMoreDocs)
             throw new BlackLabRuntimeException("Called advance() on exhausted spans!");
         endPos = -1;
@@ -215,6 +246,7 @@ public class MockSpans extends BLSpans {
             noMoreDocs = true;
         else
             noMoreHitsInDoc = false;
+        currentHitIndex = -1;
         return docId;
     }
 
@@ -229,8 +261,18 @@ public class MockSpans extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
-        // just ignore this here
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        // NOP
+    }
+
+    @Override
+    public boolean hasMatchInfo() {
+        return false;
+    }
+
+    @Override
+    public RelationInfo getRelationInfo() {
+        return null;
     }
 
     public static MockSpans emptySpans() {
@@ -245,15 +287,21 @@ public class MockSpans extends BLSpans {
         return new MockSpans(doc, start, end);
     }
 
-    public static MockSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd) {
+    public static MockSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
-        spans.setPayloadsInt(aEnd);
+        spans.setPayloadsInt(aStart, aEnd, aIsPrimary);
         return spans;
     }
 
-    public static BLSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+    public static MockSpans withRelationInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
-        spans.setPayloadsInt(aEnd, aIsPrimary);
+        spans.setPayloadsRelationsInt(aStart, aEnd, aIsPrimary);
+        return spans;
+    }
+
+    public static MockSpans withRelationInfoObjectsInPayload(int[] aDoc, int[] aStart, int[] aEnd, RelationInfo[] aRelationInfo) {
+        MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
+        spans.setPayloadsMatchInfo(aStart, aEnd, aRelationInfo);
         return spans;
     }
 
@@ -277,7 +325,7 @@ public class MockSpans extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return 0;
+        return start.length;
     }
 
 }

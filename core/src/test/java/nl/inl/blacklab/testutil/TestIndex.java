@@ -23,7 +23,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
-import nl.inl.blacklab.search.BlackLabIndexExternal;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -47,10 +46,6 @@ public class TestIndex {
 
     /** External, pre-indexed (to test that we don't accidentally break file compatibility). */
     private static TestIndex testIndexExternalPre;
-
-    public static TestIndex get() {
-        return get(null);
-    }
 
     public static TestIndex get(IndexType indexType) {
         return new TestIndex(false, indexType);
@@ -117,7 +112,7 @@ public class TestIndex {
             // Note that "The|DOH|ZZZ" will be indexed as multiple values at the same token position.
             // All values will be searchable in the reverse index, but only the first will be stored in the
             // forward index.
-            "<doc pid='0' title='Pangram'><s><entity>"
+            "<doc pid='0' title='Pangram'><s test='1'><entity>"
                 + "<w l='the'   p='art'>The|DOH|ZZZ</w> "
                 + "<w l='quick' p='adj'>quick</w> "
                 + "<w l='brown' p='adj'>brown</w> "
@@ -146,7 +141,7 @@ public class TestIndex {
                     + "<w l='aap'>aap</w> "
                     + "</doc>",
 
-            "<doc pid='2' title='Star Wars'> <s><w l='may' p='vrb'>May</w> "
+            "<doc pid='2' title='Star Wars'> <s test='2'><w l='may' p='vrb'>May</w> "
                     + "<entity><w l='the' p='art'>the</w> "
                     + "<w l='force' p='nou'>Force</w></entity> "
                     + "<w l='be' p='vrb'>be</w> "
@@ -231,13 +226,17 @@ public class TestIndex {
         }
     }
 
-    public IndexType indexFormat() {
-        return index instanceof BlackLabIndexExternal ? IndexType.EXTERNAL_FILES : IndexType.INTEGRATED;
+    public IndexType getIndexType() {
+        return index.getType();
+    }
+
+    public boolean isPreindexed() {
+        return dir == null;
     }
 
     @Override
     public String toString() {
-        return (dir != null ? "" : "PREINDEXED ") + indexFormat().toString();
+        return (dir != null ? "" : "PREINDEXED ") + getIndexType().toString();
     }
 
     public BlackLabIndex index() {
@@ -253,14 +252,14 @@ public class TestIndex {
 
     /**
      * For a given document number (input docs), return the Lucene doc id.
-     *
+     * <p>
      * May not be the same because of the document containing index metadata.
      *
      * @param docNumber document number.
      * @return Lucene doc id.
      */
     public int getDocIdForDocNumber(int docNumber) {
-        DocResults r = index.queryDocuments(new TermQuery(new Term("pid", "" + docNumber)));
+        DocResults r = index.queryDocuments(new TermQuery(new Term("pid", String.valueOf(docNumber))));
         return r.get(0).docId();
     }
 
@@ -346,7 +345,7 @@ public class TestIndex {
      */
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
-        Kwics kwics = hits.kwics(ContextSize.get(1));
+        Kwics kwics = hits.kwics(ContextSize.get(1, Integer.MAX_VALUE));
         for (Hit hit : hits) {
             Kwic kwic = kwics.get(hit);
             String left = StringUtils.join(kwic.left(word), " ");

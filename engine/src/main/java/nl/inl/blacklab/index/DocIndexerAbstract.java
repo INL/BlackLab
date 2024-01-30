@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
+import nl.inl.util.StringUtil;
 
 /**
  * Indexes a file.
@@ -124,6 +125,8 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
     @Override
     public void addMetadataField(String name, String value) {
+        name = optTranslateFieldName(name);
+
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
@@ -133,7 +136,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
             return;
         }
 
-        value = value.trim();
+        value = StringUtil.trimWhitespace(value);
         if (!value.isEmpty()) {
             metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
             IndexMetadataWriter indexMetadata = getDocWriter().metadata();
@@ -142,7 +145,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     }
 
     /**
-     * Translate a field name before adding it to the Lucene document.
+     * Translate a field name before adding it.
      *
      * By default, simply returns the input. May be overridden to change the name of
      * a metadata field as it is indexed.
@@ -200,7 +203,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                         ((MetadataFieldImpl) indexMetadata.metadataFields().get(fd.name())).removeValue(value);
                     }
                 }
-                unknownValuesToUse.put(optTranslateFieldName(fd.name()), fd.unknownValue());
+                unknownValuesToUse.put(fd.name(), fd.unknownValue());
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {

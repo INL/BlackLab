@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Provides per-hit query-wide context, such as captured groups.
@@ -19,11 +20,11 @@ public class HitQueryContext {
     /** Root of the BLSpans tree for this query. */
     private BLSpans rootSpans;
 
-    /** Captured group names for our query, in index order */
-    List<String> groupNames = new ArrayList<>();
+    /** Match info names for our query, in index order */
+    List<String> matchInfoNames = new ArrayList<>();
 
     /** We use this to check if subclauses capture groups or not */
-    private int numberOfTimesGroupRegistered = 0;
+    private int numberOfTimesMatchInfoRegistered = 0;
 
     public HitQueryContext(BLSpans spans) {
         this.rootSpans = spans;
@@ -35,8 +36,8 @@ public class HitQueryContext {
 
     public HitQueryContext copyWith(BLSpans spans) {
         HitQueryContext result = new HitQueryContext(spans);
-        result.groupNames = groupNames;
-        result.numberOfTimesGroupRegistered = numberOfTimesGroupRegistered;
+        result.matchInfoNames = matchInfoNames;
+        result.numberOfTimesMatchInfoRegistered = numberOfTimesMatchInfoRegistered;
         return result;
     }
 
@@ -53,17 +54,18 @@ public class HitQueryContext {
     }
 
     /**
-     * Register a captured group, assigning it a unique index number.
+     * Register a match info (e.g. captured group), assigning it a unique index number.
      *
      * @param name the group's name
      * @return the group's assigned index
      */
-    public int registerCapturedGroup(String name) {
-        numberOfTimesGroupRegistered++;
-        if (groupNames.contains(name))
-            return groupNames.indexOf(name); // already registered
-        groupNames.add(name);
-        return groupNames.size() - 1; // index in array
+    public int registerMatchInfo(String name) {
+        numberOfTimesMatchInfoRegistered++;
+        while (matchInfoNames.contains(name)) {
+            return matchInfoNames.indexOf(name); // already registered, reuse
+        }
+        matchInfoNames.add(name);
+        return matchInfoNames.size() - 1; // index in array
     }
 
     /**
@@ -71,8 +73,8 @@ public class HitQueryContext {
      * 
      * @return number of captured groups
      */
-    public int numberOfCapturedGroups() {
-        return groupNames.size();
+    public int numberOfMatchInfos() {
+        return matchInfoNames.size();
     }
 
     /**
@@ -80,10 +82,10 @@ public class HitQueryContext {
      *
      * Used by Hits.
      *
-     * @param capturedGroups array to place the captured group information into
+     * @param matchInfo array to place the captured group information into
      */
-    public void getCapturedGroups(Span[] capturedGroups) {
-        rootSpans.getCapturedGroups(capturedGroups);
+    public void getMatchInfo(MatchInfo[] matchInfo) {
+        rootSpans.getMatchInfo(matchInfo);
     }
 
     /**
@@ -91,11 +93,11 @@ public class HitQueryContext {
      *
      * @return the list of names
      */
-    public List<String> getCapturedGroupNames() {
-        return Collections.unmodifiableList(groupNames);
+    public List<String> getMatchInfoNames() {
+        return Collections.unmodifiableList(matchInfoNames);
     }
 
-    public int getCaptureRegisterNumber() {
-        return numberOfTimesGroupRegistered;
+    public int getMatchInfoRegisterNumber() {
+        return numberOfTimesMatchInfoRegistered;
     }
 }

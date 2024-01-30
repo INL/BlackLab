@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,16 +24,24 @@ import nl.inl.util.LuceneUtil;
  */
 public class SpanQueryNot extends BLSpanQueryAbstract {
 
+    public static SpanGuarantees createGuarantees() {
+        return new SpanGuaranteesAdapter(SpanGuarantees.TERM) {
+            @Override
+            public boolean okayToInvertForOptimization() {
+                // Yes, inverting is actually an improvement
+                return true;
+            }
+
+            @Override
+            public boolean isSingleTokenNot() {
+                return true;
+            }
+        };
+    }
+
     public SpanQueryNot(BLSpanQuery query) {
         super(query);
-    }
-
-    public SpanQueryNot(Collection<BLSpanQuery> clauscol) {
-        super(clauscol);
-    }
-
-    public SpanQueryNot(BLSpanQuery[] clauses) {
-        super(clauses);
+        this.guarantees = createGuarantees();
     }
 
     @Override
@@ -42,7 +49,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
 
         // Can we cancel out a double not?
-        if (rewritten.okayToInvertForOptimization())
+        if (rewritten.guarantees().okayToInvertForOptimization())
             return rewritten.inverted(); // yes
 
         // No, must remain a NOT
@@ -56,17 +63,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery inverted() {
         return clauses.get(0); // Just return our clause, dropping the NOT operation
-    }
-
-    @Override
-    protected boolean okayToInvertForOptimization() {
-        // Yes, inverting is actually an improvement
-        return true;
-    }
-
-    @Override
-    public boolean isSingleTokenNot() {
-        return true;
     }
 
 	@Override
@@ -93,6 +89,11 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         }
 
         @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return weight == null || weight.isCacheable(ctx);
+        }
+
+        @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
             if (weight != null)
                 weight.extractTermStates(contexts);
@@ -101,8 +102,8 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         @Override
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
             BLSpans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
-            if (!clauses.get(0).hitsStartPointSorted())
-                spans = BLSpans.optSortUniq(spans, true, false);
+            if (spans == null)
+                return new SpansNGrams(context.reader(), baseFieldName, 1, 1);
             return new SpansNot(context.reader(), baseFieldName, spans);
         }
 
@@ -111,46 +112,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     @Override
     public String toString(String field) {
         return "NOT(" + (clauses.get(0) == null ? "" : clausesToString(field)) + ")";
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return 1;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return 1;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return true;
     }
 
     @Override

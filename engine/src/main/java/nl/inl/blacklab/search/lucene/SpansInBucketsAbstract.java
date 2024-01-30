@@ -3,14 +3,12 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.Spans;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrays;
-import it.unimi.dsi.fastutil.longs.LongComparator;
-import nl.inl.blacklab.search.Span;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * Wrap a Spans to retrieve sequences of certain matches (in "buckets"), so we
@@ -30,82 +28,85 @@ import nl.inl.blacklab.search.Span;
  * Also, SpansInBuckets assumes all hits in a bucket are from a single document.
  *
  */
-abstract class SpansInBucketsAbstract implements SpansInBuckets {
+abstract class SpansInBucketsAbstract extends SpansInBuckets {
     
     protected final BLSpans source;
 
-    protected int currentDoc = -1;
-
-    /** Starts of hits in our bucket */
-    private final LongArrayList bucket = new LongArrayList(LIST_INITIAL_CAPACITY);
+    /** Starts and ends of hits in our bucket */
+    protected final LongList startsEnds = new LongArrayList(LIST_INITIAL_CAPACITY);
 
     /**
-     * For each hit we fetched, store the captured groups, so we don't lose this
-     * information.
+     * For each hit we fetched, store the match info (e.g. captured groups, relations),
+     * so we don't lose this information.
      */
-    private Long2ObjectMap<Span[]> capturedGroupsPerHit = null;
+    protected ObjectArrayList<MatchInfo[]> matchInfoPerHit = null;
 
     /**
-     * Size of the current bucket, or -1 if we're not at a valid bucket.
+     * For each hit we fetched, store the active relation info, if any.
      */
-    private int bucketSize = -1;
+    protected ObjectArrayList<RelationInfo> activeRelationPerHit = null;
 
     private HitQueryContext hitQueryContext;
 
-    /** Is there captured group information for each hit that we need to store? */
-    private boolean doCapturedGroups;
+    /** Is there match info (e.g. captured groups) for each hit that we need to store? */
+    private boolean doMatchInfo;
 
     /**
-     * Does our clause capture any groups? If not, we don't need to mess with those
+     * Does our clause capture any match info? If not, we don't need to mess with those
      */
-    protected boolean clauseCapturesGroups = true;
+    protected boolean clauseCapturesMatchInfo = true;
+
+    /**
+     * Assert that, if our clause is positioned at a doc, nextStartPosition() has also been called.
+     *
+     * Sanity check to be called from assertions at the start and end of methods that change the internal state.
+     *
+     * We require this because nextBucket() expects the clause to be positioned at a hit. This is because
+     * for certain bucketing operations we can only decide we're done with a bucket if we're at the first hit
+     * that doesn't belong in the bucket.
+     *
+     * @return true if positioned at a hit (or at a doc and nextStartPosition() has been called), false if not
+     */
+    private boolean positionedAtHitIfPositionedInDoc() {
+        return source.docID() < 0 || source.docID() == NO_MORE_DOCS || source.startPosition() >= 0;
+    }
 
     protected void addHitFromSource() {
+        assert positionedAtHitIfPositionedInDoc();
+        assert source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS;
+        assert source.endPosition() >= 0 && source.endPosition() != Spans.NO_MORE_POSITIONS;
         long span = ((long)source.startPosition() << 32) | source.endPosition();
-        bucket.add(span);
-        if (doCapturedGroups) {
-            // Store captured group information
-            Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
-            source.getCapturedGroups(capturedGroups);
-            if (capturedGroupsPerHit == null)
-                capturedGroupsPerHit = new Long2ObjectOpenHashMap<>(HASHMAP_INITIAL_CAPACITY);
-            capturedGroupsPerHit.put(span, capturedGroups);
+        startsEnds.add(span);
+        if (doMatchInfo) {
+            // Store match information such as captured groups and active relation (if any)
+            MatchInfo[] matchInfo = new MatchInfo[hitQueryContext.numberOfMatchInfos()];
+            source.getMatchInfo(matchInfo);
+            if (matchInfoPerHit == null)
+                matchInfoPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+            matchInfoPerHit.add(matchInfo);
+            if (activeRelationPerHit == null)
+                activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+            RelationInfo relationInfo = source.getRelationInfo();
+            activeRelationPerHit.add(relationInfo == null ? null : relationInfo.copy());
         }
-        bucketSize++;
-    }
-    
-    static final LongComparator longCmpEndPoint = (k1, k2) -> {
-        int a = (int)k1;
-        int b = (int)k2;
-        if (a == b)
-            return (int)(k1 >> 32) - (int)(k2 >> 32); // compare start points
-        else
-            return a - b; // compare endpoints
-    };
-    
-    protected void sortHits(boolean sortByStartPoint) {
-        if (sortByStartPoint) { 
-            LongArrays.quickSort(bucket.elements(), 0, bucket.size()); // natural order is startpoint order
-        } else {
-            LongArrays.quickSort(bucket.elements(), 0, bucket.size(), longCmpEndPoint);
-        }
+        assert positionedAtHitIfPositionedInDoc();
     }
 
     @Override
     public int bucketSize() {
-        return bucketSize;
+        return startsEnds.size();
     }
 
     @Override
     public int startPosition(int indexInBucket) {
         //return bucketSlow.get(indexInBucket).start();
-        return (int)(bucket.getLong(indexInBucket) >> 32);
+        return (int)(startsEnds.getLong(indexInBucket) >> 32);
     }
 
     @Override
     public int endPosition(int indexInBucket) {
         //return bucketSlow.get(indexInBucket).end();
-        return (int)bucket.getLong(indexInBucket);
+        return (int) startsEnds.getLong(indexInBucket);
     }
 
     public SpansInBucketsAbstract(BLSpans source) {
@@ -114,25 +115,53 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
     @Override
     public int nextDoc() throws IOException {
-        bucketSize = -1; // not at a valid bucket anymore
-        if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
-            currentDoc = source.nextDoc();
-            if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
+        assert positionedAtHitIfPositionedInDoc();
+        if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
+            if (source.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
                 source.nextStartPosition(); // start gathering at the first hit
-                //gatherHitsInternal();
             }
         }
-        return currentDoc;
+        assert positionedAtHitIfPositionedInDoc();
+        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);;
+        return source.docID();
+    }
+
+    @Override
+    public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
+        assert positionedAtHitIfPositionedInDoc();
+        int doc = source.docID();
+        if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+            if (doc >= target) {
+                // Already at or beyond; go to the next doc
+                // (though we shouldn't rely on this behavior)
+                doc = nextDoc();
+            } else {
+                doc = source.advance(target);
+                if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                    int startPos = source.nextStartPosition(); // start gathering at the first hit
+                    assert startPos >= 0 && source.startPosition() >= 0;
+                }
+            }
+        }
+        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);;
+        assert doc >= 0 && doc >= target;
+        assert positionedAtHitIfPositionedInDoc();
+        return doc;
     }
 
     @Override
     public int nextBucket() throws IOException {
-        if (currentDoc < 0) {
+        assert positionedAtHitIfPositionedInDoc();
+        assert source.docID() >= 0;
+        if (source.docID() < 0) {
             // Not nexted yet, no bucket
             return -1;
         }
-        if (currentDoc == DocIdSetIterator.NO_MORE_DOCS || source.startPosition() == Spans.NO_MORE_POSITIONS)
+        if (source.docID() == DocIdSetIterator.NO_MORE_DOCS || source.startPosition() == Spans.NO_MORE_POSITIONS)
             return NO_MORE_BUCKETS;
+        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
+        assert positionedAtHitIfPositionedInDoc();
         return gatherHitsInternal();
     }
 
@@ -148,11 +177,21 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
      */
     public int advanceBucket(int targetPos) throws IOException {
-        if (source.startPosition() >= targetPos)
-            return nextBucket();
-        if (source.advanceStartPosition(targetPos) == Spans.NO_MORE_POSITIONS)
+        assert positionedAtHitIfPositionedInDoc();
+        if (source.startPosition() >= targetPos) {
+            int i = nextBucket();
+            assert positionedAtHitIfPositionedInDoc();
+            return i;
+        }
+        if (source.advanceStartPosition(targetPos) == Spans.NO_MORE_POSITIONS) {
+            assert positionedAtHitIfPositionedInDoc();
             return NO_MORE_BUCKETS;
-        return gatherHitsInternal();
+        }
+        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
+        assert positionedAtHitIfPositionedInDoc();
+        int i = gatherHitsInternal();
+        assert positionedAtHitIfPositionedInDoc();
+        return i;
     }
 
     /**
@@ -167,49 +206,28 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      */
     protected abstract void gatherHits() throws IOException;
 
-    @Override
-    public int advance(int target) throws IOException {
-        bucketSize = -1; // not at a valid bucket anymore
-        if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
-            if (currentDoc >= target)
-                nextDoc();
-            else {
-                currentDoc = source.advance(target);
-                if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
-                    source.nextStartPosition(); // start gathering at the first hit
-                    //gatherHitsInternal();
-                }
-            }
-        }
-        return currentDoc;
-    }
-
-    @SuppressWarnings("unused")
     private int gatherHitsInternal() throws IOException {
-        // NOTE: we could call .clear() here, but we don't want to hold on to
-        // a lot of memory indefinitely after encountering one huge bucket.
-        if (!REALLOCATE_IF_TOO_LARGE || bucketSize < COLLECTION_REALLOC_THRESHOLD) {
-            // Not a huge amount of memory, so don't reallocate
-            bucket.clear();
-            if (doCapturedGroups)
-                capturedGroupsPerHit.clear();
-        } else {
-            // Reallocate in this case to avoid holding on to a lot of memory
-            bucket.trim(COLLECTION_REALLOC_THRESHOLD / 2);
-            if (doCapturedGroups)
-                capturedGroupsPerHit = new Long2ObjectOpenHashMap<>();
+        assert positionedAtHitIfPositionedInDoc();
+        startsEnds.clear();
+        if (doMatchInfo) {
+            matchInfoPerHit.clear();
+            activeRelationPerHit.clear();
         }
-
-        bucketSize = 0;
-        doCapturedGroups = clauseCapturesGroups && hitQueryContext != null
-                && hitQueryContext.numberOfCapturedGroups() > 0;
+        doMatchInfo = clauseCapturesMatchInfo && hitQueryContext != null && hitQueryContext.numberOfMatchInfos() > 0;
+        if (doMatchInfo && matchInfoPerHit == null) {
+            matchInfoPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+            activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+        }
+        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
         gatherHits();
-        return currentDoc;
+        assert(source.startPosition() >= 0);
+        assert positionedAtHitIfPositionedInDoc();
+        return source.docID();
     }
 
     @Override
     public int docID() {
-        return currentDoc;
+        return source.docID();
     }
 
     @Override
@@ -219,26 +237,60 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
     @Override
     public void setHitQueryContext(HitQueryContext context) {
+        clauseCapturesMatchInfo = hasMatchInfo();
         this.hitQueryContext = context;
-        int before = context.getCaptureRegisterNumber();
         source.setHitQueryContext(context);
-        if (context.getCaptureRegisterNumber() == before) {
-            // Our clause doesn't capture any groups; optimize
-            clauseCapturesGroups = false;
-        }
     }
 
     @Override
-    public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
-        if (!doCapturedGroups)
+    public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
+        if (!doMatchInfo)
             return;
-        Span[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.getLong(indexInBucket));
-        if (previouslyCapturedGroups != null) {
-            for (int i = 0; i < capturedGroups.length; i++) {
-                if (previouslyCapturedGroups[i] != null)
-                    capturedGroups[i] = previouslyCapturedGroups[i];
+        MatchInfo[] previouslyCapturedMatchInfo = matchInfoPerHit.get(indexInBucket);
+        if (previouslyCapturedMatchInfo != null) {
+            for (int i = 0; i < matchInfo.length; i++) {
+                if (previouslyCapturedMatchInfo.length > i &&  previouslyCapturedMatchInfo[i] != null)
+                    matchInfo[i] = previouslyCapturedMatchInfo[i];
             }
         }
     }
 
+    @Override
+    public boolean hasMatchInfo() {
+        return source.hasMatchInfo();
+    }
+
+    @Override
+    public RelationInfo getRelationInfo(int indexInBucket) {
+        if (!doMatchInfo)
+            return null;
+        return activeRelationPerHit.get(indexInBucket);
+    }
+
+    @Override
+    public SpanGuarantees guarantees() {
+        return source.guarantees();
+    }
+
+    @Override
+    public TwoPhaseIterator asTwoPhaseIterator() {
+        assert positionedAtHitIfPositionedInDoc();
+        TwoPhaseIterator twoPhaseIterator = getTwoPhaseIterator(source);
+        assert positionedAtHitIfPositionedInDoc();
+        return twoPhaseIterator;
+    }
+
+    public long cost() {
+        return source.cost();
+    }
+
+    @Override
+    public float positionsCost() {
+        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
+    }
+
+    @Override
+    public int width() {
+        return source.width();
+    }
 }

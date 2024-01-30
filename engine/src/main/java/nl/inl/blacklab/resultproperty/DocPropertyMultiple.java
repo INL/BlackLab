@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -119,13 +120,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 
     @Override
     public String name() {
-        StringBuilder b = new StringBuilder();
-        for (DocProperty crit : criteria) {
-            if (b.length() > 0)
-                b.append(", ");
-            b.append(crit.name());
-        }
-        return b.toString();
+        return criteria.stream().map(DocProperty::name).collect(Collectors.joining(", "));
     }
 
     @Override

@@ -19,7 +19,6 @@ import org.mozilla.universalchardet.UniversalDetector;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
@@ -31,6 +30,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
@@ -75,11 +75,14 @@ class IndexerImpl implements DocWriter, Indexer {
             } catch (Exception e) { 
                 logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name()); 
             }
-            DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path, contents, cs);
-            if (docIndexer == null) {
-                throw new PluginException("Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + path);
+            InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
+            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path, contents, cs)) {
+                if (docIndexer == null) {
+                    throw new PluginException(
+                            "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + path);
+                }
+                impl(docIndexer, path);
             }
-            impl(docIndexer, path);
         }
 
         @Override
@@ -93,9 +96,9 @@ class IndexerImpl implements DocWriter, Indexer {
             // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
             // and for text docIndexers, passing a binary file is an error in itself already.
-            try (
-                    UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
-                    DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path,
+            InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
+            try (UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
+                    DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path,
                             inputStream, inputStream.getEncoding())) {
                 impl(docIndexer, path);
             }
@@ -272,7 +275,7 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     private String determineFormat(String indexName, String formatIdentifier, String fallbackFormat)
             throws DocumentFormatNotFound {
-        if (!DocumentFormats.isSupported(formatIdentifier)) {
+        if (formatIdentifier == null || !DocumentFormats.isSupported(formatIdentifier)) {
             // Specified format not found; use index default
             if (fallbackFormat == null || !DocumentFormats.isSupported(fallbackFormat)) {
                 // Index default doesn't work either, error
@@ -291,13 +294,15 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     private String formatError(String formatIdentifier) {
-        String formatError;
+        String formatError = null;
         if (formatIdentifier == null)
             formatError = "No formatIdentifier";
         else {
-            formatError = DocumentFormats.formatError(formatIdentifier);
-            if (formatError == null)
+            Optional<InputFormat> inputFormat = DocumentFormats.getFormatOrError(formatIdentifier);
+            if (!inputFormat.isPresent())
                 formatError =  "Unknown formatIdentifier '" + formatIdentifier + "'";
+            else if (inputFormat.get().isError())
+                formatError = ((InputFormatError)inputFormat.get()).getErrorMessage();
         }
         return formatError;
     }
@@ -414,9 +419,9 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Override
     public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, BLInputDocument currentDoc) {
-        ForwardIndex fi = indexWriter().forwardIndex(fieldWriter.field());
-        if (fi instanceof ForwardIndexExternal) {
+        if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             // External forward index: add to it (with the integrated forward index, this is handled in the codec)
+            ForwardIndex fi = indexWriter().forwardIndex(fieldWriter.field());
             Map<Annotation, List<String>> annotations = new HashMap<>();
             Map<Annotation, List<Integer>> posIncr = new HashMap<>();
             for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
@@ -441,7 +446,8 @@ class IndexerImpl implements DocWriter, Indexer {
         // this will require moving ContentStore into engine module so it can see BlInputDocument class.
         ContentStore store = indexWriter.contentStore(field);
 
-        if (store instanceof ContentStoreIntegrated) {
+        if (getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
+            // Integrated index: store as a field in the document
             AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();
             if (annotatedFields.exists(contentStoreName)) {
                 annotatedFields.get(contentStoreName).setContentStore(true);
@@ -451,7 +457,7 @@ class IndexerImpl implements DocWriter, Indexer {
             BLFieldType fieldType = indexWriter.indexObjectFactory().fieldTypeContentStore();
             currentDoc.addField(luceneFieldName, document.toString(), fieldType);
         } else {
-            // external contentstore, different api
+            // External content store, with content id stored in the document
             ContentStoreExternal contentStore = (ContentStoreExternal) store;
             int contentId = contentStore.store(document);
             currentDoc.addStoredNumericField(contentIdFieldName, contentId, false);
@@ -591,8 +597,11 @@ class IndexerImpl implements DocWriter, Indexer {
         this.numberOfThreadsToUse = numberOfThreadsToUse;
 
         // Some of the class-based docIndexers don't support theaded indexing
-        if (!DocumentFormats.getFormat(formatIdentifier).isConfigurationBased()) {
-            logger.info("Threaded indexing is disabled for format " + formatIdentifier);
+        //@@@ enable threaded indexing with (threadsafe) class-based docIndexers
+        InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow();
+        if (!inputFormat.isConfigurationBased()) {
+            logger.info("Threaded indexing is disabled for " + formatIdentifier + " because it is not " +
+                    "configuration-based (older DocIndexers may not be threadsafe, so this is a precaution)" );
             this.numberOfThreadsToUse = 1;
         }
     }

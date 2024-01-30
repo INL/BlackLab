@@ -9,16 +9,23 @@ import java.util.Map;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.util.BytesRef;
+import org.eclipse.collections.api.list.primitive.IntList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
-import nl.inl.blacklab.index.BLIndexObjectFactory;
+import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.index.BLFieldType;
+import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.CollUtil;
 
 /**
@@ -44,7 +51,7 @@ public class AnnotationWriter {
      * Token position increments. This allows us to index multiple terms at a single
      * token position (just set the token increments of the additional tokens to 0).
      */
-    protected IntArrayList increments = new IntArrayList();
+    protected MutableIntList increments = new IntArrayList();
 
     /**
      * Payloads for this annotation, if any.
@@ -145,7 +152,7 @@ public class AnnotationWriter {
         return Collections.unmodifiableCollection(sensitivities.keySet());
     }
 
-    TokenStream tokenStream(String sensitivityName, IntArrayList startChars, IntArrayList endChars) {
+    TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
         TokenStream ts;
         if (includeOffsets) {
             ts = new TokenStreamWithOffsets(values, increments, startChars, endChars);
@@ -179,8 +186,8 @@ public class AnnotationWriter {
         return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity);
     }
 
-    public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntArrayList startChars,
-            IntArrayList endChars) {
+    public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntList startChars,
+            IntList endChars) {
         for (String sensitivityName : sensitivities.keySet()) {
             BLFieldType fieldType = getFieldType(doc.indexObjectFactory(), sensitivityName);
             TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
@@ -261,6 +268,20 @@ public class AnnotationWriter {
      * @return new position of the last token, in case it changed.
      */
     public int addValueAtPosition(String value, int position, BytesRef payload) {
+
+        if (fieldWriter.getIndexType() == BlackLabIndex.IndexType.INTEGRATED &&
+                AnnotatedFieldNameUtil.isRelationAnnotation(annotationName) &&
+                !value.isEmpty() && !value.contains("\u0001")) {
+
+            // This is the _relation annotation in the integrated index format, but not the right sort of value
+            // is being indexed. This is likely an old DocIndexer that wasn't updated to use indexInlineTag.
+            // Warn the user.
+            System.err.println("===== WARNING: your DocIndexer is using AnnotationWriter.addValuePosition() to index " +
+                    "inline tags. To work properly with the new index format, update it to use " +
+                    "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
+
+        }
+
         if (value.length() > MAXIMUM_VALUE_LENGTH) {
             // Let's keep a sane maximum value length.
             // (Lucene's is 32766, but we don't want to go that far)
@@ -379,5 +400,89 @@ public class AnnotationWriter {
 
     public AnnotationSensitivities getSensitivitySetting() {
         return sensitivitySetting;
+    }
+
+    /**
+     * Index an inline tag in this annotation.
+     *
+     * Writes the tags differently depending on the index type.
+     *
+     * If endPos is not known yet, we don't write the payload yet; it will
+     * have to be written later, at the index returned by this method.
+     *
+     * @param tagName the tag name
+     * @param startPos the start position of the tag
+     * @param endPos the end position of the tag, or -1 if we don't know it yet
+     * @param attributes the tag attributes
+     * @param indexType index type (external files or integrated)
+     * @return index the tag was stored at (so we can add payload later if needed).
+     *         Note that if this is a negative value, it is the index of the second
+     *         term indexed for this tag. We should update the payloads of both later.
+     */
+    public int indexInlineTag(String tagName, int startPos, int endPos,
+            Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
+        RelationInfo matchInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
+        String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : RelationUtil.inlineTagFullType(tagName);
+        return indexRelation(fullRelationType, attributes, indexType, matchInfo);
+    }
+
+    public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
+            int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
+        RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
+
+        // We index relations at the source start position. This way, we don't have to sort
+        // if we need the source (which is what we usually use), but we will have to sort
+        // for the target or full span (because target position can be before source).
+        // (we also might not even need to decode the payload if we ONLY need the source
+        //  start position)
+        indexRelation(fullRelationType, attributes, indexType, matchInfo);
+    }
+
+    private int indexRelation(String fullRelationType, Map<String, String> attributes,
+            BlackLabIndex.IndexType indexType, RelationInfo relationInfo) {
+        int tagIndexInAnnotation;
+        BytesRef payload;
+        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+            if (relationInfo.getType() != MatchInfo.Type.INLINE_TAG) {
+                // Classic external index doesn't support relations; ignore
+                return relationInfo.getSourceStart();
+            }
+            // classic external index; tag name and attributes are indexed separately
+            payload = relationInfo.getSpanEnd() >= 0 ?
+                    PayloadUtils.tagEndPositionPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
+                            BlackLabIndex.IndexType.EXTERNAL_FILES) :
+                    null;
+            addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
+            tagIndexInAnnotation = lastValueIndex();
+            for (Map.Entry<String, String> e: attributes.entrySet()) {
+                String term = RelationUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
+                        BlackLabIndex.IndexType.EXTERNAL_FILES);
+                addValueAtPosition(term, relationInfo.getSourceStart(), null);
+            }
+        } else {
+            // integrated index; everything is indexed as a single term
+            // We only add the payload if we know the complete relation info;
+            // for inline tags, we'll only know it when we encounter the closing tag,
+            // and we'll add the payload then.
+            payload = relationInfo.hasTarget() ? relationInfo.serialize() : null;
+            addValueAtPosition(RelationUtil.indexTerm(fullRelationType, attributes),
+                    relationInfo.getSourceStart(), payload);
+            boolean indexedTwice = false;
+            if (attributes != null && !attributes.isEmpty()) {
+                // Also index a version without attributes. We'll use this for faster search if we don't filter on
+                // attributes.
+                addValueAtPosition(RelationUtil.indexTerm(fullRelationType, null),
+                        relationInfo.getSourceStart(), payload);
+                indexedTwice = true;
+            }
+
+            tagIndexInAnnotation = lastValueIndex();
+            if (indexedTwice) {
+                // HACK so we will be able to update both payloads if this is an open tag and we have yet to
+                // encounter the close tag
+                tagIndexInAnnotation = -tagIndexInAnnotation;
+            }
+        }
+        return tagIndexInAnnotation;
     }
 }

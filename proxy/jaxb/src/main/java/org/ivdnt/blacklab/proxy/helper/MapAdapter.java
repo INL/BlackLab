@@ -19,23 +19,27 @@ public class MapAdapter extends XmlAdapter<MapAdapter.MapWrapper, Map<String, Ob
     @Override
     public MapWrapper marshal(Map<String, Object> m) {
         MapWrapper wrapper = new MapWrapper();
-        List elements = new ArrayList();
-        for (Map.Entry<String, Object> property : m.entrySet()) {
+        if (m != null) {
+            List elements = new ArrayList();
+            for (Map.Entry<String, Object> property: m.entrySet()) {
 
-            if (property.getValue() instanceof Map) {
-                elements.add(new JAXBElement<>(new QName(SerializationUtil.getCleanLabel(property.getKey())),
-                        MapWrapper.class, marshal((Map) property.getValue())));
-            } else {
-                elements.add(new JAXBElement<>(new QName(SerializationUtil.getCleanLabel(property.getKey())),
-                        String.class, property.getValue().toString()));
+                if (property.getValue() instanceof Map) {
+                    elements.add(new JAXBElement<>(new QName(SerializationUtil.getCleanLabel(property.getKey())),
+                            MapWrapper.class, marshal((Map) property.getValue())));
+                } else {
+                    elements.add(new JAXBElement<>(new QName(SerializationUtil.getCleanLabel(property.getKey())),
+                            String.class, property.getValue().toString()));
+                }
             }
+            wrapper.elements = elements;
         }
-        wrapper.elements = elements;
         return wrapper;
     }
 
     @Override
     public Map<String, Object> unmarshal(MapWrapper v) {
+        if (v.elements == null)
+            return null;
         Map<String, Object> returnval = new LinkedHashMap();
         for (Object o : v.elements) {
             Element e = (Element) o;

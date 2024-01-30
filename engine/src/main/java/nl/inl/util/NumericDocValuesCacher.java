@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.eclipse.collections.api.map.primitive.MutableIntLongMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntLongHashMap;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -30,7 +31,7 @@ public class NumericDocValuesCacher {
     /**
      * DocValues already read
      */
-    private final IntLongHashMap cache;
+    private final MutableIntLongMap cache;
 
     protected NumericDocValuesCacher(NumericDocValues source) {
         this.source = source;

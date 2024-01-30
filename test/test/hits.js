@@ -1,3 +1,4 @@
+"use strict";
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
@@ -24,11 +25,12 @@ function expectHitsUnchanged(testName, params) {
     if (typeof params === 'string')
         params = { patt: params };
 
-    describe(testName, () => {
+    describe(`hits/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
             .get('/test/hits')
             .query({
+                api: constants.TEST_API_VERSION,
                 sort: "field:pid,hitposition", // fully defined sort
                 wordsaroundhit: 1,
                 waitfortotal: "true",
@@ -55,6 +57,7 @@ expectHitsUnchanged("phrase a succesful with _FI2", '_FI2("a", [lemma="successfu
 
 // Simple capture group
 expectHitsUnchanged("simple capture group", '"one" A:[]');
+expectHitsUnchanged("same hit, different captures", '"one" A:([]{1,2}) []{1,2}');
 
 // A few simpler tests, just checking matching text
 expectHitsUnchanged("any token", '[]');
@@ -79,3 +82,9 @@ expectUrlUnchanged('hits', 'document facets',
 // Hits CSV
 expectUrlUnchanged('hits', 'CSV results',
         '/test/hits/?patt=%22the%22', 'text/csv');
+
+// /termfreq operation
+expectUrlUnchanged('hits', 'Termfreq word sensitive',
+        '/test/termfreq/?annotation=word&sensitive=true');
+expectUrlUnchanged('hits', 'Termfreq lemma insensitive',
+        '/test/termfreq/?annotation=lemma');

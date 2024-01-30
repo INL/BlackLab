@@ -13,11 +13,13 @@ import java.util.TreeSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -33,7 +35,11 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
 public final class LuceneUtil {
 
@@ -44,6 +50,66 @@ public final class LuceneUtil {
     private LuceneUtil() {}
 
     /**
+     * Query parser that will correctly produce numeric range queries for numeric fields.
+     */
+    private static class FieldTypeAwareQueryParser extends QueryParser {
+        private final MetadataFields metadataFields;
+
+        public FieldTypeAwareQueryParser(MetadataFields metadataFields, String defaultField, Analyzer analyzer) {
+            super(defaultField, analyzer);
+            this.metadataFields = metadataFields;
+        }
+
+        private boolean isNumericField(String fieldName) {
+            MetadataField f = metadataFields == null ? null : metadataFields.get(fieldName);
+            return f != null && f.type() == FieldType.NUMERIC;
+        }
+
+        @Override
+        protected Query newTermQuery(Term term, float boost) {
+            if (isNumericField(term.field())) {
+                int v = Integer.parseInt(term.text());
+                return IntPoint.newRangeQuery(term.field(), v, v);
+            } else {
+                return super.newTermQuery(term, boost);
+            }
+        }
+
+        @Override
+        protected Query newRangeQuery(String field, String startValue, String endValue, boolean startInclusive,
+                boolean endInclusive) {
+            if (isNumericField(field)) {
+                if (!startInclusive || !endInclusive)
+                    throw new BlackLabRuntimeException("Numeric range queries must be inclusive");
+                int lowerValue = Integer.parseInt(startValue);
+                int upperValue = Integer.parseInt(endValue);
+                return IntPoint.newRangeQuery(field, lowerValue, upperValue);
+            } else {
+                return super.newRangeQuery(field, startValue, endValue, startInclusive, endInclusive);
+            }
+        }
+    }
+
+    /**
+     * Parse a query in the Lucene query language format (QueryParser supplied with
+     * Lucene).
+     *
+     * @param index our index, so we know the field types, or null to always produce term queries
+     * @param luceneQuery the query string
+     * @param analyzer analyzer to use
+     * @param defaultField default search field
+     * @return the query
+     * @throws ParseException on syntax error
+     */
+    public static Query parseLuceneQuery(BlackLabIndex index, String luceneQuery, Analyzer analyzer, String defaultField)
+            throws ParseException {
+        MetadataFields metadataFields = index == null ? null : index.metadataFields();
+        QueryParser qp = new FieldTypeAwareQueryParser(metadataFields, defaultField, analyzer);
+        qp.setAllowLeadingWildcard(true);
+        return qp.parse(luceneQuery);
+    }
+
+    /**
      * Parse a query in the Lucene query language format (QueryParser supplied with
      * Lucene).
      *
@@ -52,12 +118,12 @@ public final class LuceneUtil {
      * @param defaultField default search field
      * @return the query
      * @throws ParseException on syntax error
+     * @deprecated prefer {@link #parseLuceneQuery(BlackLabIndex, String, Analyzer, String)}, which is field type aware
      */
+    @Deprecated
     public static Query parseLuceneQuery(String luceneQuery, Analyzer analyzer, String defaultField)
             throws ParseException {
-        QueryParser qp = new QueryParser(defaultField, analyzer);
-        qp.setAllowLeadingWildcard(true);
-        return qp.parse(luceneQuery);
+        return parseLuceneQuery(null, luceneQuery, analyzer, defaultField);
     }
 
     /**
@@ -182,13 +248,18 @@ public final class LuceneUtil {
     	/** Handle a term.
     	 * 
     	 * @param term term to handle
+         * @param freq total term frequency
     	 * @return whether or not to continue iterating over terms.
     	 */
-    	boolean term(String term);
+    	boolean term(String term, long freq);
     }
     
     /**
      * Find terms in the index based on a prefix. Useful for autocomplete.
+     *
+     * Note that this method iterates over parts of the index sequentially, so a
+     * term may be reported multiple times. The frequencies should be summed if you
+     * want the total frequency.
      *
      * @param index the index
      * @param fieldName the field to find terms for
@@ -218,7 +289,7 @@ public final class LuceneUtil {
                 }
                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
                     String termText = term.utf8ToString();
-                    if (!handler.term(termText))
+                    if (!handler.term(termText, termsEnum.totalTermFreq()))
                     	break outerLoop;
                 }
             }

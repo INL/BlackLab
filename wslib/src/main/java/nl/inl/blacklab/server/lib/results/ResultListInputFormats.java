@@ -3,10 +3,10 @@ package nl.inl.blacklab.server.lib.results;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
-import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats.IllegalUserFormatIdentifier;
+import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
+import nl.inl.blacklab.server.index.FinderInputFormatUserFormats.IllegalUserFormatIdentifier;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.User;
@@ -15,7 +15,7 @@ public class ResultListInputFormats {
 
     private final ResultUserInfo userInfo;
 
-    private final List<Format> formats;
+    private final List<InputFormat> inputFormats;
 
     ResultListInputFormats(WebserviceParams params) {
         userInfo = WebserviceOperations.userInfo(params);
@@ -23,22 +23,21 @@ public class ResultListInputFormats {
         // List all available input formats
         User user = params.getUser();
         IndexManager indexMan = params.getIndexManager();
-        ;
         if (user.isLoggedIn() && indexMan.getUserFormatManager() != null) {
             // Make sure users's formats are loaded
-            indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
+            indexMan.getUserFormatManager().loadUserFormats(user.getUserId(), null);
         }
-        formats = new ArrayList<>();
-        for (Format format: DocumentFormats.getFormats()) {
+        inputFormats = new ArrayList<>();
+        for (InputFormat inputFormat: DocumentFormats.getFormats()) {
             try {
-                String userId = DocIndexerFactoryUserFormats.getUserIdOrFormatName(format.getId(), false);
+                String userId = FinderInputFormatUserFormats.getFormatNameFromIdentifier(inputFormat.getIdentifier());
                 // Other user's formats are not explicitly enumerated (but should still be considered public)
                 if (!userId.equals(userInfo.getUserId()))
                     continue;
             } catch (IllegalUserFormatIdentifier e) {
                 // Alright, it's evidently not a user format, that means it's public. List it.
             }
-            formats.add(format);
+            inputFormats.add(inputFormat);
         }
     }
 
@@ -46,7 +45,7 @@ public class ResultListInputFormats {
         return userInfo;
     }
 
-    public List<Format> getFormats() {
-        return formats;
+    public List<InputFormat> getFormats() {
+        return inputFormats;
     }
 }

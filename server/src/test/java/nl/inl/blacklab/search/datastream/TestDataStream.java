@@ -12,12 +12,13 @@ import org.junit.Test;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamAbstract;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 
 public class TestDataStream {
 
     DataStream jsonStream(StringWriter sw) {
         PrintWriter pw = new PrintWriter(sw);
-        return DataStreamAbstract.create(DataFormat.JSON, pw, false);
+        return DataStreamAbstract.create(DataFormat.JSON, pw, false, ApiVersion.CURRENT);
     }
 
     @Test

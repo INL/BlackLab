@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+
 /** An annotated field */
 public interface AnnotatedField extends Field {
 
@@ -21,9 +23,14 @@ public interface AnnotatedField extends Field {
 	    return annotations().get(name);
 	}
 
-	boolean hasXmlTags();
+    @Deprecated
+	default boolean hasXmlTags() { return hasRelationAnnotation(); }
 
-	String tokenLengthField();
+    boolean hasRelationAnnotation();
+
+    RelationsStats getRelationsStats(BlackLabIndex index, long limitValues);
+
+    String tokenLengthField();
 
     @Override
     default String contentsFieldName() {
@@ -34,11 +41,7 @@ public interface AnnotatedField extends Field {
         return offsetsSensitivity.luceneField();
     }
 
-	default Annotation tagsAnnotation() {
-		return hasXmlTags() ? annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME): null;
-	}
-
-	default Annotation punctAnnotation() {
+    default Annotation punctAnnotation() {
 		return hasXmlTags() ? annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME): null;
 	}
 }

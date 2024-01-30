@@ -38,4 +38,10 @@ public class ConstraintValueBoolean extends ConstraintValue {
         return b == other.b;
     }
 
+    @Override
+    public int compareTo(ConstraintValue other) {
+        if (other instanceof ConstraintValueBoolean)
+            return Boolean.compare(b, ((ConstraintValueBoolean) other).b);
+        throw new IllegalArgumentException("Can only compare equal types! Tried to compare bool to " + other.getClass().getName());
+    }
 }

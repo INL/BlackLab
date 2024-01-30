@@ -1,8 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -21,7 +19,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     final private DocPropertyStoredField docPropStoredField;
 
     HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, boolean invert) {
-        super(prop, hits, null, invert);
+        super(prop, hits, invert);
         this.fieldName = prop.fieldName;
         this.docPropStoredField = prop.docPropStoredField;
     }
@@ -37,7 +35,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, boolean invert) {
         return new HitPropertyDocumentStoredField(this, newHits, invert);
     }
 
@@ -108,10 +106,5 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     
     public String fieldName() {
         return fieldName;
-    }
-    
-    @Override
-    public ContextSize needsContextSize(BlackLabIndex index) {
-        return null;
     }
 }

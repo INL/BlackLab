@@ -1,8 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -17,7 +15,7 @@ public class HitPropertyDoc extends HitProperty {
     private final BlackLabIndex index;
 
     HitPropertyDoc(HitPropertyDoc prop, Hits hits, boolean invert) {
-        super(prop, hits, null, invert);
+        super(prop, hits, invert);
         this.index = hits.index();
     }
 
@@ -27,7 +25,7 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, boolean invert) {
         return new HitPropertyDoc(this, newHits, invert);
     }
 
@@ -92,10 +90,5 @@ public class HitPropertyDoc extends HitProperty {
     @Override
     public boolean isDocPropOrHitText() {
         return true;
-    }
-       
-    @Override
-    public ContextSize needsContextSize(BlackLabIndex index) {
-        return null;
     }
 }

@@ -1,3 +1,4 @@
+"use strict";
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
@@ -18,6 +19,7 @@ function expectCollocUnchanged(testName, params) {
             chai.request(constants.SERVER_URL)
             .get('/test/hits')
             .query({
+                api: constants.TEST_API_VERSION,
                 calc: 'colloc',
                 wordsaroundhit: 10,
                 sensitive: 'false',

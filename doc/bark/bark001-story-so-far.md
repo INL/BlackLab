@@ -30,6 +30,6 @@ After a period of slower development, it started picking up speed again in 2022.
 
 ## Taking Flight: New Index Format, Solr, Distributed, 4.0
 
-We've long had plans to enable distributed search, for scaling to ever larger corpora and flexibly dealing with varying numbers of users. In 2022, we're finally preparing for this by creating a new index format that will play nice with Solr.
+We've long had plans to enable distributed search, for scaling to ever larger corpora and flexibly dealing with varying numbers of users. In 2022 and 2023, we're finally working toward this. We're also adding (dependency) relations search and support for parallel corpora to BlackLab, which should enable whole new use cases.
 
 Stay Tuned for the Incredible Conclusion!

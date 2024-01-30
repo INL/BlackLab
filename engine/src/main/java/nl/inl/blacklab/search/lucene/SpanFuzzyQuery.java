@@ -32,6 +32,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * @author Karl Wettin &lt;kalle@snigel.net&gt;
  */
 public class SpanFuzzyQuery extends BLSpanQuery {
+
+    public static SpanGuarantees createGuarantees() {
+        return SpanGuarantees.TERM;
+    }
+
     public final static int defaultMaxEdits = 2;
 
     public final static int defaultPrefixLength = 0;
@@ -58,7 +63,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
         if (prefixLength < 0) {
             throw new IllegalArgumentException("prefixLength < 0");
         }
-
+        this.guarantees = createGuarantees();
     }
 
     @Override
@@ -157,46 +162,6 @@ public class SpanFuzzyQuery extends BLSpanQuery {
                 return false;
         } else if (!term.equals(other.term))
             return false;
-        return true;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return 1;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return 1;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
         return true;
     }
 

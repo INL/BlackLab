@@ -180,6 +180,12 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
     }
 
     @Override
+    public String indexFlag(String name) {
+        // External index doesn't support index flags, always returns empty (not set)
+        return "";
+    }
+
+    @Override
     public void freezeBeforeIndexing() {
         // don't freeze; with this index format, it was traditionally allowed
         // for the metadata to change during indexing, because it is re-saved at
@@ -205,5 +211,10 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
     @Override
     public int documentCount() {
         return index.reader().numDocs(); // not strictly correct; includes deleted docs
+    }
+
+    @Override
+    public BlackLabIndex.IndexType getIndexType() {
+        return BlackLabIndex.IndexType.EXTERNAL_FILES;
     }
 }

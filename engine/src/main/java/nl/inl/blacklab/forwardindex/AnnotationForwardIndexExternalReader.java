@@ -191,6 +191,10 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             if (end == -1 || end > length[fiid]) // Can happen while making KWICs because we don't know the doc length until here
                 end = length[fiid];
             ForwardIndexAbstract.validateSnippetParameters(length[fiid], start, end);
+            if (start == end) {
+                result.add(new int[0]);
+                continue;
+            }
 
             // The tokens file has has been mapped to memory.
             // Get an int buffer into the file.

@@ -28,13 +28,15 @@ public class TestUtil {
             }
             docNumber++;
             hitNumber = 0;
-            Assert.assertEquals(StringUtil.ordinal(docNumber) + " doc id", expected.nextDoc(), actualDocId);
-            Assert.assertEquals(StringUtil.ordinal(docNumber) + " doc id", expected.docID(), actual.docID());
-            Assert.assertEquals(StringUtil.ordinal(docNumber) + " doc id", actualDocId, actual.docID());
+            String ord = StringUtil.ordinal(docNumber);
+            Assert.assertEquals(ord + " doc id", expected.nextDoc(), actualDocId);
+            Assert.assertEquals(ord + " doc id", expected.docID(), actual.docID());
+            Assert.assertEquals(ord + " doc id", actualDocId, actual.docID());
             if (actualDocId == DocIdSetIterator.NO_MORE_DOCS)
                 break;
-            Assert.assertEquals(-1, actual.startPosition());
-            Assert.assertEquals(-1, actual.endPosition());
+            // Not true if spans have been advanced to a specific document
+            //Assert.assertEquals(ord + " initial start -1", -1, actual.startPosition());
+            //Assert.assertEquals(ord + " initial start -1", -1, actual.endPosition());
             boolean first = true;
             while (true) {
                 int actualStartPos = actual.nextStartPosition();
@@ -53,7 +55,7 @@ public class TestUtil {
                 Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": end pos", expected.endPosition(),
                         actual.endPosition());
                 if (actualStartPos == Spans.NO_MORE_POSITIONS) {
-                    Assert.assertEquals(StringUtil.ordinal(docNumber) + " doc id", actualDocId, actual.docID());
+                    Assert.assertEquals(ord + " doc id", actualDocId, actual.docID());
                     Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": start pos", Spans.NO_MORE_POSITIONS,
                             actual.startPosition());
                     Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": end pos", Spans.NO_MORE_POSITIONS,

@@ -6,8 +6,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.util.WebserviceUtil;
+import nl.inl.util.Json;
 
 public interface DataStream {
     String XML_PROLOG = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>";
@@ -151,6 +155,10 @@ public interface DataStream {
         return startEntry(key).value(value).endEntry();
     }
 
+    DataStream startAttrEntry(String elementName, String attrName, String key);
+
+    default DataStream endAttrEntry() { return endEntry(); }
+
     default DataStream attrEntry(String elementName, String attrName, String key, String value) {
         return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
     }
@@ -175,13 +183,88 @@ public interface DataStream {
         return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
     }
 
-    DataStream startAttrEntry(String elementName, String attrName, String key);
+    /** Start map entry with dynamic key.
+     *
+     *  XML format depends on the API version.
+     *  For API v5+, entry/key/value elements will be used in XML.
+     *  Replaces startEntry() for dynamic keys, to avoid illegal element names.
+     */
+    default DataStream startDynEntry(String key) {
+        return startEntry(key);
+    }
 
-    DataStream startAttrEntry(String elementName, String attrName, int key);
+    /** End dynamic key map entry. */
+    default DataStream endDynEntry() {
+        return endEntry();
+    }
 
-    DataStream endAttrEntry();
+    default DataStream dynEntry(String key, String value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, Object value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, int value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, long value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, double value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    default DataStream dynEntry(String key, boolean value) {
+        return startDynEntry(key).value(value).endDynEntry();
+    }
+
+    /** An entry that will be rendered using separate elements in XML (default JAXB serialization) */
+    default DataStream startElEntry(String key) {
+        return startEntry(key);
+    }
+
+    default DataStream endElEntry() {
+        return endEntry();
+    }
+
+    default DataStream elEntry(String key, String value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, Object value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, int value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, long value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, double value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
+
+    default DataStream elEntry(String key, boolean value) {
+        return startElEntry(key).value(value).endElEntry();
+    }
 
     DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values);
+
+    default DataStream value(TextPattern pattern) {
+        try {
+            // By default, write it as a string (only JSON "properly" incorporates it into the response).
+            return value(Json.getJaxbWriter().writeValueAsString(pattern));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     DataStream value(String value);
 
@@ -204,7 +287,7 @@ public interface DataStream {
         startMap();
         if (value != null) {
             for (Map.Entry<S, T> entry: value.entrySet()) {
-                startEntry(entry.getKey().toString()).value(entry.getValue()).endEntry();
+                startDynEntry(entry.getKey().toString()).value(entry.getValue()).endDynEntry();
             }
         }
         endMap();
@@ -238,7 +321,9 @@ public interface DataStream {
      * @return this data stream
      */
     default DataStream value(Object value) {
-        if (value instanceof Map) {
+        if (value instanceof TextPattern) {
+            return value((TextPattern) value);
+        } else if (value instanceof Map) {
             return value((Map) value);
         } else if (value instanceof List) {
             return value((List) value);
@@ -312,4 +397,10 @@ public interface DataStream {
     default DataStream closeEl() {
         throw new UnsupportedOperationException();
     }
+
+    /** Type of data stream we're writing (json/xml/csv).
+     *
+     * (DataStreamSolr also says 'json')
+     */
+    String getType();
 }

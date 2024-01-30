@@ -28,6 +28,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
@@ -224,14 +225,12 @@ public class HitGroupsTokenFrequencies {
                         docProperties.add(asDocPropIfApplicable);
                         originalOrderOfUnpackedProperties.add(PropInfo.doc(positionInUnpackedList));
                     } else { // Property couldn't be converted to DocProperty (is null). The current property is an actual HitProperty (applies to annotation/token/hit value)
-                        List<Annotation> annot = p.needsContext();
-                        if (annot == null || annot.size() != 1) {
-                            throw new RuntimeException("Grouping property does not apply to singular annotation (nested propertymultiple? non-annotation grouping?) should never happen.");
-                        }
+                        assert p instanceof HitPropertyHitText : "HitProperty should be HitPropertyHitText, should never happen";
+                        Annotation annotation = ((HitPropertyHitText)p).getAnnotation();
 
                         final int positionInUnpackedList = hitProperties.size();
-                        final AnnotationForwardIndex annotationFI = index.annotationForwardIndex(annot.get(0));
-                        final MatchSensitivity sensitivity = p.getSensitivities().get(0);
+                        final AnnotationForwardIndex annotationFI = index.annotationForwardIndex(annotation);
+                        final MatchSensitivity sensitivity = ((HitPropertyHitText) p).getSensitivity();
                         hitProperties.add(new AnnotInfo(annotationFI, sensitivity));
                         originalOrderOfUnpackedProperties.add(PropInfo.hit(positionInUnpackedList));
                     }
@@ -283,7 +282,7 @@ public class HitGroupsTokenFrequencies {
                         final int[] emptyTokenValuesArray = new int[0];
 
                         docIds.parallelStream().forEach(docId -> {
-                            final int docLength = (int) propTokens.get(docId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                            final int docLength = (int) propTokens.get(docId); // already excludes dummy closing token!
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(
                                     index, docId), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];

@@ -1,17 +1,17 @@
 # BARK 7 - Solr integration
 
 - **type:** change
-- **status:** in development
+- **status:** experimental
 
-We will make it possible to use BlackLab with Solr, in addition to BlackLab Server.
+It is now possible to use BlackLab with Solr, in addition to BlackLab Server. Distributed search is not yet possible, but on our wish list (see [BARK 8](bark008-distributed-search.md)).
 
 ## Why?
 
-Solr provides a lot of extra functionality on top of Lucene, most importantly distributed search (see [BARK 8](bark008-distributed-search.md)), but also a huge ecosystem of potentially useful plugins. Some tasks currently handled by BlackLab Server could perhaps be handled by Solr's builtin functionality, e.g. filtering documents. This allows us to reduce the amount of code we have to maintain.
+Solr provides a lot of extra functionality on top of Lucene, most importantly distributed search, but also a huge ecosystem of potentially useful plugins. Some tasks currently handled by BlackLab Server could perhaps be handled by Solr's builtin functionality, e.g. filtering documents. This allows us to reduce the amount of code we have to maintain.
 
 ## How?
 
-After creating the integrated index format (see [BARK 6](bark006-integrated-index.md)), we will add each of BlackLab Server's operations to Solr using a custom RequestHandler. We will refer to the [Mtas](https://github.com/meertensinstituut/mtas) project for an example of how to do this, but will take our own approach.
+After creating the integrated index format (see [BARK 6](bark006-integrated-index.md)), we've added each of BlackLab Server's operations to Solr. We've referred to the [Mtas](https://github.com/meertensinstituut/mtas) project as an example, but have taken our own approach.
 
 ## Why do we favor Solr?
 
@@ -21,7 +21,7 @@ ElasticSearch (ES) could also be an option, if that were found to have advantage
 
 ## When?
 
-Work on this has started in 2022. It should be complete by the end of 2020.
+Work on this started in 2022. The non-distributed part is mostly finished although in an experimental state. Distributed search will be finished later, likely in 2024.
 
 ## Impact on users
 

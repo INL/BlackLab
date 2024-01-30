@@ -42,9 +42,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     protected final HitsInternal hitsInternal;
 
     /**
-     * Our captured groups, or null if we have none.
+     * Our match info (e.g. captured groups, relations), or null if we have none.
      */
-    protected CapturedGroups capturedGroups;
+    protected List<String> matchInfoNames = null;
 
     /**
      * The number of hits we've seen and counted so far. May be more than the number
@@ -116,7 +116,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
      */
     public HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
-        this(queryInfo, readOnly ? HitsInternal.EMPTY_SINGLETON : HitsInternal.create(-1, true, true));
+        this(queryInfo, readOnly ? HitsInternal.EMPTY_SINGLETON : HitsInternal.create(-1, true, true), null);
     }
 
     /**
@@ -128,9 +128,10 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits) {
+    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits, List<String> matchInfoNames) {
         super(queryInfo);
         this.hitsInternal = hits == null ? HitsInternal.create(-1, true, true) : hits;
+        this.matchInfoNames = matchInfoNames;
     }
 
     // Inherited from Results
@@ -165,10 +166,16 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         // Instead, first call ensureResultsRead so we block until we have either have enough or finish
         this.ensureResultsRead(first + windowSize);
         // and only THEN do this, since now we know if we don't have this many hits, we're done, and it's safe to call size
-        long number = hitsProcessedAtLeast(first + windowSize) ? windowSize : size() - first;
+        boolean enoughHitsForFullWindow = hitsProcessedAtLeast(first + windowSize);
+        long number;
+        if (enoughHitsForFullWindow)
+            number = windowSize;
+        else {
+            number = size() - first;
+            assert number < windowSize;
+        }
 
         // Copy the hits we're interested in.
-        CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
         HitsInternalMutable window = HitsInternal.create(number, number, false);
 
@@ -177,10 +184,6 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             EphemeralHit hit = new EphemeralHit();
             for (long i = first; i < first + number; i++) {
                 h.getEphemeral(i, hit);
-                if (capturedGroups != null) {
-                    Hit hh = hit.toHit();
-                    capturedGroups.put(hh, capturedGroups().get(hh));
-                }
                 // OPT: copy context as well..?
 
                 int doc = hit.doc;
@@ -195,7 +198,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, number);
         return Hits.list(queryInfo(), window, windowStats, null,
                 hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(),
-                capturedGroups, hasAscendingLuceneDocIds());
+                matchInfoNames(), hasAscendingLuceneDocIds());
     }
 
     /**
@@ -240,7 +243,6 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         }
 
         MutableInt docsInSample = new MutableInt(0);
-        CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         HitsInternalMutable sample = HitsInternal.create(numberOfHitsToSelect, numberOfHitsToSelect, false);
 
         this.hitsInternal.withReadLock(hr -> {
@@ -254,15 +256,11 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
                 }
 
                 sample.add(hit);
-                if (capturedGroups != null) {
-                    Hit h = hit.toHit();
-                    capturedGroups.put(h, this.capturedGroups.get(h));
-                }
             }
         });
 
         return Hits.list(queryInfo(), sample, null, sampleParameters, sample.size(),
-                docsInSample.getValue(), docsInSample.getValue(), capturedGroups,
+                docsInSample.getValue(), docsInSample.getValue(), matchInfoNames(),
                 hasAscendingLuceneDocIds());
     }
 
@@ -279,21 +277,19 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     public Hits sort(HitProperty sortProp) {
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
-        List<Annotation> requiredContext = sortProp.needsContext();
-        sortProp = sortProp.copyWith(this,
-            requiredContext == null ? null : new Contexts(this, requiredContext, sortProp.needsContextSize(index())));
+        sortProp = sortProp.copyWith(this);
 
         // Perform the actual sort.
         this.ensureAllResultsRead();
         HitsInternal sorted = this.hitsInternal.sort(sortProp); // TODO use wrapper objects
+        sortProp.disposeContext(); // we don't need the context information anymore, free memory
 
-        CapturedGroups capturedGroups = capturedGroups();
         long hitsCounted = hitsCountedSoFar();
         long docsRetrieved = docsProcessedSoFar();
         long docsCounted = docsCountedSoFar();
         boolean ascendingLuceneDocIds = sortProp instanceof HitPropertyDocumentId && !sortProp.isReverse();
         return Hits.list(queryInfo(), sorted, null, null,
-                hitsCounted, docsRetrieved, docsCounted, capturedGroups, ascendingLuceneDocIds);
+                hitsCounted, docsRetrieved, docsCounted, matchInfoNames(), ascendingLuceneDocIds);
     }
 
     /**
@@ -405,7 +401,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      */
     @Override
     public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
-        return TermFrequencyList.collocations(this, annotation, contextSize, sensitivity, sort);
+        // TODO: implement these using HitProperty objects that return HitPropertyValueContextWord(s);
+        //       more versatile and we can eliminate Contexts?
+        return Contexts.collocations(this, annotation, contextSize, sensitivity, sort);
     }
 
     /**
@@ -467,13 +465,13 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public Hits getHitsInDoc(int docId) {
         ensureAllResultsRead();
-        HitsInternalMutable r = HitsInternal.create(-1, size(), false);
+        HitsInternalMutable hitsInDoc = HitsInternal.create(-1, size(), false);
         // all hits read, no lock needed.
         for (EphemeralHit h : this.hitsInternal) {
             if (h.doc == docId)
-                r.add(h);
+                hitsInDoc.add(h);
         }
-        return new HitsList(queryInfo(), r, null);
+        return new HitsList(queryInfo(), hitsInDoc, matchInfoNames);
     }
 
     // Stats
@@ -544,13 +542,6 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     /** Assumes this hit is within our lists. */
     @Override
     public Hits window(Hit hit) {
-        CapturedGroupsImpl capturedGroups = null;
-        if (this.capturedGroups != null) {
-            this.size(); // ensure all results read (so we know our hit's capture groups are available)
-            capturedGroups = new CapturedGroupsImpl(this.capturedGroups.names());
-            capturedGroups.put(hit, this.capturedGroups.get(hit));
-        }
-
         HitsInternalMutable r = HitsInternal.create(1, false, false);
         r.add(hit);
 
@@ -562,21 +553,21 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             1,
             1,
             1,
-            capturedGroups,
+            matchInfoNames(),
             true);
     }
 
-    // Captured groups
+    // Match info (captured groups, relations)
     //--------------------------------------------------------------------
 
     @Override
-    public CapturedGroups capturedGroups() {
-        return capturedGroups;
+    public List<String> matchInfoNames() {
+        return matchInfoNames;
     }
 
     @Override
-    public boolean hasCapturedGroups() {
-        return capturedGroups != null;
+    public boolean hasMatchInfo() {
+        return matchInfoNames != null;
     }
 
     // Hits display

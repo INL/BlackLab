@@ -6,6 +6,10 @@ Return the corpus metadata, including size, document format, annotated and metad
 
 **Method** : `GET`
 
+| Parameter       | Description                                                    |
+|-----------------|----------------------------------------------------------------|
+| `limitvalues`   | Maximum number of values to return for fields. Default: `1000` |
+
 ## Success Response
 
 **Code** : `200 OK`
@@ -60,9 +64,7 @@ Return the corpus metadata, including size, document format, annotated and metad
         "pos",
         "pos_type",
         "pos_subtype",
-        "pos_wordpart",
-        "starttag",
-        "punct"
+        "pos_wordpart"
       ],
       "annotations": {
         "word": {

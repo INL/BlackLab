@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Some utility functions for dealing with annotated field names.
@@ -24,7 +26,13 @@ public final class AnnotatedFieldNameUtil {
     /** Used as a default value if no name has been specified (legacy indexers only) */
     public static final String DEFAULT_MAIN_ANNOT_NAME = Constants.DEFAULT_MAIN_ANNOT_NAME;
 
-    public static final String TAGS_ANNOT_NAME = "starttag";
+    private static final String LEGACY_TAGS_ANNOT_NAME = "starttag";
+
+    @Deprecated
+    /** @deprecated use {@link #relationAnnotationName(DocWriter)} instead */
+    public static final String TAGS_ANNOT_NAME = LEGACY_TAGS_ANNOT_NAME;
+
+    private static final String RELATIONS_ANNOT_NAME = "_relation";
 
     /** Annotation name for the spaces and punctuation between words */
     public static final String PUNCTUATION_ANNOT_NAME = "punct";
@@ -89,23 +97,18 @@ public final class AnnotatedFieldNameUtil {
     }
 
     /**
-     * What value do we index for attributes to tags (spans)?
-     *
-     * For example, a tag <s id="123"> ... </s> would be indexed in annotations "starttag"
-     * with two tokens at the same position: "s" and "@iid__123".
-     *
-     * FIXME: this means that currently, we cannot distinguish between attributes for
-     *   different start tags occurring at the same token position! We should change the index
-     *   format to at least include tag name with each attribute, but this will break index
-     *   compatibility. We'll probably do this as part of a larger update to how document
-     *   structure is indexed (for syntactic search features).
-     *
-     * @param name attribute name
-     * @param value attribute value
-     * @return value to index for this attribute
+     * Get the name of the annotation that stores the relations between words.
+     * @param indexType index type
+     * @return name of annotation that stores the relations between words (and inline tags)
      */
-    public static String tagAttributeIndexValue(String name, String value) {
-        return "@" + name.toLowerCase() + "__" + value.toLowerCase();
+    public static String relationAnnotationName(BlackLabIndex.IndexType indexType) {
+        return indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? LEGACY_TAGS_ANNOT_NAME : RELATIONS_ANNOT_NAME;
+    }
+
+    public static boolean isRelationAnnotation(String name) {
+        // TODO: icky, we can't name an annotation "starttag" in the integrated index this way.
+        //   not a huge deal, and we can remove it when we remove the external index.
+        return name.equals(LEGACY_TAGS_ANNOT_NAME) || name.equals(RELATIONS_ANNOT_NAME);
     }
 
     public enum BookkeepFieldType {
@@ -375,6 +378,8 @@ public final class AnnotatedFieldNameUtil {
      * @return sanitized name
      */
     public static String sanitizeXmlElementName(String name, boolean disallowDashes) {
+        if (name.isEmpty())
+            return "_EMPTY_";
         name = name.replaceAll("[^\\p{L}\\d_.\\-]", "_"); // can only contain letters, digits, underscores and periods
         if (disallowDashes)
             name = name.replaceAll("-", "_");

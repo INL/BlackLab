@@ -27,8 +27,8 @@ bin
 # vscode project settings
 .factorypath
 
-# Exclude *.env files except default .env
-?*.env
+# Exclude *.env files
+*.env
 
 # NPM libs
 node_modules

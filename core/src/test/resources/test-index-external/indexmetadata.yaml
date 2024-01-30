@@ -1,7 +1,7 @@
 ---
-displayName: "BlackLabTest_TestIndex_0e96eb9f-7af6-41e1-89ba-c304b7b354a7"
+displayName: "BlackLabTest_TestIndex_e1464844-3a97-49d1-89f2-a74eae91f390"
 description: ""
-contentViewable: false
+contentViewable: true
 textDirection: "ltr"
 documentFormat: "testformat"
 tokenCount: 37
@@ -9,8 +9,8 @@ versionInfo:
   blackLabBuildTime: "UNKNOWN"
   blackLabVersion: "UNKNOWN"
   indexFormat: "3.1"
-  timeCreated: "2022-09-21 14:26:35"
-  timeModified: "2022-09-21 14:26:35"
+  timeCreated: "2023-07-24 09:14:20"
+  timeModified: "2023-07-24 09:14:20"
   alwaysAddClosingToken: true
   tagLengthInPayload: true
 fieldInfo:
@@ -19,8 +19,23 @@ fieldInfo:
   unknownCondition: "never"
   unknownValue: "unknown"
   titleField: "fromInputFile"
-  metadataFieldGroups: []
-  annotationGroups: {}
+  metadataFieldGroups:
+  - name: "Other fields group"
+    addRemainingFields: true
+    fields: []
+  - name: "Title group"
+    fields:
+    - "title"
+  annotationGroups:
+    contents:
+    - name: "Basic"
+      annotations:
+      - "word"
+      - "lemma"
+    - name: "Advanced"
+      addRemainingAnnotations: true
+      annotations:
+      - "pos"
   metadataFields:
     fromInputFile:
       displayName: "From input file"

@@ -6,7 +6,6 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.Span;
 
 /**
  * Expands the source spans to the left and right to form N-grams.
@@ -28,13 +27,7 @@ import nl.inl.blacklab.search.Span;
  * matches per document and eliminates duplicates (hence the 'raw' in the name -
  * not suitable for consumption yet).
  */
-class SpansFilterNGramsRaw extends BLSpans {
-
-    /** The clause to expand */
-    private final BLSpans clause;
-
-    /** Whether or not there's more docs in the clause */
-    private int currentDoc = -1;
+class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
 
     /** Current startPosition() in the clause */
     private int srcStart = -1;
@@ -72,23 +65,23 @@ class SpansFilterNGramsRaw extends BLSpans {
     /** Used to get the field length in tokens for a document */
     DocFieldLengthGetter lengthGetter;
 
-    private boolean alreadyAtFirstHit;
+    private boolean atFirstInCurrentDoc;
 
     public SpansFilterNGramsRaw(LeafReader reader, String fieldName, BLSpans clause,
             SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
+        super(clause, SpanQueryFilterNGrams.createGuarantees(clause.guarantees(), min, max));
         if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT
                 && op != SpanQueryPositionFilter.Operation.MATCHES) {
             // We need to know document length to properly do expansion to the right
             // OPT: cache this in BlackLabIndex..?
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         }
-        this.clause = clause;
         this.op = op;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
             throw new IllegalArgumentException("min > max");
-        if (min < 0 || this.max < 0)
+        if (min < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
@@ -106,40 +99,27 @@ class SpansFilterNGramsRaw extends BLSpans {
     }
 
     @Override
-    public int docID() {
-        return currentDoc;
-    }
-
-    @Override
     public int endPosition() {
-        if (alreadyAtFirstHit)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet
         return end;
     }
 
     @Override
     public int nextDoc() throws IOException {
-        alreadyAtFirstHit = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            do {
-                currentDoc = clause.nextDoc();
-                if (currentDoc == NO_MORE_DOCS)
-                    return NO_MORE_DOCS;
-                srcStart = srcEnd = start = end = -1;
-                goToNextClauseSpan();
-            } while (start == NO_MORE_POSITIONS);
-            alreadyAtFirstHit = true;
-        }
-        return currentDoc;
+        assert docID() != NO_MORE_DOCS;
+        atFirstInCurrentDoc = false;
+        return super.nextDoc();
     }
 
     @Override
     public int nextStartPosition() throws IOException {
-        if (alreadyAtFirstHit) {
-            alreadyAtFirstHit = false;
+        assert startPosition() != NO_MORE_POSITIONS;
+        if (atFirstInCurrentDoc) {
+            atFirstInCurrentDoc = false;
             return start;
         }
-        if (currentDoc == NO_MORE_DOCS || srcStart == NO_MORE_POSITIONS)
+        if (in.docID() == NO_MORE_DOCS || srcStart == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
 
         // Is there another n-gram for this source hit?
@@ -147,7 +127,7 @@ class SpansFilterNGramsRaw extends BLSpans {
         switch (op) {
         case CONTAINING:
             end++;
-            while (!atValidNGram) {
+            while (true) {
                 if (end - start <= max && end <= tokenLength) {
                     // N-gram is within allowed size and not beyond end of document
                     atValidNGram = true;
@@ -217,29 +197,23 @@ class SpansFilterNGramsRaw extends BLSpans {
     }
 
     @Override
-    public int advance(int doc) throws IOException {
-        alreadyAtFirstHit = false;
-        if (currentDoc != NO_MORE_DOCS) {
-            if (currentDoc < doc) {
-                currentDoc = clause.advance(doc);
-                if (currentDoc != NO_MORE_DOCS) {
-                    while (true) {
-                        srcStart = srcEnd = start = end = -1;
-                        goToNextClauseSpan();
-                        if (start != NO_MORE_POSITIONS) {
-                            alreadyAtFirstHit = true;
-                            return currentDoc;
-                        }
-                        currentDoc = clause.nextDoc();
-                        if (currentDoc == NO_MORE_DOCS)
-                            return NO_MORE_DOCS;
-                    }
-                }
-            } else {
-                nextDoc(); // per Lucene's specification, always at least go to the next doc
-            }
+    public int advance(int target) throws IOException {
+        assert target >= 0 && target > docID();
+        atFirstInCurrentDoc = false;
+        return super.advance(target);
+    }
+
+    @Override
+    protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert positionedInDoc();
+        atFirstInCurrentDoc = false;
+        srcStart = srcEnd = start = end = -1;
+        goToNextClauseSpan();
+        if (start != NO_MORE_POSITIONS) {
+            atFirstInCurrentDoc = true;
+            return true;
         }
-        return currentDoc;
+        return false;
     }
 
     /**
@@ -253,14 +227,14 @@ class SpansFilterNGramsRaw extends BLSpans {
      *         expansion, NO_MORE_POSITIONS if we're done
      */
     private int goToNextClauseSpan() throws IOException {
-        srcStart = clause.nextStartPosition();
+        srcStart = in.nextStartPosition();
         if (srcStart == NO_MORE_POSITIONS) {
             start = end = srcEnd = NO_MORE_POSITIONS;
             return NO_MORE_POSITIONS;
         }
         while (true) {
             // Determine limits and set to initial n-gram
-            srcEnd = clause.endPosition();
+            srcEnd = in.endPosition();
             switch (op) {
             case MATCHES:
                 int len = srcEnd - rightAdjust - (srcStart - leftAdjust);
@@ -274,9 +248,9 @@ class SpansFilterNGramsRaw extends BLSpans {
                 break;
             case CONTAINING:
                 // Do we know this document's length already?
-                if (currentDoc != tokenLengthDocId) {
+                if (in.docID() != tokenLengthDocId) {
                     // No, determine length now
-                    tokenLengthDocId = currentDoc;
+                    tokenLengthDocId = in.docID();
                     tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
 
@@ -297,9 +271,9 @@ class SpansFilterNGramsRaw extends BLSpans {
                 break;
             case CONTAINING_AT_START:
                 // Do we know this document's length already?
-                if (currentDoc != tokenLengthDocId) {
+                if (in.docID() != tokenLengthDocId) {
                     // No, determine length now
-                    tokenLengthDocId = currentDoc;
+                    tokenLengthDocId = in.docID();
                     tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
 
@@ -353,7 +327,7 @@ class SpansFilterNGramsRaw extends BLSpans {
      */
     @Override
     public int startPosition() {
-        if (alreadyAtFirstHit)
+        if (atFirstInCurrentDoc)
             return -1; // .nextStartPosition() not called yet
         return start;
     }
@@ -361,33 +335,21 @@ class SpansFilterNGramsRaw extends BLSpans {
     @Override
     public String toString() {
         String adj = (leftAdjust != 0 || rightAdjust != 0) ? ", " + leftAdjust + ", " + rightAdjust : "";
-        return "SpansFilterNGrams(" + clause + ", " + op + ", " + min + ", " + inf(max) + adj + ")";
+        return "SpansFilterNGrams(" + in + ", " + op + ", " + min + ", " + BLSpanQuery.inf(max) + adj + ")";
     }
 
     @Override
     public void passHitQueryContextToClauses(HitQueryContext context) {
-        clause.setHitQueryContext(context);
-    }
-
-    @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
-        if (!childClausesCaptureGroups)
-            return;
-        clause.getCapturedGroups(capturedGroups);
+        in.setHitQueryContext(context);
     }
 
     @Override
     public int width() {
-        return clause.width();
+        return in.width();
     }
 
     @Override
     public void collect(SpanCollector collector) throws IOException {
-        clause.collect(collector);
-    }
-
-    @Override
-    public float positionsCost() {
-        return clause.positionsCost();
+        in.collect(collector);
     }
 }

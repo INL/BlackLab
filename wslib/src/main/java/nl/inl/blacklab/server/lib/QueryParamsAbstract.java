@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.lib;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -10,6 +9,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -265,7 +265,39 @@ public abstract class QueryParamsAbstract implements QueryParams {
     }
 
     @Override
-    public int getWordsAroundHit() { return getInt(WebserviceParameter.WORDS_AROUND_HIT); }
+    @Deprecated
+    public int getWordsAroundHit() {
+        // ("wordsaroundhit" is deprecated, now called "context")
+        WebserviceParameter par = has(WebserviceParameter.CONTEXT) ?
+                WebserviceParameter.CONTEXT :
+                WebserviceParameter.WORDS_AROUND_HIT;
+        return getInt(par);
+    }
+
+    public ContextSize getContext() {
+        // ("wordsaroundhit" is deprecated, now called "context")
+        WebserviceParameter par = has(WebserviceParameter.WORDS_AROUND_HIT) ?
+                WebserviceParameter.WORDS_AROUND_HIT :
+                WebserviceParameter.CONTEXT;
+        String str = get(par);
+        int before = 0, after = 0;
+        String inlineTagName = null;
+        if (str.matches("\\d+")) {
+            before = after = Integer.parseInt(str);
+        } else if (str.matches("\\d+:\\d+")) {
+            String[] parts = str.split(":");
+            before = Integer.parseInt(parts[0]);
+            after = Integer.parseInt(parts[1]);
+        } else if (str.matches("\\w+")) {
+            inlineTagName = str; // TODO: determine actual match info index for inline tag
+        } else {
+            throw new IllegalArgumentException("Invalid context value: " + str);
+        }
+
+        int maxContextSize = getSearchManager().config().getParameters().getContextSize().getMaxInt();
+
+        return ContextSize.get(before, after, true, inlineTagName, ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize));
+    }
 
     @Override
     public ConcordanceType getConcordanceType() {
@@ -309,14 +341,16 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public Set<String> getListMetadataValuesFor() { return getSet(WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS); }
 
     @Override
-    public Collection<String> getListSubpropsFor() { return getSet(WebserviceParameter.LIST_SUBPROP_VALUES); }
-
-    @Override
     public boolean getWaitForTotal() { return getBool(WebserviceParameter.WAIT_FOR_TOTAL_COUNT); }
 
     @Override
     public boolean getIncludeTokenCount() {
         return getBool(WebserviceParameter.INCLUDE_TOKEN_COUNT);
+    }
+
+    @Override
+    public boolean getIncludeCustomInfo() {
+        return getBool(WebserviceParameter.INCLUDE_CUSTOM_INFO);
     }
 
     @Override
@@ -349,6 +383,18 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public String getAutocompleteTerm() { return get(WebserviceParameter.TERM); }
+
+    @Override
+    public String getRelClasses() { return get(WebserviceParameter.REL_CLASSES); }
+
+    @Override
+    public boolean getRelOnlySpans() { return getBool(WebserviceParameter.REL_ONLY_SPANS); }
+
+    @Override
+    public boolean getRelSeparateSpans() { return getBool(WebserviceParameter.REL_SEPARATE_SPANS); }
+
+    @Override
+    public long getLimitValues() { return getLong(WebserviceParameter.LIMIT_VALUES); }
 
     @Override
     public boolean isCalculateCollocations() { return get(WebserviceParameter.CALCULATE_STATS).equals("colloc"); }
@@ -395,7 +441,12 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public Optional<String> getInputFormat() { return opt(WebserviceParameter.INPUT_FORMAT); }
 
     @Override
-    public ApiVersion apiCompatibility() { return ApiVersion.fromValue(get(WebserviceParameter.API_COMPATIBILITY)); }
+    public ApiVersion apiCompatibility() {
+        ApiVersion apiVersion = ApiVersion.fromValue(get(WebserviceParameter.API_VERSION));
+        if (apiVersion.getMajor() < 3)
+            throw new UnsupportedOperationException("API version " + apiVersion + " is no longer supported");
+        return apiVersion;
+    }
 
     @Override
     public SearchManager getSearchManager() { return searchMan; }

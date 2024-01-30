@@ -7,7 +7,7 @@ package nl.inl.blacklab.search.matchfilter;
  * ConstraintValueString while the constraint
  * <code>a.lemma = b.lemma</code> evaluates to a ConstraintValueBoolean.
  */
-public abstract class ConstraintValue {
+public abstract class ConstraintValue implements Comparable<ConstraintValue> {
 
     private static final ConstraintValue FALSE = new ConstraintValueBoolean(false);
 
@@ -37,9 +37,11 @@ public abstract class ConstraintValue {
     @Override
     public abstract boolean equals(Object obj);
 
+    @Override
+    public abstract int compareTo(ConstraintValue rb);
+
     public abstract boolean isTruthy();
 
     @Override
     public abstract String toString();
-
 }

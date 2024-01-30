@@ -1,6 +1,10 @@
 package nl.inl.blacklab.util;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Takes care of serializing/deserializing Hit/DocProperties and -Values with
@@ -28,13 +32,11 @@ public final class PropertySerializeUtil {
     }
 
     public static String combineParts(String... parts) {
-        StringBuilder b = new StringBuilder();
-        for (String part : parts) {
-            if (b.length() > 0)
-                b.append(PART_SEPARATOR);
-            b.append(escapePart(part));
-        }
-        return b.toString();
+        return Arrays.stream(parts).map(part -> escapePart(part)).collect(Collectors.joining(PART_SEPARATOR));
+    }
+
+    public static String combineParts(List<String> parts) {
+        return combineParts(parts.toArray(new String[0]));
     }
 
     /**
@@ -62,13 +64,7 @@ public final class PropertySerializeUtil {
     }
 
     public static String combineMultiple(String... values) {
-        StringBuilder b = new StringBuilder();
-        for (String value : values) {
-            if (b.length() > 0)
-                b.append(MULTIPLE_SEPARATOR);
-            b.append(value);
-        }
-        return b.toString();
+        return StringUtils.join(values, MULTIPLE_SEPARATOR);
     }
 
     public static String[] splitMultiple(String valueCombined) {

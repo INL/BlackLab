@@ -57,7 +57,7 @@ public class ResultDocsGrouped {
             first = 0;
         long number = params.getNumberOfResultsToShow();
         if (number < 0 || number > params.getSearchManager().config().getParameters().getPageSize().getMax())
-            number = params.getSearchManager().config().getParameters().getPageSize().getDefaultValue();
+            number = params.getSearchManager().config().getParameters().getPageSize().getDefault();
         long numberOfGroupsInWindow = 0;
         numberOfGroupsInWindow = number;
         if (first + number > groups.size())
@@ -77,16 +77,16 @@ public class ResultDocsGrouped {
         SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
         Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         summaryFields = WebserviceOperations.summaryCommonFields(params,
-                indexStatus, timings, groups, ourWindow);
+                indexStatus, timings, null, groups, ourWindow);
 
         numResultDocs = null;
         numResultHits = null;
         if (hitsStats == null) {
-            numResultDocs = WebserviceOperations.numResultsSummaryDocs(false, docResults, false,
+            numResultDocs = WebserviceOperations.numResultsSummaryDocs(false, docResults, timings,
                     subcorpusSize);
         } else {
             numResultHits = WebserviceOperations.numResultsSummaryHits(
-                    hitsStats, docsStats, true, false, subcorpusSize);
+                    hitsStats, docsStats, true, timings, subcorpusSize, -1);
         }
 
         corpusSizes = new ArrayList<>();

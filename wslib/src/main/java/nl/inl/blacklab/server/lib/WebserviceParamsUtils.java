@@ -27,7 +27,7 @@ public class WebserviceParamsUtils {
     public static TextPattern parsePattern(BlackLabIndex index, String patt, String pattLang, String pattGapData) {
         TextPattern pattern = null;
         if (!StringUtils.isBlank(patt)) {
-            if (pattLang.equals("corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
+            if (pattLang.matches("default|corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
                 // CQL query with gaps, and TSV data to put in the gaps
                 try {
                     pattern = GapFiller.parseGapQuery(patt, pattGapData);
@@ -37,7 +37,7 @@ public class WebserviceParamsUtils {
                 }
             } else {
                 String defaultAnnotation = index.mainAnnotatedField().mainAnnotation().name();
-                pattern = BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang, true);
+                pattern = BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang);
             }
         }
         return pattern;

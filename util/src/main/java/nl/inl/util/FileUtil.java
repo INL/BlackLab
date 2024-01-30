@@ -120,7 +120,7 @@ public class FileUtil {
             try (BufferedReader in = openForReading(inputFile, encoding)) {
                 String line;
                 while ((line = in.readLine()) != null) {
-                    result.add(line.trim());
+                    result.add(StringUtil.trimWhitespace(line));
                 }
             }
             return result;

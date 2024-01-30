@@ -2,12 +2,15 @@ package nl.inl.blacklab.mocks;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.CustomProps;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 
 public class MockAnnotatedField implements AnnotatedField {
     
@@ -83,7 +86,7 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public boolean hasXmlTags() {
+    public boolean hasRelationAnnotation() {
         return false;
     }
 
@@ -102,4 +105,8 @@ public class MockAnnotatedField implements AnnotatedField {
         return CustomProps.NONE;
     }
 
+    @Override
+    public RelationsStats getRelationsStats(BlackLabIndex index, long limitValues) {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -71,6 +71,9 @@ parameters:
     #  The filterlang GET parameter override this value.
     filterLanguage: luceneql
 
+    # Default API version to use
+    api: 4
+
 
 
 #  Settings for job caching.

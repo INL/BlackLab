@@ -1,0 +1,11 @@
+# Docker Compose development overrides for BlackLab
+# (configure JPDA to allow remote JVM debugging)
+
+version: '3.9'
+
+services:
+
+  solr:
+      volumes:
+          - /home/jan/int-projects/blacklab-data/data/conll-u/solr:/var/solr/data/conll-u
+          - /home/jan/int-projects/blacklab-data/data/conll-u/index.train:/var/solr/data/conll-u/data/index

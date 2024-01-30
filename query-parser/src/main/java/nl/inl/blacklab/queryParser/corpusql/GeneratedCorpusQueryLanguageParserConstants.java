@@ -19,15 +19,21 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
   /** RegularExpression Id. */
   int CONTAINING = 8;
   /** RegularExpression Id. */
-  int NAME = 9;
+  int DEFAULT_VALUE = 9;
   /** RegularExpression Id. */
-  int FLAGS = 10;
+  int NAME = 10;
   /** RegularExpression Id. */
-  int NUMBER = 11;
+  int FLAGS = 11;
   /** RegularExpression Id. */
-  int QUOTED_STRING = 12;
+  int NUMBER = 12;
   /** RegularExpression Id. */
-  int SINGLE_QUOTED_STRING = 13;
+  int ROOT_DEP_OP = 13;
+  /** RegularExpression Id. */
+  int DEP_OP = 14;
+  /** RegularExpression Id. */
+  int QUOTED_STRING = 15;
+  /** RegularExpression Id. */
+  int SINGLE_QUOTED_STRING = 16;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -43,21 +49,28 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "<MULTI_LINE_COMMENT>",
     "\"within\"",
     "\"containing\"",
+    "\"_\"",
     "<NAME>",
     "<FLAGS>",
     "<NUMBER>",
+    "<ROOT_DEP_OP>",
+    "<DEP_OP>",
     "<QUOTED_STRING>",
     "<SINGLE_QUOTED_STRING>",
     "\"::\"",
     "\"=\"",
     "\"!=\"",
+    "\">=\"",
+    "\"<=\"",
+    "\">\"",
+    "\"<\"",
     "\"(\"",
     "\")\"",
     "\"!\"",
     "\".\"",
-    "\"<\"",
+    "\";\"",
+    "\":\"",
     "\"/\"",
-    "\">\"",
     "\"*\"",
     "\"+\"",
     "\"?\"",
@@ -67,7 +80,6 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "\"&\"",
     "\"|\"",
     "\"->\"",
-    "\":\"",
     "\"[\"",
     "\"]\"",
   };

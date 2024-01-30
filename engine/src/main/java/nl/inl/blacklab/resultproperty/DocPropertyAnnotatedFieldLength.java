@@ -23,7 +23,7 @@ import nl.inl.util.NumericDocValuesCacher;
  * Retrieves the length of an annotated field (i.e. the main "contents" field) in
  * tokens.
  *
- * This INCLUDES the extra closing token at the end.
+ * This EXCLUDES the extra closing token at the end!
  *
  * This class is thread-safe.
  * (using synchronization on DocValues instance; DocValues are stored for each LeafReader,
@@ -59,7 +59,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         try {
             for (LeafReaderContext rc : index.reader().leaves()) {
                 LeafReader r = rc.reader();
-                NumericDocValues numericDocValues = r.getNumericDocValues(fieldName);
+                NumericDocValues numericDocValues = r.getNumericDocValues(this.fieldName);
                 if (numericDocValues == null) {
                     // (should never happen)
                     throw new UnsupportedOperationException("no DocValues available");

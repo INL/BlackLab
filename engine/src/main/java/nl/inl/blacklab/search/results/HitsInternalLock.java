@@ -5,6 +5,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that locks and can handle huge result sets.
@@ -17,13 +18,16 @@ class HitsInternalLock extends HitsInternalNoLock {
         super(initialCapacity);
     }
 
-    public void add(int doc, int start, int end) {
+    public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
+        assert HitsInternal.debugCheckReasonableHit(doc, start, end);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
             docs.add(doc);
             starts.add(start);
             ends.add(end);
+            if (matchInfo != null)
+                matchInfos.add(matchInfo);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -33,12 +37,14 @@ class HitsInternalLock extends HitsInternalNoLock {
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
     public void add(EphemeralHit hit) {
+        assert HitsInternal.debugCheckReasonableHit(hit);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
             docs.add(hit.doc);
             starts.add(hit.start);
             ends.add(hit.end);
+            matchInfos.add(hit.matchInfo);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -48,12 +54,14 @@ class HitsInternalLock extends HitsInternalNoLock {
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
     public void add(Hit hit) {
+        assert HitsInternal.debugCheckReasonableHit(hit);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
             docs.add(hit.doc());
             starts.add(hit.start());
             ends.add(hit.end());
+            matchInfos.add(hit.matchInfo());
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -107,7 +115,11 @@ class HitsInternalLock extends HitsInternalNoLock {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            return new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index));
+            MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
+            HitImpl hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index),
+                    matchInfo);
+            assert HitsInternal.debugCheckReasonableHit(hit);
+            return hit;
         } finally {
             lock.readLock().unlock();
         }
@@ -133,6 +145,8 @@ class HitsInternalLock extends HitsInternalNoLock {
             h.doc = docs.getInt(index);
             h.start = starts.getInt(index);
             h.end = ends.getInt(index);
+            h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
+            assert HitsInternal.debugCheckReasonableHit(h);
         } finally {
             lock.readLock().unlock();
         }

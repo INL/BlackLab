@@ -1,23 +1,32 @@
+"use strict";
 const SERVER_URL = process.env.APP_URL || "http://localhost:8080/blacklab-server";
 const BLACKLAB_USER = process.env.BLACKLAB_USER || "user";
 const BLACKLAB_PASSWORD = process.env.BLACKLAB_USER || "";
-const DEFAULT_WINDOW_SIZE = parseInt(process.env.BLACKLAB_DEFAULT_WINDOW_SIZE) || 50;
-const SHOULD_HAVE_CONTEXT = 'RESPONSE_SHOULD_HAVE_CONTEXT' in process.env
-    ? process.env.RESPONSE_SHOULD_HAVE_CONTEXT === "true"
-    : true;
-const SHOULD_EXPECT_DOCS_IN_GROUPS = 'RESPONSE_SHOULD_HAVE_DOCS_IN_GROUPS' in process.env
-    ? process.env.RESPONSE_SHOULD_HAVE_DOCS_IN_GROUPS === "true"
-    : false;
+
 const TEST_DATA_ROOT = process.env.TEST_DATA_ROOT || "data";
-const SAVED_RESPONSES_PATH = process.env.SAVED_RESPONSES_PATH || `${TEST_DATA_ROOT}/saved-responses`;
+
+// Determine where test responses are saved
+// NOTE: if we're testing another index type, e.g. integrated, use responses from corresponding subdir
+const INDEX_TYPE = process.env.INDEX_TYPE || "classic-external"; // what index type are we testing? (separate responses)
+const OPT_INDEX_TYPE_PATH = INDEX_TYPE === "classic-external" ? "" : `-${INDEX_TYPE}`;
+
+// Where are the "gold standard" test responses saved?
+const SAVED_RESPONSES_BASE_PATH = process.env.SAVED_RESPONSES_PATH || `${TEST_DATA_ROOT}/saved-responses`;
+const SAVED_RESPONSES_PATH = `${SAVED_RESPONSES_BASE_PATH}${OPT_INDEX_TYPE_PATH}`
+
+// We always save test output when  BLACKLAB_TEST_SAVE_MISSING_RESPONSES is true?
+// Convenient for checking and updating test responses after a run. (default to .gitignored dir)
+const LATEST_TEST_OUTPUT_BASE_PATH = process.env.LATEST_TEST_OUTPUT_BASE_PATH || `${TEST_DATA_ROOT}/latest-test-output`;
+const LATEST_TEST_OUTPUT_PATH = `${LATEST_TEST_OUTPUT_BASE_PATH}${OPT_INDEX_TYPE_PATH}`;
+
+const TEST_API_VERSION = undefined; // (if undefined, automatically uses current stable version)
 
 module.exports = {
     SERVER_URL,
-    DEFAULT_WINDOW_SIZE,
     BLACKLAB_USER,
     BLACKLAB_PASSWORD,
-    SHOULD_HAVE_CONTEXT,
-    SHOULD_EXPECT_DOCS_IN_GROUPS,
     TEST_DATA_ROOT,
-    SAVED_RESPONSES_PATH
+    SAVED_RESPONSES_PATH,
+    LATEST_TEST_OUTPUT_PATH,
+    TEST_API_VERSION
 };

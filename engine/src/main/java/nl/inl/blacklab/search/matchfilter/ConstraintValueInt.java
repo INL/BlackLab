@@ -33,6 +33,13 @@ public class ConstraintValueInt extends ConstraintValue {
     }
 
     @Override
+    public int compareTo(ConstraintValue other) {
+        if (other instanceof ConstraintValueInt)
+            return Integer.compare(i, ((ConstraintValueInt) other).i);
+        throw new IllegalArgumentException("Can only compare equal types! Tried to compare int to " + other.getClass().getName());
+    }
+
+    @Override
     public boolean isTruthy() {
         return true;
     }

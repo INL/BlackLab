@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.text.Collator;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -31,11 +32,14 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.VersionFile;
@@ -46,6 +50,16 @@ public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
+    default BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes,
+            String captureAs) {
+        return tagQuery(queryInfo, luceneField, tagName, attributes, TextPatternTags.Adjust.FULL_TAG, captureAs);
+    }
+
+    BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes,
+            TextPatternTags.Adjust adjust, String captureAs);
+
+    IndexType getType();
+
     enum IndexType {
         EXTERNAL_FILES, // classic index with external forward index, etc.
         INTEGRATED,     // everything integrated into Lucene index
@@ -54,7 +68,7 @@ public interface BlackLabIndex extends AutoCloseable {
     /**
      * Default number of context words to return around a hit.
      */
-    ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
+    ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5, Integer.MAX_VALUE);
 
     // Static [factory] methods
     //---------------------------------------------------------------
@@ -169,12 +183,24 @@ public interface BlackLabIndex extends AutoCloseable {
 
     /**
      * Find hits for a pattern in a field.
+     *
+     * @param queryInfo our query info
+     * @param query the pattern to find
+     * @param settings search settings, or null for default
+     * @return the hits found
+     */
+    Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings);
+
+    /**
+     * Find hits for a pattern in a field.
      * 
      * @param query the pattern to find
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    Hits find(BLSpanQuery query, SearchSettings settings);
+    default Hits find(BLSpanQuery query, SearchSettings settings) {
+        return find(QueryInfo.create(this, fieldFromQuery(query), true), query, settings);
+    }
 
     /**
      * Perform a document query only (no hits)
@@ -314,6 +340,10 @@ public interface BlackLabIndex extends AutoCloseable {
 
     default AnnotatedField annotatedField(String fieldName) {
         return metadata().annotatedField(fieldName);
+    }
+
+    default AnnotatedField fieldFromQuery(BLSpanQuery q) {
+        return annotatedField(q.getField());
     }
 
     default AnnotatedField mainAnnotatedField() {
@@ -494,4 +524,6 @@ public interface BlackLabIndex extends AutoCloseable {
     }
     
     String name();
+
+    RelationsStats getRelationsStats(AnnotatedField field, long limitValues);
 }

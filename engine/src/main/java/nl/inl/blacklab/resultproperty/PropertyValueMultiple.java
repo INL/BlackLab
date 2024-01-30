@@ -3,6 +3,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.util.PropertySerializeUtil;
@@ -10,7 +12,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public class PropertyValueMultiple extends PropertyValue {
     final PropertyValue[] value;
 
-    public PropertyValueMultiple(PropertyValue[] value) {
+    public PropertyValueMultiple(PropertyValue... value) {
         this.value = value;
     }
 
@@ -55,15 +57,7 @@ public class PropertyValueMultiple extends PropertyValue {
 
     @Override
     public String toString() {
-        StringBuilder b = new StringBuilder();
-        int i = 0;
-        for (PropertyValue v : value) {
-            if (i > 0)
-                b.append(" / ");
-            i++;
-            b.append(v.toString());
-        }
-        return b.toString();
+        return StringUtils.join(value, " / ");
     }
 
     @Override

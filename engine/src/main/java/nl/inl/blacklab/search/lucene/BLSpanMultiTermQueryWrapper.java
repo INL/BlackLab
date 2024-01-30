@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -27,13 +44,17 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.StringUtil;
 
 /**
- * Subclasses SpanMultiTermQueryWrapper so it correctly produces BLSpanOrQuery
+ * Version of SpanMultiTermQueryWrapper that produces BLSpanOrQuery
  * or BLSpanTermQuery.
  *
  * @param <Q> the type of query we're wrapping
  */
 public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         extends BLSpanQuery {
+
+    public static SpanGuarantees createGuarantees() {
+        return SpanGuarantees.TERM;
+    }
 
     SpanMultiTermQueryWrapper<Q> query;
 
@@ -51,11 +72,12 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             throw BlackLabRuntimeException.wrap(e);
         }
         this.query = new SpanMultiTermQueryWrapper<>(query);
+        this.guarantees = createGuarantees();
     }
 
     @Override
     public String toString(String field) {
-        return "SPANWRAP(" + query.getWrappedQuery() + ")";
+        return query.getWrappedQuery().toString(field);
     }
 
     @Override
@@ -117,46 +139,6 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     }
 
     @Override
-    public boolean hitsAllSameLength() {
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return 1;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return 1;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return true;
-    }
-
-    @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         NfaState state = NfaState.regex(getRealField(), getRegex(), null);
         return new Nfa(state, List.of(state));
@@ -172,7 +154,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             regex = StringUtil.wildcardToRegex(pattern);
         } else if (wrapped instanceof PrefixQuery) {
             // NOTE: we'd like to use Pattern.quote() here instead, but not sure if Lucene's regex engine supports \Q and \E.
-            regex = "^" + StringUtil.escapeRegexCharacters(pattern) + ".*$";
+            regex = "^" + StringUtil.escapeLuceneRegexCharacters(pattern) + ".*$";
         } else {
             throw new UnsupportedOperationException("Cannot make regex from " + wrapped);
         }

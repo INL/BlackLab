@@ -1,11 +1,16 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -13,11 +18,18 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
+import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -39,16 +51,17 @@ public class WebserviceRequestHandler {
         BlackLabIndex index = params.blIndex();
         IndexMetadata indexMetadata = index.metadata();
         String fieldName = params.getFieldName();
+        boolean includeCustomInfo = params.getIncludeCustomInfo();
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             // Annotated field
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
             ResultAnnotatedField resultAnnotatedField = WebserviceOperations.annotatedField(params, fieldDesc, true);
-            rs.annotatedField(resultAnnotatedField);
+            rs.annotatedField(resultAnnotatedField, includeCustomInfo);
         } else {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
-            ResultMetadataField metadataField = WebserviceOperations.metadataField(fieldDesc, params.getCorpusName());
-            rs.metadataField(metadataField);
+            ResultMetadataField metadataField = WebserviceOperations.metadataField(params, fieldDesc, params.getCorpusName());
+            rs.metadataField(metadataField, includeCustomInfo);
         }
     }
 
@@ -60,7 +73,7 @@ public class WebserviceRequestHandler {
      */
     public static void opCorpusInfo(WebserviceParams params, ResponseStreamer rs) {
         ResultIndexMetadata corpusInfo = WebserviceOperations.indexMetadata(params);
-        rs.indexMetadataResponse(corpusInfo);
+        rs.corpusMetadataResponse(corpusInfo, params.getIncludeCustomInfo());
     }
 
     /**
@@ -71,7 +84,7 @@ public class WebserviceRequestHandler {
      */
     public static void opCorpusStatus(WebserviceParams params, ResponseStreamer rs) {
         ResultIndexStatus corpusStatus = WebserviceOperations.resultIndexStatus(params);
-        rs.indexStatusResponse(corpusStatus);
+        rs.corpusStatusResponse(corpusStatus, params.getIncludeCustomInfo());
     }
 
     /**
@@ -82,7 +95,7 @@ public class WebserviceRequestHandler {
      */
     public static void opServerInfo(WebserviceParams params, boolean debugMode, ResponseStreamer rs) {
         ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
-        rs.serverInfo(serverInfo, params.apiCompatibility());
+        rs.serverInfo(serverInfo);
     }
 
     /**
@@ -105,7 +118,7 @@ public class WebserviceRequestHandler {
             } else {
                 // We're returning a list of results (ungrouped, or viewing single group)
                 ResultHits result = WebserviceOperations.getResultHits(params);
-                rs.hitsResponse(result, params.apiCompatibility() == ApiVersion.V3);
+                rs.hitsResponse(result);
             }
         }
     }
@@ -131,7 +144,7 @@ public class WebserviceRequestHandler {
                 // Regular set of docs (no grouping first)
                 result = WebserviceOperations.regularDocsResponse(params);
             }
-            rs.docsResponse(result, params.apiCompatibility() == ApiVersion.V3);
+            rs.docsResponse(result);
         }
     }
 
@@ -188,8 +201,7 @@ public class WebserviceRequestHandler {
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
 
         // Document info
-        rs.docInfoResponse(docInfo, metadataFieldGroups, docFields, metaDisplayNames,
-                params.apiCompatibility() == ApiVersion.V3);
+        rs.docInfoResponse(docInfo, metadataFieldGroups, docFields, metaDisplayNames);
     }
 
     /**
@@ -260,11 +272,11 @@ public class WebserviceRequestHandler {
         if (result.getGroups() == null || result.isViewGroup()) {
             // No grouping applied, or viewing a single group
             csv = WriteCsv.docs(params, result.getDocs(), result.getGroups(),
-                    result.getSubcorpusResults());
+                    result.getSubcorpusResults(), rs);
         } else {
             // Grouped results
             csv = WriteCsv.docGroups(params, result.getDocs(), result.getGroups(),
-                    result.getSubcorpusResults());
+                    result.getSubcorpusResults(), rs);
         }
         rs.getDataStream().csv(csv);
     }
@@ -273,9 +285,9 @@ public class WebserviceRequestHandler {
         ResultHitsCsv result = WebserviceOperations.hitsCsv(params);
         String csv;
         if (result.getGroups() != null && !result.isViewGroup()) {
-            csv = WriteCsv.hitsGroupsResponse(result);
+            csv = WriteCsv.hitsGroupsResponse(result, rs);
         } else {
-            csv = WriteCsv.hitsResponse(result);
+            csv = WriteCsv.hitsResponse(result, rs);
         }
         rs.getDataStream().csv(csv);
     }
@@ -286,5 +298,123 @@ public class WebserviceRequestHandler {
             throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WebserviceParameter.INPUT_FORMAT.value() + ")");
         ResultInputFormat result = WebserviceOperations.inputFormat(inputFormat.get());
         rs.formatXsltResponse(result);
+    }
+
+    public static void opParsePattern(WebserviceParamsImpl params, ResponseStreamer rs) {
+        if (!rs.getDataStream().getType().equals("json"))
+            throw new UnsupportedOperationException("/parse-pattern only supports JSON output");
+        // Write response
+        DataStream ds = rs.getDataStream();
+        ds.startMap();
+        {
+            ds.startEntry("params").startMap();
+            {
+                ds.entry("patt", params.getPattern());
+                ds.entry("pattlang", params.getPattLanguage());
+            }
+            ds.endMap().endEntry();
+            ds.startEntry("parsed").startMap();
+            {
+                try {
+                    TextPattern tp = params.pattern().orElse(null);
+                    try {
+                        ds.entry("bcql", TextPatternSerializerCql.serialize(tp));
+                    } catch (Exception e) {
+                        ds.entry("corpusql-error", e.getMessage());
+                    }
+                    ds.entry("json", tp);
+                } catch (Exception e) {
+                    ds.entry("error", e.getMessage());
+                }
+            }
+            ds.endMap().endEntry();
+        }
+        ds.endMap();
+    }
+
+    public static void opRelations(WebserviceParamsImpl params, ResponseStreamer rs) {
+        String fieldName = params.getFieldName();
+        BlackLabIndex index = params.blIndex();
+        AnnotatedField field = StringUtils.isEmpty(fieldName) ?
+                index.mainAnnotatedField() :
+                index.annotatedField(fieldName);
+        RelationsStats stats = index.getRelationsStats(field, params.getLimitValues());
+        Map<String, RelationsStats.ClassStats> classesMap = stats.getClasses();
+        Collection<String> relClasses = params.getRelClasses().isEmpty() ? classesMap.keySet() :
+                new HashSet<>(Arrays.asList(params.getRelClasses().split(",")));
+        final String spansClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
+        if (params.getRelOnlySpans()) {
+            relClasses = Set.of(spansClass);
+        }
+        boolean separateSpans = params.getRelSeparateSpans();
+        boolean onlySpans = separateSpans && relClasses.size() == 1 && relClasses.iterator().next().equals(spansClass);
+
+        // Write response
+        DataStream ds = rs.getDataStream();
+        ds.startMap();
+        {
+            boolean separateSpansResponse = separateSpans && classesMap.containsKey(spansClass) &&
+                    relClasses.contains(spansClass);
+            if (separateSpansResponse) {
+                outputClass(ds, "spans", classesMap.get(spansClass));
+            }
+            if (!onlySpans) {
+                ds.startEntry("relations").startMap();
+                {
+                    for (Map.Entry<String, RelationsStats.ClassStats> e: classesMap.entrySet()) {
+                        String relClass = e.getKey();
+                        if (!relClasses.isEmpty() && !relClasses.contains(relClass)) {
+                            // Not a relation class we're interested in
+                            continue;
+                        }
+                        if (relClass.equals(spansClass) && separateSpansResponse) {
+                            // Already handled above
+                            continue;
+                        }
+                        outputClass(ds, relClass, e.getValue());
+                    }
+                }
+                ds.endMap().endEntry();
+            }
+        }
+        ds.endMap();
+    }
+
+    private static void outputClass(DataStream ds, String relClass, RelationsStats.ClassStats classStats) {
+        ds.startDynEntry(relClass).startMap();
+        {
+            for (Map.Entry<String, RelationsStats.TypeStats> relTypeEntry: classStats.getRelationTypes().entrySet()) {
+                String typeName = relTypeEntry.getKey();
+                RelationsStats.TypeStats typeStats = relTypeEntry.getValue();
+                ds.startDynEntry(typeName).startMap();
+                {
+                    ds.entry("count", typeStats.getCount());
+                    Map<String, TruncatableFreqList> attributes = typeStats.getAttributes();
+                    if (!attributes.isEmpty()) {
+                        ds.startEntry("attributes").startMap();
+                        {
+                            for (Map.Entry<String, TruncatableFreqList> attrEntry: attributes.entrySet()) {
+                                ds.startDynEntry(attrEntry.getKey()).startMap();
+                                {
+                                    TruncatableFreqList values = attrEntry.getValue();
+                                    ds.startEntry("values").startMap();
+                                    {
+                                        for (Map.Entry<String, Long> valueEntry: values.getValues().entrySet()) {
+                                            ds.dynEntry(valueEntry.getKey(), valueEntry.getValue());
+                                        }
+                                    }
+                                    ds.endMap().endEntry();
+                                    ds.entry("valueListComplete", !values.isTruncated());
+                                }
+                                ds.endMap().endDynEntry();
+                            }
+                        }
+                        ds.endMap().endEntry();
+                    }
+                }
+                ds.endMap().endDynEntry();
+            }
+        }
+        ds.endMap().endDynEntry();
     }
 }

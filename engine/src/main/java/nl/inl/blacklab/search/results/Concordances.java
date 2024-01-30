@@ -33,11 +33,9 @@ public class Concordances {
     
     Kwics kwics = null;
 
-    /**
-     */
     public Concordances(Hits hits, ConcordanceType type, ContextSize contextSize) {
-        if (contextSize.left() < 0 || contextSize.right() < 0)
-            throw new IllegalArgumentException("contextSize cannot be negative");
+        if (contextSize.before() < 0 || contextSize.after() < 0)
+            throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
         if (type == ConcordanceType.FORWARD_INDEX) {
             kwics = new Kwics(hits, contextSize);
         } else {
@@ -94,17 +92,16 @@ public class Concordances {
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
             int hitStart = hit.start();
-            int hitEnd = hit.end() - 1;
+            int hitEnd = hit.end() - 1; // last word (inclusive)
 
-            int start = hitStart - wordsAroundHit.left();
-            if (start < 0)
-                start = 0;
-            int end = hitEnd + wordsAroundHit.right();
-
-            startsOfWords[startEndArrayIndex] = start;
+            wordsAroundHit.getSnippetStartEnd(hit, hits.matchInfoNames(), true, startsOfWords, startEndArrayIndex, endsOfWords, startEndArrayIndex + 1);
+//            // Above call replaces this:
+//            int start = wordsAroundHit.snippetStart(hit, hits.matchInfoNames());
+//            int end = wordsAroundHit.snippetEnd(hit, hits.matchInfoNames()) - 1; // last word (inclusive)
+//            startsOfWords[startEndArrayIndex] = start;
+//            endsOfWords[startEndArrayIndex + 1] = end;
             startsOfWords[startEndArrayIndex + 1] = hitStart;
             endsOfWords[startEndArrayIndex] = hitEnd;
-            endsOfWords[startEndArrayIndex + 1] = end;
 
             startEndArrayIndex += 2;
         }
@@ -148,10 +145,9 @@ public class Concordances {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (HitsInternal l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = Hits.list(queryInfo, l, null);
+            Hits hitsInThisDoc = Hits.list(queryInfo, l, hits.matchInfoNames());
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }
         return conc;
     }
-    
 }

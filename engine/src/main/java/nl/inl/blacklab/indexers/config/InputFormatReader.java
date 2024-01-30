@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat.FileType;
@@ -41,19 +41,17 @@ public class InputFormatReader extends YamlJsonReader {
 
     private static final Logger logger = LogManager.getLogger(InputFormatReader.class);
 
+    public static final String FT_XML_OPT_PROCESSOR = "processor";
+
     interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
         // (intentionally left blank)
     }
 
     /**
-     *
-     * @param finder responsible for getting (optionally locating/loading) other
-     *            configs that this config depends on. (for config keys "baseFormat"
-     *            and "inputFormat")
+     * Reads a config from a YAML or JSON file.
      * @throws InvalidInputFormatConfig if the file is not a valid config
      */
-    public static void read(Reader r, boolean isJson, ConfigInputFormat cfg,
-            Function<String, Optional<ConfigInputFormat>> finder) throws IOException {
+    public static void read(Reader r, boolean isJson, ConfigInputFormat cfg) throws IOException {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
 
         JsonNode root;
@@ -63,19 +61,16 @@ public class InputFormatReader extends YamlJsonReader {
             throw new InvalidInputFormatConfig("Could not parse config " + cfg.getName() + ": " + e.getMessage());
         }
         InputFormatReader ifr = new InputFormatReader(cfg);
-        ifr.read(root, finder);
+        ifr.read(root);
     }
 
     /**
-     *
-     * @param finder responsible for getting (optionally locating/loading) other
-     *            configs that this config depends on. ("baseFormat" and
-     *            "inputFormat")
+     * Reads a config from a YAML or JSON file.
      * @throws InvalidInputFormatConfig if the file is not a valid config
      */
-    public static void read(File file, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder)
+    public static void read(File file, ConfigInputFormat cfg)
             throws IOException {
-        read(FileUtil.openForReading(file), file.getName().endsWith(".json"), cfg, finder);
+        read(FileUtil.openForReading(file), file.getName().endsWith(".json"), cfg);
         cfg.setReadFromFile(file);
     }
 
@@ -104,8 +99,7 @@ public class InputFormatReader extends YamlJsonReader {
         return " in format " + StringUtils.defaultString(cfg.getName(), "(unnamed)");
     }
 
-    private void read(JsonNode root,
-            Function<String, Optional<ConfigInputFormat>> finder) {
+    private void read(JsonNode root) {
         obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
@@ -122,20 +116,26 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "baseFormat": {
                 String formatIdentifier = str(e);
-                if (finder == null)
+                logger.warn("Format " + descFormat() + " uses format inheritance (baseFormat: " + formatIdentifier + "), which is deprecated.");
+                Optional<InputFormat> optBaseFormat = DocumentFormats.getFormatOrError(formatIdentifier);
+                if (optBaseFormat.isEmpty())
                     throw new InvalidInputFormatConfig(
-                            "Format " + descFormat() + " depends on base format " + formatIdentifier + " but no BaseFormatFinder provided.");
-
-                ConfigInputFormat baseFormat = finder
-                        .apply(formatIdentifier)
-                        .orElseThrow(() -> new InvalidInputFormatConfig(
-                                "Base format " + formatIdentifier + " not found" + inFormat()));
-
-                cfg.setBaseFormat(baseFormat);
+                            "Base format " + formatIdentifier + " not found" + inFormat());
+                if (!optBaseFormat.get().isConfigurationBased())
+                    throw new InvalidInputFormatConfig(
+                            "Base format " + formatIdentifier + " must be configuration-based" + inFormat());
+                cfg.setBaseFormat(optBaseFormat.get().getConfig());
                 break;
             }
             case "type":
                 cfg.setType(str(e));
+                break;
+            case FT_XML_OPT_PROCESSOR:
+                // (we allow this at the top-level now because it's something most users will want to do while VTD
+                //  remains the default)
+                // Set the (XML) file processor to use, VTD or Saxon
+                cfg.setFileType(FileType.XML); // processor only supported for XML files right now
+                cfg.addFileTypeOption(DocIndexerXPath.FT_OPT_PROCESSOR, str(e));
                 break;
             case "fileType":
                 cfg.setFileType(FileType.fromStringValue(str(e)));
@@ -350,6 +350,7 @@ public class InputFormatReader extends YamlJsonReader {
                     af.setWordPath(str(e));
                     break;
                 case "tokenPositionIdPath": // old name, DEPRECATED
+                    logger.warn("Encountered deprecated key 'tokenPositionIdPath' (rename to 'tokenIdPath') in annotated field " + fieldName + inFormat());
                 case "tokenIdPath":
                     af.setTokenIdPath(str(e));
                     break;
@@ -429,6 +430,7 @@ public class InputFormatReader extends YamlJsonReader {
                 annot.setDescription(str(e));
                 break;
             case "basePath":
+                if (parentAnnot != null) throw new InvalidInputFormatConfig("Subannotations may not have their own basePath" + inFormat());
                 annot.setBasePath(str(e));
                 break;
             case "sensitivity":
@@ -485,30 +487,44 @@ public class InputFormatReader extends YamlJsonReader {
             Iterator<Entry<String, JsonNode>> it = obj(as, "standoffAnnotation").fields();
             while (it.hasNext()) {
                 Entry<String, JsonNode> e = it.next();
-                switch (e.getKey()) {
+                String key = e.getKey();
+                if (key.equals("spanEndPath")) {
+                    // Used to be implicit for annotation/span, so maintain backward compatibility.
+                    // Type must be explicitly set for relations though.
+                    s.setType(ConfigStandoffAnnotations.Type.SPAN);
+                }
+                switch (key) {
+                case "type":
+                    s.setType(ConfigStandoffAnnotations.Type.fromStringValue(str(e)));
+                    break;
                 case "path":
                     s.setPath(str(e));
                     break;
                 case "refTokenPositionIdPath": // old name, DEPRECATED
+                    logger.warn("Encountered deprecated key 'refTokenPositionIdPath' (rename to 'tokenRefPath')");
                 case "tokenRefPath":
-                case "spanStartPath":   // synonym for tokenRefPath, used in case of span annotation
+                case "spanStartPath":   // synonym, used for span annotation
+                case "sourcePath":      // synonym, used for relation annotation
                     s.setTokenRefPath(str(e));
                     break;
                 case "spanEndPath":
+                case "targetPath":      // synonym, used for relation annotation
                     s.setSpanEndPath(str(e));
                     break;
                 case "spanEndIsInclusive":
                     s.setSpanEndIsInclusive(bool(e));
                     break;
-                case "spanNamePath":
-                    s.setSpanNamePath(str(e));
+                case "spanNamePath": // DEPRECATED
+                    logger.warn("Encountered deprecated key 'spanNamePath' (rename to 'valuePath')");
+                case "valuePath":
+                    s.setValuePath(str(e));
                     break;
                 case "annotations":
                     readAnnotations(e, s);
                     break;
                 default:
                     throw new InvalidInputFormatConfig(
-                            "Unknown key " + e.getKey() + " in standoff annotations block");
+                            "Unknown key " + key + " in standoff annotations block.");
                 }
             }
             af.addStandoffAnnotation(s);
@@ -532,6 +548,11 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "tokenIdPath":
                     t.setTokenIdPath(str(e));
+                    break;
+                case "excludeAttributes":
+                    List<String> exclAttr = new ArrayList<>();
+                    readStringList(e, exclAttr);
+                    t.setExcludeAttributes(exclAttr);
                     break;
                 default:
                     throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
@@ -721,10 +742,8 @@ public class InputFormatReader extends YamlJsonReader {
     private void readInputFormat(ConfigLinkedDocument ld, Entry<String, JsonNode> e) {
         // Resolve the inputFormat right now, instead of potentially failing later when the format is actually needed at some point during indexing
         String formatIdentifier = str(e);
-        Format format = DocumentFormats.getFormat(formatIdentifier);
-        if (format == null)
-            throw new InvalidInputFormatConfig(
-                    "Unknown input format " + str(e) + " in linked document " + ld.getName());
+        InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow(() -> new InvalidInputFormatConfig(
+                "Unknown input format " + formatIdentifier + " in linked document " + ld.getName()));
 
         ld.setInputFormatIdentifier(formatIdentifier);
     }

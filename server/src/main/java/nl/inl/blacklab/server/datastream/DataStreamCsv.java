@@ -77,12 +77,6 @@ public class DataStreamCsv extends DataStreamAbstract {
     public DataStream startAttrEntry(String elementName, String attrName, String key) { return csvNotSupported(); }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, int key) { return csvNotSupported(); }
-
-    @Override
-    public DataStream endAttrEntry() { return csvNotSupported(); }
-
-    @Override
     public DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList,
             List<String> values) {
         return csvNotSupported();
@@ -100,4 +94,8 @@ public class DataStreamCsv extends DataStreamAbstract {
     @Override
     public DataStream value(boolean value) { return csvNotSupported(); }
 
+    @Override
+    public String getType() {
+        return "csv";
+    }
 }

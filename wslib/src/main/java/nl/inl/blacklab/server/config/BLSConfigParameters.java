@@ -8,8 +8,8 @@ import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 public class BLSConfigParameters {
-    /** What pattern language to use? */
-    String patternLanguage = "corpusql";
+    /** What pattern language to use? (defaults to BlackLab Corpus Query Language (BCQL)) */
+    String patternLanguage = "bcql";
 
     /** What document filter language to use? */
     String filterLanguage = "luceneql";
@@ -43,12 +43,12 @@ public class BLSConfigParameters {
      */
     public void setParameterDefaults() {
         // Set up the parameter default values
-        WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_RETRIEVE, "" + getProcessHits().getDefaultValue());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_COUNT, "" + getCountHits().getDefaultValue());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefaultValue());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_RETRIEVE, "" + getProcessHits().getDefault());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_COUNT, "" + getCountHits().getDefault());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefault());
         WebserviceParameter.setDefaultValue(WebserviceParameter.SENSITIVE, getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
-        WebserviceParameter.setDefaultValue(WebserviceParameter.WORDS_AROUND_HIT, "" + getContextSize().getDefaultValue());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.API_COMPATIBILITY, "" + getApi().versionString());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.CONTEXT, "" + getContextSize().getDefault());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.API_VERSION, "" + getApi().versionString());
     }
 
     @JsonGetter("defaultSearchSensitivity")
@@ -145,6 +145,8 @@ public class BLSConfigParameters {
 
     public void setApi(String api) {
         this.api = ApiVersion.fromValue(api);
+        if (this.api.getMajor() < 3)
+            throw new UnsupportedOperationException("API version " + api + " is no longer supported");
     }
 
     public ApiVersion getApi() {

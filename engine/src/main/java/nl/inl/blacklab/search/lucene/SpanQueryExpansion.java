@@ -35,9 +35,67 @@ import nl.inl.blacklab.search.fimatch.NfaStateAnyToken;
  */
 public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
+    public static SpanGuarantees createGuarantees(SpanGuarantees clause, Direction direction, int min, int max) {
+        return new SpanGuaranteesAdapter() {
+            @Override
+            public boolean hitsAllSameLength() {
+                return clause.hitsAllSameLength() && min == max;
+            }
+
+            @Override
+            public int hitsLengthMin() {
+                return clause.hitsLengthMin() + min;
+            }
+
+            @Override
+            public int hitsLengthMax() {
+                return addMaxValues(clause.hitsLengthMax(), max);
+            }
+
+            @Override
+            public boolean hitsEndPointSorted() {
+                return clause.hitsEndPointSorted() && (direction == Direction.LEFT || direction == Direction.RIGHT && min == max);
+            }
+
+            @Override
+            public boolean hitsStartPointSorted() {
+                return clause.hitsStartPointSorted() && (direction == Direction.RIGHT || direction == Direction.LEFT && min == max);
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStart() {
+                return clause.hitsHaveUniqueStart() && min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueEnd() {
+                return clause.hitsHaveUniqueEnd() && min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEnd() {
+                return clause.hitsHaveUniqueStartEnd() && min == max;
+            }
+
+            @Override
+            public boolean hitsHaveUniqueStartEndAndInfo() {
+                return clause.hitsHaveUniqueStartEndAndInfo() && min == max;
+            }
+        };
+    }
+
     public enum Direction {
         LEFT,
         RIGHT;
+
+        public static Direction fromStringValue(String s) {
+            for (Direction dir : values()) {
+                if (dir.name().equalsIgnoreCase(s)) {
+                    return dir;
+                }
+            }
+            throw new IllegalArgumentException("Unknown direction: " + s);
+        }
 
         @Override
         public String toString() {
@@ -70,6 +128,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min > max");
         if (min < 0 || this.max < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
+        this.guarantees = createGuarantees(clause.guarantees(), direction, min, max);
     }
 
     @Override
@@ -117,6 +176,11 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         }
 
         @Override
+        public boolean isCacheable(LeafReaderContext ctx) {
+            return weight.isCacheable(ctx);
+        }
+
+        @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
             weight.extractTermStates(contexts);
         }
@@ -126,16 +190,8 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             BLSpans spansSource = weight.getSpans(context, requiredPostings);
             if (spansSource == null)
                 return null;
-            BLSpans expanded = new SpansExpansionRaw(context.reader(), clauses.get(0).getField(), spansSource, direction, min, max);
-
-            // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
-            BLSpanQuery q = (BLSpanQuery) weight.getQuery();
-            if (q != null && !q.hitsStartPointSorted())
-                return BLSpans.ensureStartPointSorted(expanded);
-
-            return expanded;
+            return new SpansExpansionRaw(context.reader(), clauses.get(0).getField(), spansSource, direction, min, max);
         }
-
     }
 
     @Override
@@ -185,46 +241,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
     public BLSpanQuery getClause() {
         return clauses.get(0);
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return clauses.get(0).hitsAllSameLength() && min == max;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return clauses.get(0).hitsLengthMin() + min;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return addMaxValues(clauses.get(0).hitsLengthMax(), max);
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return clauses.get(0).hitsEndPointSorted() && (direction == Direction.LEFT || direction == Direction.RIGHT && min == max);
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return clauses.get(0).hitsStartPointSorted() && (direction == Direction.RIGHT || direction == Direction.LEFT && min == max);
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return clauses.get(0).hitsHaveUniqueStart() && min == max;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return clauses.get(0).hitsHaveUniqueEnd() && min == max;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
-        return clauses.get(0).hitsAreUnique() && min == max;
     }
 
     @Override
@@ -297,7 +313,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             return new SpanQueryExpansion(seq, direction, min, max);
         }
         // Add any token to our expansion.
-        return addExpand(clause.hitsLengthMin(), clause.hitsLengthMax());
+        return addExpand(clause.guarantees().hitsLengthMin(), clause.guarantees().hitsLengthMax());
     }
 
 }

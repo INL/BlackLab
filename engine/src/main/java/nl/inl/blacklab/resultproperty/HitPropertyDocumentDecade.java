@@ -4,8 +4,6 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -31,7 +29,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
     private final DocPropertyDecade docPropertyDocumentDecade;
 
     HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, boolean invert) {
-        super(prop, hits, null, invert);
+        super(prop, hits, invert);
         this.index = prop.index;
         this.reader = index.reader();
         this.fieldName = prop.fieldName;
@@ -47,7 +45,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, boolean invert) {
         return new HitPropertyDocumentDecade(this, newHits, invert);
     }
 
@@ -112,10 +110,5 @@ public class HitPropertyDocumentDecade extends HitProperty {
     @Override
     public boolean isDocPropOrHitText() {
         return true;
-    }
-    
-    @Override
-    public ContextSize needsContextSize(BlackLabIndex index) {
-        return null;
     }
 }

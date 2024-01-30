@@ -17,6 +17,7 @@ public interface MetadataField extends Field {
     /**
      * @deprecated use {@link #custom()} and .get("displayOrder", Collections.emptyList()) instead
      */
+    @Deprecated
     List<String> displayOrder();
 
 	String analyzerName();
@@ -24,20 +25,21 @@ public interface MetadataField extends Field {
     /**
      * @deprecated use {@link #custom()} and .get("unknownValue", "") instead
      */
+    @Deprecated
 	String unknownValue();
 
     /**
      * @deprecated use {@link #custom()} and .get("unknownCondition", "") instead
      */
+    @Deprecated
 	UnknownCondition unknownCondition();
 
-	Map<String, Integer> valueDistribution();
-
-	ValueListComplete isValueListComplete();
+    MetadataFieldValues values(long maxValues);
 
     /**
      * @deprecated use {@link #custom()} and .get("displayValues", Collections.emptyMap()) instead
      */
+    @Deprecated
     Map<String, String> displayValues();
 
     @Override

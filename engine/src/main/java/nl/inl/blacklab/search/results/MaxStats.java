@@ -23,14 +23,6 @@ public class MaxStats {
         this(false, false);
     }
 
-    public void setHitsProcessedExceededMaximum() {
-        this.maxHitsProcessed = true;
-    }
-
-    public void setHitsCountedExceededMaximum() {
-        this.maxHitsCounted = true;
-    }
-
     public boolean hitsProcessedExceededMaximum() {
         return maxHitsProcessed;
     }

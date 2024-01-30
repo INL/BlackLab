@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -128,14 +129,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     }
 
     public String clausesToString(String field) {
-        StringBuilder buffer = new StringBuilder();
-        for (BLSpanQuery clause : clauses) {
-            if (buffer.length() > 0) {
-                buffer.append(", ");
-            }
-            buffer.append(clause.toString(field));
-        }
-        return buffer.toString();
+        return clauses.stream().map(clause -> clause.toString(field)).collect(Collectors.joining(", "));
     }
     
     @Override

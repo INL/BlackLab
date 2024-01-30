@@ -61,7 +61,9 @@ public class TermsIntegratedSegment implements AutoCloseable {
         }
     }
 
-    public Iterator<TermInSegment> iterator() {
+    public synchronized Iterator<TermInSegment> iterator() {
+        // NOTE: method is synchronized because TermInSegmentIterator constructor uses IndexInput.clone(), which is
+        // not thread-safe.
         if (this.isClosed) throw new BlackLabRuntimeException("Segment is closed");
         return new TermInSegmentIterator(this);
     }
@@ -92,13 +94,15 @@ public class TermsIntegratedSegment implements AutoCloseable {
     }
 
     @NotThreadSafe
-    public static class TermInSegmentIterator implements Iterator<TermInSegment> {
+    private static class TermInSegmentIterator implements Iterator<TermInSegment> {
+
         /**
          * Metadata about this field(=annotation) in this segment(=section of the index).
          * such as how many terms in the field in this segment,
          * file offsets where to find the data in the segment's files, etc.
          */
         private final Field field;
+
         /** Ord (ordinal) of the segment */
         private final int ord;
 
@@ -112,20 +116,24 @@ public class TermsIntegratedSegment implements AutoCloseable {
          *     int[n] sensitivePos2TermID      ( offset [3*n*int] )
          */
         private final IndexInput termID2SensitivePosFile;
+
         private final IndexInput termID2InsensitivePosFile;
+
         /** File containing the strings */
         private final IndexInput termStringFile;
 
         /** index of the term CURRENTLY loaded in peek/how many times has next() been called. */
         private int i = 0;
+
         /** Total number of terms in the segment */
         private final int n;
+
         private final TermInSegment t = new TermInSegment();
 
         /**
          * @param segment only used for initialization, because we need to pass many parameters otherwise.
          */
-        public TermInSegmentIterator(TermsIntegratedSegment segment) {
+        private TermInSegmentIterator(TermsIntegratedSegment segment) {
             // first navigate to where the sensitive iteration order is stored in the _termOrderFile.
             try {
                 this.field = segment.field;

@@ -1,15 +1,22 @@
 package nl.inl.blacklab.analysis;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.apache.lucene.store.ByteArrayDataInput;
+import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
+
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
  * Utilities for dealing with payloads in BlackLab.
  *
  * Specifically:
  * <ul>
- * <li>a payload is stored in the "starttag" annotation to indicate the end position
+ * <li>a payload is stored in the "_relation" (previously "starttag") annotation to indicate the end position
  * of a span</li>
  * <li>while indexing, payloads are used to distinguish between "primary values" (that are
  * recorded in the forward index) and "secondary values" (that are not). These indicators will stripped
@@ -171,16 +178,33 @@ public class PayloadUtils {
     /**
      * Get the payload to store with the span start tag.
      *
-     * Spans are stored in the "starttag" annotation, at the token position of the start tag.
+     * Spans are stored in the "_relation" annotation, at the token position of the start tag.
      * The payload gives the token position of the end tag.
      *
-     * @param endPosition end position (exclusive), or the first token after the span
-     * @param isPrimaryValue if true, resulting payload will indicate if that this is a primary value. Pass false if
-     *                       this is not a primary value, or if primary value status should not be recorded in the
-     *                       payload (i.e. because there is no forward index)
+     * Note that in the integrated index, we store the relative position of the last token
+     * inside the span, not the first token after the span. This is so it matches how relations
+     * are stored.
+     *
+     * @param startPosition  start position (inclusive), or the first token of the span
+     * @param endPosition    end position (exclusive), or the first token after the span
+     * @param indexType
      * @return payload to store
      */
-    public static BytesRef tagEndPositionPayload(int endPosition) {
-        return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
+    public static BytesRef tagEndPositionPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType) {
+        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
+            return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
+
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            RelationInfo.serializeInlineTag(startPosition, endPosition, new OutputStreamDataOutput(os));
+            return new BytesRef(os.toByteArray());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ByteArrayDataInput getDataInput(byte[] payload, boolean payloadIndicatesPrimaryValues) {
+        int skipBytes = payloadIndicatesPrimaryValues ? getPrimaryValueIndicatorLength(payload) : 0;
+        return new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
     }
 }

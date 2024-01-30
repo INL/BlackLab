@@ -6,7 +6,7 @@ In addition to the Java library (BlackLab Core), there is also a web service (Bl
 
 BlackLab is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-To learn how to index and search your data, see the [official project site](http://inl.github.io/BlackLab/).
+To learn how to index and search your data, see the [official project site](http://inl.github.io/BlackLab/guide/getting-started.html).
 
 To learn about BlackLab development, see the [dev docs](doc/#readme). 
 
@@ -30,7 +30,7 @@ This version uses Lucene 8. This unfortunately means that corpora created with o
 
 There is a high-level [roadmap](https://inl.github.io/BlackLab/roadmap.html) page on the documentation site. There are also [BlackLab Archives of Relevant Knowledge (BARKs)](doc/bark/#readme) that go into more detail.
 
-For the next major version (4.0), we are focused on integrating BlackLab with Solr, with the goal of enabling distributed search. We will use this to scale our largest corpus to many billions of tokens. Status and plans for this can be found in the above-mentioned BARKs and in more technical detail [here](doc/DISTRIBUTED PLAN.md).
+For the next major version (4.0), we are focused on integrating BlackLab with Solr, with the goal of enabling distributed search. We will use this to scale our largest corpus to many billions of tokens. Status and plans for this can be found in the above-mentioned BARKs and in more technical detail [here](doc/technical/design/plan-distributed.md).
 
 
 ## Development workflow
@@ -68,16 +68,23 @@ mvn site
 
 ## Using BlackLab with Docker
 
-An experimental Docker setup is provided now. It works well, but details may change in the future. We will eventually publish an official Docker image release, which will then be available on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab).
+An alpha version of the Docker setup is provided on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). For each upcoming release, we will publish a corresponding Docker image.
 
 A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher. 
 
+See the [Docker README](docker/#readme) for more details.
+
+### Indexing with Docker 
+
 We assume here that you are familiar with the BlackLab indexing process; see [indexing with BlackLab](https://inl.github.io/BlackLab/indexing-with-blacklab.html) to learn more.
+
+The easiest is to use the [`index-corpus.sh`](./index-corpus.sh) Bash script in the root of the repository. It will download Docker image and run IndexTool in a container, using bind mounts for the input data and writing the indexed corpus. Run the script without arguments for documentation.
+
+Alternatively, you can use Docker Compose to run the indexer. This will create your index on a named volume defined by the Compose file.
 
 Create a file named `test.env` with your indexing configuration:
 
 ```ini
-IMAGE_VERSION=latest
 BLACKLAB_FORMATS_DIR=/path/to/my/formats
 INDEX_NAME=my-index
 INDEX_FORMAT=my-file-format
@@ -99,8 +106,17 @@ docker-compose up -d
 
 Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
 
+If you want to be able to use the corpus frontend as well, create a file named `.env` in the root of the repository with the following contents:
 
-See the [Docker README](docker/#readme) for more details.
+```ini
+DOCKER_IMAGE=blacklab-frontend
+```
+
+Then run:
+
+```bash
+docker-compose up -d --no-build
+```
 
 ## Special thanks
 

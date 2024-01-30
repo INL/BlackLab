@@ -33,7 +33,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.search.spans.TermSpans;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -57,6 +57,10 @@ public class BLSpanTermQuery extends BLSpanQuery {
         return new BLSpanTermQuery(queryInfo, q);
     }
 
+    public static SpanGuarantees createGuarantees() {
+        return SpanGuarantees.TERM;
+    }
+
     final SpanTermQuery query;
 
     private final TermStates termStates;
@@ -74,6 +78,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
         super(queryInfo);
         query = new SpanTermQuery(term);
         termStates = null;
+        this.guarantees = createGuarantees();
     }
 
     BLSpanTermQuery(QueryInfo queryInfo, SpanTermQuery termQuery) {
@@ -122,13 +127,18 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
             @Override
             public BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException {
-                Spans spans = weight.getSpans(ctx, requiredPostings);
-                return spans == null ? null : new BLSpansWrapper(spans);
+                TermSpans spans = (TermSpans)weight.getSpans(ctx, requiredPostings);
+                return spans == null ? null : BLSpans.wrapTermSpans(spans);
             }
 
             @Override
             public void extractTerms(Set<Term> terms) {
                 weight.extractTerms(terms);
+            }
+
+            @Override
+            public boolean isCacheable(LeafReaderContext ctx) {
+                return weight.isCacheable(ctx);
             }
         };
     }
@@ -167,46 +177,6 @@ public class BLSpanTermQuery extends BLSpanQuery {
                 return false;
         } else if (!query.equals(other.query))
             return false;
-        return true;
-    }
-
-    @Override
-    public boolean hitsAllSameLength() {
-        return true;
-    }
-
-    @Override
-    public int hitsLengthMin() {
-        return 1;
-    }
-
-    @Override
-    public int hitsLengthMax() {
-        return 1;
-    }
-
-    @Override
-    public boolean hitsEndPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsStartPointSorted() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStart() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsHaveUniqueEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean hitsAreUnique() {
         return true;
     }
 

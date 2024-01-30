@@ -7,12 +7,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -25,7 +28,10 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.
@@ -44,18 +50,10 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     public static DocIndexerConfig fromConfig(ConfigInputFormat config) {
-        DocIndexerConfig docIndexer = null;
+        DocIndexerConfig docIndexer;
         switch (config.getFileType()) {
         case XML:
-            for (ConfigInputFormat.FileTypeOption fto: ConfigInputFormat.FileTypeOption.fromConfig(config, ConfigInputFormat.FileType.XML)) {
-                if (fto == ConfigInputFormat.FileTypeOption.SAXONICA) {
-                    docIndexer = new DocIndexerSaxon();
-                    break;
-                }
-            }
-            if (docIndexer == null) {
-                docIndexer = new DocIndexerXPath();
-            }
+            docIndexer = DocIndexerXPath.create(config.getFileTypeOptions());
             break;
         case TABULAR:
             docIndexer = new DocIndexerTabular();
@@ -65,6 +63,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             break;
         case CHAT:
             docIndexer = new DocIndexerChat();
+            break;
+        case CONLL_U:
+            docIndexer = new DocIndexerCoNLLU();
             break;
         default:
             throw new InvalidInputFormatConfig(
@@ -108,7 +109,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             return;
         inited = true;
         setStoreDocuments(config.shouldStore());
-        for (ConfigAnnotatedField af : config.getAnnotatedFields().values()) {
+        for (ConfigAnnotatedField af: config.getAnnotatedFields().values()) {
 
             // Define the properties that make up our annotated field
             if (af.isDummyForStoringLinkedDocuments())
@@ -118,13 +119,14 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
             boolean needsPrimaryValuePayloads = getDocWriter().needsPrimaryValuePayloads();
-            AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(af.getName(),
+            AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(getDocWriter(), af.getName(),
                     mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
                     needsPrimaryValuePayloads);
 
-            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
+            AnnotationWriter annotRelation = fieldWriter.addAnnotation(
+                    AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()),
                     AnnotationSensitivities.ONLY_SENSITIVE, true, false);
-            annotStartTag.setHasForwardIndex(false);
+            annotRelation.setHasForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
@@ -133,8 +135,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
                             annot.createForwardIndex());
             }
-            for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
-                for (ConfigAnnotation annot : standoff.getAnnotations().values()) {
+            for (ConfigStandoffAnnotations standoff: af.getStandoffAnnotations()) {
+                for (ConfigAnnotation annot: standoff.getAnnotations().values()) {
                     fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
                             annot.createForwardIndex());
                 }
@@ -163,6 +165,71 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 break;
             case FAIL:
                 throw new BlackLabRuntimeException("Link path " + path + " not found in document " + documentName);
+        }
+    }
+
+    protected Collection<String> processAnnotationValues(ConfigAnnotation annotation, Collection<String> values) {
+        List<ConfigProcessStep> processingSteps = annotation.getProcess();
+        boolean hasProcessing = !processingSteps.isEmpty();
+
+        // Do we have anything to do?
+        boolean nothingToProcess = !hasProcessing || values.isEmpty();
+        boolean noDupesToEliminate = values.size() <= 1 || annotation.isAllowDuplicateValues();
+        if (nothingToProcess && noDupesToEliminate) {
+            // No processing or deduplication to do; just return the values as-is (but sanitized/normalized)
+            return values.stream().map(StringUtil::sanitizeAndNormalizeUnicode).collect(Collectors.toList());
+        }
+
+        Collection<String> results = new ArrayList<>();
+
+        // Apply processing steps
+        if (annotation.isMultipleValues()) {
+            // Could there be multiple values here? (either there already are, or a processing step might create them)
+            // (this is to prevent allocating a set if we don't have to)
+
+            // If duplicates are not allowed, keep track of values we've already added
+            Set<String> valuesSeen = annotation.isAllowDuplicateValues() ? null : new HashSet<>();
+            for (String rawValue: values) {
+                rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
+                for (String processedValue: processStringMultipleValues(rawValue, processingSteps, null)) {
+                    if (annotation.isAllowDuplicateValues() || !valuesSeen.contains(processedValue)) {
+                        // Not a duplicate, or we don't care about duplicates. Add it.
+                        results.add(processedValue);
+                        if (valuesSeen != null)
+                            valuesSeen.add(processedValue);
+                    }
+                }
+            }
+        } else {
+            // Single value (the collection should only contain one entry)
+            for (String rawValue: values) {
+                rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
+                results.add(processString(rawValue, processingSteps, null));
+                break; // if multiple were matched, only index the first one
+            }
+        }
+        return results;
+    }
+
+    protected void indexAnnotationValues(ConfigAnnotation annotation, int indexAtPosition, int spanEndPos,
+            Collection<String> valuesToIndex) {
+        // For span annotations (which are all added to the same annotation),
+        // the span name has already been indexed at this position with an increment of 1,
+        // so the attribute values we're indexing here should all get position increment 0.
+        //   (only true for classic external index; integrated index combines tag name and attributes into 1 value)
+        boolean isSpan = spanEndPos >= 0;
+
+        String name = isSpan ? AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()) : annotation.getName();
+        // Now add values to the index
+        for (String value: valuesToIndex) {
+            if (isSpan) {
+                assert getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
+                // External index, attribute values are indexed separately from the tag name
+                // For the external index format (annotation "starrtag"), we index several terms:
+                // // one for the span name, and one for each attribute name and value.
+                value = RelationUtil.tagAttributeIndexValue(annotation.getName(), value, BlackLabIndex.IndexType.EXTERNAL_FILES);
+            }
+            annotationValue(name, value, indexAtPosition, spanEndPos, false);
         }
     }
 
@@ -247,6 +314,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             }
             List<String> resultAfterProcessing = new ArrayList<>();
             for (String inputValue : results) {
+                inputValue = StringUtil.sanitizeAndNormalizeUnicode(inputValue);
                 resultAfterProcessing.addAll(processStringMultipleValues(inputValue, linkValue.getProcess(), null));
             }
             results = resultAfterProcessing;
@@ -374,7 +442,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     static String opParsePartOfSpeech(String result, String field) {
         // Trim character/string from beginning and end
-        result = result.trim();
+        result = StringUtil.trimWhitespace(result);
         if (field.equals("_")) {
             //  Get main pos: A(b=c,d=e) -> A
             return MAIN_POS_PATTERN.matcher(result).replaceAll("$1");
@@ -383,8 +451,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             String featuresString = FEATURE_PATTERN.matcher(result).replaceAll("$2");
             return Arrays.stream(featuresString.split(","))
                 .map(feat -> feat.split("="))
-                .filter(featParts -> featParts[0].trim().equals(field))
-                .map(featParts -> featParts[1].trim())
+                .filter(featParts -> StringUtil.trimWhitespace(featParts[0]).equals(field))
+                .map(featParts -> StringUtil.trimWhitespace(featParts[1]))
                 .findFirst()
                 .orElse("");
         }
@@ -593,8 +661,15 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      */
     @Override
     public void addMetadataField(String name, String value) {
-        this.sortedMetadataValues.computeIfAbsent(name, __ -> {
-            ConfigMetadataField conf = this.config.getMetadataField(name);
+        assert name != null;
+        assert value != null;
+        if (name.isEmpty()) {
+            warn("Tried to add metadata value but field name is empty, ignoring (value: " + value + ")");
+            return;
+        }
+        final String indexAsName = optTranslateFieldName(name);
+        this.sortedMetadataValues.computeIfAbsent(indexAsName, __ -> {
+            ConfigMetadataField conf = this.config.getMetadataField(indexAsName);
             if (conf != null && conf.getSortValues()) {
                 return new TreeSet<>(BlackLab.defaultCollator()::compare);
             } else {
@@ -622,7 +697,17 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     @Override
     public List<String> getMetadataField(String name) {
         List<String> v = super.getMetadataField(name);
-        return v == null ? collectionToList(sortedMetadataValues.get(name)) : v;
+        if (v != null)
+            return v;
+        v = collectionToList(sortedMetadataValues.get(name));
+        if (v != null)
+            return v;
+        if (linkingIndexer != null) {
+            // Get the value from the indexer that linked to us
+            // (because it may already contain metadata values that have not been added to the Lucene doc yet)
+            v = linkingIndexer.getMetadataField(name);
+        }
+        return v;
     }
 
     @Override
@@ -635,5 +720,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         }
         sortedMetadataValues.clear();
         super.endDocument();
+        linkingIndexer = null; // help GC
     }
 }

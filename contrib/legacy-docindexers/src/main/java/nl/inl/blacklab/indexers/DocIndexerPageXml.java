@@ -1,11 +1,11 @@
 package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
+import java.util.regex.Pattern;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.util.StringUtil;
 
 /**
  * Index a PageXML (OCR'ed text) file.
@@ -18,6 +18,19 @@ public class DocIndexerPageXml extends DocIndexerXmlHandlers {
 
     public static String getDescription() {
         return "";
+    }
+
+    /** Whitespace and/or punctuation at start or end */
+    private static final Pattern PATT_WS_PUNCT_AT_START_OR_END = Pattern.compile("^[\\p{Punct}\\p{javaSpaceChar}]+|[\\p{Punct}\\p{javaSpaceChar}]+$");
+
+    /**
+     * Remove any punctuation and whitespace at the start and end of input.
+     *
+     * @param input the input string
+     * @return the string without punctuation or whitespace at the edges.
+     */
+    public static String trimWhitespaceAndPunctuation(String input) {
+        return PATT_WS_PUNCT_AT_START_OR_END.matcher(input).replaceAll("");
     }
 
     public DocIndexerPageXml(DocWriter indexer, String fileName, Reader reader) {
@@ -49,7 +62,7 @@ public class DocIndexerPageXml extends DocIndexerXmlHandlers {
                 // In PageXML, punctuation and/or whitespace may be part of the word token.
                 // Strip it off before indexing the word.
                 // (instead of stripping it off, better to add it to punctuation index..?)
-                return StringUtil.trimWhitespaceAndPunctuation(super.getWord());
+                return trimWhitespaceAndPunctuation(super.getWord());
             }
         });
 

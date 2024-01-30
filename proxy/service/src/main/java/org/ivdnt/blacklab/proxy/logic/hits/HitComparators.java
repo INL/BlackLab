@@ -65,6 +65,7 @@ class HitComparators {
                 throw new UnsupportedOperationException("Specify annotation for sort/group prop!");
             boolean sensitive = parts.length <= 1 || parts[1].equals("s");
             switch (type) {
+            case "before":
             case "left":
                 cmp = hitTextBefore(annotation, sensitive, false);
                 break;
@@ -74,6 +75,7 @@ class HitComparators {
             case "hit":
                 cmp = hitMatchedText(annotation, sensitive);
                 break;
+            case "after":
             case "right":
                 cmp = hitTextAfter(annotation, sensitive, false);
                 break;

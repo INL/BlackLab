@@ -1,3 +1,4 @@
+"use strict";
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
@@ -8,9 +9,8 @@ const path = require('path')
 const parseXmlString = require('xml2js').parseStringPromise;
 chai.use(chaiHttp);
 
-const { sanitizeResponse } = require("./compare-responses");
+const { sanitizeResponse, sanitizeBlsResponse} = require("./compare-responses");
 const constants = require('./constants');
-const SERVER_URL = constants.SERVER_URL;
 
 const TEST_DATA_ROOT = constants.TEST_DATA_ROOT;
 const TEST_CONFIG = JSON.parse(fs.readFileSync(path.resolve(TEST_DATA_ROOT, 'index-test-config.json'),
@@ -41,8 +41,9 @@ function createIndexName() {
 async function createInputFormat() {
     const formatName = path.basename(INPUT_FORMAT_PATH);
     const request = chai
-            .request(SERVER_URL)
+            .request(constants.SERVER_URL)
             .post('/input-formats')
+            .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
             .attach('data', fs.readFileSync(INPUT_FORMAT_PATH), formatName);
     addDefaultHeaders(request);
@@ -53,9 +54,10 @@ async function createIndex(indexName) {
     const index_url = constants.BLACKLAB_USER + ":" + indexName
     const inputFormat = TEST_CONFIG['input-format'].split('.')[0];
     const request = chai
-            .request(SERVER_URL)
+            .request(constants.SERVER_URL)
             .post('/')
             .query({
+                'api': constants.TEST_API_VERSION,
                 'name': index_url,
                 'display': indexName,
                 'format': constants.BLACKLAB_USER + ":" + inputFormat
@@ -68,8 +70,9 @@ async function createIndex(indexName) {
 async function getIndexRequest(indexName) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName
     const request = chai
-            .request(SERVER_URL)
+            .request(constants.SERVER_URL)
             .get("/" + indexUrl + "/status")
+            .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
     addDefaultHeaders(request);
     return request.send();
@@ -78,8 +81,9 @@ async function getIndexRequest(indexName) {
 async function addToIndex(indexName, payloadPath) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName
     const request = chai
-            .request(SERVER_URL)
+            .request(constants.SERVER_URL)
             .post('/' + indexUrl + '/docs')
+            .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
             .attach('data', fs.readFileSync(payloadPath), 'testdocs');
     addDefaultHeaders(request);
@@ -89,26 +93,33 @@ async function addToIndex(indexName, payloadPath) {
 async function getIndexContent(indexName) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName;
     let request = chai
-            .request(SERVER_URL)
+            .request(constants.SERVER_URL)
             .get("/" + indexUrl + "/docs")
+            .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
     addDefaultHeaders(request);
     return request.send();
 }
 
 function clearKeys(keys, data) {
-    return sanitizeResponse(data, keys, (v) => {
+    return sanitizeResponse(data, keys, (value, key) => {
+        return key === 'displayName' && value === 'Starttag' ? '_relation' : value;
+
         // Is the value an array with a single string element that only contains whitespace?
         // If so, return an empty array. Otherwise, return unchanged
-        return Array.isArray(v) && v.length === 1 && typeof v[0] === "string" && v[0].trim() === "" ? [] : v;
+        //return Array.isArray(v) && v.length === 1 && typeof v[0] === "string" && v[0].trim() === "" ? [] : v;
+    }, (key) => {
+        // starttag annotation has been renamed to _relation in integrated index format
+        return key === 'starttag' ? '_relation' : key;
     });
 }
 
 async function getIndexMetadata(indexName) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName
     const request = chai
-            .request(SERVER_URL)
+            .request(constants.SERVER_URL)
             .get("/" + indexUrl + "/")
+            .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
     addDefaultHeaders(request);
     return request.send();
@@ -122,8 +133,9 @@ function queryIndex(indexName, pattern, filters, format = 'application/json') {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName + "/hits";
     const respFormat = format === "" ? "application/json" : format;
     const request = chai
-            .request(SERVER_URL)
+            .request(constants.SERVER_URL)
             .post("/" + indexUrl + "/")
+            .query({ api: constants.TEST_API_VERSION })
             .buffer()
             .set('Accept', respFormat)
     if (filters !== "") {

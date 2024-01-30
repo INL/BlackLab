@@ -8,4 +8,4 @@ set -o errexit  # Exit on error (set -e)
 # If a new test has been added, but no saved response file exists, the test will fail.
 # You should execute run-local.sh to save and commit the new response file.
 
-$( dirname -- "$0"; )/testrunner.sh test
+"$( dirname -- "$0"; )"/testrunner.sh test

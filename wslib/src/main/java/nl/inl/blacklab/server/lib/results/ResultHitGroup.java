@@ -1,15 +1,14 @@
 package nl.inl.blacklab.server.lib.results;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -23,13 +22,7 @@ public class ResultHitGroup {
 
     HitGroup group;
 
-    private final String identity;
-
-    private final String identityDisplay;
-
-    private final long size;
-
-    private final List<Pair<String, String>> properties;
+    private final Map<ResultProperty, PropertyValue> properties;
 
     private CorpusSize subcorpusSize = null;
 
@@ -45,9 +38,6 @@ public class ResultHitGroup {
             DocResults subcorpus, List<HitProperty> prop, Map<Integer, Document> luceneDocs) {
         this.group = group;
         PropertyValue id = group.identity();
-        identity = id.serialize();
-        identityDisplay = id.toString();
-        size = group.size();
 
         if (metadataGroupProperties != null) {
             // Find size of corresponding subcorpus group
@@ -58,15 +48,9 @@ public class ResultHitGroup {
 
         numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
-        properties = new ArrayList<>();
-        List<PropertyValue> valuesForGroup = id.valuesList();
-        for (int j = 0; j < prop.size(); ++j) {
-            final HitProperty hp = prop.get(j);
-            final PropertyValue pv = valuesForGroup.get(j);
-            properties.add(Pair.of(hp.serialize(), pv.toString()));
-        }
+        properties = group.getGroupProperties(prop);
 
-        if (params.includeGroupContents()) {
+        if (params.getIncludeGroupContents()) {
             Hits hitsInGroup = group.storedResults();
             ContextSettings contextSettings = params.contextSettings();
             concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(),
@@ -74,26 +58,14 @@ public class ResultHitGroup {
             docIdToPid = WebserviceOperations.collectDocsAndPids(params.blIndex(), hitsInGroup, luceneDocs);
         }
 
-        if (params.includeGroupContents()) {
+        if (params.getIncludeGroupContents()) {
             Hits hitsInGroup = getGroup().storedResults();
             listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup, getConcordanceContext(),
                     getDocIdToPid());
         }
     }
 
-    public String getIdentity() {
-        return identity;
-    }
-
-    public String getIdentityDisplay() {
-        return identityDisplay;
-    }
-
-    public long getSize() {
-        return size;
-    }
-
-    public List<Pair<String, String>> getProperties() {
+    public Map<ResultProperty, PropertyValue> getProperties() {
         return properties;
     }
 

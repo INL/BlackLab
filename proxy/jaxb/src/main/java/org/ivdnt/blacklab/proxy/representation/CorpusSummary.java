@@ -15,11 +15,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class CorpusSummary implements Cloneable {
 
     @XmlAttribute
-    public String name = "";
+    @JsonInclude(Include.NON_NULL)
+    public String name;
 
-    public String displayName = "";
+    @JsonInclude(Include.NON_NULL)
+    public String displayName;
 
-    public String description = "";
+    @JsonInclude(Include.NON_NULL)
+    public String description;
 
     public String status = "available";
 

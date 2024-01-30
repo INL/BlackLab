@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -177,7 +178,7 @@ public class Corpus implements Cloneable {
         }
     }
 
-    /** Use this to serialize metadat fields to JSON.
+    /** Use this to serialize metadata fields to JSON.
      *
      * Necessary because we convert a list (needed for the XML mapping) to a JSON object structure .
      */
@@ -236,17 +237,20 @@ public class Corpus implements Cloneable {
 
     public String indexName = "";
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String displayName = "";
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String description = "";
 
     public String status = "available";
 
     public boolean contentViewable = false;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String textDirection = "ltr";
 
-    public String documentFormat = "tei";
+    public String documentFormat = "";
 
     public long tokenCount = 0;
 
@@ -254,6 +258,10 @@ public class Corpus implements Cloneable {
 
     public VersionInfo versionInfo;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String pidField;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public SpecialFieldInfo fieldInfo;
 
     @XmlElementWrapper(name="annotatedFields")
@@ -302,7 +310,7 @@ public class Corpus implements Cloneable {
 
     @Override
     public String toString() {
-        return "Index{" +
+        return "Corpus{" +
                 "indexName='" + indexName + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", description='" + description + '\'' +
@@ -313,6 +321,7 @@ public class Corpus implements Cloneable {
                 ", tokenCount=" + tokenCount +
                 ", documentCount=" + documentCount +
                 ", versionInfo=" + versionInfo +
+                ", pidField=" + pidField +
                 ", fieldInfo=" + fieldInfo +
                 ", annotatedFields=" + annotatedFields +
                 ", metadataFields=" + metadataFields +

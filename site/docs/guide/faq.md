@@ -23,7 +23,7 @@ The simplest program using the Java library is 3 lines long: open a BlackLab ind
 
 Queries can be supplied in many different forms, depending on what you’re familiar with:
 
-- [Corpus Query Language](/guide/corpus-query-language.md), as used by the Sketch Engine and IMS Corpus WorkBench;
+- [BlackLab Corpus Query Language](/guide/corpus-query-language.md) (BCQL), similar to the query languages of the IMS Corpus WorkBench and Lexicom Sketch Engine;
 - [Contextual Query Language](http://www.loc.gov/standards/sru/specs/cql.html) (EXPERIMENTAL), used by many online information retrieval systems;
 - or if you prefer, you can programmatically construct queries out of objects, so you can add your own query languages, offer a GUI query builder, etc.
 
@@ -59,7 +59,9 @@ See the note about `contentViewable` on the [BlackLab Server overview](/server/)
 
 ## Can I use BlackLab with Solr/ElasticSearch?
 
-We are working on it! Version 4 of BlackLab should work with Solr, including distributed search. 
+We are working on it! Version 4 of BlackLab should work with Solr. 
+
+Distributed search will follow in a later version. 
 
 See our [future plans](future-plans.md).
 
@@ -105,7 +107,7 @@ We designed BlackLab to offer the flexibility that we missed in other corpus eng
 
 - allows sorting and grouping hits on different properties, including context
 - doesn't prescribe a fixed input format, but can work with any data you want to throw at it
-- provides solid support for Corpus Query Language, but you can easily add query languages. We've added basic support for SRU/CQL (Contextual Query Language), for example, and may add other query languages (e.g. treebanks-search related) in the future.
+- provides solid support for BlackLab Corpus Query Language (BCQL), but you can easily add query languages. We've added basic support for SRU/CQL (Contextual Query Language), for example, and may add other query languages (e.g. treebanks-search related) in the future.
 - has a modular design, making it easier to extend and maintain
 - includes the ability to customize and fundamental indexing features, such as future support for searching tree-like structures, such as syntactic and semantic relations.
 - continually benefits from developments to Lucene, Solr and ElasticSearch, making it more future-proof and lowering development cost

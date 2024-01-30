@@ -26,8 +26,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
@@ -44,8 +44,8 @@ import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.util.Json;
+import nl.inl.util.StringUtil;
 import nl.inl.util.TimeUtil;
 
 /**
@@ -70,7 +70,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     private static final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
             "namingScheme", "unknownCondition", "unknownValue",
             "metadataFields", "complexFields", "metadataFieldGroups", "annotationGroups",
-            "defaultAnalyzer", "titleField", "authorField", "dateField", "pidField"));
+            "defaultAnalyzer", "titleField", "authorField", "dateField", MetadataFields.SPECIAL_FIELD_SETTING_PID));
 
     /** What keys may occur under metadataFieldGroups group? */
     private static final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
@@ -228,7 +228,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         if (custom.containsKey("dateField"))
             fieldInfo.put("dateField", custom.get("dateField", ""));
         if (metadataFields.pidField() != null)
-            fieldInfo.put("pidField", metadataFields.pidField().name());
+            fieldInfo.put(MetadataFields.SPECIAL_FIELD_SETTING_PID, metadataFields.pidField().name());
         ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
         ObjectNode annotationGroups = fieldInfo.putObject("annotationGroups");
         ObjectNode metadataFields = fieldInfo.putObject("metadataFields");
@@ -270,12 +270,12 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             fi.put("analyzer", f.analyzerName());
             fi.put("unknownValue", f.unknownValue());
             fi.put("unknownCondition", unknownCondition.toString());
-            if (f.isValueListComplete() != ValueListComplete.UNKNOWN)
-                fi.put("valueListComplete", f.isValueListComplete().equals(ValueListComplete.YES));
-            Map<String, Integer> values = f.valueDistribution();
+            TruncatableFreqList metaFieldValues = f.values(MetadataFieldImpl.maxMetadataValuesToStore()).valueList();
+            fi.put("valueListComplete", !metaFieldValues.isTruncated());
+            Map<String, Long> values = metaFieldValues.getValues();
             if (values != null) {
                 ObjectNode jsonValues = fi.putObject("values");
-                for (Map.Entry<String, Integer> e: values.entrySet()) {
+                for (Map.Entry<String, Long> e: values.entrySet()) {
                     jsonValues.put(e.getKey(), e.getValue());
                 }
             }
@@ -608,8 +608,10 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     fieldDesc.setDisplayValues(fieldConfig.get("displayValues"));
                 if (fieldConfig.has("displayOrder"))
                     fieldDesc.putCustom("displayOrder", Json.getListOfStrings(fieldConfig, "displayOrder"));
-                if (fieldConfig.has("valueListComplete"))
+                MetadataFieldValues values = fieldDesc.values(MetadataFieldImpl.maxMetadataValuesToStore());
+                if (fieldConfig.has("valueListComplete") && !values.valueList().isTruncated()) {
                     fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
+                }
                 metadataFields.put(fieldName, fieldDesc);
             }
 
@@ -691,7 +693,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 } else {
                     String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
                     if (noForwardIndex.length() > 0) {
-                        String[] noForwardIndexAnnotations = noForwardIndex.split("\\s+");
+                        String[] noForwardIndexAnnotations = noForwardIndex.split(StringUtil.REGEX_WHITESPACE);
                         fieldDesc.setNoForwardIndexAnnotations(new HashSet<>(Arrays.asList(noForwardIndexAnnotations)));
                     }
                 }
@@ -768,8 +770,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
         metadataFields.setTopLevelCustom(custom());
         metadataFields.clearSpecialFields();
-        if (fieldInfo.has("pidField"))
-            metadataFields.setPidField(fieldInfo.get("pidField").textValue());
+        if (fieldInfo.has(MetadataFields.SPECIAL_FIELD_SETTING_PID))
+            metadataFields.setPidField(fieldInfo.get(MetadataFields.SPECIAL_FIELD_SETTING_PID).textValue());
         if (fieldInfo.has("authorField"))
             custom.put("authorField", fieldInfo.get("authorField").textValue());
         if (fieldInfo.has("dateField"))
@@ -1068,9 +1070,10 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         // Also (recursively) add metadata and annotated field config from any linked
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format != null && format.isConfigurationBased())
-                addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroupsPerField, format.getConfig());
+            InputFormat inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
+            if (inputFormat.isConfigurationBased())
+                addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroupsPerField,
+                        inputFormat.getConfig());
         }
     }
 
@@ -1089,7 +1092,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         if (annotation.isInternal()) {
             annotationNode.put("isInternal", annotation.isInternal());
         }
-        if (index instanceof BlackLabIndexIntegrated) {
+        if (getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
             annotationNode.put("hasForwardIndex", annotation.createForwardIndex());
         }
         if (annotation.getSubAnnotations().size() > 0) {

@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -67,6 +67,7 @@ public class IndexTool {
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
         List<File> linkedFileDirs = new ArrayList<>();
         IndexType indexType = null; // null means "use default"
+        boolean createEmptyIndex = false;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
             if (arg.startsWith("---")) {
@@ -76,21 +77,33 @@ public class IndexTool {
                     usage();
                     return;
                 }
-                // create --nothreads --integrate-external-files true E:/code/ivdnt/data/corpora/gysseling E:/code/ivdnt/data/to-import/gysseling E:/code/ivdnt/data/interface/gysseling/gysseling.blf.yaml
                 i++;
                 String value = args[i];
                 indexerParam.put(name, value);
             } else if (arg.startsWith("--")) {
                 String name = arg.substring(2);
                 switch (name) {
+                case "index-type":
+                    if (i + 1 == args.length || !List.of("integrated", "external").contains(args[i + 1].toLowerCase())) {
+                        System.err.println("--index-type needs a parameter: integrated or external.");
+                        usage();
+                        return;
+                    }
+                    indexType = args[i + 1].equalsIgnoreCase("integrated") ? IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
+                    i++;
+                    break;
                 case "integrate-external-files":
+                    // NOTE: deprecated, use  --index-type integrated  instead
                     if (i + 1 == args.length || !List.of("true", "false").contains(args[i + 1].toLowerCase())) {
-                        System.err.println("--integrate-external-files needs a parameter, true or false.");
+                        System.err.println("--integrate-external-files needs a parameter: true or false.");
                         usage();
                         return;
                     }
                     indexType = Boolean.parseBoolean(args[i + 1]) ? IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
                     i++;
+                    break;
+                case "create-empty":
+                    createEmptyIndex = true;
                     break;
                 case "threads":
                     if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
@@ -106,6 +119,15 @@ public class IndexTool {
                     break;
                 case "nothreads":
                     numberOfThreadsToUse = 1;
+                    break;
+                case "format-dir":
+                    if (i + 1 == args.length) {
+                        System.err.println("--format-dir option needs argument");
+                        usage();
+                        return;
+                    }
+                    DocumentFormats.addConfigFormatsInDirectories(List.of(new File(args[i + 1])));
+                    i++;
                     break;
                 case "linked-file-dir":
                     if (i + 1 == args.length) {
@@ -273,7 +295,7 @@ public class IndexTool {
         if (!formatDirs.contains(indexDirParent))
             formatDirs.add(indexDirParent);
 
-        DocumentFormats.registerFormatsInDirectories(formatDirs);
+        DocumentFormats.addConfigFormatsInDirectories(formatDirs);
 
 
         // Create the indexer and index the files
@@ -285,8 +307,8 @@ public class IndexTool {
             File maybeFormatFile = new File(formatIdentifier);
             if (maybeFormatFile.isFile() && maybeFormatFile.canRead()) {
                 try {
-                    ConfigInputFormat format = new ConfigInputFormat(maybeFormatFile, null);
-                    DocumentFormats.registerFormat(format);
+                    ConfigInputFormat format = new ConfigInputFormat(maybeFormatFile);
+                    DocumentFormats.add(format);
                     formatIdentifier = format.getName();
                 } catch (IOException e) {
                     System.err.println("Not a format, not a valid file: " + formatIdentifier + " . " + e.getMessage());
@@ -316,13 +338,15 @@ public class IndexTool {
             indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
         indexer.setLinkedFileDirs(linkedFileDirs);
         try {
-            if (glob.contains("*") || glob.contains("?")) {
-                // Real wildcard glob
-                indexer.index(inputDir, glob);
-            } else {
-                // Single file.
-                indexer.index(new File(inputDir, glob));
-                MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
+            if (!createEmptyIndex) {
+                if (glob.contains("*") || glob.contains("?")) {
+                    // Real wildcard glob
+                    indexer.index(inputDir, glob);
+                } else {
+                    // Single file.
+                    indexer.index(new File(inputDir, glob));
+                    MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
+                }
             }
         } catch (Exception e) {
             System.err.println(
@@ -390,7 +414,7 @@ public class IndexTool {
         }
         try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
             System.out.println("Doing delete: " + deleteQuery);
-            indexWriter.delete(LuceneUtil.parseLuceneQuery(deleteQuery, indexWriter.analyzer(), "nonExistentDefaultField"));
+            indexWriter.delete(LuceneUtil.parseLuceneQuery(null, deleteQuery, indexWriter.analyzer(), "nonExistentDefaultField"));
         }
     }
 
@@ -407,16 +431,18 @@ public class IndexTool {
                         + "Options:\n"
                         + "  --maxdocs <n>                  Stop after indexing <n> documents\n"
                         + "  --linked-file-dir <d>          Look in directory <d> for linked (e.g. metadata) files\n"
+                        + "  --format-dir <d>               Look in directory <d> for formats (i.e. .blf.yaml files)\n"
                         + "  --nothreads                    Disable multithreaded indexing (enabled by default)\n"
                         + "  --threads <n>                  Number of threads to use\n"
-                        + "  --integrate-external-files <b> Enable integrating external files into lucene index (disabled by default)\n"
+                        + "  --index-type <t>               Set the index type, external (old) or integrated (new)\n"
+                        + "  --create-empty                 Create an empty index (ignore inputdir param)\n"
                         + "\n"
                         + "Available input format configurations:");
-        for (Format format : DocumentFormats.getFormats()) {
-            String name = format.getId();
-            String displayName = format.getDisplayName();
-            String desc = format.getDescription();
-            String url = format.getHelpUrl();
+        for (InputFormat inputFormat: DocumentFormats.getFormats()) {
+            String name = inputFormat.getIdentifier();
+            String displayName = inputFormat.getDisplayName();
+            String desc = inputFormat.getDescription();
+            String url = inputFormat.getHelpUrl();
             if (!url.isEmpty())
                 url = "\n      (see " + url + ")";
             if (displayName.length() > 0)

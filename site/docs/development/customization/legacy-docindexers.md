@@ -28,7 +28,7 @@ Configuring an external metadata fetcher (see "Metadata from an external source"
 
 You can also configure what "sensitivity alternatives" (case/diacritics sensitivity) to index for each annotation, using the "PROPNAME_sensitivity" parameter. Accepted values are "i" (both only insensitive), "s" (both only sensitive), "si" (sensitive and insensitive) and "all" (case/diacritics sensitive and insensitive, so 4 alternatives). What alternatives are indexed determines how specifically you can specify the desired sensitivity when searching.
 
-If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e. word/lemma get "si", punct gets "i", starttag gets "s", others get "i"). (CAUTION: the special behaviour for word/lemma is deprecated. Please explictly configure the sensitivity for these annotations. Eventually they too will default to "i")
+If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e. word/lemma get "si", punct gets "i", _relation/starttag gets "s", others get "i"). (CAUTION: the special behaviour for word/lemma is deprecated. Please explictly configure the sensitivity for these annotations. Eventually they too will default to "i")
 
 ## Configuring the index structure
 
@@ -115,7 +115,7 @@ Finally, you may sometimes wish to add values to an earlier corpus position. Say
 
 It is possible to add payloads to annotation values. When calling addAnnotation() at the start of the constructor, make sure to use the version that takes a boolean called 'includePayloads', and set it to true. Then use AnnotationWriter.addPayload(). You can use null if a particular value has no payload. There's also a addPayloadAtIndex() method to add payloads some time after adding the value itself, but that requires knowing the index in the value list of the value you want to add a payload for, so you should store this index when you add the value.
 
-One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHandler. When you use InlineTagHandler to index an inline element, say a sentence tag, BlackLab will add a value (or several values, if the element has attributes) to the built-in 'starttag' annotation. When it encounters the end tag, it wil update the start tag value with a payload indication the element length. This is used when searching to determine what matches occur inside certain XML tags.
+One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHandler. When you use InlineTagHandler to index an inline element, say a sentence tag, BlackLab will index it to the '_relation' (or older 'starttag') annotation. When it encounters the end tag, it wil update the start tag value with a payload indication the element length. This is used when searching to determine what matches occur inside certain XML tags.
 
 ### Indexing non-XML file types
 

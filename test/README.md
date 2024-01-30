@@ -23,6 +23,8 @@ sh test/run-ci.sh
 
 If you add a new test, you should run `test/run-local.sh`. The new test will always PASS and the server response will be saved to `test/data/saved-responses/<category>/<testName>.json`. Then subsequent runs of `run-ci.sh` will use the saved response.
 
+`run-local` is also useful if the test output changes (i.e. a key is added to the JSON output), because it will always save the latest results to the `test/data/latest-test-output` directory (which is excluded from Git). You can then use a diff tool to check the differences and update the saved response if necessary.
+
 ### Build a blacklab test server
 If you've made changes ensure the latest BlackLab code and tests are being used by:
 
