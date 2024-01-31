@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import org.apache.commons.fileupload.FileItem;
 
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -12,6 +11,8 @@ import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+
+import org.apache.commons.fileupload2.core.FileItem;
 
 /**
  * Add or update an input format configuration.

@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 

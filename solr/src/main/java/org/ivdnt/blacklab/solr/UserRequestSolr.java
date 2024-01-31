@@ -61,9 +61,10 @@ public class UserRequestSolr implements UserRequest {
 
     @Override
     public String getRemoteAddr() {
-        if (rb.req.getHttpSolrCall() == null)
+//        if (rb.req.getHttpSolrCall() == null)
             return "UNKNOWN"; // test
-        return ServletUtil.getOriginatingAddress(rb.req.getHttpSolrCall().getReq());
+//        TODO looks like solr still uses javax.servlet
+//        return ServletUtil.getOriginatingAddress(rb.req.getHttpSolrCall().getReq());
     }
 
     @Override

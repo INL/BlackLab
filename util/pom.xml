@@ -75,6 +75,12 @@
             <artifactId>jaxb-runtime</artifactId>
             <version>${jaxb.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/jakarta.xml.bind/jakarta.xml.bind-api -->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.1</version>
+        </dependency>
 
         <!-- jackson is our json and yaml library, it's not a part of jakarta/Java EE -->
         <!-- transitively pulls in data-binding, core -->
@@ -93,7 +99,7 @@
 <!--        </dependency>-->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jaxb-annotations</artifactId>
+            <artifactId>jackson-module-jakarta-xmlbind-annotations</artifactId>
             <version>${jackson.version}</version>
         </dependency>
 
