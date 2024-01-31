@@ -360,7 +360,7 @@ public class ResponseStreamer {
                         if (def.getOverriddenField() != null)
                             ds.entry(KEY_FIELD_NAME, def.getOverriddenField());
                     }
-                    ds.endMap().endEntry();
+                    ds.endMap().endDynEntry();
                 }
                 ds.endMap().endEntry();
             }
@@ -671,7 +671,7 @@ public class ResponseStreamer {
                             ds.entry(KEY_SPAN_END, kwic.fragmentEndInDoc());
                             optMatchInfos(matchInfos, mi -> mi.getOverriddenField() != null &&
                                     mi.getOverriddenField().equals(field));
-                            ds.startEntry(KEY_DOC_SNIPPET);
+                            ds.startEntry(KEY_MATCHING_PART_OF_HIT);
                             ds.contextList(kwic.annotations(), annotationsToList, kwic.tokens());
                             ds.endEntry();
                         }
@@ -747,7 +747,6 @@ public class ResponseStreamer {
                 }
             }
             ds.endList().endEntry();
-            optFieldName(ds, listOfRelations);
         }
         ds.endMap();
     }
@@ -758,7 +757,6 @@ public class ResponseStreamer {
             ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.SPAN.jsonName());
             ds.entry(KEY_SPAN_START, capturedGroup.getSpanStart());
             ds.entry(KEY_SPAN_END, capturedGroup.getSpanEnd());
-            optFieldName(ds, capturedGroup);
         }
         ds.endMap();
     }
@@ -773,7 +771,6 @@ public class ResponseStreamer {
             optAttributes(ds, inlineTag);
             ds.entry(KEY_SPAN_START, inlineTag.getSourceStart());
             ds.entry(KEY_SPAN_END, inlineTag.getTargetStart());
-            optFieldName(ds, inlineTag);
         }
         ds.endMap();
     }
@@ -789,12 +786,6 @@ public class ResponseStreamer {
                 ds.endMap().endEntry();
             }
         }
-    }
-
-    /** If field name was overridden (parallel corpora), include it in the response. */
-    private static void optFieldName(DataStream ds, MatchInfo matchInfo) {
-        if (matchInfo.getOverriddenField() != null)
-            ds.entry(KEY_FIELD_NAME, matchInfo.getOverriddenField());
     }
 
     private static void matchInfoRelation(DataStream ds, RelationInfo relationInfo) {

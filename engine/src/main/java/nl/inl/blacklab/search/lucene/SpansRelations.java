@@ -27,7 +27,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     private final int NOT_YET_NEXTED = -1;
 
     /** Source and target for this relation */
-    private RelationInfo relationInfo = RelationInfo.create();
+    private RelationInfo relationInfo = null;
 
     /** Have we fetched relation info (decoded payload) for current hit yet? */
     private boolean fetchedRelationInfo = false;
@@ -99,9 +99,10 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             // When capturing relations, remember that we're producing hits in a different field.
             // (used with parallel corpora)
             boolean isOverridden = !sourceField.equals(context.getDefaultField());
-            assert !isOverridden; // we don't allow this at the moment, but might want to in the future
             relationInfo = RelationInfo.createWithFields(sourceField, isOverridden, targetField);
         }
+        if (relationInfo == null)
+            relationInfo = RelationInfo.createWithFields(context.getDefaultField(), false, null);
         // Register our group
         if (!captureAs.isEmpty())
             this.groupIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.RELATION, sourceField);
@@ -134,6 +135,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
                 in.collect(collector);
                 byte[] payload = collector.getPayloads().iterator().next();
                 ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
+                if (relationInfo == null) { // should only happen in tests
+                    relationInfo = RelationInfo.create();
+                }
                 relationInfo.deserialize(in.startPosition(), dataInput);
             } catch (IOException e) {
                 throw new BlackLabRuntimeException("Error getting payload");
@@ -211,7 +215,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         fetchedRelationInfo = false; // only decode payload if we need to
 
-        getRelationInfo(); // TEST
+        //@@@ JN DISABLED 2024-01-31; not needed? getRelationInfo(); // TEST
 
         if (spansMayIncludeRoots && spanMode == RelationInfo.SpanMode.SOURCE && getRelationInfo().isRoot()) {
             // Need source, but this has no source

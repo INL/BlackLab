@@ -97,15 +97,6 @@ public class TextPatternSerializerCql {
             });
         });
 
-        // ANDNOT
-        //noinspection deprecation
-//        cqlSerializers.put(TextPatternAndNot.class, TextPatternSerializerCql::serializeAndNot);
-
-        // ANNOTATION
-//        cqlSerializers.put(TextPatternAnnotation.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-//            throw new UnsupportedOperationException("Cannot serialize deprecated TextPatternAnnotation to CQL");
-//        });
-
         // ANYTOKEN
         cqlSerializers.put(TextPatternAnyToken.class, (pattern1, b1, parenthesizeIfNecessary, insideTokenBrackets) -> {
             TextPatternAnyToken tp = (TextPatternAnyToken) pattern1;
@@ -142,11 +133,6 @@ public class TextPatternSerializerCql {
             b.append("_");
         });
 
-        // EDGE
-//        cqlSerializers.put(TextPatternEdge.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-//            throw new UnsupportedOperationException("Cannot serialize TextPatternEdge to CQL");
-//        });
-
         // EXPANSION
         cqlSerializers.put(TextPatternExpansion.class, TextPatternSerializerCql::serializeExpansion);
 
@@ -176,11 +162,6 @@ public class TextPatternSerializerCql {
         // POSFILTER
         cqlSerializers.put(TextPatternPositionFilter.class, TextPatternSerializerCql::serializePosFilter);
 
-        // PREFIX
-//        cqlSerializers.put(TextPatternPrefix.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-//            throw new UnsupportedOperationException("Cannot serialize deprecated TextPatternPrefix to CQL (use regex)");
-//        });
-
         // QUERYFUNCTION
         cqlSerializers.put(TextPatternQueryFunction.class, TextPatternSerializerCql::serializeFuncCall);
 
@@ -207,7 +188,7 @@ public class TextPatternSerializerCql {
                 b.append(")");
         });
 
-        // Relation target (child)  @@@ TODO
+        // Relation target (child)
         cqlSerializers.put(RelationTarget.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             if (insideTokenBrackets)
                 throw new UnsupportedOperationException("Cannot serialize TextPatternRelationTarget inside brackets to CQL");
@@ -220,7 +201,9 @@ public class TextPatternSerializerCql {
             if (isRoot && tp.getSpanMode() != RelationInfo.SpanMode.TARGET)
                 throw new IllegalArgumentException("Root relation must have span mode target (has no source)");
             String optOperatorPrefix = isRoot ? "^" : (operatorInfo.isNegate() ? "!" : "");
-            b.append(isRoot ? "" : " ").append(optCapture).append(optOperatorPrefix).append("-").append(optRegex).append("-> ");
+            String opChar = operatorInfo.isAlignment() ? "=" : "-";
+            b.append(isRoot ? "" : " ").append(optCapture).append(optOperatorPrefix).append(opChar).append(optRegex)
+                    .append(opChar).append("> ");
             serialize(tp.getTarget(), b, true, insideTokenBrackets);
         });
 
@@ -237,16 +220,23 @@ public class TextPatternSerializerCql {
                 b.append(")");
         });
 
-        // SENSITIVE
-//        cqlSerializers.put(TextPatternSensitive.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-//            throw new UnsupportedOperationException("Cannot serialize deprecated TextPatternSensitive to CQL");
-//        });
-
         // SEQUENCE
         cqlSerializers.put(TextPatternSequence.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             if (insideTokenBrackets)
                 throw new UnsupportedOperationException("Cannot serialize TextPatternSequence inside brackets to CQL");
             infix(b, parenthesizeIfNecessary, insideTokenBrackets, " ", ((TextPatternSequence)pattern).getClauses());
+        });
+
+        // Settings
+        cqlSerializers.put(TextPatternSettings.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            if (insideTokenBrackets)
+                throw new UnsupportedOperationException("Cannot serialize TextPatternSettings inside brackets to CQL");
+            b.append("@");
+            TextPatternSettings tp = (TextPatternSettings) pattern;
+            b.append(tp.getSettings().entrySet().stream()
+                    .map(e -> e.getKey() + "=" + e.getValue())
+                    .collect(Collectors.joining(","))).append(" ");
+            serialize(tp.getClause(), b, true, false);
         });
 
         // TAGS
@@ -261,11 +251,6 @@ public class TextPatternSerializerCql {
 
         // TERM
         cqlSerializers.put(TextPatternTerm.class, TextPatternSerializerCql::serializeRegexOrTerm);
-
-        // WILDCARD
-//        cqlSerializers.put(TextPatternWildcard.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-//            throw new UnsupportedOperationException("Cannot serialize deprecated TextPatternWildcard to CQL (use regex)");
-//        });
 
         // MatchFilter AND
         cqlSerializers.put(MatchFilterAnd.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
@@ -346,21 +331,6 @@ public class TextPatternSerializerCql {
             serializer.serialize(parenthesizeIfNecessary, insideTokenBrackets);
         }
     }
-
-//    private static void serializeAndNot(TextPatternStruct pattern, StringBuilder b, boolean parenthesizeIfNecessary,
-//            boolean insideTokenBrackets) {
-//        @SuppressWarnings("deprecation")
-//        TextPatternAndNot tp = ((TextPatternAndNot) pattern);
-//        if (parenthesizeIfNecessary)
-//            b.append("(");
-//        infix(b, false, insideTokenBrackets, " & ", tp.include);
-//        if (!tp.exclude.isEmpty()) {
-//            b.append(" & !");
-//            infix(b, tp.exclude.size() > 1, insideTokenBrackets, " & ", tp.exclude);
-//        }
-//        if (parenthesizeIfNecessary)
-//            b.append(")");
-//    }
 
     private static void serializePosFilter(TextPatternStruct pattern, StringBuilder b, boolean parenthesizeIfNecessary,
             boolean insideTokenBrackets) {

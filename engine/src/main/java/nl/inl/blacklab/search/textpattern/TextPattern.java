@@ -47,6 +47,7 @@ public abstract class TextPattern implements TextPatternStruct {
     public static final String NT_REPEAT = "repeat";
     public static final String NT_SENSITIVITY = "sensitivity";
     public static final String NT_SEQUENCE = "sequence";
+    public static final String NT_SETTINGS = "settings";
     public static final String NT_TAGS = "tags";
     public static final String NT_TERM = "term";
     public static final String NT_WILDCARD = "wildcard";

@@ -33,10 +33,10 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
     /** Combination of relation and target queries */
     public static class Target {
 
-        public static Target get(QueryInfo queryInfo, String relationFieldName, BLSpanQuery target, String captureRelsAs,
-                String relationType) {
-            return new Target(
-                    getRelationsQuery(queryInfo, relationFieldName, relationType), target, captureRelsAs);
+        public static Target get(QueryInfo queryInfo, String relationFieldName, BLSpanQuery target, String targetField,
+                String captureRelsAs, String relationType) {
+            return new Target(getRelationsQuery(queryInfo, relationFieldName, relationType), target, targetField,
+                    captureRelsAs);
         }
 
         private static SpanQueryRelations getRelationsQuery(QueryInfo queryInfo, String relationFieldName, String relationType) {
@@ -56,10 +56,13 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Span the relation targets must be inside of (or null if we don't care) */
         private final BLSpanQuery target;
 
-        private Target(BLSpanQuery relations, BLSpanQuery target, String captureAs) {
+        private final String targetField;
+
+        private Target(BLSpanQuery relations, BLSpanQuery target, String targetField, String captureAs) {
             this.relations = relations;
-            this.captureAs = captureAs;
             this.target = target;
+            this.targetField = targetField;
+            this.captureAs = captureAs;
         }
 
         public static List<Target> rewriteTargets(List<Target> targets, IndexReader reader) throws IOException {
@@ -88,13 +91,13 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpanWeight relationsWeight = relations.createWeight(searcher, scoreMode, boost);
             BLSpanWeight targetWeight = null;
             String captureTargetAs = null;
-            String targetField = null;
+            //String targetField = null;
             if (target instanceof SpanQueryCaptureGroup &&
                     BLSpanQuery.isAnyNGram(((SpanQueryCaptureGroup)target).getClause())) {
                 // Special case: target is e.g. A:[]*. Don't actually search for all n-grams, just ignore
                 // target while matching relations and capture the relation targets as A.
                 captureTargetAs = ((SpanQueryCaptureGroup)target).getCaptureName();
-                targetField = target.getField(); // so we can set the field properly when we capture target
+                //targetField = target.getField(); // so we can set the field properly when we capture target
             } else {
                 targetWeight = target == null || BLSpanQuery.isAnyNGram(target) ? null : target.createWeight(searcher, scoreMode, boost);
             }
@@ -105,7 +108,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpanQuery newRelations = relations.rewrite(reader);
             BLSpanQuery newTarget = target == null ? null : target.rewrite(reader);
             if (newRelations != relations || newTarget != target) {
-                return new Target(newRelations, newTarget, captureAs);
+                return new Target(newRelations, newTarget, targetField, captureAs);
             }
             return this;
         }
@@ -147,7 +150,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Match info name for the target span (if target == null, and if desired) */
         private final String captureTargetAs;
 
-        /** If target == null and captureTargetAs is set, this gives the target field for capture. */
+        /** Target field for capture. */
         private final String targetField;
 
         /** Span the relation targets must be inside of (or null if we don't care) */
@@ -269,8 +272,9 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
      * @param relationType type of relation to capture (regex)
      */
     public SpanQueryCaptureRelationsBetweenSpans(QueryInfo queryInfo, String relationFieldName,
-            BLSpanQuery source, BLSpanQuery target, String captureRelsAs, String relationType) {
-        this(source, List.of(Target.get(queryInfo, relationFieldName, target, captureRelsAs, relationType)));
+            BLSpanQuery source, BLSpanQuery target, String targetField, String captureRelsAs, String relationType) {
+        this(source, List.of(Target.get(queryInfo, relationFieldName, target, targetField, captureRelsAs,
+                relationType)));
     }
 
     /**
@@ -285,8 +289,8 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
      * @param captureRelsAs name to capture the list of relations as
      */
     public SpanQueryCaptureRelationsBetweenSpans(BLSpanQuery source, BLSpanQuery relations, BLSpanQuery target,
-            String captureRelsAs) {
-        this(source, List.of(new Target(relations, target, captureRelsAs)));
+            String targetField, String captureRelsAs) {
+        this(source, List.of(new Target(relations, target, targetField, captureRelsAs)));
     }
 
     @Override

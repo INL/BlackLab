@@ -205,10 +205,10 @@ public class RelationInfo extends MatchInfo {
     private Map<String, String> attributes;
 
     /** Field this points from. May or may not be overridden from default field. */
-    private String sourceField;
+    private final String sourceField;
 
     /** Field this points to, or null if same as source field. */
-    private String targetField;
+    private final String targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
             String fullRelationType, Map<String, String> attributes, String sourceField, boolean sourceIsOverridden, String targetField) {

@@ -16,7 +16,19 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
-import nl.inl.blacklab.search.matchfilter.*;
+import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import nl.inl.blacklab.search.matchfilter.MatchFilterAnd;
+import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
+import nl.inl.blacklab.search.matchfilter.MatchFilterEquals;
+import nl.inl.blacklab.search.matchfilter.MatchFilterFunctionCall;
+import nl.inl.blacklab.search.matchfilter.MatchFilterImplication;
+import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
+import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
+import nl.inl.blacklab.search.matchfilter.MatchFilterSameTokens;
+import nl.inl.blacklab.search.matchfilter.MatchFilterString;
+import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
+import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotationEqualsString;
+import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
 import nl.inl.blacklab.util.ObjectSerializationWriter;
 
 /**
@@ -94,6 +106,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_REL_SPAN_MODE = "spanmode";
     private static final String KEY_REL_TYPE = "reltype";
     private static final String KEY_SENSITIVITY = "sensitivity";
+    private static final String KEY_SETTINGS = "settings";
     private static final String KEY_START = "start";
     private static final String KEY_TARGET_VERSION = "targetVersion";
     private static final String KEY_TRAILING_EDGE = "trailingEdge";
@@ -242,6 +255,13 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         // Sequence
         jsonSerializers.put(TextPatternSequence.class, (pattern, writer) -> {
             writer.write(TextPattern.NT_SEQUENCE, KEY_CLAUSES, ((TextPatternSequence) pattern).getClauses());
+        });
+
+        // Settings
+        jsonSerializers.put(TextPatternSettings.class, (pattern, writer) -> {
+            writer.write(TextPattern.NT_SETTINGS,
+                    KEY_CLAUSE, ((TextPatternSettings) pattern).getClause(),
+                    KEY_SETTINGS, ((TextPatternSettings) pattern).getSettings());
         });
 
         // Tags

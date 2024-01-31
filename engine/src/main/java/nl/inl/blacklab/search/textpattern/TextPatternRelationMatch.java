@@ -85,7 +85,7 @@ public class TextPatternRelationMatch extends TextPattern {
 
         return SpanQueryCaptureRelationsBetweenSpans.Target.get(
                 context.queryInfo(), context.withRelationAnnotation().luceneField(), targetQuery,
-                captureName, relationType);
+                targetContext.field().name(), captureName, relationType);
     }
 
     private BLSpanQuery createRelMatchQuery(QueryExecutionContext context, TextPattern parent, List<RelationTarget> children) throws InvalidQuery {
