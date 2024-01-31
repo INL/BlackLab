@@ -7,23 +7,31 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.QueryExecutionContext;
 
 public class RelationUtil {
 
     /** Relation class used for inline tags. Deliberately obscure to avoid collisions with "real" relations. */
     public static final String CLASS_INLINE_TAG = "__tag";
 
+    /** Relation class to use for relations if not specified. */
+    public static final String CLASS_DEFAULT_INDEX = "rel";
+
+    /** Default fallback class to use when searching.
+     *  Actually the default class is index-specific; it is alphabetically
+     *  the first non-__tag class, with the version stripped off if it's a
+     *  cross-field class in a parallel corpus. This means that if your corpus
+     *  has only one class of relations, you never have to specify it but can
+     *  rely on the default.
+     */
+    public static final String CLASS_DEFAULT_SEARCH = CLASS_DEFAULT_INDEX;
+
     /** Relation class to use for dependency relations (by convention). */
     public static final String CLASS_DEPENDENCY = "dep";
 
-    /** Relation class to use for alignment relations (by convention). */
+    /** Relation class to use for alignment relations in parallel corpus (by convention). */
+    @SuppressWarnings("unused")
     public static final String CLASS_ALIGNMENT = "al";
-
-    /** Relation class to use for relations if not specified. */
-    public static final String CLASS_DEFAULT_INDEX = CLASS_DEPENDENCY;
-
-    /** Default relation class to use when searching */
-    public static final String CLASS_DEFAULT_SEARCH = CLASS_DEFAULT_INDEX;
 
     /** Default relation type: any */
     public static final String ANY_TYPE_REGEX = ".*";
@@ -245,9 +253,11 @@ public class RelationUtil {
         return optParRegex(fullRelationTypeRegex) + ATTR_SEPARATOR + ".*" + attrPart + ".*";
     }
 
-    public static String optPrependDefaultClass(String relationTypeRegex) {
-        if (!relationTypeRegex.contains(CLASS_TYPE_SEPARATOR))
-            relationTypeRegex = fullTypeRegex(CLASS_DEFAULT_SEARCH, optParRegex(relationTypeRegex));
+    public static String optPrependDefaultClass(String relationTypeRegex, QueryExecutionContext context) {
+        if (!relationTypeRegex.contains(CLASS_TYPE_SEPARATOR)) {
+            String defaultClass = context.resolveDefaultRelationClass();
+            relationTypeRegex = fullTypeRegex(defaultClass, optParRegex(relationTypeRegex));
+        }
         return relationTypeRegex;
     }
 }

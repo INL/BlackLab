@@ -11,6 +11,8 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
  * Apply some settings to part of the query.
+ *
+ * Example: @relationclass=al to change default relation class for (part of) the query.
  */
 public class TextPatternSettings extends TextPattern {
 
@@ -33,11 +35,6 @@ public class TextPatternSettings extends TextPattern {
             case "rc":
                 // Set default relation class to use if not overridden
                 context = context.withDefaultRelationClass(value);
-                break;
-            case "targetversion":
-            case "tv":
-                // Set default target version for alignment relations (parallel corpora)
-                context = context.withDocVersion(value);
                 break;
             default:
                 throw new InvalidQuery("Unknown setting: " + key + "= " + value);

@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
@@ -154,11 +155,11 @@ public class RelationOperatorInfo {
     /**
      * Get the full relation type regex, optionally including the target version.
      *
-     * @return
+     * @return the full relation type regex
      */
-    public String getFullTypeRegex() {
+    public String getFullTypeRegex(QueryExecutionContext context) {
         // Make sure our type regex has a relation class
-        String regex = RelationUtil.optPrependDefaultClass(typeRegex);
+        String regex = RelationUtil.optPrependDefaultClass(typeRegex, context);
         if (targetVersion == null || targetVersion.isEmpty())
             return regex;
         String[] classAndType = RelationUtil.classAndType(regex);

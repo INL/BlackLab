@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
@@ -216,11 +215,6 @@ public class TextPatternSerializerCql {
             String optCapture = tp.getCaptureAs().isEmpty() ? "" : tp.getCaptureAs() + ":";
             RelationOperatorInfo operatorInfo = tp.getOperatorInfo();
             String typeRegex = operatorInfo.getTypeRegex();
-            if (typeRegex.startsWith(RelationUtil.CLASS_DEFAULT_SEARCH + RelationUtil.CLASS_TYPE_SEPARATOR)) {
-                // Strip default relation class
-                typeRegex = typeRegex.substring(
-                        RelationUtil.CLASS_DEFAULT_SEARCH.length() + RelationUtil.CLASS_TYPE_SEPARATOR.length());
-            }
             String optRegex = typeRegex.equals(".*") ? "" : typeRegex;
             boolean isRoot = operatorInfo.getDirection() == SpanQueryRelations.Direction.ROOT;
             if (isRoot && tp.getSpanMode() != RelationInfo.SpanMode.TARGET)

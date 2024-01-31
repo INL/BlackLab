@@ -61,7 +61,7 @@ public class RelationTarget implements TextPatternStruct {
         TextPattern targetNoDefVal = TextPatternDefaultValue.replaceWithAnyToken(target);
         QueryExecutionContext targetContext = context.withDocVersion(opInfo.getTargetVersion());
 
-        String relationType = opInfo.getFullTypeRegex();
+        String relationType = opInfo.getFullTypeRegex(context);
 
         // Auto-determine capture name if none was given
         String captureName = captureAs;

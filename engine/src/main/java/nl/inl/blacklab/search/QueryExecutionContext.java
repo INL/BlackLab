@@ -8,8 +8,8 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Represents the current "execution context" for executing a TextPattern query.
@@ -31,6 +31,9 @@ public class QueryExecutionContext {
 
     /** The index object, representing the BlackLab index */
     private final BlackLabIndex index;
+
+    /** Our query info object */
+    private final QueryInfo queryInfo;
 
     /**
      * Name of the annotated field we're searching.
@@ -56,7 +59,7 @@ public class QueryExecutionContext {
     /** The sensitivity variant of our annotation we'll search. */
     private final AnnotationSensitivity sensitivity;
 
-    /** Default relation class to search */
+    /** Default relation class to search, or null to use index default */
     private final String defaultRelationClass;
 
     /** Registered capture names */
@@ -88,8 +91,9 @@ public class QueryExecutionContext {
             throw new IllegalArgumentException("Annotation doesn't exist: null");
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
-        this.defaultRelationClass = defaultRelationClass == null ? RelationUtil.CLASS_DEFAULT_SEARCH : defaultRelationClass;
+        this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
+        queryInfo = QueryInfo.create(index, field);
     }
 
     public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
@@ -203,8 +207,18 @@ public class QueryExecutionContext {
         return index;
     }
 
-    public String getDefaultRelationClass() {
-        return defaultRelationClass;
+    /**
+     * Get the overridden default relation class.
+     *
+     * @return default relation class, or null if not overridden
+     */
+    public String resolveDefaultRelationClass() {
+        // If overridden (e.g. using @rc=al): return that.
+        // Otherwise determine the default for this index and use that
+        return defaultRelationClass != null ?
+                defaultRelationClass :
+                index().getRelationsStats(queryInfo().field(), WebserviceParameter.DEF_VAL_LIMIT_VALUES)
+                        .getDefaultClass();
     }
 
     /**
@@ -217,7 +231,7 @@ public class QueryExecutionContext {
     }
 
     public QueryInfo queryInfo() {
-        return QueryInfo.create(index(), field());
+        return queryInfo;
     }
 
     public String ensureUniqueCapture(String captureBaseName) {

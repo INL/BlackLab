@@ -71,7 +71,7 @@ public class TextPatternRelationMatch extends TextPattern {
         RelationOperatorInfo opInfo = target.getOperatorInfo();
         assert opInfo.isAlignment();
 
-        String relationType = opInfo.getFullTypeRegex();
+        String relationType = opInfo.getFullTypeRegex(context);
 
         // Auto-determine capture name from relation type if none was given
         String captureName = target.getCaptureAs();

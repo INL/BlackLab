@@ -46,7 +46,7 @@ public class XFRelations implements ExtensionFunctionClass {
         SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.fromCode((String)args.get(4));
 
         // Make sure relationType has a relation class
-        relationType = RelationUtil.optPrependDefaultClass(relationType);
+        relationType = RelationUtil.optPrependDefaultClass(relationType, context);
 
         // Auto-determine capture name if none was given
         if (StringUtils.isEmpty(captureAs))
@@ -143,7 +143,7 @@ public class XFRelations implements ExtensionFunctionClass {
             throw new IllegalArgumentException("rcapture() requires at least a query");
         BLSpanQuery query = (BLSpanQuery)args.get(0);
         String captureAs = context.ensureUniqueCapture((String)args.get(1));
-        String relationType = RelationUtil.optPrependDefaultClass((String) args.get(2));
+        String relationType = RelationUtil.optPrependDefaultClass((String) args.get(2), context);
         String field = context.withRelationAnnotation().luceneField();
         return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, null, captureAs, relationType);
     }
@@ -165,7 +165,7 @@ public class XFRelations implements ExtensionFunctionClass {
         BLSpanQuery query = (BLSpanQuery)args.get(0);
         String toCapture = (String)args.get(1);
         String captureAs = context.ensureUniqueCapture((String)args.get(2));
-        String relationType = RelationUtil.optPrependDefaultClass((String) args.get(3));
+        String relationType = RelationUtil.optPrependDefaultClass((String) args.get(3), context);
         String field = context.withRelationAnnotation().luceneField();
         return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, toCapture, captureAs, relationType);
     }
