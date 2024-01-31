@@ -187,7 +187,8 @@
           }
         ],
         "type": "or"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {

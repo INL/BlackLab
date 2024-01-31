@@ -63,7 +63,8 @@
       "json": {
         "type": "regex",
         "value": "a"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 30,
     "searchParam": {

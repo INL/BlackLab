@@ -379,7 +379,8 @@
           "value": "abcdefg"
         },
         "type": "not"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 30,
     "searchParam": {

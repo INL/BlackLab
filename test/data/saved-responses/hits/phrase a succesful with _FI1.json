@@ -99,7 +99,8 @@
         ],
         "name": "_FI1",
         "type": "callfunc"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {

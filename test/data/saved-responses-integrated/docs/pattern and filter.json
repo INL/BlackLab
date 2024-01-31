@@ -421,7 +421,8 @@
       "json": {
         "type": "regex",
         "value": "the"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {

@@ -149,7 +149,8 @@
           }
         ],
         "type": "sequence"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 30,
     "searchParam": {

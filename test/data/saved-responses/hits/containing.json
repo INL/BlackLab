@@ -519,9 +519,12 @@
         },
         "type": "posfilter"
       },
-      "matchInfoNames": [
-        "u"
-      ]
+      "matchInfos": {
+        "u": {
+          "type": "span"
+        }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {

@@ -87,7 +87,8 @@
       "json": {
         "type": "regex",
         "value": "very"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 30,
     "searchParam": {

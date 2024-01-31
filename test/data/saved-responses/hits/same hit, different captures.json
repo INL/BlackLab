@@ -641,9 +641,12 @@
         ],
         "type": "sequence"
       },
-      "matchInfoNames": [
-        "A"
-      ]
+      "matchInfos": {
+        "A": {
+          "type": "span"
+        }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {

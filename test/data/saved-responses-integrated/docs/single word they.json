@@ -269,7 +269,8 @@
       "json": {
         "type": "regex",
         "value": "they"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {

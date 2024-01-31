@@ -98,7 +98,8 @@
           }
         ],
         "type": "sequence"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {

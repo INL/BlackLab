@@ -376,7 +376,8 @@
         "max": 1,
         "min": 1,
         "type": "anytoken"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 30,
     "searchParam": {

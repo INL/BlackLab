@@ -114,9 +114,12 @@
         },
         "type": "posfilter"
       },
-      "matchInfoNames": [
-        "u"
-      ]
+      "matchInfos": {
+        "u": {
+          "type": "relation"
+        }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {

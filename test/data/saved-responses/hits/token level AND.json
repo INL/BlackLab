@@ -390,7 +390,8 @@
           }
         ],
         "type": "and"
-      }
+      },
+      "searchField": "contents"
     },
     "requestedWindowSize": 50,
     "searchParam": {
