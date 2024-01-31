@@ -788,6 +788,8 @@ The best way to influence the corpus metadata is by including a special section 
         - keywords
 ```
 
+If you add `addRemainingFields: true` to one of the groups, any field that wasn't explicitly listed will be added to that group.
+
 There's also a complete [annotated index metadata file](/guide/how-to-configure-indexing.md#annotated-configuration-file) if you want to know more details about that.
 
 There are also (hacky) ways to make changes to the corpus metadata after it was indexed: you can export the metadata to a file and re-import it later (older indexes had an external `indexmetadata.yaml` file that could be edited directly). Start the `IndexTool` with `--help` to learn more, but be careful, as it is easy to make the index unusable this way. 
