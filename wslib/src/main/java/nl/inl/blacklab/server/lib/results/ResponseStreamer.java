@@ -333,18 +333,25 @@ public class ResponseStreamer {
         }
 
         TextPattern textPattern = summaryFields.getTextPattern();
-        if (modernizeApi && textPattern != null && ds.getType().equals("json")) {
+        if (modernizeApi && textPattern != null) {
+            // Show how pattern was parsed
             ds.startEntry("pattern").startMap();
-            ds.entry("json", textPattern);
+            if (ds.getType().equals("json")) {
+                // Only include the JSON representation in the JSON response
+                // (we don't have a proper XML representation (yet) and don't care as much about that response format)
+                ds.entry("json", textPattern);
+            }
             try {
                 ds.entry("bcql", TextPatternSerializerCql.serialize(textPattern));
             } catch (Exception e) {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
             }
-            ds.entry("searchField", summaryFields.getSearchField());
+            ds.entry(KEY_FIELD_NAME, summaryFields.getSearchField());
             List<MatchInfo.Def> matchInfoDefs = summaryFields.getMatchInfoDefs();
             if (!matchInfoDefs.isEmpty()) {
+                // Report the match infos in the query, their types, and the field they apply to (if different from
+                // main field, i.e. for parallel corpora)
                 ds.startEntry(KEY_MATCH_INFOS).startMap();
                 for (MatchInfo.Def def: matchInfoDefs) {
                     ds.startDynEntry(def.getName()).startMap();
@@ -651,7 +658,7 @@ public class ResponseStreamer {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
                 }
             }
-            if (isNewApi) {
+            if (modernizeApi) {
                 Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
                 if (foreignKwics != null) {
                     ds.startEntry("otherFields").startMap();
@@ -804,11 +811,9 @@ public class ResponseStreamer {
             ds.entry("targetEnd", relationInfo.getTargetEnd());
             ds.entry(KEY_SPAN_START, relationInfo.getSpanStart());
             ds.entry(KEY_SPAN_END, relationInfo.getSpanEnd());
-            // If source and target fields are different than the default field (relation in another field),
-            // or different from each other (cross-field relation), include them in the response
-            // (should only ever happen with parallel corpora)
-            if (relationInfo.getOverriddenField() != null || !relationInfo.getSourceField().equals(relationInfo.getTargetField())) {
-                ds.entry("sourceField", relationInfo.getSourceField());
+
+            if (!relationInfo.getSourceField().equals(relationInfo.getTargetField())) {
+                // Report targetField for cross-field relations
                 ds.entry("targetField", relationInfo.getTargetField());
             }
         }
