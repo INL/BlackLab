@@ -269,11 +269,11 @@
     "numberOfHitsRetrieved": 5,
     "pattern": {
       "bcql": "'a'",
+      "fieldName": "contents",
       "json": {
         "type": "regex",
         "value": "a"
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

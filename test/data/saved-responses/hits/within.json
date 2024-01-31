@@ -99,6 +99,7 @@
     "numberOfHitsRetrieved": 1,
     "pattern": {
       "bcql": "('very' 'good') within <u/>",
+      "fieldName": "contents",
       "json": {
         "filter": {
           "name": "u",
@@ -124,8 +125,7 @@
         "u": {
           "type": "span"
         }
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

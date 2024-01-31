@@ -477,6 +477,7 @@
     "numberOfHitsRetrieved": 5,
     "pattern": {
       "bcql": "<u/> containing 'good'",
+      "fieldName": "contents",
       "json": {
         "filter": {
           "type": "regex",
@@ -493,8 +494,7 @@
         "u": {
           "type": "relation"
         }
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

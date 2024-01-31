@@ -84,11 +84,11 @@
     "numberOfHitsRetrieved": 7,
     "pattern": {
       "bcql": "'very'",
+      "fieldName": "contents",
       "json": {
         "type": "regex",
         "value": "very"
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 30,
     "searchParam": {

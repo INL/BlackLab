@@ -175,11 +175,11 @@
     "numberOfHitsRetrieved": 3,
     "pattern": {
       "bcql": "'two|four'",
+      "fieldName": "contents",
       "json": {
         "type": "regex",
         "value": "two|four"
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

@@ -266,11 +266,11 @@
     "numberOfHitsRetrieved": 3,
     "pattern": {
       "bcql": "'they'",
+      "fieldName": "contents",
       "json": {
         "type": "regex",
         "value": "they"
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

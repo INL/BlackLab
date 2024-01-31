@@ -1705,6 +1705,7 @@
     "numberOfHitsRetrieved": 35,
     "pattern": {
       "bcql": "[lemma='be' & word!='are']",
+      "fieldName": "contents",
       "json": {
         "clauses": [
           {
@@ -1722,8 +1723,7 @@
           }
         ],
         "type": "and"
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

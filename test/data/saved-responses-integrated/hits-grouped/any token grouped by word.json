@@ -372,6 +372,7 @@
     "numberOfHitsRetrieved": 766,
     "pattern": {
       "bcql": "[word!='abcdefg']",
+      "fieldName": "contents",
       "json": {
         "clause": {
           "annotation": "word",
@@ -379,8 +380,7 @@
           "value": "abcdefg"
         },
         "type": "not"
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 30,
     "searchParam": {

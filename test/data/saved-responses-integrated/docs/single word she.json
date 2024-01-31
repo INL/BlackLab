@@ -418,11 +418,11 @@
     "numberOfHitsRetrieved": 5,
     "pattern": {
       "bcql": "'she'",
+      "fieldName": "contents",
       "json": {
         "type": "regex",
         "value": "she"
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

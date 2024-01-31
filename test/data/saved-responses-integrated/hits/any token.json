@@ -2380,12 +2380,12 @@
     "numberOfHitsRetrieved": 766,
     "pattern": {
       "bcql": "[]",
+      "fieldName": "contents",
       "json": {
         "max": 1,
         "min": 1,
         "type": "anytoken"
-      },
-      "searchField": "contents"
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {
