@@ -129,6 +129,12 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         }
 
         public void updateType(Type type) {
+            if (type == null) {
+                // This just means "we don't know the type at this point in the query",
+                // which is fine (any match info can be used as a regular span). The type
+                // will be known at one location in the query, so this will eventually get set.
+                return;
+            }
             assert this.type == null || type == this.type;
             this.type = type;
         }

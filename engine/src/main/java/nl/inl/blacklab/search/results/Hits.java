@@ -16,6 +16,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo.Def;
 
 /**
  * A list of hits, optionally with captured groups.
@@ -298,6 +299,11 @@ public interface Hits extends Results<Hit, HitProperty> {
     Hits window(Hit hit);
 
     List<MatchInfo.Def> matchInfoDefs();
+
+    default int matchInfoIndex(String name) {
+        return matchInfoDefs().stream().filter(def -> def.getName().equals(name)).map(Def::getIndex)
+                .findFirst().orElse(-1);
+    }
 
     boolean hasMatchInfo();
 
