@@ -33,7 +33,7 @@
         <module>server</module>
 
         <!-- Solr integration (experimental) -->
-        <module>solr</module>
+        <!--<module>solr</module> TODO wait for jakarta compatible version -->
 
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>
