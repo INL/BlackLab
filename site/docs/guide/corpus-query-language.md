@@ -446,7 +446,7 @@ Note that _full_ is the default value for the second parameter, so this will wor
 
     rspan(_ -subj-> (_ -amod-> _) ; -obj-> _, 'all')
 
-Note that BlackLab already adds this by default if your query matches any relations, so you generally don't need to specify it explicitly. Of course, if you specify _full_ or _target_, BlackLab won't change it to _all_.
+Because this is pretty useful when searching relations, there's an easy way to apply this `rspan` operation: just add a parameter `adjusthits=yes` to your BlackLab Server URL. Note that if your query already starts with a call to `rspan`, `adjusthits=yes` won't do anything.
 
 #### Capturing all relations in a sentence
 

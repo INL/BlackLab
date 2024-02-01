@@ -103,7 +103,7 @@ public enum WebserviceParameter {
     LIMIT_VALUES("limitvalues"),        // truncate lists/maps of values to this length [1000]
 
     // relations querying options
-    REL_ADJUST_HITS("adjust-hits"),       // adjust hits to cover all words involved in relation [no]
+    REL_ADJUST_HITS("adjusthits", "adjust-hits"),  // adjust hits to cover all tokens involved in relation [no]
 
     DEBUG("debug"), // include debug info (cache)
 
