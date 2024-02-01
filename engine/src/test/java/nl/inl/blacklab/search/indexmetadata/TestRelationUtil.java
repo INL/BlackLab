@@ -9,14 +9,14 @@ public class TestRelationUtil {
 
     @Test
     public void testInlineTagRelationType() {
-        String rt = RelationUtil.inlineTagFullType("word");
+        String rt = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, "word");
         String tagName = RelationUtil.classAndType(rt)[1];
         Assert.assertEquals("word", tagName);
     }
 
     @Test
     public void testRelationIndexTerm() {
-        String rt = RelationUtil.inlineTagFullType("word");
+        String rt = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, "word");
 
         // Index with attributes in one order - should be sorted alphabetically
         Map<String, String> attr = Map.of("attr3", "v3", "attr2", "v2", "attr1", "v1");

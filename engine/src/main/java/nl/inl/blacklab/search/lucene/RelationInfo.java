@@ -21,7 +21,23 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  * Note that this is not named MatchInfoRelation, as it is
  * used while indexing as well as matching.
  */
-public class RelationInfo implements MatchInfo {
+public class RelationInfo extends MatchInfo {
+
+    public static RelationInfo create() {
+        return new RelationInfo(false, -1, -1, -1, -1, null, null, null, false, null);
+    }
+
+    public static RelationInfo createWithFields(String sourceField, boolean sourceIsOverridden, String targetField) {
+        return new RelationInfo(false, -1, -1, -1, -1, null, null, sourceField, sourceIsOverridden, targetField);
+    }
+
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, null, null, null, false, null);
+    }
+
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, String fullRelationType) {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, null, null, false, null);
+    }
 
     /** Include attributes in relation info? We wanted to do this but can't anymore
      *  because they're only available in the version indexed with attributes. We also index
@@ -34,6 +50,41 @@ public class RelationInfo implements MatchInfo {
         int relativePositionOfLastToken = end - start;
         dataOutput.writeZInt(relativePositionOfLastToken);
         // (rest of RelationInfo members have the default value so we skip them)
+    }
+
+    public static void serializeRelation(boolean onlyHasTarget, int sourceStart, int sourceEnd,
+            int targetStart, int targetEnd, DataOutput dataOutput) {
+
+        assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
+        // Determine values to write from our source and target, and the position we're being indexed at
+        int thisLength = sourceEnd - sourceStart;
+        int relOtherStart = targetStart - sourceStart;
+        int otherLength = targetEnd - targetStart;
+
+        // Which default length should we use? (can save 1 byte per relation)
+        boolean useAlternateDefaultLength = thisLength == DEFAULT_LENGTH_ALT && otherLength == DEFAULT_LENGTH_ALT;
+        int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
+
+        byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
+                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0));
+
+        // Only write as much as we need (omitting default values from the end)
+        boolean writeOtherLength = otherLength != defaultLength;
+        boolean writeThisLength = writeOtherLength || thisLength != defaultLength;
+        boolean writeFlags = writeThisLength || flags != DEFAULT_FLAGS;
+        boolean writeRelOtherStart = writeFlags || relOtherStart != DEFAULT_REL_OTHER_START;
+        try {
+            if (writeRelOtherStart)
+                dataOutput.writeZInt(relOtherStart);
+            if (writeFlags)
+                dataOutput.writeByte(flags);
+            if (writeThisLength)
+                dataOutput.writeVInt(thisLength);
+            if (writeOtherLength)
+                dataOutput.writeVInt(otherLength);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -153,26 +204,38 @@ public class RelationInfo implements MatchInfo {
     /** Tag attributes (if any), or empty if not set (set during search by SpansRelations) */
     private Map<String, String> attributes;
 
-    public RelationInfo() {
-        this(false, -1, -1, -1, -1, null, null);
-    }
+    /** Field this points from. May or may not be overridden from default field. */
+    private final String sourceField;
 
-    public RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
-        this(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, null, null);
-    }
+    /** Field this points to, or null if same as source field. */
+    private final String targetField;
 
-    public RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, String fullRelationType, Map<String, String> attributes) {
+    private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
+            String fullRelationType, Map<String, String> attributes, String sourceField, boolean sourceIsOverridden, String targetField) {
+        super(sourceIsOverridden ? sourceField : null);
         this.fullRelationType = fullRelationType;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
+        this.sourceField = sourceField;
+        this.targetField = targetField;
         this.onlyHasTarget = onlyHasTarget;
-        if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd)) {
-            throw new IllegalArgumentException("By convention, root relations should have a 'fake source' that coincides with their target " +
+        if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd) && (sourceStart != targetStart || sourceEnd != targetStart)) {
+            // Root relations must have a fake source (position where they are indexed).
+            // Either source must equal target (older convention, remove eventually), e.g. 2-3 -> 2-3, OR
+            // source must start at the same position as target and have length 0, e.g. 2-2 -> 2-3
+            // (new convention, slightly more space efficient when indexing)
+            throw new IllegalArgumentException("By convention, root relations should have a 'fake source' of length 0 that starts at the same position as the target " +
                     "(values here are SRC " + sourceStart + ", " + sourceEnd + " - TGT " + targetStart + ", " + targetEnd + ").");
         }
         this.sourceStart = sourceStart;
         this.sourceEnd = sourceEnd;
         this.targetStart = targetStart;
         this.targetEnd = targetEnd;
+    }
+
+    public RelationInfo copy() {
+        boolean sourceIsOverridden = sourceField != null && sourceField.equals(getOverriddenField());
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType,
+                attributes, sourceField, sourceIsOverridden, targetField);
     }
 
     /**
@@ -219,43 +282,10 @@ public class RelationInfo implements MatchInfo {
      * @return the serialized data
      */
     public BytesRef serialize() {
-        assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
-        // Determine values to write from our source and target, and the position we're being indexed at
-        int thisLength = sourceEnd - sourceStart;
-        int relOtherStart = targetStart - sourceStart;
-        int otherLength = targetEnd - targetStart;
-
-        // Which default length should we use? (can save 1 byte per relation)
-        boolean useAlternateDefaultLength = thisLength == DEFAULT_LENGTH_ALT && otherLength == DEFAULT_LENGTH_ALT;
-        int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
-
-        byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
-                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0));
-
-        // Only write as much as we need (omitting default values from the end)
-        boolean writeOtherLength = otherLength != defaultLength;
-        boolean writeThisLength = writeOtherLength || thisLength != defaultLength;
-        boolean writeFlags = writeThisLength || flags != DEFAULT_FLAGS;
-        boolean writeRelOtherStart = writeFlags || relOtherStart != DEFAULT_REL_OTHER_START;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         DataOutput dataOutput = new OutputStreamDataOutput(os);
-        try {
-            if (writeRelOtherStart)
-                dataOutput.writeZInt(relOtherStart);
-            if (writeFlags)
-                dataOutput.writeByte(flags);
-            if (writeThisLength)
-                dataOutput.writeVInt(thisLength);
-            if (writeOtherLength)
-                dataOutput.writeVInt(otherLength);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        serializeRelation(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, dataOutput);
         return new BytesRef(os.toByteArray());
-    }
-
-    public RelationInfo copy() {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, attributes);
     }
 
     public boolean isRoot() {
@@ -284,6 +314,14 @@ public class RelationInfo implements MatchInfo {
 
     public int getSpanEnd() {
         return Math.max(sourceEnd, targetEnd);
+    }
+
+    public String getSourceField() {
+        return sourceField;
+    }
+
+    public String getTargetField() {
+        return targetField == null ? sourceField : targetField;
     }
 
     public int spanStart(SpanMode mode) {
@@ -369,33 +407,58 @@ public class RelationInfo implements MatchInfo {
         return attributes;
     }
 
+    private String toStringOptSourceTargetFields() {
+        if (sourceField == null)
+            return "";
+        if (getOverriddenField() == null) {
+            // Source field is the default field, don't mention it separately
+            if (targetField == null) {
+                // Both are default
+                return "";
+            } else {
+                // Source is default, target is not
+                return "(-> " + targetField + ")";
+            }
+        } else {
+            // Source field is not the default field
+            if (targetField == null) {
+                // Source is not default, target is
+                return "(" + sourceField + ")";
+            } else {
+                // Both are not default
+                return "(" + sourceField + " -> " + targetField + ")";
+            }
+
+        }
+    }
+
     @Override
     public String toString() {
         // Inline tag
         if (isTag()) {
-            String tagName = RelationUtil.classAndType(fullRelationType)[1];
+            String tagName = fullRelationType == null ? "UNKNOWN" : RelationUtil.classAndType(fullRelationType)[1];
             String attr = attributes == null || attributes.isEmpty() ? "" :
                     " " + attributes.entrySet().stream()
                             .map(e -> e.getKey() + "=\"" + e.getValue() + "\"")
                             .collect(Collectors.joining(" "));
-            return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )";
+            return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )" + toStringOptFieldName();
         }
 
         // Relation
         int targetLen = targetEnd - targetStart;
-        String target = targetStart + (targetLen != 1 ? " (len=" + targetEnd + ")" : "");
+        String target = targetStart + (targetLen != 1 ? "-" + targetEnd : "");
         if (isRoot())
             return "rel( ^-" + fullRelationType + "-> " + target + ")";
         int sourceLen = sourceEnd - sourceStart;
-        String source = sourceStart + (sourceLen != 1 ? " (len=" + sourceEnd + ")" : "");
-        return "rel(" + source + " -" + fullRelationType + "-> " + target + ")";
+        String source = sourceStart + (sourceLen != 1 ? "-" + sourceEnd : "");
+        return "rel(" + source + " -" + fullRelationType + "-> " + target + ")" + toStringOptSourceTargetFields();
     }
 
     @Override
     public int compareTo(MatchInfo o) {
         if (o instanceof RelationInfo)
             return compareTo((RelationInfo) o);
-        return MatchInfo.super.compareTo(o);
+        return super.compareTo(o);
     }
 
     public int compareTo(RelationInfo o) {

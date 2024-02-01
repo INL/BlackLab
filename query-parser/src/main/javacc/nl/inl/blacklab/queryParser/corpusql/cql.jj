@@ -20,13 +20,13 @@ package nl.inl.blacklab.queryParser.corpusql;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.ChildRelationStruct;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.RelationTypeStruct;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
@@ -40,6 +40,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
+import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
@@ -53,6 +54,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
 import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
+import nl.inl.blacklab.search.textpattern.TextPatternSettings;
 import nl.inl.blacklab.search.textpattern.TextPatternTags.Adjust;import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
@@ -89,12 +91,15 @@ TOKEN [IGNORE_CASE]:
     <WITHIN: "within" >
 |   <CONTAINING: "containing" >
 |   <DEFAULT_VALUE: "_">
+    /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
+|   <ROOT_DEP_OP: "^-" ( ~["-"] (~["-"] | "-" ~[">"] )* )? "->" (["A"-"Z","a"-"z","_","0"-"9"])* >
+|   <DEP_OP: ("!")? "-" ( ~["-"] (~["-"] | "-" ~[">"] )* )? "->" (["A"-"Z","a"-"z","_","0"-"9"])* >
+|   <ALIGNMENT_OP: "=" ( ~["="] (~["="] | "=" ~[">"] )* )? "=>" (["A"-"Z","a"-"z","_","0"-"9"])* >
 |   <NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |   <NUMBER: (["0"-"9"])+ >
-    /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
-|   <ROOT_DEP_OP: "^-" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "->" >
-|   <DEP_OP: ("!")? "-" ( ~["-",">"] (~["-"] | "-" ~[">"] )* )? "->" >
+|   <SETTINGS_OP: "@" (["A"-"Z","a"-"z","_","0"-"9"])+ "=" (["A"-"Z","a"-"z","_","0"-"9"])+
+                ( "," (["A"-"Z","a"-"z","_","0"-"9"])+ "=" (["A"-"Z","a"-"z","_","0"-"9"])+ )* >
 |   <QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 |   <SINGLE_QUOTED_STRING: "'" (~["'","\\"] | "\\" ~[] )* "'" >
 }
@@ -107,7 +112,32 @@ TextPattern query():
     TextPattern a = null;
 }
 {
-    a=constrainedQuery() <EOF>
+    a=settingsQuery() <EOF>
+    {
+        return a;
+    }
+}
+
+TextPattern settingsQuery():
+{
+    TextPattern a = null;
+    Token settings = null;
+}
+{
+    settings=<SETTINGS_OP> a=settingsQuery()
+    {
+        // Parse settings operator (of the form "@a=b,c=d,e=f") into a map
+        String keyValuesString = settings.toString().substring(1);
+        Map<String, String> settingsMap = new LinkedHashMap<String, String>();
+        for (String keyValue : keyValuesString.split(",")) {
+            String[] keyAndValue = keyValue.split("=");
+            if (keyAndValue.length != 2)
+                throw new IllegalArgumentException("Invalid settings string: " + keyValuesString);
+            settingsMap.put(keyAndValue[0], keyAndValue[1]);
+        }
+        return new TextPatternSettings(settingsMap, a);
+    }
+|   a=constrainedQuery()
     {
         return a;
     }
@@ -294,7 +324,7 @@ TextPattern relationQuery():
 
 ChildRelationStruct childRelation():
 {
-    RelationTypeStruct relType = null;
+    RelationOperatorInfo relType = null;
     TextPattern target = null;
     String label = "";
 }
@@ -306,14 +336,14 @@ ChildRelationStruct childRelation():
     }
 }
 
-RelationTypeStruct relationType():
+RelationOperatorInfo relationType():
 {
     Token t = null;
 }
 {
-    t=<DEP_OP>
+    (t=<DEP_OP> | t=<ALIGNMENT_OP>)
     {
-        return RelationTypeStruct.fromOperator(t.toString());
+        return RelationOperatorInfo.fromOperator(t.toString());
     }
 }
 
@@ -327,7 +357,7 @@ TextPattern rootRelationType():
     [ label=captureLabel() ":" ]
     t=<ROOT_DEP_OP> target=relationQuery()
     {
-        RelationTypeStruct relType = RelationTypeStruct.fromOperator(t.toString().substring(1));
+        RelationOperatorInfo relType = RelationOperatorInfo.fromOperator(t.toString());
         return wrapper.rootRelationQuery(new ChildRelationStruct(relType, target, label));
     }
 }

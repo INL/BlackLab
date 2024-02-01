@@ -44,6 +44,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyAfterHit;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
@@ -840,6 +841,19 @@ public class QueryTool {
                 String v = lcased.substring(6);
                 determineTotalNumberOfHits = v.equals("on") || v.equals("yes") || v.equals("true");
                 outprintln("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
+            } else if (lcased.startsWith("pattfield")) {
+                String v = lcased.substring(9).trim();
+                if (v.isEmpty()) {
+                    contentsField = index.mainAnnotatedField();
+                    outprintln("Searching main annotated field: " + contentsField.name());
+                } else {
+                    AnnotatedFields annotatedFields = index.metadata().annotatedFields();
+                    if (annotatedFields.exists(v)) {
+                        contentsField = annotatedFields.get(v);
+                        outprintln("Searching annotated field: " + contentsField.name());
+                    } else
+                        errprintln("Annotated field '" + v + "' does not exist.");
+                }
             } else {
                 // Not a command; assume it's a query
                 parseAndExecuteQuery(cmd);
@@ -860,7 +874,7 @@ public class QueryTool {
             return;
         }
         Document doc = index.luceneDoc(docId);
-        ContentAccessor ca = index.contentAccessor(index.metadata().annotatedFields().main());
+        ContentAccessor ca = index.contentAccessor(contentsField);
         String[] content = ca.getSubstringsFromDocument(docId, doc, new int[] { -1 }, new int[] { -1 });
         outprintln(content[0]);
     }
@@ -1098,11 +1112,11 @@ public class QueryTool {
                     throw new RuntimeException(e);
                 }
             }
-            SearchHits search = index.search().find(spanQuery);
+            SearchHits search = index.search(contentsField).find(spanQuery);
             timings = search.queryInfo().timings();
 
             if (alwaysSortBy != null) {
-                search = search.sort(HitProperty.deserialize(index, index.mainAnnotatedField(), alwaysSortBy));
+                search = search.sort(HitProperty.deserialize(index, contentsField, alwaysSortBy));
             }
 
             hits = search.execute();
@@ -1371,7 +1385,7 @@ public class QueryTool {
      * Report how long an operation took
      */
     private void reportTime() {
-        if (showStats) {
+        if (showStats && verbose) {
             //outprintln(describeInterval(time) + " elapsed");
             if (!timings.isEmpty()) {
                 outprintln("Query timings:\n" + timings.summarize());
@@ -1657,7 +1671,7 @@ public class QueryTool {
                     MatchInfo mi = e.getValue();
                     if (mi == null)
                         return "(null)";
-                    return e.getKey() + "=" + e.getValue();
+                    return e.getKey() + "=" + mi;
                 })
                 .collect(Collectors.joining(", "));
     }

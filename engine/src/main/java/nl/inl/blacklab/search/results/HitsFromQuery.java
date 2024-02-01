@@ -47,7 +47,7 @@ public class HitsFromQuery extends HitsMutable {
     protected final long maxHitsToCount;
 
     // state
-    protected final HitQueryContext hitQueryContext = new HitQueryContext();
+    protected final HitQueryContext hitQueryContext;
     protected final Lock ensureHitsReadLock = new ReentrantLock();
     protected final List<SpansReader> spansReaders = new ArrayList<>();
     protected boolean allSourceSpansFullyRead = false;
@@ -55,7 +55,7 @@ public class HitsFromQuery extends HitsMutable {
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo, HitsInternal.create(-1, true, true), null);
-        queryInfo.setMatchInfoNames(hitQueryContext.getMatchInfoNames());
+        hitQueryContext = new HitQueryContext(null, sourceQuery.getField()); // each spans will get a copy
         QueryTimings timings = queryInfo().timings();
         timings.start();
         final BlackLabIndex index = queryInfo.index();
@@ -138,8 +138,8 @@ public class HitsFromQuery extends HitsMutable {
 
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
-                    if (hitQueryContextForThisSpans.getMatchInfoRegisterNumber() > 0) {
-                        matchInfoNames = hitQueryContextForThisSpans.getMatchInfoNames();
+                    if (hitQueryContextForThisSpans.numberOfMatchInfos() > 0) {
+                        matchInfoDefs = hitQueryContextForThisSpans.getMatchInfoDefs();
                     }
 
                     hasInitialized = true;

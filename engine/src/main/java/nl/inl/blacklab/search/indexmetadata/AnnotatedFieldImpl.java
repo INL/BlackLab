@@ -75,6 +75,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         public boolean isEmpty() {
             return annots.isEmpty();
         }
+
+        @Override
+        public int size() {
+            return annots.size();
+        }
     }
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);

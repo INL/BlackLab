@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -117,6 +118,7 @@ public class ResponseStreamer {
     public static final String KEY_SPAN_START = "start";
     public static final String KEY_SPAN_END = "end";
     public static final String KEY_MATCHING_PART_OF_HIT = "match";
+    public static final String KEY_MATCH_INFOS = "matchInfos";
     private static final String KEY_MATCH_INFO_TYPE = "type";
 
     // Fields
@@ -331,18 +333,37 @@ public class ResponseStreamer {
         }
 
         TextPattern textPattern = summaryFields.getTextPattern();
-        if (modernizeApi && textPattern != null && ds.getType().equals("json")) {
+        if (modernizeApi && textPattern != null) {
+            // Show how pattern was parsed
             ds.startEntry("pattern").startMap();
-            ds.entry("json", textPattern);
+            if (ds.getType().equals("json")) {
+                // Only include the JSON representation in the JSON response
+                // (we don't have a proper XML representation (yet) and don't care as much about that response format)
+                ds.entry("json", textPattern);
+            }
             try {
                 ds.entry("bcql", TextPatternSerializerCql.serialize(textPattern));
             } catch (Exception e) {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
             }
-            List<String> matchInfoNames = summaryFields.getMatchInfoNames();
-            if (!matchInfoNames.isEmpty())
-                ds.entry("matchInfoNames", matchInfoNames);
+            ds.entry(KEY_FIELD_NAME, summaryFields.getSearchField());
+            List<MatchInfo.Def> matchInfoDefs = summaryFields.getMatchInfoDefs();
+            if (!matchInfoDefs.isEmpty()) {
+                // Report the match infos in the query, their types, and the field they apply to (if different from
+                // main field, i.e. for parallel corpora)
+                ds.startEntry(KEY_MATCH_INFOS).startMap();
+                for (MatchInfo.Def def: matchInfoDefs) {
+                    ds.startDynEntry(def.getName()).startMap();
+                    {
+                        ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
+                        if (def.getOverriddenField() != null)
+                            ds.entry(KEY_FIELD_NAME, def.getOverriddenField());
+                    }
+                    ds.endMap().endDynEntry();
+                }
+                ds.endMap().endEntry();
+            }
             ds.endMap().endEntry();
         }
 
@@ -529,16 +550,16 @@ public class ResponseStreamer {
             ds.startItem("hit");
             {
                 String docPid = result.getDocIdToPid().get(hit.doc());
-                Map<String, MatchInfo> capturedGroups = null;
+                Map<String, MatchInfo> matchInfos = null;
                 if (hits.hasMatchInfo()) {
-                    capturedGroups = hits.getMatchInfoMap(hit, params.getOmitEmptyCaptures());
-                    if (capturedGroups == null && logger != null)
+                    matchInfos = hits.getMatchInfoMap(hit, params.getOmitEmptyCaptures());
+                    if (matchInfos == null && logger != null)
                         logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, capturedGroups, params.contextSettings().size(), result.getConcordanceContext(), result.getAnnotationsToWrite()
-                );
+                hit(docPid, hit, matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                        result.getAnnotationsToWrite());
             }
             ds.endItem();
         }
@@ -558,7 +579,7 @@ public class ResponseStreamer {
      *
      * @param result hit to output
      */
-    public void hitOrFragmentInfo(ResultDocSnippet result) {
+    public void snippet(ResultDocSnippet result) {
         String docPid = result.getParams().getDocPid();
         Hits hits = result.getHits();
         if (!hits.hitsStats().processedAtLeast(1))
@@ -579,7 +600,7 @@ public class ResponseStreamer {
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, Hit hit, Map<String, MatchInfo> matchInfo,
+    private void outputHitOrSnippet(String docPid, Hit hit, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;
@@ -594,7 +615,7 @@ public class ResponseStreamer {
         // If any groups were captured, include them in the response
         // (legacy, replaced by matchInfos)
         if (!isNewApi) {
-            Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfo, MatchInfo.Type.SPAN);
+            Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfos, MatchInfo.Type.SPAN);
             if (!capturedGroups.isEmpty()) {
                 ds.startEntry("captureGroups").startList();
                 for (Map.Entry<String, MatchInfo> capturedGroup: capturedGroups) {
@@ -606,20 +627,8 @@ public class ResponseStreamer {
             }
         }
 
-        // If there's any match info, include it here
-        if (modernizeApi) {
-            if (matchInfo != null && !matchInfo.isEmpty()) {
-                ds.startEntry("matchInfos").startMap();
-                for (Map.Entry<String, MatchInfo> e: matchInfo.entrySet()) {
-                    if (e.getValue() != null) {
-                        ds.startElEntry(e.getKey());
-                        matchInfo(ds, e.getValue());
-                        ds.endElEntry();
-                    }
-                }
-                ds.endMap().endEntry();
-            }
-        }
+        // If there's any match info for this field, include it here
+        optMatchInfos(matchInfos, mi -> mi.getOverriddenField() == null);
 
         if (concordanceContext.isConcordances()) {
             // Add concordance from original XML
@@ -649,8 +658,47 @@ public class ResponseStreamer {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
                 }
             }
+            if (modernizeApi) {
+                Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
+                if (foreignKwics != null) {
+                    ds.startEntry("otherFields").startMap();
+                    for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
+                        String field = e.getKey();
+                        Kwic kwic = e.getValue();
+                        ds.startDynEntry(field).startMap();
+                        {
+                            ds.entry(KEY_SPAN_START, kwic.fragmentStartInDoc());
+                            ds.entry(KEY_SPAN_END, kwic.fragmentEndInDoc());
+                            optMatchInfos(matchInfos, mi -> mi.getOverriddenField() != null &&
+                                    mi.getOverriddenField().equals(field));
+                            ds.startEntry(KEY_MATCHING_PART_OF_HIT);
+                            ds.contextList(kwic.annotations(), annotationsToList, kwic.tokens());
+                            ds.endEntry();
+                        }
+                        ds.endMap().endDynEntry();
+                    }
+                    ds.endMap().endEntry();
+                }
+            }
         }
         ds.endMap();
+    }
+
+    private void optMatchInfos(Map<String, MatchInfo> matchInfos, Predicate<MatchInfo> include) {
+        if (modernizeApi) {
+            if (matchInfos != null && !matchInfos.isEmpty()) {
+                ds.startEntry(KEY_MATCH_INFOS).startMap();
+                for (Map.Entry<String, MatchInfo> e: matchInfos.entrySet()) {
+                    MatchInfo matchInfo = e.getValue();
+                    if (matchInfo != null && include.test(matchInfo)) {
+                        ds.startElEntry(e.getKey());
+                        matchInfo(ds, matchInfo);
+                        ds.endElEntry();
+                    }
+                }
+                ds.endMap().endEntry();
+            }
+        }
     }
 
     private static void legacyCapturedGroup(DataStream ds, Map.Entry<String, MatchInfo> capturedGroup) {
@@ -685,7 +733,7 @@ public class ResponseStreamer {
     private static void matchInfoListOfRelations(DataStream ds, RelationListInfo listOfRelations) {
         ds.startMap();
         {
-            ds.entry(KEY_MATCH_INFO_TYPE, "list");
+            ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.LIST_OF_RELATIONS.jsonName());
             ds.entry(KEY_SPAN_START, listOfRelations.getSpanStart());
             ds.entry(KEY_SPAN_END, listOfRelations.getSpanEnd());
             ds.startEntry("infos").startList();
@@ -706,7 +754,7 @@ public class ResponseStreamer {
     private static void matchInfoCapturedGroup(DataStream ds, MatchInfo capturedGroup) {
         ds.startMap();
         {
-            ds.entry(KEY_MATCH_INFO_TYPE, "span");
+            ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.SPAN.jsonName());
             ds.entry(KEY_SPAN_START, capturedGroup.getSpanStart());
             ds.entry(KEY_SPAN_END, capturedGroup.getSpanEnd());
         }
@@ -718,7 +766,7 @@ public class ResponseStreamer {
         {
             String fullRelationType = inlineTag.getFullRelationType();
             String tagName = RelationUtil.classAndType(fullRelationType)[1];
-            ds.entry(KEY_MATCH_INFO_TYPE, "tag");
+            ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.INLINE_TAG.jsonName());
             ds.entry("tagName", tagName);
             optAttributes(ds, inlineTag);
             ds.entry(KEY_SPAN_START, inlineTag.getSourceStart());
@@ -727,6 +775,7 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
+    /** If attribute values are avaiable, include those in the response. */
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
         if (RelationInfo.INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
             if (!inlineTag.getAttributes().isEmpty()) {
@@ -742,7 +791,7 @@ public class ResponseStreamer {
     private static void matchInfoRelation(DataStream ds, RelationInfo relationInfo) {
         ds.startMap();
         {
-            ds.entry(KEY_MATCH_INFO_TYPE, "relation");
+            ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.RELATION.jsonName());
             ds.entry("relType", relationInfo.getFullRelationType());
             optAttributes(ds, relationInfo);
             if (!relationInfo.isRoot()) {
@@ -753,6 +802,11 @@ public class ResponseStreamer {
             ds.entry("targetEnd", relationInfo.getTargetEnd());
             ds.entry(KEY_SPAN_START, relationInfo.getSpanStart());
             ds.entry(KEY_SPAN_END, relationInfo.getSpanEnd());
+
+            if (!relationInfo.getSourceField().equals(relationInfo.getTargetField())) {
+                // Report targetField for cross-field relations
+                ds.entry("targetField", relationInfo.getTargetField());
+            }
         }
         ds.endMap();
     }

@@ -287,7 +287,8 @@ public class DocUtil {
     private static String[] getSubstringsFromDocument(BlackLabIndex index,
             int docId, Document d, Field field, int[] starts, int[] ends) {
         try {
-            if (!field.hasContentStore()) {
+            ContentAccessor contentAccessor = index.contentAccessor(field);
+            if (contentAccessor == null) {
                 // No special content accessor set; assume a non-annotated stored field
                 String[] content;
                 String fieldName = field.contentsFieldName();
@@ -301,8 +302,8 @@ public class DocUtil {
                 return content;
             } else {
                 // Content accessor set. Use it to retrieve the content.
-                d = fetchDocumentIfRequired(index, docId, d, field);
-                return index.contentAccessor(field).getSubstringsFromDocument(docId, d, starts, ends);
+                d = fetchDocumentIfRequired(index, docId, d, contentAccessor.getField());
+                return contentAccessor.getSubstringsFromDocument(docId, d, starts, ends);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

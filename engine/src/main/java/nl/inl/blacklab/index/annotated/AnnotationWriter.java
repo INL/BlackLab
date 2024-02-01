@@ -268,6 +268,7 @@ public class AnnotationWriter {
      * @return new position of the last token, in case it changed.
      */
     public int addValueAtPosition(String value, int position, BytesRef payload) {
+        assert position >= 0;
 
         if (fieldWriter.getIndexType() == BlackLabIndex.IndexType.INTEGRATED &&
                 AnnotatedFieldNameUtil.isRelationAnnotation(annotationName) &&
@@ -421,14 +422,17 @@ public class AnnotationWriter {
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
-        String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : RelationUtil.inlineTagFullType(tagName);
+        RelationInfo matchInfo = RelationInfo.create(false, startPos, startPos, endPos, endPos);
+        String fullRelationType;
+        fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
+                tagName :
+                RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
         return indexRelation(fullRelationType, attributes, indexType, matchInfo);
     }
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
+        RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort
@@ -449,7 +453,7 @@ public class AnnotationWriter {
             }
             // classic external index; tag name and attributes are indexed separately
             payload = relationInfo.getSpanEnd() >= 0 ?
-                    PayloadUtils.tagEndPositionPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
+                    PayloadUtils.inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
                             BlackLabIndex.IndexType.EXTERNAL_FILES) :
                     null;
             addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);

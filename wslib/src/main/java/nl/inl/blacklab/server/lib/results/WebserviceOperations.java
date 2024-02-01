@@ -49,6 +49,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -758,8 +759,10 @@ public class WebserviceOperations {
     }
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
-            SearchTimings timings, List<String> matchInfoNames, ResultGroups<?> groups, WindowStats window) {
-        return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoNames,groups, window);
+            SearchTimings timings, List<MatchInfo.Def> matchInfoDefs, ResultGroups<?> groups, WindowStats window,
+            String searchField) {
+        return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoDefs,groups, window,
+                searchField);
     }
 
     public static ResultUserInfo userInfo(WebserviceParams params) {

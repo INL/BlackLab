@@ -36,7 +36,6 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
@@ -75,7 +74,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     private AnnotatedFieldWriter mainAnnotatedField;
 
     /** The indexing object for the annotated field we're currently processing. */
-    private AnnotatedFieldWriter currentAnnotatedField;
+    protected AnnotatedFieldWriter currentAnnotatedField;
 
     /** The _relation annotation (where inline tags and dependency relations are stored)
         for the annotated field we're currently processing. */
@@ -497,7 +496,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!openTag.name.equals(tagName))
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(openTag.position, currentPos, getIndexType());
+            BytesRef payload = PayloadUtils.inlineTagPayload(openTag.position, currentPos, getIndexType());
             int index = openTag.index;
             if (index < 0) {
                 // Negative value means two terms were indexed (one with, one without attributes, for search performance)
@@ -552,7 +551,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     protected void annotationValueAppend(String name, String value, int increment) {
         int position = getAnnotation(name).lastValuePosition() + increment;
-        annotationValue(name, value, position, -1, false);
+        annotationValue(name, value, position, null);
     }
 
     /**
@@ -563,11 +562,55 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param position position to index value at
      */
     protected void annotationValue(String name, String value, int position) {
-        annotationValue(name, value, position, -1, false);
+        annotationValue(name, value, position, null);
     }
 
     /**
-     * Index an annotation.
+     * Index a token, span or relation.
+     *
+     * @param name annotation name
+     * @param value annotation value (or span name or span attribute value)
+     * @param position token position, span start, or relation source
+     * @param spanEndOrRelTarget (optional) span end or relation target (or null if this is just a token)
+     * @param annotType the type of annotation we're indexing: a token, a span (inline tag) or a relation
+     */
+    protected void annotationValue(String name, String value, Span position, Span spanEndOrRelTarget,
+            AnnotationType annotType) {
+        // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
+        // which has no source, so we index it at its target.
+        int indexAtPosition = position.start() < 0 ?
+                spanEndOrRelTarget.start() : position.start();
+
+        BytesRef payload = null;
+        switch (annotType) {
+        case TOKEN:
+            // no payload for token annotation
+            break;
+        case SPAN:
+            // Span: index as a relation from the start of source to the start of target (0-length)
+            //   (and in the classic external index, the payload just contains the end position)
+            payload = PayloadUtils.inlineTagPayload(indexAtPosition, spanEndOrRelTarget.start(), getIndexType());
+            break;
+        case RELATION:
+            // Relation: index with the full source and target spans
+            boolean onlyHasTarget = !Span.isValid(position); // standoff root annotation
+
+            // Root relations have no source, so we index them at their target position.
+            // In this case we set source start/end to target start, so it is indexed there and
+            // source length does not need to be stored (because 0 is the default value, see
+            // RelationInfo.serializeRelation).
+            int sourceStart = indexAtPosition;
+            int sourceEnd = onlyHasTarget ? indexAtPosition : position.end();
+
+            payload = PayloadUtils.relationPayload(onlyHasTarget, sourceStart, sourceEnd,
+                    spanEndOrRelTarget.start(), spanEndOrRelTarget.end());
+            break;
+        }
+        annotationValue(name, value, indexAtPosition, payload);
+    }
+
+    /**
+     * Index an annotation, span or relation.
      *
      * Also used to index inline tags (spans). In that case, spanEndOrRelTarget is >= 0.
      * For the external index, this method is called several times, once for the tag
@@ -577,21 +620,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param name annotation name
      * @param value annotation value (or span name or span attribute value)
      * @param position position to index value at
-     * @param spanEndOrRelTarget if >= 0, this is a span or relation annotation and this is the span end (first token position after) or
-     *                           relation target (token position of the target of the relation)
-     * @param isRelation if spanEndOrRelTarget >= 0, this indicates whether this is a relation (true) or a span (false)
+     * @param payload payload to add to the annotation value
      */
-    protected void annotationValue(String name, String value, int position, int spanEndOrRelTarget, boolean isRelation) {
-        // Normally name gives the annotation to index this is, but for span annotations,
-        // we already know the annotation and name is instead used for attribute values (see below).
-        boolean isInlineTagOrRelation = spanEndOrRelTarget >= 0;
+    protected void annotationValue(String name, String value, int position, BytesRef payload) {
         AnnotationWriter annotation = getAnnotation(name);
         if (annotation != null) {
-            BytesRef payload = isInlineTagOrRelation ? getPayload(spanEndOrRelTarget, isRelation, position) : null;
-            if (position < 0) {
-                // root relation, index at target instead of source (because it has no source)
-                position = spanEndOrRelTarget;
-            }
             annotation.addValueAtPosition(value, position, payload);
         } else {
             // Annotation not declared; report, but keep going
@@ -600,21 +633,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 logger.error(documentName + ": skipping undeclared annotation " + name);
             }
         }
-    }
-
-    private BytesRef getPayload(int targetPos, boolean isRelation, int currentAndSourceStartPos) {
-        BytesRef payload;
-        if (isRelation) {
-            boolean onlyHasTarget = currentAndSourceStartPos < 0; // standoff root annotation
-            if (onlyHasTarget)
-                currentAndSourceStartPos = targetPos;
-            RelationInfo info = new RelationInfo(onlyHasTarget,
-                    currentAndSourceStartPos, currentAndSourceStartPos + 1,
-                    targetPos, targetPos + 1);
-            payload = info.serialize();
-        } else
-            payload = PayloadUtils.tagEndPositionPayload(currentAndSourceStartPos, targetPos, getIndexType());
-        return payload;
     }
 
     @Override

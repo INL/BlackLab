@@ -67,11 +67,11 @@ public class TextPatternTags extends TextPattern {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
         // Desensitize tag name and attribute values if required
-        QueryExecutionContext contextWithRel = context.withRelationAnnotation();
-        String optInsensitiveElName = optInsensitive(contextWithRel, elementName);
+        context = context.withRelationAnnotation();
+        String optInsensitiveElName = optInsensitive(context, elementName);
         Map<String, String> attrOptIns = new HashMap<>();
         for (Map.Entry<String, String> e : attributes.entrySet()) {
-            attrOptIns.put(e.getKey(), optInsensitive(contextWithRel, e.getValue()));
+            attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue()));
         }
 
         // Use element name if no explicit name given. Keep only characters and add unique number if needed.
@@ -83,7 +83,7 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        return contextWithRel.index().tagQuery(contextWithRel.queryInfo(), contextWithRel.luceneField(),
+        return context.index().tagQuery(context.queryInfo(), context.luceneField(),
                 optInsensitiveElName, attrOptIns, adjust, captureAsOrAuto);
     }
 

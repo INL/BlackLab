@@ -12,6 +12,24 @@ import nl.inl.util.LimitUtil;
 public class RelationsStats {
 
     /**
+     * Return default class for this index.
+     *
+     * This is the first class alphabetically (except special class "__tag"),
+     * or the default value "rel". For parallel corpora, the versions are ignored,
+     * so "al__nl" will be returned as "al". This makes sense, because you should specify
+     * the target version in the operator, e.g. <pre>==&gt;nl</pre>.
+     *
+     * @return default class
+     */
+    public String getDefaultClass() {
+        return classes.keySet().stream()
+                .filter(cls -> !cls.equals(RelationUtil.CLASS_INLINE_TAG))
+                .map(cls -> AnnotatedFieldNameUtil.splitParallelFieldName(cls)[0])
+                .findFirst()
+                .orElse(RelationUtil.CLASS_DEFAULT_SEARCH);
+    }
+
+    /**
      * Information about a relation type (under a class) and the attributes that occur with it.
      */
     public class TypeStats implements LimitUtil.Limitable<TypeStats> {
@@ -141,7 +159,7 @@ public class RelationsStats {
         String relationClass;
         if (oldStyleStarttag) {
             // Old external index. Convert term to new style so we can process it the same way.
-            relationClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
+            relationClass = RelationUtil.CLASS_INLINE_TAG;
             term = RelationUtil.indexTerm(RelationUtil.fullType(relationClass, term), null);
         } else {
             // New integrated index with spans indexed as relations as well.

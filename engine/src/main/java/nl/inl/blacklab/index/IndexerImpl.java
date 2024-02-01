@@ -81,6 +81,8 @@ class IndexerImpl implements DocWriter, Indexer {
                     throw new PluginException(
                             "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + path);
                 }
+                if (file != null)
+                    docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
                 impl(docIndexer, path);
             }
         }
@@ -100,6 +102,8 @@ class IndexerImpl implements DocWriter, Indexer {
             try (UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
                     DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path,
                             inputStream, inputStream.getEncoding())) {
+                if (file != null)
+                    docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
                 impl(docIndexer, path);
             }
         }

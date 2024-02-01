@@ -50,8 +50,7 @@ public class TextPatternQueryFunction extends TextPattern {
             }
         }
 
-        QueryInfo queryInfo = context.queryInfo();
-        return QueryExtensions.apply(name, queryInfo, context, translated);
+        return QueryExtensions.apply(name, context, translated);
     }
 
     @Override

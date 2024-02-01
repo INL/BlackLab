@@ -3,6 +3,7 @@ package nl.inl.blacklab.indexers.config.saxon;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FileUtils;
@@ -22,6 +23,8 @@ public class DocumentReference {
      */
     private char[] contents;
 
+    private Charset charset;
+
     /**
      * If we were called with a file, we'll store it here.
      * Large files also get temporarily stored on disk until they're needed again.
@@ -33,21 +36,28 @@ public class DocumentReference {
      */
     private boolean deleteFileOnExit = false;
 
-    public DocumentReference(char[] contents, File file) {
+    public DocumentReference(char[] contents, Charset charset, File file) {
+        this(contents, charset, file, true);
+    }
+
+    public DocumentReference(char[] contents, Charset charset, File file, boolean swapIfTooLarge) {
         this.contents = contents;
+        this.charset = charset;
         this.file = file;
-        swapIfTooLarge();
+        if (swapIfTooLarge)
+            swapIfTooLarge();
     }
 
     public void swapIfTooLarge() {
         if (contents != null && contents.length * Character.BYTES > MAX_DOC_SIZE_IN_MEMORY_BYTES) {
             if (file == null) {
-                // We don't have a file with the contenst yet; create it now.
+                // We don't have a file with the contents yet; create it now.
                 try {
                     file = File.createTempFile("blDocToIndex", null);
                     file.deleteOnExit();
                     deleteFileOnExit = true;
-                    try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
+                    charset = StandardCharsets.UTF_8;
+                    try (FileWriter writer = new FileWriter(file, charset)) {
                         IOUtils.write(contents, writer);
                     }
                 } catch (IOException e) {
@@ -61,7 +71,7 @@ public class DocumentReference {
     public String get() {
         try {
             if (contents == null)
-                return FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+                return FileUtils.readFileToString(file, charset);
         } catch (IOException e) {
             throw new BlackLabRuntimeException("unable to read document cache from disk");
         }
@@ -73,5 +83,17 @@ public class DocumentReference {
             file.delete();
         contents = null;
         file = null;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public Charset getCharset() {
+        return charset;
+    }
+
+    public char[] getContents() {
+        return contents;
     }
 }

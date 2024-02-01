@@ -93,6 +93,7 @@
     "numberOfHitsRetrieved": 1,
     "pattern": {
       "bcql": "('very' 'good') within <u/>",
+      "fieldName": "contents",
       "json": {
         "filter": {
           "name": "u",
@@ -114,9 +115,11 @@
         },
         "type": "posfilter"
       },
-      "matchInfoNames": [
-        "u"
-      ]
+      "matchInfos": {
+        "u": {
+          "type": "relation"
+        }
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

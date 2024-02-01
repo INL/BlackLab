@@ -43,7 +43,7 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
      */
     private final String fieldName;
 
-    public MetadataFieldValuesInMetadataFile(String fieldName) {
+    private MetadataFieldValuesInMetadataFile(String fieldName) {
         this.fieldName = fieldName;
     }
 

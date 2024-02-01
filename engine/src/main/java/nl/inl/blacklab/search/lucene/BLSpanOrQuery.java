@@ -468,7 +468,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                                                                                               // use
                                                                                               // -1
 
-            return new BLSpans() {
+            return new BLSpans(SpanGuarantees.NONE) {
                 Spans topPositionSpans = null;
 
                 @Override

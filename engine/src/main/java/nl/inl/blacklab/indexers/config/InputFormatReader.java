@@ -491,11 +491,11 @@ public class InputFormatReader extends YamlJsonReader {
                 if (key.equals("spanEndPath")) {
                     // Used to be implicit for annotation/span, so maintain backward compatibility.
                     // Type must be explicitly set for relations though.
-                    s.setType(ConfigStandoffAnnotations.Type.SPAN);
+                    s.setType(AnnotationType.SPAN);
                 }
                 switch (key) {
                 case "type":
-                    s.setType(ConfigStandoffAnnotations.Type.fromStringValue(str(e)));
+                    s.setType(AnnotationType.fromStringValue(str(e)));
                     break;
                 case "path":
                     s.setPath(str(e));
@@ -521,6 +521,15 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "annotations":
                     readAnnotations(e, s);
+                    break;
+                case "relationClass":
+                    s.setRelationClass(str(e));
+                    break;
+                case "targetField":
+                    s.setTargetField(str(e));
+                    break;
+                case "targetVersionPath":
+                    s.setTargetVersionPath(str(e));
                     break;
                 default:
                     throw new InvalidInputFormatConfig(

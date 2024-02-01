@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
@@ -20,7 +19,7 @@ import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
-    private static final Set<String> reportedSanitizedNames = new HashSet<>();
+    private static final Set<String> reportedWarnings = new HashSet<>();
 
     public static final String FT_OPT_PROCESSOR = "processor";
 
@@ -46,10 +45,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         return new DocIndexerVTD(); // VTD is still the default for now
     }
 
-    synchronized static void warnSanitized(String origFieldName, String fieldName) {
-        if (!reportedSanitizedNames.contains(origFieldName)) {
-            logger.warn("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
-            reportedSanitizedNames.add(origFieldName);
+    synchronized static void warnOnce(String message) {
+        if (!reportedWarnings.contains(message)) {
+            logger.warn(message);
+            reportedWarnings.add(message);
         }
     }
 
@@ -76,7 +75,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName,
                 disallowDashInname());
         if (!origFieldName.equals(fieldName)) {
-            warnSanitized(origFieldName, fieldName);
+            warnOnce("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
         }
         return fieldName;
     }
@@ -106,148 +105,180 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     /**
      * Process an annotation at the current position.
-     * <p>
-     * If this is a span annotation (spanEndPos >= 0), and the span looks like this:
-     * <code>&lt;named-entity type="person"&gt;Santa Claus&lt;/named-entity&gt;</code>,
-     * then spanName should be "named-entity" and annotation name should be "type" (and
-     * its XPath expression should evaluate to "person", obviously).
      *
      * @param annotation   annotation to process.
-     * @param position     position to index at
-     * @param spanEndOrTarget   if >= 0, index as a span annotation with this end position (exclusive)
+     * @param word         current node in the document
+     * @param positionSpanStartOrRelSource     position to index at
      */
-    protected void processAnnotation(ConfigAnnotation annotation, T word, int position, int spanEndOrTarget) {
-        processAnnotation(annotation, word, position, spanEndOrTarget, this::indexAnnotationValues);
+    protected void processAnnotation(ConfigAnnotation annotation, T word, Span positionSpanStartOrRelSource) {
+        processAnnotation(annotation, word, positionSpanStartOrRelSource, null, this::indexAnnotationValues);
     }
 
-    protected abstract void processAnnotation(ConfigAnnotation annotation, T word, int position, int spanEndPos,
+    protected abstract void processAnnotation(ConfigAnnotation annotation, T word,
+            Span positionSpanStartOrRelSource, Span spanEndOrRelTarget,
             AnnotationHandler handler);
 
-    protected void processStandoffSpan(T standoffNode, ConfigStandoffAnnotations.Type type, boolean isRelation,
-            int position, Collection<ConfigAnnotation> standoffAnnotations, int endOrTarget,
+    /**
+     * Process a standoff annotation at the current position.
+     *
+     * @param standoffNode current node
+     * @param type        the type of the standoff annotation (token, span or relation)
+     * @param sourceSpan if this is a relation, this span is the source of that relation; otherwise,
+     *                   the .start() of this span object is the start of the span to index
+     * @param targetSpan if this is a relation, this span is the target of that relation; otherwise,
+     *                   the .start() of this span object is the end of the span to index
+     * @param standoffAnnotations any annotations to index as attributes of the span or relation
+     * @param spanOrRelType the type name of the span or relation (e.g. "named-entity", "nsubj", etc.)
+     */
+    protected void processStandoffSpan(T standoffNode, AnnotationType type,
+            Span sourceSpan, Span targetSpan, Collection<ConfigAnnotation> standoffAnnotations,
             String spanOrRelType) {
         String name = AnnotatedFieldNameUtil.relationAnnotationName(getIndexType());
         AnnotationWriter annotationWriter = getAnnotation(name);
         if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             // Classic external index format. Span name and attributes indexed separately.
 
+            assert type != AnnotationType.RELATION; // not supported in classic external index
+
             // First index the span name at this position, then any configured
             // annotations as attributes.
             // (we pass null for the annotation name to indicate that this is the tag name we're indexing,
             //  not an attribute)
-            annotationValue(annotationWriter.name(), spanOrRelType, position, endOrTarget, isRelation);
+            annotationValue(annotationWriter.name(), spanOrRelType, sourceSpan, targetSpan, type);
             for (ConfigAnnotation annotation: standoffAnnotations) {
-                processAnnotation(annotation, standoffNode, position, endOrTarget,
-                        this::indexAnnotationValues);
+                processAnnotation(annotation, standoffNode, sourceSpan, targetSpan, this::indexAnnotationValues);
             }
         } else {
-            // Integrated index format. Span name and attributes indexed together as one term.
+            // Integrated index format; span name and attributes indexed together as one term.
+
+            // Collect any attribute values
             Map<String, Collection<String>> attributes = new HashMap<>();
             for (ConfigAnnotation annotation: standoffAnnotations) {
-                processAnnotation(annotation, standoffNode, position, endOrTarget,
+                // NOTE: we pass invalid values for the positions because they don't matter here; we're not indexing,
+                //       just finding XPath matches for the attributes and collecting them.
+                processAnnotation(annotation, standoffNode, null, null,
                         (annot, pos, spanEndPos, values) -> attributes.put(annot.getName(), values));
             }
+
+            // Determine the full type name to index (relation class and relation type, e.g. "__tag::s" or "dep::nmod")
             String fullType = spanOrRelType;
-            if (type == ConfigStandoffAnnotations.Type.SPAN)
-                fullType = RelationUtil.inlineTagFullType(spanOrRelType);
-            else if (!fullType.contains(RelationUtil.RELATION_CLASS_TYPE_SEPARATOR)) {
-                // If no relation class specified, prepend the default relation class.
-                fullType = RelationUtil.fullType(RelationUtil.RELATION_CLASS_DEPENDENCY, spanOrRelType);
-            }
+            if (type == AnnotationType.SPAN)
+                fullType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, spanOrRelType);
+
+            // Determine the full value to index, e.g. full type and any attributes
             String valueToIndex = RelationUtil.indexTermMulti(fullType, attributes);
-            annotationValue(name, valueToIndex, position, endOrTarget, isRelation);
+
+            // Actually index the value, once without and once with attributes (if any)
+            annotationValue(name, valueToIndex, sourceSpan, targetSpan, type);
             if (attributes != null && !attributes.isEmpty()) {
                 // Also index a version without attributes. We'll use this for faster search if we don't filter on
                 // attributes.
                 // OPT: find a way to only create the payload once, because it is identical for both.
                 valueToIndex = RelationUtil.indexTermMulti(fullType, null);
-                annotationValue(name, valueToIndex, position, endOrTarget, isRelation);
+                annotationValue(name, valueToIndex, sourceSpan, targetSpan, type);
             }
         }
     }
 
     protected abstract void processAnnotatedFieldContainer(T nav, ConfigAnnotatedField annotatedField,
-            Map<String, Integer> tokenPositionsMap);
+            Map<String, Span> tokenPositionsMap);
 
-    protected void processStandoffAnnotation(ConfigStandoffAnnotations standoff, T container, Map<String, Integer> tokenPositionsMap) {
+    protected void processAnnotatedFieldContainerStandoff(T container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
+
+        // (separate method because we only run these once all token positions for all fields have been collected,
+        //  so parallel corpora can refer to token positions in other fields)
+
+        // Process standoff annotations
+        for (ConfigStandoffAnnotations standoff: annotatedField.getStandoffAnnotations()) {
+            processStandoffAnnotation(standoff, container, tokenPositionsMap);
+        }
+    }
+
+    protected void processStandoffAnnotation(ConfigStandoffAnnotations standoff, T container, Map<String, Span> tokenPositionsMap) {
         // For each instance of this standoff annotation..
-        ConfigStandoffAnnotations.Type type = standoff.getType();
-        boolean isRelation = type == ConfigStandoffAnnotations.Type.RELATION;
-
-        // Do we need XPaths for span type, span end / relation target?
-        boolean isSpanOrRel = type == ConfigStandoffAnnotations.Type.SPAN || isRelation;
-
+        AnnotationType type = standoff.getType();
         xpathForEach(standoff.getPath(), container, (standoffNode) -> {
             // Determine what token positions to index these values at
-            List<Integer> indexAtPositions = new ArrayList<>();
+            List<Span> indexAtPositions = new ArrayList<>();
             xpathForEachStringValue(standoff.getTokenRefPath(), standoffNode, (tokenPositionId) -> {
                 if (!tokenPositionId.isEmpty()) {
-                    Integer integer = tokenPositionsMap.get(tokenPositionId);
-                    if (integer == null)
-                        warn("Standoff annotation contains unresolved reference to token position: '" + tokenPositionId
-                                + "'");
+                    Span span = tokenPositionsMap.get(tokenPositionId);
+                    if (span == null)
+                        warn("Standoff annotation contains unresolved reference to token position: '" + tokenPositionId + "'");
                     else
-                        indexAtPositions.add(integer);
+                        indexAtPositions.add(span);
                 }
             });
 
             Collection<ConfigAnnotation> standoffAnnotations = standoff.getAnnotations().values();
-            final AtomicInteger endOrTarget = new AtomicInteger(-1);
-            if (isSpanOrRel) {
+            if (type == AnnotationType.TOKEN) {
+                // "Regular" standoff annotation for a single token.
+                // Index annotation values at the position(s) indicated
+                for (ConfigAnnotation annotation: standoffAnnotations) {
+                    for (Span position: indexAtPositions) {
+                        processAnnotation(annotation, standoffNode, position);
+                    }
+                }
+            } else {
 
                 // Standoff span or relation annotation. Try to find end/target and type.
 
                 // end/target
-                if (!indexAtPositions.isEmpty())
-                    endOrTarget.set(indexAtPositions.get(0));
+                Span endOrTarget = indexAtPositions.isEmpty() ? Span.invalid() : indexAtPositions.get(0);
+                Span[] endOrTargetArr = new Span[] { endOrTarget };
                 xpathForEachStringValue(standoff.getSpanEndPath(), standoffNode, (tokenId) -> {
-                    Integer tokenPos = tokenPositionsMap.get(tokenId);
+                    Span tokenPos = tokenPositionsMap.get(tokenId);
                     if (tokenPos == null) {
                         warn("Standoff annotation contains unresolved reference to span end token: '" + tokenId + "'");
                     } else {
-                        endOrTarget.set(tokenPositionsMap.get(tokenId));
+                        endOrTargetArr[0] = tokenPos;
                     }
                 });
-                if (!isRelation && standoff.isSpanEndIsInclusive()) {
-                    // The matched token should be included in the span, but we always store
-                    // the first token outside the span as the end. Adjust the position accordingly.
-                    endOrTarget.incrementAndGet();
-                }
+                endOrTarget = endOrTargetArr[0];
 
-                // type
-                String spanOrRelType = xpathValue(standoff.getValuePath(), standoffNode);
-                if (endOrTarget.get() >= 0) {
+                if (Span.isValid(endOrTarget)) {
+                    // span end
+                    if (type != AnnotationType.RELATION && standoff.isSpanEndIsInclusive()) {
+                        // The matched token should be included in the span, but we always store
+                        // the first token outside the span as the end. Adjust the position accordingly.
+                        endOrTarget = endOrTarget.plus(1); // copy because we mustn't change tokenPositionsMap
+                    }
+
+                    // type
+                    String spanOrRelType = xpathValue(standoff.getValuePath(), standoffNode);
+                    if (type == AnnotationType.RELATION && !spanOrRelType.contains(RelationUtil.CLASS_TYPE_SEPARATOR)) {
+                        // If no relation class specified, prepend the configured default relation class.
+                        String targetVersion = standoff.getTargetVersionPath().isEmpty() ? "" :
+                                xpathValue(standoff.getTargetVersionPath(), standoffNode);
+                        String relationClass = standoff.resolveRelationClass(currentAnnotatedField.name(), targetVersion);
+                        spanOrRelType = RelationUtil.fullType(relationClass, spanOrRelType);
+                    }
+
                     if (indexAtPositions.isEmpty()) {
-                        if (!isRelation) {
+                        if (type != AnnotationType.RELATION) {
                             warn("Standoff annotation for inline tag has end but no start: "
                                     + standoffNode);
                         } else {
                             // Standoff root relation
-                            processStandoffSpan(standoffNode, type, true, -1, standoffAnnotations,
-                                    endOrTarget.get(), spanOrRelType);
+                            processStandoffSpan(standoffNode, type, Span.invalid(), endOrTarget,
+                                    standoffAnnotations,
+                                    spanOrRelType);
                         }
                     } else {
                         // Standoff annotation to index a relation (or inline tag).
-                        for (int position: indexAtPositions) {
-                            processStandoffSpan(standoffNode, type, isRelation, position, standoffAnnotations,
-                                    endOrTarget.get(), spanOrRelType);
+                        for (Span position: indexAtPositions) {
+                            processStandoffSpan(standoffNode, type, position, endOrTarget,
+                                    standoffAnnotations,
+                                    spanOrRelType);
                         }
-                    }
-                }
-            }
-            if (endOrTarget.get() < 0) {
-                // "Regular" standoff annotation for a single token.
-                // Index annotation values at the position(s) indicated
-                for (ConfigAnnotation annotation: standoffAnnotations) {
-                    for (int position: indexAtPositions) {
-                        processAnnotation(annotation, standoffNode, position, -1);
                     }
                 }
             }
         });
     }
 
-    protected void processSubannotations(ConfigAnnotation parentAnnot, T context, int position, int spanEndPos,
+    protected void processSubannotations(ConfigAnnotation parentAnnot, T context,
+            Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler, Collection<String> parentAnnotValues) {
         // For each configured subannotation...
         for (ConfigAnnotation subannot : parentAnnot.getSubAnnotations()) {
@@ -285,7 +316,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
                     // Find annotation matches, process and dedupe and index them.
                     // Can we reuse the values from our parent annotation? Only if all options are the same.
-                    findAndIndexSubannotation(subannot, match, declSubannot, position, spanEndPos,
+                    findAndIndexSubannotation(subannot, match, declSubannot, positionSpanEndOrSource, spanEndOrRelTarget,
                             handler, parentAnnot, parentAnnotValues
                     );
                 });
@@ -293,20 +324,20 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 // Regular subannotation; just the fieldName and an XPath expression for the value
                 // Find annotation matches, process and dedupe and index them.
                 // Can we reuse the values from our parent annotation? Only if all options are the same.
-                findAndIndexSubannotation(subannot, context, subannot, position, spanEndPos,
+                findAndIndexSubannotation(subannot, context, subannot, positionSpanEndOrSource, spanEndOrRelTarget,
                         handler, parentAnnot, parentAnnotValues);
             }
         }
     }
 
     protected void findAndIndexSubannotation(ConfigAnnotation toIndex, T context, ConfigAnnotation indexAs,
-            int position, int spanEndPos, AnnotationHandler handler,
+            Span positionSpanEndOrSource, Span spanEndOrRelTarget, AnnotationHandler handler,
             ConfigAnnotation parent, Collection<String> parentValues) {
         Collection<String> unprocessed = !toIndex.isForEach() && canReuseParentValues(indexAs, toIndex.getValuePath(), parent) ?
                 parentValues :
                 findAnnotationMatches(indexAs, toIndex.getValuePath(), context);
         Collection<String> processedValues = processAnnotationValues(indexAs, unprocessed);
-        handler.values(indexAs, position, spanEndPos, processedValues);
+        handler.values(indexAs, positionSpanEndOrSource, spanEndOrRelTarget, processedValues);
     }
 
     protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath, T context) {
@@ -331,14 +362,15 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         return values;
     }
 
-    protected void processAnnotationWithinBasePath(ConfigAnnotation annotation, T word, int position, int spanEndPos, AnnotationHandler handler) {
+    protected void processAnnotationWithinBasePath(ConfigAnnotation annotation, T word,
+            Span positionSpanEndOrSource, Span spanEndOrRelTarget, AnnotationHandler handler) {
         String valuePath = determineValuePath(annotation, word);
         if (valuePath != null) {
             // Find annotation matches, process and dedupe and index them.
             Collection<String> unprocessedValues = findAnnotationMatches(annotation, valuePath, word);
             Collection<String> processedValues = processAnnotationValues(annotation, unprocessedValues);
-            handler.values(annotation, position, spanEndPos, processedValues);
-            processSubannotations(annotation, word, position, spanEndPos, handler, unprocessedValues);
+            handler.values(annotation, positionSpanEndOrSource, spanEndOrRelTarget, processedValues);
+            processSubannotations(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler, unprocessedValues);
         } else {
             // No valuePath given. Assume this will be captured using forEach.
         }
@@ -377,10 +409,25 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected void indexDocument(T doc) {
         startDocument();
 
+        // This is where we'll capture token ("word") ids and remember the position associated with each id.
+        // In the case to <tei:anchor> between tokens, these are also stored here (referring to the token position after
+        // the anchor).
+        // This is used for standoff annotations, that refer back to the captured ids to add annotations later.
+        // Standoff span annotations are also supported.
+        // The full documentation is available here:
+        // https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#standoff-annotations
+        Map<String, Span> tokenPositionsMap = new HashMap<>();
+
         // For each configured annotated field...
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
             if (!annotatedField.isDummyForStoringLinkedDocuments()) {
-                processAnnotatedField(doc, annotatedField);
+                processAnnotatedField(doc, annotatedField, tokenPositionsMap);
+            }
+        }
+        // Process all the standoffs last, so token positions for all fields have been collected.
+        for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
+            if (!annotatedField.isDummyForStoringLinkedDocuments()) {
+                processAnnotatedFieldStandoff(doc, annotatedField, tokenPositionsMap);
             }
         }
 
@@ -495,16 +542,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         });
     }
 
-    protected void processAnnotatedField(T document, ConfigAnnotatedField annotatedField) {
-        // This is where we'll capture token ("word") ids and remember the position associated with each id.
-        // In the case to <tei:anchor> between tokens, these are also stored here (referring to the token position after
-        // the anchor).
-        // This is used for standoff annotations, that refer back to the captured ids to add annotations later.
-        // Standoff span annotations are also supported.
-        // The full documentation is available here:
-        // https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#standoff-annotations
-        Map<String, Integer> tokenPositionsMap = new HashMap<>();
-
+    protected void processAnnotatedField(T document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
         // Determine some useful stuff about the field we're processing
         // and store in instance variables so our methods can access them
         setCurrentAnnotatedFieldName(annotatedField.getName());
@@ -512,6 +550,20 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         // For each container (e.g. "text" or "body" element) ...
         xpathForEach(annotatedField.getContainerPath(), document,
                 (container) -> processAnnotatedFieldContainer(container, annotatedField, tokenPositionsMap));
+    }
+
+    protected void processAnnotatedFieldStandoff(T document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
+
+        // (separate method because we only run these once all token positions for all fields have been collected,
+        //  so parallel corpora can refer to token positions in other fields)
+
+        // Determine some useful stuff about the field we're processing
+        // and store in instance variables so our methods can access them
+        setCurrentAnnotatedFieldName(annotatedField.getName());
+
+        // For each container (e.g. "text" or "body" element) ...
+        xpathForEach(annotatedField.getContainerPath(), document,
+                (container) -> processAnnotatedFieldContainerStandoff(container, annotatedField, tokenPositionsMap));
     }
 
     protected boolean indexParsedFile(String docXPath, boolean mustBeSingleDocument) {
@@ -534,6 +586,6 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected abstract T contextNodeWholeDocument();
 
     protected interface AnnotationHandler {
-        void values(ConfigAnnotation annotation, int position, int spanEndPos, Collection<String> values);
+        void values(ConfigAnnotation annotation, Span positionSpanEndOrSource, Span spanEndOrRelTarget, Collection<String> values);
     }
 }

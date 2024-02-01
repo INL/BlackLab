@@ -93,7 +93,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                 Bits liveDocs = reader.getLiveDocs();
                 int maxDoc = reader.maxDoc();
                 DocFieldLengthGetter lengthGetter = new DocFieldLengthGetter(reader, getField());
-                return new BLSpans() {
+                return new BLSpans(SpanGuarantees.NONE) {
 
                     boolean atFirstInCurrentDoc = false;
 

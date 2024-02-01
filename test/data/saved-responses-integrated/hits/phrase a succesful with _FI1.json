@@ -85,6 +85,7 @@
     "numberOfHitsRetrieved": 1,
     "pattern": {
       "bcql": "_FI1('a', [lemma='successful'])",
+      "fieldName": "contents",
       "json": {
         "args": [
           {

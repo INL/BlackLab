@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A collection of matches being fetched as they are needed.
@@ -44,7 +45,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     /**
      * Our match info (e.g. captured groups, relations), or null if we have none.
      */
-    protected List<String> matchInfoNames = null;
+    protected List<MatchInfo.Def> matchInfoDefs = null;
 
     /**
      * The number of hits we've seen and counted so far. May be more than the number
@@ -128,10 +129,10 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits, List<String> matchInfoNames) {
+    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits, List<MatchInfo.Def> matchInfoDefs) {
         super(queryInfo);
         this.hitsInternal = hits == null ? HitsInternal.create(-1, true, true) : hits;
-        this.matchInfoNames = matchInfoNames;
+        this.matchInfoDefs = matchInfoDefs;
     }
 
     // Inherited from Results
@@ -198,7 +199,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, number);
         return Hits.list(queryInfo(), window, windowStats, null,
                 hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(),
-                matchInfoNames(), hasAscendingLuceneDocIds());
+                matchInfoDefs(), hasAscendingLuceneDocIds());
     }
 
     /**
@@ -260,7 +261,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         });
 
         return Hits.list(queryInfo(), sample, null, sampleParameters, sample.size(),
-                docsInSample.getValue(), docsInSample.getValue(), matchInfoNames(),
+                docsInSample.getValue(), docsInSample.getValue(), matchInfoDefs(),
                 hasAscendingLuceneDocIds());
     }
 
@@ -289,7 +290,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         long docsCounted = docsCountedSoFar();
         boolean ascendingLuceneDocIds = sortProp instanceof HitPropertyDocumentId && !sortProp.isReverse();
         return Hits.list(queryInfo(), sorted, null, null,
-                hitsCounted, docsRetrieved, docsCounted, matchInfoNames(), ascendingLuceneDocIds);
+                hitsCounted, docsRetrieved, docsCounted, matchInfoDefs(), ascendingLuceneDocIds);
     }
 
     /**
@@ -471,7 +472,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             if (h.doc == docId)
                 hitsInDoc.add(h);
         }
-        return new HitsList(queryInfo(), hitsInDoc, matchInfoNames);
+        return new HitsList(queryInfo(), hitsInDoc, matchInfoDefs);
     }
 
     // Stats
@@ -553,7 +554,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             1,
             1,
             1,
-            matchInfoNames(),
+            matchInfoDefs(),
             true);
     }
 
@@ -561,13 +562,13 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     //--------------------------------------------------------------------
 
     @Override
-    public List<String> matchInfoNames() {
-        return matchInfoNames;
+    public List<MatchInfo.Def> matchInfoDefs() {
+        return matchInfoDefs;
     }
 
     @Override
     public boolean hasMatchInfo() {
-        return matchInfoNames != null;
+        return matchInfoDefs != null;
     }
 
     // Hits display

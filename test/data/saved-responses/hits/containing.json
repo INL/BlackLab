@@ -507,6 +507,7 @@
     "numberOfHitsRetrieved": 5,
     "pattern": {
       "bcql": "<u/> containing 'good'",
+      "fieldName": "contents",
       "json": {
         "filter": {
           "type": "regex",
@@ -519,9 +520,11 @@
         },
         "type": "posfilter"
       },
-      "matchInfoNames": [
-        "u"
-      ]
+      "matchInfos": {
+        "u": {
+          "type": "span"
+        }
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

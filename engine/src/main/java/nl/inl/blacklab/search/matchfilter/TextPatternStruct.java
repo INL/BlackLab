@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternSerializerJson;
 @JsonDeserialize(using = TextPatternDeserializer.class)
 public interface TextPatternStruct {
     /**
-     * Can this be represented by a bracketer expression in CorpusQL?
+     * Can this be represented by a bracketed expression in CorpusQL?
      *
      * It must be a single-token expression that includes annotation names.
      *

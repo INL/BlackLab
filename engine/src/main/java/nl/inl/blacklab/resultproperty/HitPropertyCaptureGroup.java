@@ -26,9 +26,9 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         return hp;
     }
 
-    String groupName;
+    private String groupName;
 
-    int groupIndex = -1;
+    private int groupIndex = -1;
 
     HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, boolean invert) {
         super(prop, hits, invert);
@@ -36,7 +36,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
         // Determine group index. We don't use the one from prop (if any), because
         // index might be different for different hits object.
-        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoNames().indexOf(groupName);
+        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoIndex(groupName);
         if (groupIndex < 0)
             throw new IllegalArgumentException("Unknown group name '" + groupName + "'");
     }

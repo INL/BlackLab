@@ -3,9 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.results.QueryInfo;
+import java.util.Optional;
 
 /**
  * Provides per-hit query-wide context, such as captured groups.
@@ -21,23 +19,40 @@ public class HitQueryContext {
     private BLSpans rootSpans;
 
     /** Match info names for our query, in index order */
-    List<String> matchInfoNames = new ArrayList<>();
+    List<MatchInfo.Def> matchInfoDefs = new ArrayList<>();
 
-    /** We use this to check if subclauses capture groups or not */
-    private int numberOfTimesMatchInfoRegistered = 0;
+    /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
+    private final String defaultField;
 
-    public HitQueryContext(BLSpans spans) {
+    /** If non-null, this part of the query searches a different field (parallel corpora) */
+    private final String overriddenField;
+
+    public HitQueryContext(BLSpans spans, String defaultField) {
+        this(spans, defaultField, null);
+    }
+
+    private HitQueryContext(BLSpans spans, String defaultField, String overriddenField) {
         this.rootSpans = spans;
+        this.defaultField = defaultField;
+        this.overriddenField = overriddenField;
     }
 
-    public HitQueryContext() {
-        this(null);
+    boolean fieldWasOverridden() {
+        return getOverriddenField() != null && !getOverriddenField().equals(getDefaultField());
     }
 
-    public HitQueryContext copyWith(BLSpans spans) {
-        HitQueryContext result = new HitQueryContext(spans);
-        result.matchInfoNames = matchInfoNames;
-        result.numberOfTimesMatchInfoRegistered = numberOfTimesMatchInfoRegistered;
+    public HitQueryContext withSpans(BLSpans spans) {
+        HitQueryContext result = new HitQueryContext(spans, defaultField, overriddenField);
+        result.matchInfoDefs = matchInfoDefs;
+        return result;
+    }
+
+    public HitQueryContext withField(String overriddenField) {
+        HitQueryContext result = this;
+        if (overriddenField != null) {
+            result = new HitQueryContext(rootSpans, defaultField, overriddenField);
+            result.matchInfoDefs = matchInfoDefs;
+        }
         return result;
     }
 
@@ -57,15 +72,40 @@ public class HitQueryContext {
      * Register a match info (e.g. captured group), assigning it a unique index number.
      *
      * @param name the group's name
+     * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name) {
-        numberOfTimesMatchInfoRegistered++;
-        while (matchInfoNames.contains(name)) {
-            return matchInfoNames.indexOf(name); // already registered, reuse
+    public int registerMatchInfo(String name, MatchInfo.Type type) {
+        return registerMatchInfo(name, type, null);
+    }
+
+    /**
+     * Register a match info (e.g. captured group), assigning it a unique index number.
+     *
+     * @param name the group's name
+     * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
+     * @param actualField if null, use the (possibly overridden) field from this context.
+     *                    Otherwise use the field specified here. Used e.g. when capturing relation, which should always
+     *                    be captured in the source field, even if the span mode is target (and the context reflects that).
+     * @return the group's assigned index
+     */
+    public int registerMatchInfo(String name, MatchInfo.Type type, String actualField) {
+        Optional<MatchInfo.Def> mi = matchInfoDefs.stream()
+                .filter(mid -> mid.getName().equals(name))
+                .findFirst();
+        if (mi.isPresent()) {
+            mi.get().updateType(type); // update type (e.g. if group is referred to before we know its type)
+            return mi.get().getIndex(); // already registered, reuse
         }
-        matchInfoNames.add(name);
-        return matchInfoNames.size() - 1; // index in array
+        String field = overriddenField;
+        if (actualField != null) {
+            // Use a different field than this context specifies.
+            // (e.g. always capture relations in source field even if span mode is target)
+            field = actualField.equals(defaultField) ? null : actualField;
+        }
+        MatchInfo.Def newMatchInfo = new MatchInfo.Def(matchInfoDefs.size(), name, type, field);
+        matchInfoDefs.add(newMatchInfo);
+        return newMatchInfo.getIndex(); // index in array
     }
 
     /**
@@ -74,7 +114,7 @@ public class HitQueryContext {
      * @return number of captured groups
      */
     public int numberOfMatchInfos() {
-        return matchInfoNames.size();
+        return matchInfoDefs.size();
     }
 
     /**
@@ -89,15 +129,28 @@ public class HitQueryContext {
     }
 
     /**
-     * Get the names of the captured groups, in index order.
+     * Get the match infos definitions.
      *
-     * @return the list of names
+     * The list is in index order.
+     *
+     * @return the list of match infos
      */
-    public List<String> getMatchInfoNames() {
-        return Collections.unmodifiableList(matchInfoNames);
+    public List<MatchInfo.Def> getMatchInfoDefs() {
+        return Collections.unmodifiableList(matchInfoDefs);
     }
 
-    public int getMatchInfoRegisterNumber() {
-        return numberOfTimesMatchInfoRegistered;
+    /**
+     * Get the overridden field for this part of the query (if any).
+     *
+     * Used for parallel corpora. Will always return null in non-parallel corpora.
+     *
+     * @return the field this part of the query searches, or null if it's just the main field we're querying
+     */
+    public String getOverriddenField() {
+        return overriddenField;
+    }
+
+    public String getDefaultField() {
+        return defaultField;
     }
 }

@@ -397,6 +397,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public long getLimitValues() { return getLong(WebserviceParameter.LIMIT_VALUES); }
 
     @Override
+    public boolean getAdjustRelationHits() { return getBool(WebserviceParameter.REL_ADJUST_HITS); }
+
+    @Override
     public boolean isCalculateCollocations() { return get(WebserviceParameter.CALCULATE_STATS).equals("colloc"); }
 
     @Override

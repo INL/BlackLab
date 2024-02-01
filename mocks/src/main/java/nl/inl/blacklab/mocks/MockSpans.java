@@ -137,8 +137,6 @@ public class MockSpans extends BLSpans {
 
     private final MyTermSpans spans;
 
-    private int currentHitIndex;
-
     private boolean noMoreDocs = false;
 
     private boolean noMoreHitsInDoc = true;
@@ -177,7 +175,7 @@ public class MockSpans extends BLSpans {
     private void setPayloadsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(aStart[i], aEnd[i],
+            BytesRef payload = PayloadUtils.inlineTagPayload(aStart[i], aEnd[i],
                     BlackLabIndex.IndexType.EXTERNAL_FILES);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
@@ -188,8 +186,8 @@ public class MockSpans extends BLSpans {
     private void setPayloadsRelationsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            RelationInfo relInfo = new RelationInfo(false, aStart[i], aStart[i], aEnd[i], aEnd[i],
-                    "test", null);
+            RelationInfo relInfo = RelationInfo.create(false, aStart[i], aStart[i],
+                    aEnd[i], aEnd[i], "test");
             BytesRef payload = relInfo.serialize();
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
@@ -215,7 +213,6 @@ public class MockSpans extends BLSpans {
             noMoreDocs = true;
         else
             noMoreHitsInDoc = false;
-        currentHitIndex = -1;
         return docId;
     }
 
@@ -225,7 +222,6 @@ public class MockSpans extends BLSpans {
         if (noMoreHitsInDoc)
             throw new BlackLabRuntimeException("Called nextStartPosition() on hit-exhausted spans!");
         int startPos = spans.nextStartPosition();
-        currentHitIndex++;
         endPos = startPos == NO_MORE_POSITIONS ? NO_MORE_POSITIONS : postings.endOffset();
         if (startPos == NO_MORE_POSITIONS) {
             noMoreHitsInDoc = true;
@@ -246,7 +242,6 @@ public class MockSpans extends BLSpans {
             noMoreDocs = true;
         else
             noMoreHitsInDoc = false;
-        currentHitIndex = -1;
         return docId;
     }
 

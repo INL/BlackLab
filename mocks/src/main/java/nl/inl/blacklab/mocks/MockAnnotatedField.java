@@ -2,7 +2,6 @@ package nl.inl.blacklab.mocks;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -81,7 +80,12 @@ public class MockAnnotatedField implements AnnotatedField {
             public boolean isEmpty() {
                 return annotations.isEmpty();
             }
-            
+
+            @Override
+            public int size() {
+                return annotations.size();
+            }
+
         };
     }
 

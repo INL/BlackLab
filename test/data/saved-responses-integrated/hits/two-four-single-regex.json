@@ -175,6 +175,7 @@
     "numberOfHitsRetrieved": 3,
     "pattern": {
       "bcql": "'two|four'",
+      "fieldName": "contents",
       "json": {
         "type": "regex",
         "value": "two|four"

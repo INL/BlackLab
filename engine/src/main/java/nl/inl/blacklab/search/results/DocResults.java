@@ -33,6 +33,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -181,7 +182,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     private CorpusSize corpusSize = null;
 
-    private List<String> matchInfoNames = null;
+    private List<MatchInfo.Def> matchInfoDefs = null;
 
     /**
      * Construct an empty DocResults.
@@ -201,7 +202,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, false);
-        this.matchInfoNames = hits.matchInfoNames();
+        this.matchInfoDefs = hits.matchInfoDefs();
         this.sourceHitsIterator = hits.iterator();
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
@@ -297,7 +298,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
-                            Hits hits = Hits.list(queryInfo(), docHits, matchInfoNames);
+                            Hits hits = Hits.list(queryInfo(), docHits, matchInfoDefs);
                             long size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
@@ -319,7 +320,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
-                        Hits hits = Hits.list(queryInfo(), docHits, matchInfoNames);
+                        Hits hits = Hits.list(queryInfo(), docHits, matchInfoDefs);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;

@@ -5,13 +5,18 @@ import java.util.Objects;
 /**
  * Position information about a relation's source and target
  */
-public class SpanInfo implements MatchInfo {
+public class SpanInfo extends MatchInfo {
+
+    public static SpanInfo create(int start, int end, String overriddenField) {
+        return new SpanInfo(start, end, overriddenField);
+    }
 
     int start;
 
     int end;
 
-    public SpanInfo(int start, int end) {
+    private SpanInfo(int start, int end, String overriddenField) {
+        super(overriddenField);
         this.start = start;
         this.end = end;
     }
@@ -31,14 +36,14 @@ public class SpanInfo implements MatchInfo {
 
     @Override
     public String toString() {
-        return "span(" + getSpanStart() + "-" + getSpanEnd() + ")";
+        return "span(" + getSpanStart() + "-" + getSpanEnd() + ")" + toStringOptFieldName();
     }
 
     @Override
     public int compareTo(MatchInfo o) {
         if (o instanceof SpanInfo)
             return compareTo((SpanInfo) o);
-        return MatchInfo.super.compareTo(o);
+        return super.compareTo(o);
     }
 
     public int compareTo(SpanInfo o) {

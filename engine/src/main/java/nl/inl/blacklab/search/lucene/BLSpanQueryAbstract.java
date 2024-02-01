@@ -11,8 +11,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.QueryVisitor;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -31,41 +29,31 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
 
     protected List<BLSpanQuery> clauses;
 
-    public BLSpanQueryAbstract(BLSpanQuery first, BLSpanQuery second) {
-        super(first != null ? first.queryInfo : second != null ? second.queryInfo : null);
-        clauses = Arrays.asList(first, second);
-        determineBaseFieldName();
+    public BLSpanQueryAbstract(Collection<BLSpanQuery> clauses) {
+        super(getQueryInfo(clauses));
+        this.clauses = new ArrayList<>(clauses);
+        baseFieldName = checkAllCompatibleFields(clauses);
+        luceneFieldName = getLuceneFieldName(clauses);
     }
 
-    public BLSpanQueryAbstract(BLSpanQuery clause) {
-        super(clause != null ? clause.queryInfo : null);
-        clauses = List.of(clause);
-        determineBaseFieldName();
-    }
-
-    public BLSpanQueryAbstract(Collection<BLSpanQuery> clauscol) {
-        super(clauscol.isEmpty() ? null : clauscol.iterator().next().queryInfo);
-        clauses = new ArrayList<>(clauscol);
-        determineBaseFieldName();
-    }
-
-    public BLSpanQueryAbstract(BLSpanQuery[] clauses) {
-        super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo : null);
-        this.clauses = Arrays.asList(clauses);
-        determineBaseFieldName();
-    }
-
-    private void determineBaseFieldName() {
-        if (!clauses.isEmpty()) {
-            luceneFieldName = clauses.get(0).getRealField();
-            baseFieldName = AnnotatedFieldNameUtil.getBaseName(clauses.get(0).getField());
-            for (int i = 1; i < clauses.size(); i++) {
-                String f = AnnotatedFieldNameUtil.getBaseName(clauses.get(i).getField());
-                if (!baseFieldName.equals(f))
-                    throw new BlackLabRuntimeException("Mix of incompatible fields in query ("
-                            + baseFieldName + " and " + f + ")");
-            }
+    private String getLuceneFieldName(Collection<BLSpanQuery> clauses) {
+        for (BLSpanQuery clause: clauses) {
+            if (clause != null)
+                return clause.getRealField();
         }
+        return "";
+    }
+
+    private static QueryInfo getQueryInfo(Collection<BLSpanQuery> clauses) {
+        for (BLSpanQuery clause: clauses) {
+            if (clause != null)
+                return clause.queryInfo;
+        }
+        return null;
+    }
+
+    public BLSpanQueryAbstract(BLSpanQuery... clauses) {
+        this(Arrays.asList(clauses));
     }
 
     @Override
@@ -112,7 +100,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     protected List<BLSpanQuery> rewriteClauses(IndexReader reader) throws IOException {
         List<BLSpanQuery> rewritten = new ArrayList<>(clauses.size());
         boolean someRewritten = false;
-        for (BLSpanQuery c : clauses) {
+        for (BLSpanQuery c: clauses) {
             BLSpanQuery query = c == null ? null : c.rewrite(reader);
             rewritten.add(query);
             if (query != c)
@@ -124,19 +112,25 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     @Override
     public void visit(QueryVisitor visitor) {
         if (visitor.acceptField(getField())) {
-            clauses.forEach(cl -> cl.visit(visitor.getSubVisitor(Occur.MUST, this)));
+            for (BLSpanQuery clause: clauses) {
+                if (clause != null)
+                    clause.visit(visitor.getSubVisitor(Occur.MUST, this));
+            }
         }
     }
 
     public String clausesToString(String field) {
-        return clauses.stream().map(clause -> clause.toString(field)).collect(Collectors.joining(", "));
+        return clauses.stream()
+                .map(clause -> clause == null ? "(null)" : clause.toString(field))
+                .collect(Collectors.joining(", "));
     }
     
     @Override
     public void setQueryInfo(QueryInfo queryInfo) {
         super.setQueryInfo(queryInfo);
         for (BLSpanQuery clause: clauses) {
-            clause.setQueryInfo(queryInfo);
+            if (clause != null)
+                clause.setQueryInfo(queryInfo);
         }
     }
 }

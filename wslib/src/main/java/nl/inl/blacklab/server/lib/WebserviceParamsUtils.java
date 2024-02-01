@@ -1,12 +1,16 @@
 package nl.inl.blacklab.server.lib;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.SingleDocIdFilter;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.util.BlsUtils;
@@ -24,7 +28,7 @@ public class WebserviceParamsUtils {
      * @param pattGapData optional pattern gap data if the pattern string contains gaps
      * @return text pattern
      */
-    public static TextPattern parsePattern(BlackLabIndex index, String patt, String pattLang, String pattGapData) {
+    public static TextPattern parsePattern(BlackLabIndex index, String patt, String pattLang, String pattGapData, boolean adjustRelationHits) {
         TextPattern pattern = null;
         if (!StringUtils.isBlank(patt)) {
             if (pattLang.matches("default|corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
@@ -39,8 +43,33 @@ public class WebserviceParamsUtils {
                 String defaultAnnotation = index.mainAnnotatedField().mainAnnotation().name();
                 pattern = BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang);
             }
+
+            if (adjustRelationHits) {
+                // Automatically add rspan(..., 'all') so hit encompasses all matched relations.
+                pattern = ensureHitSpansMatchedRelations(pattern);
+            }
         }
         return pattern;
+    }
+
+    /** Automatically add rspan so hit encompasses all matched relations.
+     *
+     * Only does this if this is a relations query and if setting enabled.
+     */
+    private static TextPattern ensureHitSpansMatchedRelations(TextPattern pattern) {
+        boolean addRspanAll = false;
+        if (pattern.isRelationsQuery()) {
+            addRspanAll = true;
+            if (pattern instanceof TextPatternQueryFunction) {
+                TextPatternQueryFunction qf = (TextPatternQueryFunction) pattern;
+                // Only add rspan if not already doing it explicitly
+                if (qf.getName().equals(XFRelations.FUNC_RSPAN) || qf.getName().equals(XFRelations.FUNC_REL)) {
+                    addRspanAll = false;
+                }
+            }
+        }
+        return addRspanAll ? new TextPatternQueryFunction(XFRelations.FUNC_RSPAN,
+                List.of(pattern, "all")) : pattern;
     }
 
     /**

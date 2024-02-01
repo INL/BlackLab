@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -16,7 +17,9 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  */
 public class ContextSize {
 
-    public static final int SAFE_MAX_CONTEXT_SIZE = (Constants.JAVA_MAX_ARRAY_SIZE - 100) / 2;
+    public static final int MAX_HIT_SIZE = 1000;
+
+    public static final int SAFE_MAX_CONTEXT_SIZE = (Constants.JAVA_MAX_ARRAY_SIZE - MAX_HIT_SIZE * 2) / 2;
 
     /**
      * Context based on am inline tag containing the hit instead of the hit.
@@ -126,10 +129,6 @@ public class ContextSize {
      */
     private final int maxSnippetLength;
 
-    private ContextSize(int before, int after, boolean includeHit, String matchInfoName) {
-        this(before, after, includeHit, matchInfoName, Integer.MAX_VALUE);
-    }
-
     private ContextSize(int before, int after, boolean includeHit, String matchInfoName, int maxSnippetLength) {
         super();
         assert before >= 0;
@@ -146,7 +145,7 @@ public class ContextSize {
     public static int maxSnippetLengthFromMaxContextSize(int maxContextSize) {
         if (maxContextSize > SAFE_MAX_CONTEXT_SIZE)
             maxContextSize = SAFE_MAX_CONTEXT_SIZE;
-        return maxContextSize * 2 + 10; // 10 seems a reasonable maximum hit length
+        return maxContextSize * 2 + MAX_HIT_SIZE;
     }
 
     /**
@@ -160,14 +159,15 @@ public class ContextSize {
      * decreasing the end position if necessary.
      *
      * @param hit hit to get snippet boundaries for
-     * @param matchInfoNames names of match info groups
+     * @param matchInfoDefs names of match info groups
      * @param lastWordInclusive should snippet end point to the last word of the snippet, or to the first word after it?
      * @param startArr array to write start position to
      * @param startIndex index in startArr to write start position to
      * @param endArr array to write end position to
      * @param endIndex index in endArr to write end position to
      */
-    public void getSnippetStartEnd(Hit hit, List<String> matchInfoNames, boolean lastWordInclusive, int[] startArr, int startIndex, int[] endArr, int endIndex) {
+    public void getSnippetStartEnd(Hit hit, List<MatchInfo.Def> matchInfoDefs, boolean lastWordInclusive,
+            int[] startArr, int startIndex, int[] endArr, int endIndex) {
         assert HitsInternal.debugCheckReasonableHit(hit);
         int start, end;
         if (!isInlineTag()) {
@@ -176,7 +176,7 @@ public class ContextSize {
             end = hit.end();
         } else {
             // Use a match info group to determine snippet
-            MatchInfo tag = findTag(hit, inlineTagName(), matchInfoNames);
+            MatchInfo tag = findTag(hit, inlineTagName(), matchInfoDefs);
             start = tag == null ? hit.start() : tag.getSpanStart();
             end = tag == null ? hit.start() : tag.getSpanEnd();
         }
@@ -194,13 +194,13 @@ public class ContextSize {
         endArr[endIndex] = end;
     }
 
-    private static MatchInfo findTag(Hit hit, String matchInfoName, List<String> matchInfoNames) {
+    private static MatchInfo findTag(Hit hit, String matchInfoName, List<MatchInfo.Def> matchInfoDefs) {
         MatchInfo[] matchInfos = hit.matchInfo();
         if (matchInfos != null) {
             // Return the match info group with the specified name
-            int index = matchInfoNames.indexOf(matchInfoName);
-            if (index >= 0)
-                return matchInfos[index];
+            Optional<MatchInfo.Def> mid = matchInfoDefs.stream().filter(d -> d.getName().equals(matchInfoName)).findFirst();
+            if (mid.isPresent())
+                return matchInfos[mid.get().getIndex()];
 
             // Maybe it's a tag name, not a match info capture name? (REMOVE THIS?)
             for (int i = matchInfos.length - 1; i >= 0; i--) { // reverse because we expect it to be the last
@@ -300,5 +300,9 @@ public class ContextSize {
 
     public boolean isInlineTag() {
         return matchInfoName != null;
+    }
+
+    public int getMaxSnippetLength() {
+        return maxSnippetLength;
     }
 }

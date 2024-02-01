@@ -58,4 +58,9 @@ public interface Annotations extends Iterable<Annotation> {
 
     boolean isEmpty();
 
+    /** Get the number of annotations.
+     *
+     * @return number of annotations
+     */
+    int size();
 }

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Hit  {
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String docPid;
 
     @XmlTransient
@@ -32,13 +33,18 @@ public class Hit  {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("matchInfos")
-    public Map<String, MatchInfo> matchInfo;
+    public Map<String, MatchInfo> matchInfo; // @@ why not matchInfos here? for XML serialization..?
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public ContextWords left;
 
     public ContextWords match;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public ContextWords right;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Map<String, Hit> otherFields; // @@ check XML serialization
 
     // required for Jersey
     public Hit() {}

@@ -3,36 +3,19 @@ package nl.inl.blacklab.indexers.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+
 /**
  * Configuration for a block of standoff annotations (annotations that don't
  * reside under the word tag but elsewhere in the document).
  */
 public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
-    public enum Type {
-        TOKEN,
-        SPAN,
-        RELATION;
-
-        public static Type fromStringValue(String t) {
-            switch (t.toLowerCase()) {
-            case "token": return TOKEN;
-            case "span": return SPAN;
-            case "relation": return RELATION;
-            }
-            throw new IllegalArgumentException("Unknown standoff annotation type: " + t);
-        }
-
-        @Override
-        public String toString() {
-            return super.toString().toLowerCase();
-        }
-    }
-
     /**
      * The type of standoff annotation (e.g. "token" (default), "span" or "relation")
      */
-    private Type type = Type.TOKEN;
+    private AnnotationType type = AnnotationType.TOKEN;
 
     /**
      * Path to the elements containing the values to index (values may apply to
@@ -49,8 +32,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     private String tokenRefPath;
 
     /**
-     * How to find the end of the span. If non-empty, this is a span annotation instead of
-     * a regular one.
+     * How to find the end of the span or target of the relation. Empty for token annotations.
      */
     private String spanEndPath = "";
 
@@ -68,6 +50,27 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     /** The annotations to index at the referenced token positions. */
     private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
+
+    /** For relations: the relation class to index this as. If not specified, a logical default is chosen
+     *  ("al" if targetField/targetVersion specified; "dep" otherwise
+     */
+    private String relationClass = null;
+
+    /** For relations: target field for the relation. Defaults to empty, meaning 'this field'.
+     *
+     * NOTE: targetField and targetVersion are combined into a single field in the index.
+     * For example, if targetField is empty and targetVersion is "de", and this field is "contents__nl",
+     * the target field for the relations will be the field will be "contents__de".
+     */
+    private String targetField = "";
+
+    /** For relations: how to find target version for the relation. Defaults to empty, meaning 'this version'.
+     *
+     * NOTE: targetField and targetVersion are combined into a single field in the index.
+     * For example, if targetField is empty and targetVersion resolves to "de", and this field is "contents__nl",
+     * the target field for the relations will be the field will be "contents__de".
+     */
+    private String targetVersionPath = "";
 
     public ConfigStandoffAnnotations() {
     }
@@ -169,11 +172,82 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         return "ConfigStandoffAnnotations [path=" + path + "]";
     }
 
-    public void setType(Type type) {
+    public void setType(AnnotationType type) {
         this.type = type;
     }
 
-    public Type getType() {
+    public AnnotationType getType() {
         return type;
+    }
+
+    public String getRelationClass() {
+        // Return default value for relation class if not specified
+        return relationClass != null ? relationClass : RelationUtil.CLASS_DEFAULT_INDEX;
+    }
+
+    public void setRelationClass(String relationClass) {
+        this.relationClass = relationClass;
+    }
+
+    /**
+     * Based on the configured targetField and/or targetVersion, return the field name to use.
+     *
+     * If neither targetField nor targetVersion is set, just returns the default field name.
+     *
+     * @param defaultTargetField if no targetField given, what field to use?
+     * @param targetVersion target version to use (if empty, keep the one from the targetField)
+     * @return resolved target field
+     */
+    public String resolveTargetField(String defaultTargetField, String targetVersion) {
+        String f = targetField.isEmpty() ? defaultTargetField : targetField;
+        return AnnotatedFieldNameUtil.getParallelFieldVersion(f, targetVersion);
+    }
+
+    /**
+     * Determine the actual relation class to index, including the parallel target version if applicable.
+     *
+     * Examples (if defaultTargetField == "contents__nl"):
+     * - relationClass = "dep", targetField = "", targetVersion = "" --> "dep"
+     * - relationClass = "al", targetField = "contents__de", targetVersion = "" --> "al__de"
+     * - relationClass = "al", targetField = "contents__nl", targetVersion = "de" --> "al__de"
+     *
+     * @param defaultTargetField if no target field was specified, use this (i.e. the annotated field we belong to)
+     * @param targetVersion target version to use (if empty, keep the one from the targetField)
+     * @return the relation class to index
+     */
+    public String resolveRelationClass(String defaultTargetField, String targetVersion) {
+        String actualTargetField = resolveTargetField(defaultTargetField, targetVersion);
+        if (actualTargetField.equals(defaultTargetField)) {
+            // Not a cross-field relation
+            return getRelationClass();
+        } else if (AnnotatedFieldNameUtil.isSameParallelBaseField(defaultTargetField, actualTargetField)) {
+            // Cross-field relation to a different version of the same parallel field,
+            // e.g. contents__nl --> contents__de
+            String actualTargetVersion = AnnotatedFieldNameUtil.splitParallelFieldName(actualTargetField)[1];
+            return getRelationClass() + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetVersion;
+        } else {
+            // Cross-field relation to a different field
+            // e.g. contents --> metadata
+            // (we don't support this yet, but might want to in the future; this might be a reasonable way to
+            //  index it)
+            return getRelationClass() + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR
+                                 + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetField;
+        }
+    }
+
+    public String getTargetField() {
+        return targetField;
+    }
+
+    public void setTargetField(String targetField) {
+        this.targetField = targetField;
+    }
+
+    public String getTargetVersionPath() {
+        return targetVersionPath;
+    }
+
+    public void setTargetVersionPath(String targetVersionPath) {
+        this.targetVersionPath = targetVersionPath;
     }
 }

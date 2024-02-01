@@ -298,7 +298,7 @@ public class TestSearches {
             List<String> targets = List.of("fox [] jumps", "dog []", "Force [] be");
             List<String> sources = List.of("[] The", "over [] the", "May [] the");
             List<String> none = Collections.emptyList();
-            String type = RelationUtil.inlineTagFullType("entity");
+            String type = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, "entity");
 
             Assert.assertEquals(allRelations, testIndex.findConc("rel('" + type + "', _, 'full')"));
             Assert.assertEquals(allRelations, testIndex.findConc("rspan(rel('" + type + "'), 'full')"));
@@ -645,10 +645,10 @@ public class TestSearches {
             Assert.assertEquals(p1, p2);
             Assert.assertEquals(p1.hashCode(), p2.hashCode());
             BlackLabIndex index = testIndex.index();
-            QueryExecutionContext context = new QueryExecutionContext(index,
+            QueryExecutionContext context = QueryExecutionContext.get(index,
                     index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE);
             BLSpanQuery q1 = p1.translate(context);
-            context = new QueryExecutionContext(index,
+            context = QueryExecutionContext.get(index,
                     index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE);
             BLSpanQuery q2 = p2.translate(context);
             Assert.assertEquals(q1, q2);
@@ -664,7 +664,7 @@ public class TestSearches {
                 "May [the] Force",
                 "To [find] or");
         TextPattern patt = new TextPatternFixedSpan(1, 2);
-        BLSpanQuery query = patt.translate(new QueryExecutionContext(testIndex.index(),
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertEquals(expected, testIndex.findConc(query));
     }
@@ -677,7 +677,7 @@ public class TestSearches {
             TextPattern tp = CorpusQueryLanguageParser.parse(patt);
             Assert.assertTrue(tp instanceof TextPatternRegex);
             Assert.assertEquals("\\\"", ((TextPatternRegex) tp).getValue());
-            BLSpanQuery q = tp.translate(new QueryExecutionContext(testIndex.index(),
+            BLSpanQuery q = tp.translate(QueryExecutionContext.get(testIndex.index(),
                     testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
             Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
             Assert.assertEquals("contents%word@i:/\\\"/", q.toString());

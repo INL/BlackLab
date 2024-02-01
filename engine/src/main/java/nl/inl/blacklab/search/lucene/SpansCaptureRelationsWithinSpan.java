@@ -16,7 +16,7 @@ import org.apache.lucene.search.spans.FilterSpans;
  */
 class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
 
-    private final SpansRelations relations;
+    private final BLSpans relations;
 
     /** Name of match info spans to capture relations from
      *  (if not set, capture all relations in current clause hit) */
@@ -50,7 +50,7 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
      * @param toCapture name of the match info span to capture relations from
      * @param captureAs name to capture the list of relations as
      */
-    public SpansCaptureRelationsWithinSpan(BLSpans clause, SpansRelations relations, String toCapture, String captureAs) {
+    public SpansCaptureRelationsWithinSpan(BLSpans clause, BLSpans relations, String toCapture, String captureAs) {
         super(clause);
         this.relations = relations;
         this.toCapture = toCapture;
@@ -60,7 +60,7 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         if (matchInfo == null) {
-            matchInfo = new MatchInfo[context.getMatchInfoNames().size()];
+            matchInfo = new MatchInfo[context.numberOfMatchInfos()];
         } else {
             Arrays.fill(matchInfo, null);
         }
@@ -98,7 +98,7 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
                 }
             }
             capturedRelations.sort(RelationInfo::compareTo);
-            matchInfo[captureAsIndex] = new RelationListInfo(capturedRelations);
+            matchInfo[captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
         }
 
         return FilterSpans.AcceptStatus.YES;
@@ -114,8 +114,8 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
         super.passHitQueryContextToClauses(context);
         this.context = context;
         if (!StringUtils.isEmpty(toCapture))
-            this.toCaptureIndex = context.registerMatchInfo(toCapture);
-        this.captureAsIndex = context.registerMatchInfo(captureAs);
+            this.toCaptureIndex = context.registerMatchInfo(toCapture, null);
+        this.captureAsIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.LIST_OF_RELATIONS);
     }
 
     @Override

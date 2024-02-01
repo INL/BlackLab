@@ -190,7 +190,7 @@ public class PayloadUtils {
      * @param indexType
      * @return payload to store
      */
-    public static BytesRef tagEndPositionPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType) {
+    public static BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType) {
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
             return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
 
@@ -201,6 +201,14 @@ public class PayloadUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static BytesRef relationPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
+            int targetEnd) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        RelationInfo.serializeRelation(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
+                new OutputStreamDataOutput(os));
+        return new BytesRef(os.toByteArray());
     }
 
     public static ByteArrayDataInput getDataInput(byte[] payload, boolean payloadIndicatesPrimaryValues) {

@@ -24,7 +24,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -191,7 +190,8 @@ public class SpanQueryAndNot extends BLSpanQuery {
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
         if (this.include.size() == 0 && this.exclude.size() == 0)
             throw new IllegalArgumentException("AND(NOT)/RSPAN query without clauses");
-        checkBaseFieldName();
+        checkAllCompatibleFields(this.include);
+        checkAllCompatibleFields(this.exclude);
 
         List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(this.include);
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
@@ -207,18 +207,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
      */
     public void setRequireUniqueRelations(boolean b) {
         this.requireUniqueRelations = b;
-    }
-
-    private void checkBaseFieldName() {
-        if (!include.isEmpty()) {
-            String baseFieldName = AnnotatedFieldNameUtil.getBaseName(include.get(0).getField());
-            for (BLSpanQuery clause : include) {
-                String f = AnnotatedFieldNameUtil.getBaseName(clause.getField());
-                if (!baseFieldName.equals(f))
-                    throw new BlackLabRuntimeException("Mix of incompatible fields in query ("
-                            + baseFieldName + " and " + f + ")");
-            }
-        }
     }
 
     @Override

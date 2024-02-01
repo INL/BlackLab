@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results;
 import java.util.List;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A group of results, with its group identity and the results themselves, that
@@ -14,8 +15,8 @@ public class HitGroup extends Group<Hit> {
     }
 
     public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,
-            List<String> matchInfoNames, long totalSize) {
-        return new HitGroup(queryInfo, groupIdentity, storedResults, matchInfoNames, totalSize);
+            List<MatchInfo.Def> matchInfoDefs, long totalSize) {
+        return new HitGroup(queryInfo, groupIdentity, storedResults, matchInfoDefs, totalSize);
     }
 
     public static HitGroup fromHits(PropertyValue groupIdentity, Hits storedResults, long totalSize) {
@@ -33,12 +34,12 @@ public class HitGroup extends Group<Hit> {
      *
      * @param queryInfo query info
      * @param storedResults the hits we actually stored
-     * @param matchInfoNames captured groups for hits in this group
+     * @param matchInfoDefs captured groups for hits in this group
      * @param totalSize total group size
      */
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,
-            List<String> matchInfoNames, long totalSize) {
-        super(groupIdentity, Hits.list(queryInfo, storedResults, matchInfoNames), totalSize);
+            List<MatchInfo.Def> matchInfoDefs, long totalSize) {
+        super(groupIdentity, Hits.list(queryInfo, storedResults, matchInfoDefs), totalSize);
     }
 
     /**

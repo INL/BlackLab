@@ -9,27 +9,24 @@ import nl.inl.blacklab.search.indexmetadata.Field;
  * Defines a way to access the original indexed content.
  */
 public class ContentAccessor {
-    protected String fieldName;
+    protected Field field;
 
     private ContentStore contentStore;
 
     private String contentIdField = null;
 
     public ContentAccessor(Field field, ContentStore contentStore) {
+        this.field = field;
         contentIdField = field.contentIdField();
         this.contentStore = contentStore;
     }
 
-    public String getFieldName() {
-        return fieldName;
+    public Field getField() {
+        return field;
     }
 
     public ContentStore getContentStore() {
         return contentStore;
-    }
-
-    public ContentAccessor(String fieldName) {
-        this.fieldName = fieldName;
     }
 
     private int getContentId(int docId, Document d) {
