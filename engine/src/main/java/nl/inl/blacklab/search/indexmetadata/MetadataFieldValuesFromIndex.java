@@ -75,11 +75,6 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
         return new MetadataFieldValuesFromIndex(fieldName, isNumeric, newValues);
     }
 
-    @Override
-    public boolean shouldAddValuesWhileIndexing() {
-        return false;
-    }
-
     private void determineValueDistribution(IndexReader reader) {
         try {
             // OPT: is this worth parallellizing?

@@ -19,8 +19,6 @@ public interface MetadataFieldValues {
         MetadataFieldValues create(String fieldName, FieldType fieldType, long limitValues);
     }
 
-    boolean shouldAddValuesWhileIndexing();
-
     TruncatableFreqList valueList();
 
     void setValues(JsonNode values);

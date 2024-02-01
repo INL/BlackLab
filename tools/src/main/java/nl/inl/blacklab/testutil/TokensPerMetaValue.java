@@ -13,7 +13,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.util.LuceneUtil;
@@ -40,7 +39,7 @@ public class TokensPerMetaValue {
             System.out.println("field\tvalue\tnumberOfDocs\tnumberOfTokens");
             for (MetadataField field: indexMetadata.metadataFields()) {
                 // Check if this field has only a few values
-                MetadataFieldValues values = field.values(MetadataFieldImpl.maxMetadataValuesToStore());
+                MetadataFieldValues values = field.values(50);
                 if (!values.valueList().isTruncated()) {
                     // Loop over the values
                     for (Map.Entry<String, Long> entry: values.valueList().getValues().entrySet()) {

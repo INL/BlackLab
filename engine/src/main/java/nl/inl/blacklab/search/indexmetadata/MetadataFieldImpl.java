@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * A metadata field in an index.
@@ -25,16 +26,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     
 //    private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
-
-    private static int maxMetadataValuesToStore = 50;
-
-    public static void setMaxMetadataValuesToStore(int n) {
-        maxMetadataValuesToStore = n;
-    }
-
-    public static int maxMetadataValuesToStore() {
-        return maxMetadataValuesToStore;
-    }
 
     public static MetadataFieldImpl fromConfig(ConfigMetadataField config,
             MetadataFieldsImpl metadataFields) {
@@ -88,7 +79,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     }
 
     MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory) {
-        this(fieldName, type, factory, factory.create(fieldName, type, MetadataFieldImpl.maxMetadataValuesToStore()));
+        this(fieldName, type, factory, null);
     }
 
     MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory, MetadataFieldValues values) {
@@ -148,7 +139,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         return UnknownCondition.fromStringValue(strUnknownCondition);
     }
 
-    public MetadataFieldValues values(long maxValues) {
+    public synchronized MetadataFieldValues values(long maxValues) {
         if (values == null || !values.canTruncateTo(maxValues))
             values = factory.create(name(), type, maxValues);
         return values.truncate(maxValues);
@@ -212,9 +203,11 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         }
     }
 
-    void setValues(JsonNode values) {
-        if (this.values.shouldAddValuesWhileIndexing()) {
+    synchronized void setValues(JsonNode values) {
+        if (factory instanceof MetadataFieldValuesInMetadataFile.Factory) {
+            // We're reading values from indexmetadata.yaml (old external index)
             ensureNotFrozen();
+            ensureValuesCreated();
             this.values.setValues(values);
         }
     }
@@ -237,11 +230,18 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         custom.put("displayValues", map);
     }
 
-    void setValueListComplete(boolean valueListComplete) {
-        if (this.values.shouldAddValuesWhileIndexing()) {
+    synchronized void setValueListComplete(boolean valueListComplete) {
+        if (factory instanceof MetadataFieldValuesInMetadataFile.Factory) {
+            // We're reading values from indexmetadata.yaml (old external index)
             ensureNotFrozen();
+            ensureValuesCreated();
             this.values.setComplete(valueListComplete);
         }
+    }
+
+    private void ensureValuesCreated() {
+        if (this.values == null)
+            this.values = factory.create(fieldName, type, WebserviceParameter.DEF_VAL_LIMIT_VALUES);
     }
 
     /**
@@ -254,6 +254,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         if (!keepTrackOfValues)
             return;
         ensureNotFrozen();
+        ensureValuesCreated();
         values.addValue(value);
     }
 
@@ -265,6 +266,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
      */
     public synchronized void removeValue(String value) {
         ensureNotFrozen();
+        ensureValuesCreated();
         values.removeValue(value);
     }
 
@@ -274,13 +276,13 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
      */
     public void resetForIndexing() {
         ensureNotFrozen();
+        ensureValuesCreated();
         values.reset();
     }
 
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName, MetadataFieldValues.Factory factory) {
         super.fixAfterDeserialization(index, fieldName);
         this.factory = factory;
-        values = factory.create(fieldName, type, MetadataFieldImpl.maxMetadataValuesToStore());
         setKeepTrackOfValues(false); // integrated uses DocValues for this
     }
 }
