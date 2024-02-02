@@ -54,7 +54,7 @@
 
         <!-- Library versions -->
         <servlet.version>6.0.0</servlet.version>
-        <lucene.version>9.8.0</lucene.version>
+        <blacklab.luceneVersion>9.9.1</blacklab.luceneVersion>
         <solr.version>9.4.1</solr.version>
         <log4j.version>2.20.0</log4j.version>
         <eclipse.collections.version>11.1.0</eclipse.collections.version>

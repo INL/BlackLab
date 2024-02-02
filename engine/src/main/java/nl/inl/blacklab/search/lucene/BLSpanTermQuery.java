@@ -113,7 +113,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
         final IndexReaderContext topContext = searcher.getTopReaderContext();
         if (termStates == null || !termStates.wasBuiltFor(topContext)) {
         	boolean needsStats=true;
-            context = TermStates.build(topContext, query.getTerm(),needsStats);
+            context = TermStates.build(searcher, query.getTerm(),needsStats);
         } else {
             context = termStates;
         }
