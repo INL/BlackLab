@@ -125,6 +125,8 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
     @Override
     public void addMetadataField(String name, String value) {
+        name = optTranslateFieldName(name);
+
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
@@ -143,7 +145,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     }
 
     /**
-     * Translate a field name before adding it to the Lucene document.
+     * Translate a field name before adding it.
      *
      * By default, simply returns the input. May be overridden to change the name of
      * a metadata field as it is indexed.
@@ -201,7 +203,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                         ((MetadataFieldImpl) indexMetadata.metadataFields().get(fd.name())).removeValue(value);
                     }
                 }
-                unknownValuesToUse.put(optTranslateFieldName(fd.name()), fd.unknownValue());
+                unknownValuesToUse.put(fd.name(), fd.unknownValue());
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {

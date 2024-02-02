@@ -88,6 +88,7 @@ All URLs should start with `/blacklab-server`.
 * [Add data to user corpus](corpus/docs/post.md) : `POST /<corpus-name>/docs`
 * [Get user corpus sharing settings](corpus/sharing/get.md) : `GET /<corpus-name>/sharing`
 * [Update user corpus sharing settings](corpus/sharing/post.md) : `POST /<corpus-name>/sharing`
+* [List corpora shared with me](corpus/sharing/post.md) : `GET /shared-with-me`
 
 ## Other global endpoints
 

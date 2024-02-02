@@ -378,6 +378,8 @@ public final class AnnotatedFieldNameUtil {
      * @return sanitized name
      */
     public static String sanitizeXmlElementName(String name, boolean disallowDashes) {
+        if (name.isEmpty())
+            return "_EMPTY_";
         name = name.replaceAll("[^\\p{L}\\d_.\\-]", "_"); // can only contain letters, digits, underscores and periods
         if (disallowDashes)
             name = name.replaceAll("-", "_");

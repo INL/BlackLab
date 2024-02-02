@@ -74,10 +74,13 @@ public class XPathFinder {
             MyNamespaceContext context = new MyNamespaceContext();
             context.add("xml", "http://www.w3.org/XML/1998/namespace");
             for (Map.Entry<String, String> e: namespaces.entrySet()) {
-                if (e.getKey().isEmpty())
-                    ((XPathEvaluator)xPath).getStaticContext().setDefaultElementNamespace(NamespaceUri.of(namespaces.get("")));
-                else
+                NamespaceUri namespaceUri;
+                if (e.getKey().isEmpty()) {
+                    namespaceUri = NamespaceUri.of(namespaces.get(""));
+                    ((XPathEvaluator)xPath).getStaticContext().setDefaultElementNamespace(namespaceUri);
+                } else {
                     context.add(e.getKey(), e.getValue());
+                }
             }
             xPath.setNamespaceContext(context);
         }

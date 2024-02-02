@@ -1,9 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
@@ -23,7 +20,7 @@ import nl.inl.util.DocValuesUtil;
  */
 class MetadataFieldValuesFromIndex implements MetadataFieldValues {
 
-//    private static final Logger logger = LogManager.getLogger(MetadataFieldValuesFromIndex.class);
+    //    private static final Logger logger = LogManager.getLogger(MetadataFieldValuesFromIndex.class);
 
     static class Factory implements MetadataFieldValues.Factory {
 
@@ -33,33 +30,49 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
             this.index = index;
         }
 
-        public MetadataFieldValues create(String fieldName, FieldType fieldType) {
-            return new MetadataFieldValuesFromIndex(index.reader(), fieldName, fieldType == FieldType.NUMERIC);
+        public MetadataFieldValues create(String fieldName, FieldType fieldType, long limitValues) {
+            return new MetadataFieldValuesFromIndex(index.reader(), fieldName, fieldType == FieldType.NUMERIC,
+                    limitValues);
         }
     }
 
-    /**
-     * The values this field can have. Note that this may not be the complete list;
-     * check valueListComplete.
-     */
-    private final Map<String, Integer> values = new HashMap<>();
+    private TruncatableFreqList values;
 
     private final boolean isNumeric;
-
-    /**
-     * Whether or not all values are stored here.
-     */
-    private ValueListComplete valueListComplete = ValueListComplete.UNKNOWN;
 
     /**
      * Field name for use in warning message
      */
     private final String fieldName;
 
-    public MetadataFieldValuesFromIndex(IndexReader reader, String fieldName, boolean isNumeric) {
+    public MetadataFieldValuesFromIndex(IndexReader reader, String fieldName, boolean isNumeric, long limitValues) {
+        this(reader, fieldName, isNumeric, new TruncatableFreqList(limitValues));
+    }
+
+    public MetadataFieldValuesFromIndex(String fieldName, boolean isNumeric, TruncatableFreqList values) {
+        this(null, fieldName, isNumeric, values);
+    }
+
+    private MetadataFieldValuesFromIndex(IndexReader reader, String fieldName, boolean isNumeric,
+            TruncatableFreqList values) {
         this.fieldName = fieldName;
         this.isNumeric = isNumeric;
-        determineValueDistribution(reader);
+        this.values = values;
+        if (reader != null)
+            determineValueDistribution(reader);
+    }
+
+    @Override
+    public boolean canTruncateTo(long maxValues) {
+        return values.canTruncateTo(maxValues);
+    }
+
+    @Override
+    public MetadataFieldValues truncate(long maxValues) {
+        TruncatableFreqList newValues = values.truncate(maxValues);
+        if (newValues == values)
+            return this;
+        return new MetadataFieldValuesFromIndex(fieldName, isNumeric, newValues);
     }
 
     @Override
@@ -73,14 +86,14 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
             for (LeafReaderContext rc : reader.leaves()) {
                 LeafReader r = rc.reader();
                 Bits liveDocs = r.getLiveDocs();
-                getDocValues(r, isNumeric, liveDocs);
+                getDocValues(r, isNumeric, liveDocs, values);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void getDocValues(LeafReader r, boolean numeric, Bits liveDocs) throws IOException {
+    private void getDocValues(LeafReader r, boolean numeric, Bits liveDocs, TruncatableFreqList values) throws IOException {
         DocIdSetIterator dv = DocValuesUtil.docValuesIterator(r, fieldName, numeric);
         if (dv != null) { // If null, the documents in this segment do not contain any values for this field
             while (true) {
@@ -90,39 +103,15 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
                 if (liveDocs == null || liveDocs.get(docId)) { // not deleted?
                     String key = DocValuesUtil.getCurrentValueAsString(dv);
                     if (key != null) // if null, there's no value for this field in this document
-                        addToValueMap(key);
+                        values.add(key);
                 }
             }
         }
     }
 
-    private void addToValueMap(String key) {
-        if (isComplete() == ValueListComplete.UNKNOWN)
-            valueListComplete = ValueListComplete.YES;
-
-        if (values.containsKey(key)) {
-            // Seen this value before; increment frequency
-            values.compute(key, (__, value) -> value == null ? 1 : value + 1);
-        } else {
-            // New value; add it
-            if (values.size() >= MetadataFieldImpl.maxMetadataValuesToStore()) {
-                // We don't want to store thousands of unique values;
-                // Stop storing now and indicate that there's more.
-                valueListComplete = ValueListComplete.NO;
-            } else {
-                values.put(key, 1);
-            }
-        }
-    }
-
     @Override
-    public Map<String, Integer> distribution() {
-        return Collections.unmodifiableMap(values);
-    }
-
-    @Override
-    public ValueListComplete isComplete() {
-        return valueListComplete;
+    public TruncatableFreqList valueList() {
+        return values;
     }
 
     @Override
@@ -131,7 +120,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
     }
 
     @Override
-    public void setComplete(ValueListComplete complete) {
+    public void setComplete(boolean complete) {
         throw new UnsupportedOperationException("Metadata field values are determined from index");
     }
 

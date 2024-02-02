@@ -13,8 +13,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class RelationsResponse {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public Map<String, String> spans;
+    public Map<String, RelationType> spans;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public Map<String, Map<String, Long>> relations;
+    public Map<String, Map<String, RelationType>> relations;
 }

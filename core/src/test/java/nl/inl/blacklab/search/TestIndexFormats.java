@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.testutil.TestIndex;
 
 /**
@@ -178,12 +178,13 @@ public class TestIndexFormats {
     public void testMetadataMetadataField() {
         MetadataField field = index.metadata().metadataFields().get("pid");
         Assert.assertEquals(FieldType.TOKENIZED, field.type());
-        Assert.assertEquals(ValueListComplete.YES, field.isValueListComplete());
-        Map<String, Integer> map = field.valueDistribution();
+        MetadataFieldValues values = field.values(100);
+        Assert.assertEquals(false, values.valueList().isTruncated());
+        Map<String, Long> map = values.valueList().getValues();
         int expectedNumberOfDocuments = TestIndex.DOC_LENGTHS_TOKENS.length;
         Assert.assertEquals(expectedNumberOfDocuments, map.size());
         for (int i = 0; i < expectedNumberOfDocuments; i++)
-            Assert.assertEquals(1, (int)map.get(Integer.toString(i)));
+            Assert.assertEquals(1, (long)map.get(Long.toString(i)));
         Assert.assertEquals(TestIndex.DOC_LENGTHS_TOKENS.length, index.metadata().documentCount());
     }
 

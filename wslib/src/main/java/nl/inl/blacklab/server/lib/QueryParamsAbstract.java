@@ -394,6 +394,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public boolean getRelSeparateSpans() { return getBool(WebserviceParameter.REL_SEPARATE_SPANS); }
 
     @Override
+    public long getLimitValues() { return getLong(WebserviceParameter.LIMIT_VALUES); }
+
+    @Override
     public boolean isCalculateCollocations() { return get(WebserviceParameter.CALCULATE_STATS).equals("colloc"); }
 
     @Override

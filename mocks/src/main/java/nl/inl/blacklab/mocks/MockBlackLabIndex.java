@@ -34,6 +34,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -157,7 +158,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
+    public Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
@@ -284,7 +285,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field) {
+    public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
         throw new UnsupportedOperationException();
     }
 }

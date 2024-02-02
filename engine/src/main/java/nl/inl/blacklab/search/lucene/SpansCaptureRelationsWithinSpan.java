@@ -5,7 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.lucene.queries.spans.FilterSpans;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.spans.FilterSpans;
 
 /**
  * Captures all relations within a match info span.
@@ -17,7 +18,8 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
 
     private final SpansRelations relations;
 
-    /** Name of match info spans to capture relations from */
+    /** Name of match info spans to capture relations from
+     *  (if not set, capture all relations in current clause hit) */
     final String toCapture;
 
     /** Group index of toCapture */
@@ -40,6 +42,8 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
 
     /**
      * Construct a SpansCaptureRelationsWithinSpan.
+     *
+     * if toCapture is not set, capture all relations in current clause hit
      *
      * @param clause clause we're capturing from
      * @param relations relations to capture
@@ -64,12 +68,21 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
         // We can "only" get match info for our own clause, but that should be enough
         // (we can only capture relations from match info captured within own clause)
         candidate.getMatchInfo(matchInfo);
-        MatchInfo mi = matchInfo[toCaptureIndex];
-        // We can only capture relations if we have the span
-        if (mi != null) {
-            int start = mi.getSpanStart();
-            int end = mi.getSpanEnd();
+        int start = -1, end = -1;
+        if (toCaptureIndex >= 0) {
+            // Capture relations inside a named captured span
+            MatchInfo mi = matchInfo[toCaptureIndex];
+            if (mi != null) { // We can only capture relations if we have the span
+                start = mi.getSpanStart();
+                end = mi.getSpanEnd();
+            }
+        } else {
+            // Just use the current clause hit.
+            start = in.startPosition();
+            end = in.endPosition();
+        }
 
+        if (start >= 0) {
             // Capture all relations within the toCapture span
             capturedRelations.clear();
             int docId = relations.docID();
@@ -100,7 +113,8 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         super.passHitQueryContextToClauses(context);
         this.context = context;
-        this.toCaptureIndex = context.registerMatchInfo(toCapture);
+        if (!StringUtils.isEmpty(toCapture))
+            this.toCaptureIndex = context.registerMatchInfo(toCapture);
         this.captureAsIndex = context.registerMatchInfo(captureAs);
     }
 

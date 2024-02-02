@@ -49,6 +49,7 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -325,13 +326,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         }
     }
 
-    protected AnnotatedField fieldFromQuery(BLSpanQuery q) {
-        return annotatedField(q.getField());
-    }
-
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) {
-        QueryInfo queryInfo = QueryInfo.create(this, fieldFromQuery(query), true);
+    public Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
         return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
@@ -553,7 +549,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             String analyzerName = field.analyzerName();
             if (field.type() == FieldType.UNTOKENIZED)
                 analyzerName = "nontokenizing";
-            if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("default")) {
+            if (!analyzerName.isEmpty() && !analyzerName.equalsIgnoreCase("default")) {
                 Analyzer fieldAnalyzer = BuiltinAnalyzers.fromString(analyzerName).getAnalyzer();
                 if (fieldAnalyzer == null) {
                     logger.error("Unknown analyzer name " + analyzerName + " for field " + field.name());
@@ -753,7 +749,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return contentAccessor(field).getContentStore();
     }
 
-    public Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field) {
-        return field.getRelationsMap(this);
+    public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
+        return field.getRelationsStats(this, limitValues);
     }
 }

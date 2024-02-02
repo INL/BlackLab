@@ -106,6 +106,18 @@ docker-compose up -d
 
 Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
 
+If you want to be able to use the corpus frontend as well, create a file named `.env` in the root of the repository with the following contents:
+
+```ini
+DOCKER_IMAGE=blacklab-frontend
+```
+
+Then run:
+
+```bash
+docker-compose up -d --no-build
+```
+
 ## Special thanks
 
 * ej-technologies for the [JProfiler Java profiler](https://www.ej-technologies.com/products/jprofiler/overview.html)

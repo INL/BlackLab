@@ -1,6 +1,8 @@
 package nl.inl.blacklab.webservice;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -94,8 +96,11 @@ public enum WebserviceParameter {
 
     // list relations options
     REL_CLASSES("classes"),               // what relation classes to report (default all)
-    REL_ONLY_SPANS("only-spans"),         // only report spans, not other relations [no]
-    REL_SEPARATE_SPANS("separate-spans"), // report spans separately from other relations [yes]
+    REL_ONLY_SPANS("onlyspans", "only-spans"),  // only report spans, not other relations [no]
+    REL_SEPARATE_SPANS("separatespans", "separate-spans"), // report spans separately from other relations [yes]
+
+    // for listing values (metadata, annotations, relations, attributes)
+    LIMIT_VALUES("limitvalues"),        // truncate lists/maps of values to this length [1000]
 
     DEBUG("debug"), // include debug info (cache)
 
@@ -107,7 +112,9 @@ public enum WebserviceParameter {
 
     public static Optional<WebserviceParameter> fromValue(String str) {
         for (WebserviceParameter v: values()) {
-            if (v.value.equals(str))
+            if (v.name.equals(str))
+                return Optional.of(v);
+            if (v.synonyms.contains(str))
                 return Optional.of(v);
         }
         return Optional.empty();
@@ -144,6 +151,7 @@ public enum WebserviceParameter {
         defaultValues.put(PROPERTY, Constants.DEFAULT_MAIN_ANNOT_NAME); // deprecated, use "annotation" now
         defaultValues.put(REL_SEPARATE_SPANS, "yes");
         defaultValues.put(SENSITIVE, "no");
+        defaultValues.put(LIMIT_VALUES, "1000");
         defaultValues.put(USE_CACHE, "yes");
         defaultValues.put(WAIT_FOR_TOTAL_COUNT, "no");
         defaultValues.put(WORD_END, "-1");
@@ -154,16 +162,25 @@ public enum WebserviceParameter {
         defaultValues.put(par, value);
     }
 
-    private final String value;
+    /** Canonical parameter name. */
+    private final String name;
 
-    WebserviceParameter(String value) {
-        this.value = value;
+    /** Any alternative names for this parameter that will also be recognized. */
+    private final List<String> synonyms;
+
+    WebserviceParameter(String name) {
+        this(name, new String[0]);
     }
 
-    public String value() { return value; }
+    WebserviceParameter(String name, String... synonyms) {
+        this.name = name;
+        this.synonyms = Arrays.asList(synonyms);
+    }
+
+    public String value() { return name; }
 
     @Override
-    public String toString() { return value(); }
+    public String toString() { return name; }
 
     public String getDefaultValue() {
         return defaultValues.getOrDefault(this, "");

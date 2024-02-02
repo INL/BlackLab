@@ -8,14 +8,16 @@ public class ResultMetadataField {
     private String indexName;
     private MetadataField fieldDesc;
     private boolean listValues;
-    private Map<String, Integer> fieldValues;
+    private Map<String, Long> fieldValues;
+    private boolean valueListComplete;
 
     ResultMetadataField(String indexName, MetadataField fieldDesc, boolean listValues,
-            Map<String, Integer> fieldValues) {
+            Map<String, Long> fieldValues, boolean valueListComplete) {
         this.indexName = indexName;
         this.fieldDesc = fieldDesc;
         this.listValues = listValues;
         this.fieldValues = fieldValues;
+        this.valueListComplete = valueListComplete;
     }
 
     public String getIndexName() {
@@ -30,7 +32,11 @@ public class ResultMetadataField {
         return listValues;
     }
 
-    public Map<String, Integer> getFieldValues() {
+    public Map<String, Long> getFieldValues() {
         return fieldValues;
+    }
+
+    public boolean isValueListComplete() {
+        return valueListComplete;
     }
 }

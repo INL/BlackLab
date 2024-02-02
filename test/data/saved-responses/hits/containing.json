@@ -518,7 +518,10 @@
           "type": "tags"
         },
         "type": "posfilter"
-      }
+      },
+      "matchInfoNames": [
+        "u"
+      ]
     },
     "requestedWindowSize": 50,
     "searchParam": {

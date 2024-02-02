@@ -113,7 +113,10 @@
           "type": "sequence"
         },
         "type": "posfilter"
-      }
+      },
+      "matchInfoNames": [
+        "u"
+      ]
     },
     "requestedWindowSize": 50,
     "searchParam": {

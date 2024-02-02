@@ -79,18 +79,22 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     @XmlTransient
     private MetadataFieldValues values;
 
+    @XmlTransient
+    private MetadataFieldValues.Factory factory;
+
     // For JAXB deserialization
     @SuppressWarnings("unused")
     MetadataFieldImpl() {
     }
 
     MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory) {
-        this(fieldName, type, factory.create(fieldName, type));
+        this(fieldName, type, factory, factory.create(fieldName, type, MetadataFieldImpl.maxMetadataValuesToStore()));
     }
 
-    MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues values) {
+    MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory, MetadataFieldValues values) {
         super(fieldName);
         this.type = type;
+        this.factory = factory;
         this.values = values;
     }
 
@@ -144,14 +148,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         return UnknownCondition.fromStringValue(strUnknownCondition);
     }
 
-    @Override
-    public Map<String, Integer> valueDistribution() {
-        return values.distribution();
-    }
-
-    @Override
-    public ValueListComplete isValueListComplete() {
-        return values.isComplete();
+    public MetadataFieldValues values(long maxValues) {
+        if (values == null || !values.canTruncateTo(maxValues))
+            values = factory.create(name(), type, maxValues);
+        return values.truncate(maxValues);
     }
 
     /**
@@ -240,7 +240,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     void setValueListComplete(boolean valueListComplete) {
         if (this.values.shouldAddValuesWhileIndexing()) {
             ensureNotFrozen();
-            this.values.setComplete(valueListComplete ? ValueListComplete.YES : ValueListComplete.NO);
+            this.values.setComplete(valueListComplete);
         }
     }
 
@@ -279,7 +279,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
 
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName, MetadataFieldValues.Factory factory) {
         super.fixAfterDeserialization(index, fieldName);
-        values = factory.create(fieldName, type);
+        this.factory = factory;
+        values = factory.create(fieldName, type, MetadataFieldImpl.maxMetadataValuesToStore());
         setKeepTrackOfValues(false); // integrated uses DocValues for this
     }
 }

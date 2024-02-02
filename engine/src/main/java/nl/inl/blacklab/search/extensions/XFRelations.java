@@ -29,6 +29,7 @@ public class XFRelations implements ExtensionFunctionClass {
     public static final String FUNC_RMATCH = "rmatch";
     public static final String FUNC_RSPAN = "rspan";
     public static final String FUNC_RCAPTURE = "rcapture";
+    public static final String FUNC_RCAPTURE2 = "rcapture2";
 
     /**
      * Find relations matching type and target.
@@ -166,10 +167,31 @@ public class XFRelations implements ExtensionFunctionClass {
      *
      * @param queryInfo
      * @param context
-     * @param args function arguments: query, toCapture, captureAs, relationType
+     * @param args function arguments: query, captureAs, relationType
      * @return
      */
     private static BLSpanQuery rcapture(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
+        if (args.isEmpty())
+            throw new IllegalArgumentException("rcapture() requires at least a query");
+        BLSpanQuery query = (BLSpanQuery)args.get(0);
+        String captureAs = context.ensureUniqueCapture((String)args.get(1));
+        String relationType = optPrependDefaultType((String) args.get(2));
+        String field = context.withRelationAnnotation().luceneField();
+        return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, null, captureAs, relationType);
+    }
+
+    /**
+     * Capture relations inside a captured group.
+     *
+     * Will capture all relations matching the specified type regex as a list
+     * under the specified capture name.
+     *
+     * @param queryInfo
+     * @param context
+     * @param args function arguments: query, toCapture, captureAs, relationType
+     * @return
+     */
+    private static BLSpanQuery rcaptureWithinCapture(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         if (args.size() < 3)
             throw new IllegalArgumentException("rcapture() requires at least three arguments: query, toCapture, and captureAs");
         BLSpanQuery query = (BLSpanQuery)args.get(0);
@@ -188,7 +210,9 @@ public class XFRelations implements ExtensionFunctionClass {
                 List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM));
         QueryExtensions.register(FUNC_RSPAN, XFRelations::rspan, QueryExtensions.ARGS_QS,
                 Arrays.asList(null, "full"));
-        QueryExtensions.register(FUNC_RCAPTURE, XFRelations::rcapture, QueryExtensions.ARGS_QSSS,
+        QueryExtensions.register(FUNC_RCAPTURE, XFRelations::rcapture, QueryExtensions.ARGS_QSS,
+                Arrays.asList(null, "rels", ".*"), true);
+        QueryExtensions.register(FUNC_RCAPTURE2, XFRelations::rcaptureWithinCapture, QueryExtensions.ARGS_QSSS,
                 Arrays.asList(null, null, "rels", ".*"), true);
     }
 

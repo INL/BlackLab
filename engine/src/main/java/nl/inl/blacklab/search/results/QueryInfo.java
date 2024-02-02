@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collections;
+import java.util.List;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -30,6 +31,13 @@ public final class QueryInfo {
     /** Should we use the cache for this query, or bypass it? */
     private final boolean useCache;
 
+    /** The list of match info names registered while executing the query. These are all possible match infos that
+     *  could be captured, although not every hit is guaranteed to have every match info. */
+    private List<String> matchInfoNames;
+
+    /** How long executing certain parts of the operation took. */
+    private final QueryTimings timings = new QueryTimings();
+
     private QueryInfo(BlackLabIndex index, AnnotatedField field, boolean useCache) {
         super();
         this.index = index;
@@ -50,6 +58,29 @@ public final class QueryInfo {
     /** @return should we use the cache for this query, or bypass it? */
     public boolean useCache() {
         return useCache;
+    }
+
+    /** Get timings objects.
+     *
+     * Describes how long executing certain parts of the operation took.
+     * Mostly useful for debugging.
+     *
+     * @return the query timings object
+     */
+    public QueryTimings timings() {
+        return timings;
+    }
+
+    /**
+     * Get match info names.
+     *
+     * Returns the match info names registered while executing the query. These are all possible match infos that
+     * could be captured, although not every hit is guaranteed to have every match info.
+     *
+     * @return the list of match info names
+     */
+    public List<String> matchInfoNames() {
+        return Collections.unmodifiableList(matchInfoNames);
     }
 
     @Override
@@ -81,6 +112,10 @@ public final class QueryInfo {
         } else if (!index.equals(other.index))
             return false;
         return true;
+    }
+
+    public void setMatchInfoNames(List<String> matchInfoNames) {
+        this.matchInfoNames = matchInfoNames;
     }
 }
 

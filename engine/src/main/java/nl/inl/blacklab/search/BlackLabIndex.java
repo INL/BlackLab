@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -182,12 +183,24 @@ public interface BlackLabIndex extends AutoCloseable {
 
     /**
      * Find hits for a pattern in a field.
+     *
+     * @param queryInfo our query info
+     * @param query the pattern to find
+     * @param settings search settings, or null for default
+     * @return the hits found
+     */
+    Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings);
+
+    /**
+     * Find hits for a pattern in a field.
      * 
      * @param query the pattern to find
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    Hits find(BLSpanQuery query, SearchSettings settings);
+    default Hits find(BLSpanQuery query, SearchSettings settings) {
+        return find(QueryInfo.create(this, fieldFromQuery(query), true), query, settings);
+    }
 
     /**
      * Perform a document query only (no hits)
@@ -327,6 +340,10 @@ public interface BlackLabIndex extends AutoCloseable {
 
     default AnnotatedField annotatedField(String fieldName) {
         return metadata().annotatedField(fieldName);
+    }
+
+    default AnnotatedField fieldFromQuery(BLSpanQuery q) {
+        return annotatedField(q.getField());
     }
 
     default AnnotatedField mainAnnotatedField() {
@@ -508,5 +525,5 @@ public interface BlackLabIndex extends AutoCloseable {
     
     String name();
 
-    Map<String, Map<String, Long>> getRelationsMap(AnnotatedField field);
+    RelationsStats getRelationsStats(AnnotatedField field, long limitValues);
 }

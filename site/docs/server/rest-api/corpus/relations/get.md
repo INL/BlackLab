@@ -10,12 +10,13 @@ Return an overview of spans ("inline tags") and relations classes and types in t
 
 **Method** : `GET`
 
-| Parameter        | Description                                                                                                                                     |
-|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `field`          | Annotated field to get relations for. If omitted, the main annotated field is used.                                                             |
-| `classes`        | Comma-separated list of relations classes to return. If omitted, return all relations classes.                                                  |
-| `only-spans`     | If `true`, only returns spans. Equivalent to `classes=__tag`. Default: `false`                                                                  |
-| `separate-spans` | If `true` (the default), return spans differently than other relations. Set to `false` to return them as a regular relation with class `__tag`. |
+| Parameter       | Description                                                                                                                                     |
+|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `field`         | Annotated field to get relations for. If omitted, the main annotated field is used.                                                             |
+| `classes`       | Comma-separated list of relations classes to return. If omitted, return all relations classes.                                                  |
+| `onlyspans`     | If `true`, only returns spans. Equivalent to `classes=__tag`. Default: `false`                                                                  |
+| `separatespans` | If `true` (the default), return spans differently than other relations. Set to `false` to return them as a regular relation with class `__tag`. |
+| `limitvalues`   | Maximum number of values to return for attributes. Default: `1000`                                                                              |
 
 
 ## Success Response
@@ -29,70 +30,157 @@ Result for `/relations`:
 ```json
 {
     "spans": {
-        "p": 1,
-        "s": 2,
-        "named-entity": 3
+        "p": {
+            "attributes": {
+                "fixed": {
+                    "valueListComplete": true,
+                    "values": {
+                        "true": 1,
+                        "false": 2
+                    }
+                }
+            },
+            "count": 3
+        }
     },
     "relations": {
         "dep": {
-            "nsubj": 1,
-            "nobj": 2,
-            "nmod": 3
+            "nsubj": {
+                "count": 1
+            },
+            "nobj": {
+                "count": 2
+            },
+            "nmod": {
+                "count": 3
+            }
         },
         "fam": {
-            "mother": 1,
-            "father": 2,
-            "sibling": 3
+            "mother": {
+                "count": 1
+            },
+            "father": {
+                "count": 2
+            },
+            "sibling": {
+                "attributes": {
+                    "gender": {
+                        "valueListComplete": true,
+                        "values": {
+                            "male": 1,
+                            "female": 2,
+                            "other": 1
+                        }
+                    }
+                },
+                "count": 4
+            }
         }
     }
 }
 ```
 
-Result for `/relations?only-spans=true`:
+Result for `/relations?onlyspans=true`:
 
 ```json
 {
     "spans": {
-        "p": 1,
-        "s": 2,
-        "named-entity": 3
-    }
-}
-```
-
-Result for `/relations?classes=family`:
-
-```json
-{
-    "relations": {
-        "fam": {
-            "mother": 1,
-            "father": 2,
-            "sibling": 3
+        "p": {
+            "attributes": {
+                "fixed": {
+                    "valueListComplete": true,
+                    "values": {
+                        "true": 1,
+                        "false": 2
+                    }
+                }
+            },
+            "count": 3
         }
     }
 }
 ```
 
-Result for `/relations?separate-spans=false`:
+Result for `/relations?classes=fam`:
+
+```json
+{
+    "relations": {
+        "fam": {
+            "mother": {
+                "count": 1
+            },
+            "father": {
+                "count": 2
+            },
+            "sibling": {
+                "attributes": {
+                    "gender": {
+                        "valueListComplete": true,
+                        "values": {
+                            "male": 1,
+                            "female": 2,
+                            "other": 1
+                        }
+                    }
+                },
+                "count": 4
+            }
+        }
+    }
+}
+```
+
+Result for `/relations?separatespans=false`:
 
 ```json
 {
     "relations": {
         "__tag": {
-            "p": 1,
-            "s": 2,
-            "named-entity": 3
+            "p": {
+                "attributes": {
+                    "fixed": {
+                        "valueListComplete": true,
+                        "values": {
+                            "true": 1,
+                            "false": 2
+                        }
+                    }
+                },
+                "count": 3
+            }
         },
         "dep": {
-            "nsubj": 1,
-            "nobj": 2,
-            "nmod": 3
+            "nsubj": {
+                "count": 1
+            },
+            "nobj": {
+                "count": 2
+            },
+            "nmod": {
+                "count": 3
+            }
         },
         "fam": {
-            "mother": 1,
-            "father": 2,
-            "sibling": 3
+            "mother": {
+                "count": 1
+            },
+            "father": {
+                "count": 2
+            },
+            "sibling": {
+                "attributes": {
+                    "gender": {
+                        "valueListComplete": true,
+                        "values": {
+                            "male": 1,
+                            "female": 2,
+                            "other": 1
+                        }
+                    }
+                },
+                "count": 4
+            }
         }
     }
 }

@@ -7,8 +7,8 @@ import java.util.Map;
 import nl.inl.blacklab.search.indexmetadata.CustomProps;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
-import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 
 public final class MockMetadataField implements MetadataField {
     
@@ -79,13 +79,8 @@ public final class MockMetadataField implements MetadataField {
     }
 
     @Override
-    public Map<String, Integer> valueDistribution() {
-        return Collections.emptyMap();
-    }
-
-    @Override
-    public ValueListComplete isValueListComplete() {
-        return null;
+    public MetadataFieldValues values(long maxValues) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Override

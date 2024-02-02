@@ -10,6 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.CustomProps;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 
 public class MockAnnotatedField implements AnnotatedField {
     
@@ -105,7 +106,7 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public Map<String, Map<String, Long>> getRelationsMap(BlackLabIndex index) {
+    public RelationsStats getRelationsStats(BlackLabIndex index, long limitValues) {
         throw new UnsupportedOperationException();
     }
 }

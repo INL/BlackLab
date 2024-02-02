@@ -180,7 +180,7 @@ public class ResultDocsResponse {
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
         Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus, timings,
-                null, window.windowStats());
+                null, null, window.windowStats());
         ResultSummaryNumDocs numResultDocs = null;
         ResultSummaryNumHits numResultHits = null;
         if (hitsStats == null) {

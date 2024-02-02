@@ -9,6 +9,7 @@
 - BlackLab Corpus Query Language (BCQL) queries now allow dashes in names. Integrated index type allows dash in forEach names.
 - BCQL now allows the not-operator (`!`) to be used at the top level, and "global" constraints (`::`) to be used within parentheses as well.
 - Unicode normalization is applied to documents while indexing.
+- If a corpus directory is named `index`, we used to look at the parent directory for the "real" corpus name, but this quirk has been removed. 
 
 ### Fixed
 

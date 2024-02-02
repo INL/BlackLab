@@ -593,8 +593,7 @@ Please note that you must use the new integrated index format to index relations
         <w xml:id="w1">I</w>
         <w xml:id="w2">support</w>
         <w xml:id="w3">the</w>
-        <w join="right"
-           xml:id="w4">amendment</w>
+        <w join="right" xml:id="w4">amendment</w>
         <pc xml:id="w5">.</pc>
         <linkGrp targFunc="head argument" type="UD-SYN">
             <link ana="ud-syn:nsubj" target="#w2 #w1"/>
@@ -607,17 +606,36 @@ Please note that you must use the new integrated index format to index relations
 </doc>
 ```
 
-You can use this `standoffAnnotations` configuration:
+You can use this configuration:
 
 ```yaml
-tokenIdPath: "@xml:id"
+documentPath: //doc
+processor: saxon  # required to index relations
+namespaces:
+    xml: http://www.w3.org/XML/1998/namespace
+annotatedFields:
+    contents:
+        containerPath: text
+        # Both <w/> and <pc/> tags should be indexed as separate token positions
+        wordPath: .//w|.//pc
 
-standoffAnnotations:
-- path: .//linkGrp[@targFunc='head argument']
-  type: relation
-  valuePath: "replace(@ana, 'ud-syn:', '')"  # relation type
-  sourcePath: "replace(./@target, '^#(.+) .+$', '$1')"
-  targetPath: "replace(./@target, '^.+ #(.+)$', '$1')"
+        # If specified, the token position for each id will be saved,
+        # so you can index standoff annotations referring to this id later.
+        tokenIdPath: "@xml:id"
+
+        annotations:
+        - name: word  # First annotation becomes the main annotation
+          valuePath: .
+          sensitivity: sensitive_insensitive
+
+        standoffAnnotations:
+        - path: .//linkGrp[@targFunc='head argument']/link
+          type: relation
+          valuePath: "replace(@ana, 'ud-syn:', '')"  # relation type
+          # Note that we make sure the root relation is indexed without a source, 
+          # which is required in BlackLab.
+          sourcePath: "if (./@ana = 'ud-syn:root') then '' else replace(./@target, '^#(.+) .+$', '$1')"
+          targetPath: "replace(./@target, '^.+ #(.+)$', '$1')"
 ```
 
 The above would allow you to search for `_ -nsubj-> "I"` to find "I support", with the relation information captured. [Learn more about how to query relations](corpus-query-language.md#relations-querying)
@@ -769,6 +787,8 @@ The best way to influence the corpus metadata is by including a special section 
         - date
         - keywords
 ```
+
+If you add `addRemainingFields: true` to one of the groups, any field that wasn't explicitly listed will be added to that group.
 
 There's also a complete [annotated index metadata file](/guide/how-to-configure-indexing.md#annotated-configuration-file) if you want to know more details about that.
 

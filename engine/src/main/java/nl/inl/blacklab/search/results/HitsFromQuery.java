@@ -55,6 +55,9 @@ public class HitsFromQuery extends HitsMutable {
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo, HitsInternal.create(-1, true, true), null);
+        queryInfo.setMatchInfoNames(hitQueryContext.getMatchInfoNames());
+        QueryTimings timings = queryInfo().timings();
+        timings.start();
         final BlackLabIndex index = queryInfo.index();
         final IndexReader reader = index.reader();
         BLSpanQuery optimizedQuery;
@@ -97,9 +100,11 @@ public class HitsFromQuery extends HitsMutable {
                     ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);
                 }
             }
+            timings.record("rewrite");
 
             // This call can take a long time
             BLSpanWeight weight = optimizedQuery.createWeight(index.searcher(), ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+            timings.record("createWeight");
 
             // We must always initialize one spansReader upfront, so global state for Capture Groups and context are created.
             // We then store get these global objects from the initialized SpansReader, and pass them to the rest of the (stil uninitialized) SpansReaders.

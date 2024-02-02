@@ -618,13 +618,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     @Override
-    public void addMetadataField(String fieldName, String value) {
-        fieldName = optTranslateFieldName(fieldName);
-        traceln("METADATA " + fieldName + "=" + value);
-        super.addMetadataField(fieldName, value);
-    }
-
-    @Override
     public final void reportCharsProcessed() {
         final int charsDone = getCharacterPosition();
         final int charsDoneSinceLastReport;

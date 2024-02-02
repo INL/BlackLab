@@ -215,6 +215,20 @@ to the same word:
 
 This would match _day by day_, _step by step_, etc.
 
+::: details Multiple-value annotations and constraints
+
+Unfortunately, capture constraints can only access the first value indexed for an annotation. If you need this kind of
+functionality in combination with multi-values constraints, you'll have to find a way around this limitation.
+
+Some queries can be rewritten so they don't need a capture constraint. For example,
+`A:[word="some"] B:[word="queries"] :: A.lemma="some" & B.lemma="query"` can also be written as
+`A:[word="some" & lemma="some"] B:[word="queries" & lemma="query"]`, which does work with multiple annotation values.
+But this is rare.
+
+In other cases, you might be able to add extra annotations or use spans ("inline tags") to get around this limitation.
+
+:::
+
 #### Functions
 
 You can also use a few special functions in capture constraints. For example, ensure that words occur in the right order:
@@ -438,19 +452,17 @@ Note that BlackLab already adds this by default if your query matches any relati
 
 If you want to capture all relations in the sentence containing your match, use:
 
-    rcapture('elephant' within <s/>, 's')
+    'elephant' within rcapture(<s/>)
 
-What actually happens here is that all relations in a captured span are returned as _rels_ in the match info. In this case, the sentence span in our query is automatically captured as _s_, but you can use any capture. So if you wanted to capture the relations in the preceding and following sentences as well, you could useuse:
+What actually happens here is that all relations in the matched clause are returned as _rels_ in the match info.
 
-    rcapture(A:(<s/> (<s/> containing 'elephant') <s/>), 'A')
+You can pass a second parameter with the match info name for the list of captured relations (defaults to _rels_):
 
-You can pass a third parameter with the match info name for the list of captured relations (defaults to _rels_):
+    'elephant' within rcapture(<s/>, 'relations')
 
-    rcapture('elephant' within <s/>, 's', 'relations')
+If you only want to capture certain relations, you specify a third parameter that is a regular expression filter on the relation type. For example, to only capture relations in the `fam` class, use:
 
-If you only want to capture certain relations, you specify a fourth parameter that is a regular expression filter on the relation type. For example, to only capture relations in the `fam` class, use:
-
-    rcapture('elephant' within <s/>, 's', 'rels', 'fam::.*')
+    'elephant' within rcapture(<s/>, 'relations', 'fam::.*')
 
 
 ## Advanced subjects
