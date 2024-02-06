@@ -22,4 +22,7 @@ public class SummaryTextPattern {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     Map<String, MatchInfoDef> matchInfos;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String fieldName;
+
 }
