@@ -109,7 +109,9 @@ public class ResponseStreamer {
 
     // Docs
     public static final String KEY_DOC_INFO = "docInfo";
-    public static final String KEY_DOC_LENGTH_TOKENS = "lengthInTokens";
+    public static final String KEY_DOC_LENGTH_TOKENS = "lengthInTokens"; // v3/4: main field token count (docInfo)
+    public static final String KEY_TOKEN_COUNT = "tokenCount";           // v3/4: main field token count (index info)
+    public static final String KEY_TOKEN_COUNTS = "tokenCounts";         // v4/5: per-field token counts (both)
     public static final String KEY_DOC_MAY_VIEW = "mayView";
     public static final String KEY_DOC_PID = "docPid";
     public static final String KEY_DOC_SNIPPET = "snippet";
@@ -254,7 +256,17 @@ public class ResponseStreamer {
                 documentMetadataEntries(docInfo);
                 ds.endMap().endEntry();
             }
-            if (docInfo.getLengthInTokens() != null)
+            if (modernizeApi) {
+                ds.startEntry(KEY_TOKEN_COUNTS).startList();
+                for (Map.Entry<String, Integer> entry: docInfo.getLengthInTokensPerField().entrySet()) {
+                    ds.startItem(KEY_TOKEN_COUNT).startMap();
+                    ds.entry(KEY_FIELD_NAME, entry.getKey());
+                    ds.entry(KEY_TOKEN_COUNT, entry.getValue());
+                    ds.endMap().endItem();
+                }
+                ds.endList().endEntry();
+            }
+            if (!isNewApi && docInfo.getLengthInTokens() != null)
                 ds.dynEntry(KEY_DOC_LENGTH_TOKENS, docInfo.getLengthInTokens());
             ds.dynEntry(KEY_DOC_MAY_VIEW, docInfo.isMayView());
             if (!isNewApi) {
@@ -1019,7 +1031,7 @@ public class ResponseStreamer {
             if (params.getExplain()) {
                 TextPattern tp = params.patternWithinContextTag().orElseThrow();
                 try {
-                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
+                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index, params.getAnnotatedField()));
                     QueryExplanation explanation = index.explain(q);
                     ds.startEntry("explanation").startMap()
                             .entry("originalQuery", explanation.originalQuery())
@@ -1286,10 +1298,25 @@ public class ResponseStreamer {
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("timeModified", indexMetadata.timeModified());
-            ds.entry("tokenCount", indexMetadata.tokenCount());
+            indexTokenCount(indexMetadata);
             indexProgress(progress);
         }
         ds.endMap().endElEntry();
+    }
+
+    private void indexTokenCount(IndexMetadata indexMetadata) {
+        if (modernizeApi) {
+            ds.startEntry(KEY_TOKEN_COUNTS).startList();
+            for (Map.Entry<String, Long> entry: indexMetadata.tokenCountPerField().entrySet()) {
+                ds.startItem(KEY_TOKEN_COUNT).startMap();
+                ds.entry(KEY_FIELD_NAME, entry.getKey());
+                ds.entry(KEY_TOKEN_COUNT, entry.getValue());
+                ds.endMap().endItem();
+            }
+            ds.endList().endEntry();
+        }
+        if (!isNewApi)
+            ds.entry(KEY_TOKEN_COUNT, indexMetadata.tokenCount());
     }
 
     private void customInfoEntry(CustomProps custom) {
@@ -1324,7 +1351,7 @@ public class ResponseStreamer {
                 if (formatIdentifier != null && !formatIdentifier.isEmpty())
                     ds.entry("documentFormat", formatIdentifier);
                 ds.entry("timeModified", indexMetadata.timeModified());
-                ds.entry("tokenCount", indexMetadata.tokenCount());
+                indexTokenCount(indexMetadata);
                 indexProgress(progress);
             }
             ds.endMap();
@@ -1353,7 +1380,7 @@ public class ResponseStreamer {
             String formatIdentifier = metadata.documentFormat();
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
-            ds.entry("tokenCount", metadata.tokenCount());
+            indexTokenCount(metadata);
             ds.entry("documentCount", metadata.documentCount());
             indexProgress(result.getProgress());
 
@@ -1471,7 +1498,7 @@ public class ResponseStreamer {
             }
             ds.entry(KEY_STATS_STATUS, progress.getIndexStatus());
             ds.entry("timeModified", metadata.timeModified());
-            ds.entry("tokenCount", metadata.tokenCount());
+            indexTokenCount(metadata);
             String formatIdentifier = metadata.documentFormat();
             if (!StringUtils.isEmpty(formatIdentifier))
                 ds.entry("documentFormat", formatIdentifier);

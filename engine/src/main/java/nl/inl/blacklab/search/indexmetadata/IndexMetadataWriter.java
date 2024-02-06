@@ -6,8 +6,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 
 /** Used to write information about a BlackLab index, including its fields structure. */
 public interface IndexMetadataWriter extends IndexMetadata {
-    
-	/**
+
+    /**
 	 * Save the index structure file.
 	 */
 	void save();

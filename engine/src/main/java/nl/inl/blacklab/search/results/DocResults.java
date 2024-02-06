@@ -363,7 +363,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
 
-        String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().name();
+        String tokenLengthFieldName = queryInfo().field().name();
         DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(queryInfo().index(), tokenLengthFieldName);
 
         for (DocResult r : this) {
@@ -538,7 +538,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
                     Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                    String tokenLengthField = queryInfo().index().mainAnnotatedField().tokenLengthField();
+                    String tokenLengthField = queryInfo().field().tokenLengthField();
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         LeafReader reader = r.reader();
                         Bits liveDocs = reader.getLiveDocs();
@@ -569,7 +569,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 // (note that DocPropertyAnnotatedFieldLength already excludes the dummy closing token)
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
 //                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
-                String fieldName = queryInfo().index().mainAnnotatedField().name();
+                String fieldName = queryInfo().field().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), fieldName);
                 numberOfTokens = countTokens ? intSum(propTokens) : -1;
                 numberOfDocuments = size();

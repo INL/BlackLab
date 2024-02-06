@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -83,6 +84,8 @@ public interface WebserviceParams extends QueryParams {
      * @return hits - filtered then sorted then sampled
      */
     SearchHits hitsSample() throws BlsException;
+
+    AnnotatedField getAnnotatedField();
 
     SearchDocs docsWindow() throws BlsException;
 

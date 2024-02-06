@@ -333,11 +333,8 @@ public class WebserviceRequestHandler {
     }
 
     public static void opRelations(WebserviceParamsImpl params, ResponseStreamer rs) {
-        String fieldName = params.getFieldName();
         BlackLabIndex index = params.blIndex();
-        AnnotatedField field = StringUtils.isEmpty(fieldName) ?
-                index.mainAnnotatedField() :
-                index.annotatedField(fieldName);
+        AnnotatedField field = params.getAnnotatedField();
         RelationsStats stats = index.getRelationsStats(field, params.getLimitValues());
         Map<String, RelationsStats.ClassStats> classesMap = stats.getClasses();
         Collection<String> relClasses = params.getRelClasses().isEmpty() ? classesMap.keySet() :

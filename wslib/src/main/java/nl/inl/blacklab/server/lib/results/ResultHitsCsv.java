@@ -59,7 +59,7 @@ public class ResultHitsCsv {
                 groups = params.hitsGroupedWithStoredHits().execute();
 
                 if (viewGroup != null) {
-                    PropertyValue groupId = PropertyValue.deserialize(params.blIndex(), params.blIndex().mainAnnotatedField(), viewGroup);
+                    PropertyValue groupId = PropertyValue.deserialize(params.blIndex(), params.getAnnotatedField(), viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
                     HitGroup group = groups.get(groupId);

@@ -513,7 +513,7 @@ public class WebserviceOperations {
         //TODO: use background job?
 
         BlackLabIndex blIndex = params.blIndex();
-        AnnotatedField cfd = blIndex.mainAnnotatedField();
+        AnnotatedField cfd = params.getAnnotatedField();
         String annotName = params.getAnnotationName();
         if (annotName.isEmpty())
             annotName = cfd.mainAnnotation().name();
@@ -635,7 +635,7 @@ public class WebserviceOperations {
             throw new NotAuthorized("You can only add new data to your own private indices.");
 
         long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
-        if (indexMetadata.tokenCount() > maxTokenCount) {
+        if (indexMetadata.tokenCountPerField().values().stream().anyMatch(count -> count > maxTokenCount)) {
             throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + maxTokenCount
                     + " tokens allowed in a user index. Cannot add any more data to it.");
         }

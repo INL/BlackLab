@@ -83,7 +83,7 @@ public class ExportCorpus implements AutoCloseable {
                 String fromInputFile = doc.get("fromInputFile");
                 System.out.println("Getting content for " + fromInputFile + "...");
                 try {
-                    String xml = DocUtil.contents(index, id, doc);
+                    String xml = DocUtil.contents(index, index.mainAnnotatedField(), id, doc);
                     File file = new File(exportDir, fromInputFile);
                     System.out.println("Got content, exporting to " + file + "...");
                     if (file.exists()) {

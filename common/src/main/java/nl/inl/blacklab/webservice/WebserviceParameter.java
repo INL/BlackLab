@@ -109,7 +109,7 @@ public enum WebserviceParameter {
 
     OPERATION("op"),
     CORPUS_NAME("indexname"),
-    FIELD("field"),
+    FIELD("field"), // (annotated) field to use for operation
     INPUT_FORMAT("inputformat"),
     API_VERSION("api");
 

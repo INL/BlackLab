@@ -7,6 +7,12 @@
   "textDirection": "ltr",
   "documentFormat": "docuser:voice-tei",
   "tokenCount": 334,
+  "tokenCounts": [
+  	{
+  	  "fieldName": "contents",
+  	  "tokenCount": 334
+  	}
+  ],
   "documentCount": 1,
   "versionInfo": {
     "blacklabBuildTime": "UNKNOWN",

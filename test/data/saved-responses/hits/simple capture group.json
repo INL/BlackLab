@@ -11,6 +11,12 @@
       ],
       "title": [
         "service encounter about visa application for family members"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 334
+        }
       ]
     }
   },

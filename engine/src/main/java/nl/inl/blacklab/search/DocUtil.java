@@ -376,9 +376,10 @@ public class DocUtil {
      * @param d Lucene document if available, otherwise null
      * @return contents
      */
-    public static String contents(BlackLabIndex index, int docId, Document d) {
+    public static String contents(BlackLabIndex index, AnnotatedField field, int docId, Document d) {
+        if (field == null)
+            field = index.mainAnnotatedField();
         try {
-            Field field = index.mainAnnotatedField();
             if (!field.hasContentStore()) {
                 // Regular stored field
                 String fieldName = field.contentsFieldName();

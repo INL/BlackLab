@@ -11,6 +11,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -47,6 +48,7 @@ public class ResultDocSnippet {
         this.params = params;
 
         BlackLabIndex index = params.blIndex();
+        AnnotatedField field = params.getAnnotatedField();
         String docPid = params.getDocPid();
         int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
         if (luceneDocId < 0)
@@ -89,10 +91,10 @@ public class ResultDocSnippet {
             // Also capture any relations that are in the tag
             pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, captureInlineTagAs, "rels"));
             QueryExecutionContext queryContext = QueryExecutionContext.get(index,
-                    index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
+                    params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {
                 BLSpanQuery query = pattern.translate(queryContext);
-                hits = index.search().find(query).execute();
+                hits = index.search(field).find(query).execute();
             } catch (InvalidQuery e) {
                 throw new BlackLabRuntimeException(e);
             }
@@ -110,7 +112,7 @@ public class ResultDocSnippet {
                 int newAfter = (int)(context.after() * factor);
                 context = ContextSize.get(newBefore, newAfter, maxSnippetSize);
             }
-            hits = Hits.singleton(QueryInfo.create(index), luceneDocId, start, end);
+            hits = Hits.singleton(QueryInfo.create(index, field), luceneDocId, start, end);
         }
 
         origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;

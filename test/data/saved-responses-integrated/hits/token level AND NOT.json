@@ -11,6 +11,12 @@
       ],
       "title": [
         "service encounter about visa application for family members"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 334
+        }
       ]
     },
     "PBsve435": {
@@ -24,6 +30,12 @@
       ],
       "title": [
         "service encounter about getting an address printed out"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 164
+        }
       ]
     },
     "PRint602": {
@@ -37,6 +49,12 @@
       ],
       "title": [
         "interview about conference experience and impressions of city"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 268
+        }
       ]
     }
   },

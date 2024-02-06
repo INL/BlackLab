@@ -19,6 +19,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
@@ -317,7 +318,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         Optional<String> sortBy = getSortProps();
         if (sortBy.isEmpty())
             return null;
-        HitProperty sortProp = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), sortBy.get());
+        HitProperty sortProp = HitProperty.deserialize(blIndex(), getAnnotatedField(), sortBy.get());
         return new HitSortSettings(sortProp);
     }
 
@@ -430,13 +431,13 @@ public class WebserviceParamsImpl implements WebserviceParams {
         String hitFilterVal = getHitFilterValue();
         if (StringUtils.isEmpty(hitFilterCrit) || StringUtils.isEmpty(hitFilterVal))
             return hits();
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterCrit);
-        PropertyValue value = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterVal);
+        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), hitFilterCrit);
+        PropertyValue value = PropertyValue.deserialize(blIndex(), getAnnotatedField(), hitFilterVal);
         return hits().filter(prop, value);
     }
 
     private SearchHits hits() throws BlsException {
-        SearchEmpty search = blIndex().search(null, useCache());
+        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
         try {
             Query filter = filterQuery();
             Optional<TextPattern> pattern = patternWithinContextTag();
@@ -448,6 +449,23 @@ public class WebserviceParamsImpl implements WebserviceParams {
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
         }
+    }
+
+    /**
+     * Get the annotated field we want to search.
+     *
+     * Uses the main field if none was specified or the specified field doesn't exist,
+     * so we can always return a valid field.
+     *
+     * @return the annotated field
+     */
+    @Override
+    public AnnotatedField getAnnotatedField() {
+        String fieldName = getFieldName();
+        AnnotatedField field = blIndex().annotatedField(fieldName);
+        if (field == null)
+            field = blIndex().mainAnnotatedField();
+        return field;
     }
 
     @Override
@@ -481,7 +499,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (docFilterQuery == null) {
             docFilterQuery = blIndex().getAllRealDocsQuery();
         }
-        SearchEmpty search = blIndex().search(null, useCache());
+        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
         return search.findDocuments(docFilterQuery);
     }
 
@@ -499,7 +517,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (docFilterQuery == null) {
             docFilterQuery = blIndex().getAllRealDocsQuery();
         }
-        SearchEmpty search = blIndex().search(null, useCache());
+        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
         return search.findDocuments(docFilterQuery);
     }
 
@@ -520,7 +538,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         HitGroupSettings hitGroupSettings = hitGroupSettings();
         assert hitGroupSettings != null;
         String groupProps = hitGroupSettings.groupBy();
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupProps);
+        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), groupProps);
         if (prop == null)
             throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
         return prop;

@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -327,6 +328,11 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     @Override
     public long tokenCount() {
         return tokenCount;
+    }
+
+    @Override
+    public Map<String, Long> tokenCountPerField() {
+        return Map.of(mainAnnotatedField().name(), tokenCount);
     }
 
     // Methods that mutate data

@@ -11,6 +11,12 @@
       ],
       "title": [
         "interview about conference experience and impressions of city"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 268
+        }
       ]
     }
   },

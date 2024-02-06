@@ -81,7 +81,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     @Override
     public AnnotatedFieldImpl get(String fieldName) {
         if (!annotatedFields.containsKey(fieldName))
-            throw new IllegalArgumentException("Annotated field '" + fieldName + "' not found!");
+            return null;
         return annotatedFields.get(fieldName);
     }
 

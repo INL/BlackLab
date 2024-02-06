@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -29,6 +31,8 @@ public class ResultDocInfo {
     private Map<String, List<String>> metadata;
 
     private Integer lengthInTokens;
+
+    private Map<String, Integer> lengthInTokensPerField = new LinkedHashMap<>();
 
     private boolean mayView;
 
@@ -69,6 +73,7 @@ public class ResultDocInfo {
                 continue;
             metadata.put(f.name(), List.of(values));
         }
+        // TODO: report token length for all annotated fields?
         String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
         lengthInTokens = null;
         if (tokenLengthField != null) {
@@ -76,6 +81,17 @@ public class ResultDocInfo {
             lengthInTokens = strDocLength == null ? 0 :
                     Integer.parseInt(strDocLength) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
+
+        for (AnnotatedField f: index.annotatedFields()) {
+            Integer length = null;
+            if (f.tokenLengthField() != null) {
+                String strDocLength = document.get(f.tokenLengthField());
+                length = strDocLength == null ? 0 :
+                        Integer.parseInt(strDocLength) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            }
+            lengthInTokensPerField.put(f.name(), length);
+        }
+
         mayView = index.mayView(document);
 
     }
@@ -89,7 +105,11 @@ public class ResultDocInfo {
     }
 
     public Integer getLengthInTokens() {
-        return lengthInTokens;
+        return lengthInTokensPerField.get(index.mainAnnotatedField().name());
+    }
+
+    public Map<String, Integer> getLengthInTokensPerField() {
+        return Collections.unmodifiableMap(lengthInTokensPerField);
     }
 
     public boolean isMayView() {

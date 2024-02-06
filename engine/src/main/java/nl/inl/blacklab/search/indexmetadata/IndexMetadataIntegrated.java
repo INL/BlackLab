@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -194,7 +195,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
         tokenCount = 0;
         documentCount = 0;
-        tokenCountCalculated = false;
+        synchronized (this) {
+            tokenCountCalculated = false;
+        }
         // (already set) metadataDocument = new MetadataDocument();
 
         annotatedFields.fixAfterDeserialization(index, this);
@@ -253,15 +256,18 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @XmlTransient
     protected long tokenCount = 0;
 
+    @XmlTransient
+    protected Map<String, Long> tokenCountPerField = new LinkedHashMap<>();
+
+    /** Have we determined our tokenCount from the index? (done lazily) */
+    @XmlTransient
+    private boolean tokenCountCalculated;
+
     /** Our metadata fields */
     protected MetadataFieldsImpl metadataFields = null;
 
     /** Our annotated fields */
     protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
-
-    /** Have we determined our tokenCount from the index? (done lazily) */
-    @XmlTransient
-    private boolean tokenCountCalculated;
 
     /** How many documents with values for the main annotated field are in our index */
     @XmlTransient
@@ -728,6 +734,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     @Override
+    public synchronized Map<String, Long> tokenCountPerField() {
+        ensureDocsAndTokensCounted();
+        return Collections.unmodifiableMap(tokenCountPerField);
+    }
+
+    @Override
     public synchronized int documentCount() {
         ensureDocsAndTokensCounted();
         return documentCount;
@@ -736,21 +748,28 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     private synchronized void ensureDocsAndTokensCounted() {
         if (!tokenCountCalculated) {
             tokenCountCalculated = true;
-            tokenCount = documentCount = 0;
+            tokenCount = 0;
+            tokenCountPerField.clear();
             if (!isNewIndex()) {
-                // Add up token counts for all the documents
-                AnnotatedField field = annotatedFields().main();
-                Annotation annot = field.mainAnnotation();
-                AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
-                index.forEachDocument((__, docId) -> {
-                    int docLength = afi.docLength(docId);
-                    if (docLength >= 1) {
-                        // Positive docLength means that this document has a value for this annotated field
-                        // (e.g. the index metadata document does not and returns 0)
-                        tokenCount += docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                        documentCount++;
-                    }
-                });
+                // Count tokens for each field (and documents while we're at it)
+                for (AnnotatedField field: annotatedFields()) {
+                    documentCount = 0;
+                    long[] fieldTokenCount = new long[] { 0 };
+                    // Add up token counts for all the documents
+                    Annotation annot = field.mainAnnotation();
+                    AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
+                    index.forEachDocument((__, docId) -> {
+                        int docLength = afi.docLength(docId);
+                        if (docLength >= 1) {
+                            // Positive docLength means that this document has a value for this annotated field
+                            // (e.g. the index metadata document does not and returns 0)
+                            fieldTokenCount[0] += docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                            documentCount++; // NOTE: we dont use afi.size() because that includes deleted docs.
+                        }
+                    });
+                    tokenCountPerField.put(field.name(), fieldTokenCount[0]);
+                }
+                tokenCount = tokenCountPerField.get(mainAnnotatedField().name());
             }
         }
     }

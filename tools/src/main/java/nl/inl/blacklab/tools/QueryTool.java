@@ -841,8 +841,8 @@ public class QueryTool {
                 String v = lcased.substring(6);
                 determineTotalNumberOfHits = v.equals("on") || v.equals("yes") || v.equals("true");
                 outprintln("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
-            } else if (lcased.startsWith("pattfield")) {
-                String v = lcased.substring(9).trim();
+            } else if (lcased.matches("^(patt)?field ")) {
+                String v = lcased.replaceAll("^(patt)?field ", "").trim();
                 if (v.isEmpty()) {
                     contentsField = index.mainAnnotatedField();
                     outprintln("Searching main annotated field: " + contentsField.name());
@@ -1016,6 +1016,7 @@ public class QueryTool {
         outprintln("  group {match|before|after} [annot] # Group query results (annot = e.g. 'word', 'lemma', 'pos')");
         outprintln("  group <property>                   #   (like BLS, e.g. hit:lemma:i or capture:pos:i:A)");
         outprintln("  hits / groups / group <n> / colloc # Switch between results modes");
+        outprintln("  field <name>                       # Set the annotated field to search");
         outprintln("  context <n>                        # Set number of words to show around hits");
         outprintln("  pagesize <n>                       # Set number of hits to show per page");
         outprintln("  snippet <x>                        # Show longer snippet around hit x");

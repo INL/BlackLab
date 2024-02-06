@@ -63,7 +63,7 @@ The next section explains how these queries work.
 
 The `==>` operator is a new type of relation operator that finds all relations where the source of the relation is part of the left side hit. It also finds a right side span that encompasses all the matching relations' targets. It also required that the right side span contains a hit for the given right side query (here `'wie' [] 'und' []`), if any such query was given.
 
-The `de` at the end of the relation operator shows that the relations we're looking for must be cross-field relations pointing from the current field (`contents__nl`, as indicated by the `pattfield` parameter) to the `contents__de` field. Of course, the `==>` operator still supports the same relation class/type filters if necessary, so you can specify a different class or type, e.g. `=s=>de` or `=al::s=>de`.
+The `de` at the end of the relation operator shows that the relations we're looking for must be cross-field relations pointing from the current field (`contents__nl`, as indicated by the `field` parameter) to the `contents__de` field. Of course, the `==>` operator still supports the same relation class/type filters if necessary, so you can specify a different class or type, e.g. `=s=>de` or `=al::s=>de`.
 
 This operator returns the left span and two captures: the list of relations as `rels/de` and the right part as `target/de`. The captures will indicate relations pointing to the `contents__de` field, or the capture itself being from that field.
 

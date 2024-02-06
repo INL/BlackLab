@@ -377,7 +377,7 @@ public class IndexTool {
 
             String indexInfo =
                     "documentCount: " + index.metadata().documentCount() + "\n" +
-                    "tokenCount: " + index.metadata().tokenCount() + "\n";
+                    "tokenCount: " + index.metadata().tokenCount() + "\n"; // TODO: per field
             File indexInfoFile = new File(indexDir, "indexinfo.yaml");
             System.out.println("Writing " + indexInfoFile);
             FileUtils.write(indexInfoFile, indexInfo, StandardCharsets.UTF_8);

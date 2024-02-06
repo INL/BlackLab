@@ -59,6 +59,7 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
 - New endpoints were added for all operations on corpora, at `/corpora/CORPUSNAME/...` (for now alongside existing endpoints `/CORPUSNAME`). These endpoints are available in BlackLab v4 but only "speak" API v5 (see below). You should move to these endpoints for future compatibility.
 - A new endpoint `/parse-pattern` was added that allows you to parse a CorpusQL or JSON query structure pattern without actually executing the search.
 - A new endpoint `.../CORPUSNAME/relations` that will return all the spans ("inline tags") and relations indexed in the corpus.
+- Doc info on results pages and document info page: the new `tokenCounts` array gives token counts for all annotated fields. The first annotated field is the main one, which has the same value as `lengthInTokens`.
 
 ### Deprecated
 
@@ -68,6 +69,7 @@ These features still work for now, but will be removed in the future.
   - The `indices` object. Use `corpora` instead.
   - The top-level `fieldInfo` object. Instead, use the top-level `pidField` to find the persistent identifier field. For other special fields, you still have to use `fieldInfo`, but that will move to `custom` in API v5.
 - Document info page (`/docs/DOC_PID`) and results pages: `metadataFieldDisplayNames`, `metadataFieldGroups` and `docFields` are deprecated. This information can be found on the corpus info page, so it should be retrieved from there once.
+- Doc info on results pages and document info page: `lengthInTokens` is deprecated; use the first object in the `tokenCounts` array instead, which gives the `tokenCount` for the main annotated field.
 - Search operations:
   - the `wordsaroundhit` parameter (use `context` instead)
   - sort/group properties `wordleft`,`wordright`. Use `before`/`after` instead with `1` as the number of tokens, e.g. `before:lemma:i:1` instead of `wordleft:lemma:i`.

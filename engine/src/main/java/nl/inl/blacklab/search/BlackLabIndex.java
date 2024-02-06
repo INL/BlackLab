@@ -347,7 +347,7 @@ public interface BlackLabIndex extends AutoCloseable {
     }
 
     default AnnotatedField mainAnnotatedField() {
-        return metadata().mainAnnotatedField();
+        return metadata().annotatedFields().main();
     }
     
     default MetadataFields metadataFields() {

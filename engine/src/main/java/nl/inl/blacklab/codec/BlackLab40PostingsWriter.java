@@ -5,7 +5,6 @@ import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +44,7 @@ import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -197,6 +197,53 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     }
 
     /**
+     * Offset in term vector file per term id for a single doc and field.
+     *
+     * Keeps track of position in the term vector file where the occurrences of each term id
+     * are stored for a single document and field.
+     */
+    private static class TermVecFileOffsetPerTermId extends LinkedHashMap<Integer, Long> {
+        // intentionally blank; this is just a typedef for readability
+    }
+
+    /**
+     * Keeps track of tokens length and term vector file offsets for a single Lucene field.
+     *
+     * Tokens length is shared between all Lucene fields belonging to a single annotated
+     * field, because those all have the same length.
+     */
+    private static class LengthsAndOffsetsPerDocument {
+        /** For each document id (key), the length in tokens of the annotated field this Lucene field is a part of.
+         *  (shared with other annotations on this annotated field) */
+        private final Map<Integer, Integer> docId2annotatedFieldTokenLengths;
+
+        /** For each document id (key), record the term vector file offsets (value). */
+        private final SortedMap<Integer, TermVecFileOffsetPerTermId> docId2TermVecFileOffsets = new TreeMap<>();
+
+        LengthsAndOffsetsPerDocument(Map<Integer, Integer> docId2annotatedFieldTokenLengths) {
+            this.docId2annotatedFieldTokenLengths = docId2annotatedFieldTokenLengths;
+        }
+
+        void putTermOffset(Integer docId, int termId, long filePointer) {
+            TermVecFileOffsetPerTermId vecFileOffsetsPerTermId =
+                    docId2TermVecFileOffsets.computeIfAbsent(docId, k -> new TermVecFileOffsetPerTermId());
+            vecFileOffsetsPerTermId.put(termId, filePointer);
+        }
+
+        void updateFieldLength(Integer docId, int length) {
+            docId2annotatedFieldTokenLengths.compute(docId, (k, v) -> v == null ? length : Math.max(v, length));
+        }
+
+        TermVecFileOffsetPerTermId get(int docId) {
+            TermVecFileOffsetPerTermId termVecFileOffsetPerTermId = docId2TermVecFileOffsets.get(docId);
+            if (termVecFileOffsetPerTermId == null) {
+                termVecFileOffsetPerTermId = new TermVecFileOffsetPerTermId();
+            }
+            return termVecFileOffsetPerTermId;
+        }
+    }
+
+    /**
      * Write our additions to the default postings (i.e. the forward index)
      *
      * Iterates over the term vector to build the forward index in a temporary file.
@@ -225,8 +272,11 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             // Write our postings extension information
 
 
+
             // We'll keep track of doc lengths so we can preallocate our forward index structure.
-            Map<Integer, Integer> docLengths = new HashMap<>();
+            // (we do this per annotated field, e.g. contents, NOT per annotation, e.g. contents%word@s,
+            //  because all annotations on the same field have the same length)
+            Map<String, Map<Integer, Integer>> docLengthsPerAnnotatedField = new HashMap<>();
 
             // First we write a temporary dump of the term vector, and keep track of
             // where we can find term occurrences per document so we can reverse this
@@ -236,11 +286,16 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             //  (we're trying to reconstruct the document), so we will do that below.
             //   we use temporary files because this might take a huge amount of memory)
             // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
-            Map<String/*field*/, SortedMap<Integer/*lucene doc id*/, Map<Integer/*termID*/, Long/*filePointer*/>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
+            Map<String, LengthsAndOffsetsPerDocument> field2docTermVecFileOffsets = new LinkedHashMap<>();
             try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                 // Process fields
                 for (String luceneField: fields) { // for each field
+                    // Make sure doc lengths are shared between all annotations for a single annotated field.
+                    String annotatedFieldName = AnnotatedFieldNameUtil.getBaseName(luceneField);
+                    Map<Integer, Integer> docLengths = docLengthsPerAnnotatedField.computeIfAbsent(
+                            annotatedFieldName, __ -> new HashMap<>());
+
                     // If this field should get a forward index...
                     if (!BlackLabIndexIntegrated.isForwardIndexField(fieldInfos.fieldInfo(luceneField))) {
                         continue;
@@ -262,8 +317,9 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     // The map is keyed by docId and stores a list of offsets into the
                     // temporary termvector file where the occurrences for each term can be
                     // found.
-                    Map<Integer, Map<Integer, Long>> docId2TermVecFileOffsets =
-                            field2docTermVecFileOffsets.computeIfAbsent(luceneField, k -> new TreeMap<>());
+                    LengthsAndOffsetsPerDocument lengthsAndOffsetsPerDocument =
+                            field2docTermVecFileOffsets.computeIfAbsent(luceneField,
+                                    __ -> new LengthsAndOffsetsPerDocument(docLengths));
 
                     // For each term in this field...
                     PostingsEnum postingsEnum = null; // we'll reuse this for efficiency
@@ -293,16 +349,15 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                                 break;
 
                             // Keep track of term positions offsets in term vector file
-                            Map<Integer, Long> vecFileOffsetsPerTermId =
-                                    docId2TermVecFileOffsets.computeIfAbsent(docId, k -> new HashMap<>());
-                            vecFileOffsetsPerTermId.put(termId, outTempTermVectorFile.getFilePointer());
+                            lengthsAndOffsetsPerDocument.putTermOffset(docId, termId,
+                                    outTempTermVectorFile.getFilePointer());
 
                             // Go through each occurrence of term in this doc,
                             // gathering the positions where this term occurs as a "primary value"
                             // (the first value at this token position, which we will store in the
                             //  forward index). Also determine docLength.
                             int nOccurrences = postingsEnum.freq();
-                            int docLength = docLengths.getOrDefault(docId, 0);
+                            int docLength = -1;
                             byte[] bytesPositions = new byte[nOccurrences * Integer.BYTES];
                             DataOutput positions = new ByteArrayDataOutput(bytesPositions);
                             int numOccurrencesWritten = 0;
@@ -323,7 +378,8 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                                     numOccurrencesWritten++;
                                 }
                             }
-                            docLengths.put(docId, docLength);
+                            if (docLength > -1)
+                                lengthsAndOffsetsPerDocument.updateFieldLength(docId, docLength);
 
                             // Write the positions where this term occurs as primary value
                             // (will be reversed below to get the forward index)
@@ -352,7 +408,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     for (int i : insensitivePos2TermID) termsOrderFile.writeInt(i);
                     for (int i : termID2SensitivePos) termsOrderFile.writeInt(i);
                     for (int i : sensitivePos2TermID) termsOrderFile.writeInt(i);
-                }
+                } // for each field
                 CodecUtil.writeFooter(outTempTermVectorFile);
             }
 
@@ -362,16 +418,22 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             try (IndexInput inTermVectorFile = openInput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                 // For each field...
-                for (Entry<String, SortedMap<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
+                for (Entry<String, LengthsAndOffsetsPerDocument> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
                     String luceneField = fieldEntry.getKey();
-                    SortedMap<Integer/*docID*/, Map<Integer/*termID*/, Long/*file offset*/>> docPosOffsets = fieldEntry.getValue();
+                    LengthsAndOffsetsPerDocument docPosOffsets = fieldEntry.getValue();
 
                     // Record starting offset of field in tokensindex file (written to fields file later)
                     fiFields.get(luceneField).setTokensIndexOffset(outTokensIndexFile.getFilePointer());
 
+                    // Make sure we know our document lengths
+                    String annotatedFieldName = AnnotatedFieldNameUtil.getBaseName(luceneField);
+                    Map<Integer, Integer> docLengths = docLengthsPerAnnotatedField.get(annotatedFieldName);
+
                     // For each document...
                     for (int docId = 0; docId < state.segmentInfo.maxDoc(); docId++) {
-                        int[] termIds = getDocumentContents(docId, docLengths, inTermVectorFile, docPosOffsets);
+                        final int docLength = docLengths.getOrDefault(docId, 0);
+                        TermVecFileOffsetPerTermId offsets = docPosOffsets.get(docId);
+                        int[] termIds = getDocumentContents(docLength, inTermVectorFile, offsets);
                         writeTokensInDoc(outTokensIndexFile, outTokensFile, termIds);
                     }
                 }
@@ -400,12 +462,10 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         }
     }
 
-    private int[] getDocumentContents(int docId, Map<Integer, Integer> docLengths,
-            IndexInput inTermVectorFile, SortedMap<Integer, Map<Integer, Long>> docPosOffsets)
+    private int[] getDocumentContents(int docLength,
+            IndexInput inTermVectorFile, TermVecFileOffsetPerTermId termPosOffsets)
             throws IOException {
 
-        final Map<Integer/*term ID*/, Long/*file offset*/> termPosOffsets = docPosOffsets.getOrDefault(docId, Collections.emptyMap());
-        final int docLength = docLengths.getOrDefault(docId, 0);
         final int[] tokensInDoc = new int[docLength]; // reconstruct the document here
 
         // NOTE: sometimes docs won't have any values for a field, but we'll

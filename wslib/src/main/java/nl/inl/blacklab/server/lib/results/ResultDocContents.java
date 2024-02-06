@@ -132,7 +132,7 @@ public class ResultDocContents {
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc;
         if (hits == null) {
-            hitsInDoc = Hits.empty(QueryInfo.create(index));
+            hitsInDoc = Hits.empty(QueryInfo.create(index, params.getAnnotatedField()));
         } else {
             hitsInDoc = hits.getHitsInDoc(docId);
         }
@@ -163,7 +163,7 @@ public class ResultDocContents {
             // here we may need to include namespace declarations
             // retrieve the first bit of the document, try to find namespaces
             String root = DocUtil.contentsByCharPos(index, docId, document,
-                    index.mainAnnotatedField(), 0, 1024);
+                    params.getAnnotatedField(), 0, 1024);
             m = NAMED_NAMESPACE.matcher(root);
             namespaces = new HashSet<>();
             while (m.find()) {

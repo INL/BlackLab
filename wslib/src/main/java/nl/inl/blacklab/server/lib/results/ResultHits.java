@@ -168,8 +168,7 @@ public class ResultHits {
      * @return the SearchHits that will yield the hits, or null if the search could not be reconstructed.
      */
     private static SearchHits getQueryForHitsInSpecificGroupOnly(WebserviceParams params, PropertyValue viewGroupVal,
-            HitGroups hitsGrouped) throws
-            BlsException, InvalidQuery {
+            HitGroups hitsGrouped) throws BlsException, InvalidQuery {
         // see if we can enhance this query
         if (hitsGrouped.isSample())
             return null;
@@ -180,7 +179,7 @@ public class ResultHits {
         // (we can't enhance multi-token queries such as ngrams yet)
         TextPattern tp = params.patternWithinContextTag().orElseThrow();
         BlackLabIndex index = params.blIndex();
-        if (!tp.toQuery(QueryInfo.create(index)).guarantees().producesSingleTokens())
+        if (!tp.toQuery(QueryInfo.create(index, params.getAnnotatedField())).guarantees().producesSingleTokens())
             return null;
 
         // Alright, the original query for the Hits lends itself to enhancement.
@@ -228,8 +227,8 @@ public class ResultHits {
 
         // All specifiers merged!
         // Construct the query that will get us our hits.
-        SearchEmpty search = index.search(index.mainAnnotatedField(), params.useCache());
-        QueryInfo queryInfo = QueryInfo.create(index, index.mainAnnotatedField());
+        SearchEmpty search = index.search(params.getAnnotatedField(), params.useCache());
+        QueryInfo queryInfo = search.queryInfo();
         BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
         SearchHits hits = search.find(query, params.searchSettings());
         if (params.hitsSortSettings() != null) {
@@ -244,7 +243,7 @@ public class ResultHits {
     private static Pair<SearchCacheEntry<?>, Hits> getHitsFromGroup(WebserviceParams params, String viewGroup)
             throws InterruptedException, ExecutionException, InvalidQuery, BlsException {
         BlackLabIndex index = params.blIndex();
-        PropertyValue viewGroupVal = PropertyValue.deserialize(index, index.mainAnnotatedField(), viewGroup);
+        PropertyValue viewGroupVal = PropertyValue.deserialize(index, params.getAnnotatedField(), viewGroup);
         if (viewGroupVal == null)
             throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
         SearchCacheEntry<HitGroups> jobHitGroups = params.hitsGroupedStats().executeAsync();
