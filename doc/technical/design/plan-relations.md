@@ -529,6 +529,24 @@ As another example, the payload `0x81; 0x04` would mean `{ relOtherStart: 1, fla
 
 In the future, we will likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
 
+
+#### How to ensure we can look up attributes and other relation info (NOT YET IMPLEMENTED)
+
+_(NOTE: this feature is planned but not yet implemented)_
+
+Relations with attributes are index twice: once with the attributes as part of the term (so we can find instances with specific attribute values efficiently)and once without the attributes (so queries that don't filter on attributes are efficient even if there's a unique id attribute).
+
+This causes problems when we want to group by an attribute value of a tag we matched, because we don't always have those available, depending on the query.
+
+There could also be other things we want to look up about a relation in the future, such as its parent or children.
+
+We want to enable this by adding a unique relation id to the payload that allows us to look up additional information in a separate file.
+
+How this changes the relation encoding:
+- we add a flag `0x10`; if set, a unique `relationId` is stored in the payload. It would be stored after `flags` (and after `targetField`, if present). This ensures BlackLab remains compatible with older corpora; however, corpora encoded this way are not compatible with older versions of BlackLab (as they would not be able to correctly decode the payload).
+- `relationId` is a unique number (for this annotated field), assigned when the relation is parsed and added, that can be used to look up information about the relation, such as its attributes, in separate index files.
+- The index files with relation info is created while writing the indexed terms _with_ attributes to the segment (because that term contains all the information we need to create it, whereas the optimization terms obviously do not). Both versions of the term are added with the same `relationId`, of course. 
+
 ### Calculate Lucene span from relation term
 
 When found using BlackLab, a relation has a source and target (which may be word groups or single words) as well as a "regular" span.
