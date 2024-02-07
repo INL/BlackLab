@@ -152,15 +152,24 @@ public class RelationsStats {
     }
 
     boolean addIndexedTerm(String term, long freq) {
-        if (term.isEmpty())
-            return true; // empty terms are added if no relations are found at a position (?)
-        if (oldStyleStarttag && term.startsWith("@"))
-            return true; // attribute value in older index; cannot match to its tag
+        if (term.endsWith(RelationUtil.IS_OPTIMIZATION_INDICATOR)) {
+            // Don't count these; they are extra terms to speed up certain searches.
+            return true;
+        }
+        if (term.isEmpty()) {
+            // Empty terms are added if no relations are found at a position
+            return true;
+        }
+        if (oldStyleStarttag && term.startsWith("@")) {
+            // Attribute value in older index; cannot match to its tag, so cannot count
+            return true;
+        }
         String relationClass;
         if (oldStyleStarttag) {
             // Old external index. Convert term to new style so we can process it the same way.
             relationClass = RelationUtil.CLASS_INLINE_TAG;
-            term = RelationUtil.indexTerm(RelationUtil.fullType(relationClass, term), null);
+            term = RelationUtil.indexTerm(RelationUtil.fullType(relationClass, term),
+                    null, false);
         } else {
             // New integrated index with spans indexed as relations as well.
             relationClass = RelationUtil.classAndType(RelationUtil.fullTypeFromIndexedTerm(term))[0];

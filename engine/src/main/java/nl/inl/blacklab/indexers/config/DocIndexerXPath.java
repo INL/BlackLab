@@ -166,7 +166,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 fullType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, spanOrRelType);
 
             // Determine the full value to index, e.g. full type and any attributes
-            String valueToIndex = RelationUtil.indexTermMulti(fullType, attributes);
+            String valueToIndex = RelationUtil.indexTermMulti(fullType, attributes, false);
 
             // Actually index the value, once without and once with attributes (if any)
             annotationValue(name, valueToIndex, sourceSpan, targetSpan, type);
@@ -174,7 +174,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 // Also index a version without attributes. We'll use this for faster search if we don't filter on
                 // attributes.
                 // OPT: find a way to only create the payload once, because it is identical for both.
-                valueToIndex = RelationUtil.indexTermMulti(fullType, null);
+                valueToIndex = RelationUtil.indexTermMulti(fullType, null, true);
                 annotationValue(name, valueToIndex, sourceSpan, targetSpan, type);
             }
         }

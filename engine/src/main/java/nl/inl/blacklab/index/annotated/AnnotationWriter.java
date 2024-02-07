@@ -469,13 +469,14 @@ public class AnnotationWriter {
             // for inline tags, we'll only know it when we encounter the closing tag,
             // and we'll add the payload then.
             payload = relationInfo.hasTarget() ? relationInfo.serialize() : null;
-            addValueAtPosition(RelationUtil.indexTerm(fullRelationType, attributes),
+            addValueAtPosition(RelationUtil.indexTerm(fullRelationType, attributes, false),
                     relationInfo.getSourceStart(), payload);
             boolean indexedTwice = false;
             if (attributes != null && !attributes.isEmpty()) {
                 // Also index a version without attributes. We'll use this for faster search if we don't filter on
-                // attributes.
-                addValueAtPosition(RelationUtil.indexTerm(fullRelationType, null),
+                // attributes. The indexed term will be tagged as an optimization term, so it won't be counted when we
+                // determine statistics.
+                addValueAtPosition(RelationUtil.indexTerm(fullRelationType, null, true),
                         relationInfo.getSourceStart(), payload);
                 indexedTwice = true;
             }

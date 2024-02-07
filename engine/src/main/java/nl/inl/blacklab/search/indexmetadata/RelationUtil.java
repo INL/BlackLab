@@ -49,16 +49,26 @@ public class RelationUtil {
     /** Character before attribute name in _relation annotation. */
     private static final String CH_NAME_START = "\u0003";
 
+    /** An indexed term that ends with this character should not be counted, it is an extra search helper.
+     *  (used for relations, which are indexed with and without attributes so we can search faster if we don't
+     *   care about attributes)
+     */
+    static final String IS_OPTIMIZATION_INDICATOR = "\u0004";
+
     /**
      * Determine the term to index in Lucene for a relation.
      *
      * @param fullRelationType full relation type
      * @param attributes any attributes for this relation
+     * @param isOptimization is this an extra index term to help speed up search in some cases? Such terms should
+     *                not be counted when determining stats. This will be indicated in the term encoding.
      * @return term to index in Lucene
      */
-    public static String indexTerm(String fullRelationType, Map<String, String> attributes) {
+    public static String indexTerm(String fullRelationType, Map<String, String> attributes, boolean isOptimization) {
+        String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
+
         if (attributes == null || attributes.isEmpty())
-            return fullRelationType + ATTR_SEPARATOR;
+            return fullRelationType + ATTR_SEPARATOR + isOptSuffix;
 
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
@@ -68,7 +78,7 @@ public class RelationUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return fullRelationType + ATTR_SEPARATOR + attrPart;
+        return fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
     }
 
     /**
@@ -79,11 +89,15 @@ public class RelationUtil {
      *
      * @param fullRelationType full relation type
      * @param attributes any attributes for this relation
+     * @param isOptimization is this an extra index term to help speed up search in some cases? Such terms should
+     *                not be counted when determining stats. This will be indicated in the term encoding.
      * @return term to index in Lucene
      */
-    public static String indexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes) {
+    public static String indexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes,
+            boolean isOptimization) {
+        String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
         if (attributes == null)
-            return fullRelationType + ATTR_SEPARATOR;
+            return fullRelationType + ATTR_SEPARATOR + isOptSuffix;
 
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
@@ -95,12 +109,14 @@ public class RelationUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return fullRelationType + ATTR_SEPARATOR + attrPart;
+        return fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
     }
 
     public static Map<String, String> attributesFromIndexedTerm(String indexedTerm) {
         int i = indexedTerm.indexOf(ATTR_SEPARATOR);
-        if (i < 0 || i == indexedTerm.length() - 1)
+        boolean isFinalChar = i == indexedTerm.length() - 1;
+        boolean isFinalCharBeforeOptIndicator = i == indexedTerm.length() - 2 && indexedTerm.charAt(i + 1) == IS_OPTIMIZATION_INDICATOR.charAt(0);
+        if (i < 0 || isFinalChar || isFinalCharBeforeOptIndicator)
             return Collections.emptyMap();
         Map<String, String> attributes = new HashMap<>();
         for (String attrPart: indexedTerm.substring(i + 1).split(ATTR_SEPARATOR)) {
@@ -113,6 +129,19 @@ public class RelationUtil {
         return attributes;
     }
 
+    /**
+     * Optionally surround a regular expression with parens.
+     *
+     * Necessary when concatenating certain regexes, e.g. ones that use the "|" operator.
+     *
+     * If it is already parenthesized, or clearly doesn't need parens
+     * (simple regexes like e.g. ".*" or "hello"), leave it as is.
+     *
+     * Not very smart, but it doesn't hurt to add parens.
+     *
+     * @param regex regular expression
+     * @return possibly parenthesized regex
+     */
     private static String optParRegex(String regex) {
         if (regex.startsWith("(") && regex.endsWith(")") || regex.matches("\\.[*+?]|\\w+"))
             return regex;
@@ -236,10 +265,16 @@ public class RelationUtil {
         boolean useOldRelationsEncoding = index != null && index.metadata()
                 .indexFlag(IndexMetadataIntegrated.IFL_INDEX_RELATIONS_TWICE).isEmpty();
 
+        String typeRegex = optParRegex(fullRelationTypeRegex);
         if (attributes == null || attributes.isEmpty()) {
             // No attribute filters, so find the faster term that only has the relation type.
             // (for older encoding, just do a prefix query on the slower terms)
-            return optParRegex(fullRelationTypeRegex) + ATTR_SEPARATOR + (useOldRelationsEncoding ? ".*" : "");
+            if (useOldRelationsEncoding)
+                return typeRegex + ATTR_SEPARATOR + ".*";
+
+            // Note: we make the optimization indicator optional so older indexes (created with
+            // alpha version) don't break; remove this eventually.
+            return typeRegex + ATTR_SEPARATOR + "(" + IS_OPTIMIZATION_INDICATOR + ")?";
         }
 
         // Sort and concatenate the attribute names and values
@@ -250,7 +285,7 @@ public class RelationUtil {
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
         // The regex consists of the type part followed by the (sorted) attributes part.
-        return optParRegex(fullRelationTypeRegex) + ATTR_SEPARATOR + ".*" + attrPart + ".*";
+        return typeRegex + ATTR_SEPARATOR + ".*" + attrPart + ".*";
     }
 
     public static String optPrependDefaultClass(String relationTypeRegex, QueryExecutionContext context) {
