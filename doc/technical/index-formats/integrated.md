@@ -74,6 +74,10 @@ Three special characters delineate the separate parts of the term:
 
 These delineation characters make sure we can generate a regular expressions that avoid any unwanted matches (e.g. prefix or suffix matches).
 
+Relations with attributes are indexed twice: once with, and once without
+attributes. The second version is used to speed up queries that don't
+filter on the attributes. This version is marked with a `\u0004` appended to the term, so we know to skip it when determining relations statistics.
+
 
 ### Payload
 
