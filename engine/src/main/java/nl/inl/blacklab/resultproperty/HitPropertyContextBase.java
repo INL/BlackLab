@@ -128,10 +128,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         initForwardIndex();
     }
 
-    public void setSerializeAs(String type) {
-        this.serializeName = type;
-    }
-
     public Annotation getAnnotation() {
         return annotation;
     }

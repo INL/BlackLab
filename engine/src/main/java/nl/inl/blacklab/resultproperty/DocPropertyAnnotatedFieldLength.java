@@ -31,6 +31,8 @@ import nl.inl.util.NumericDocValuesCacher;
  */
 public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
+    public static final String ID = "fieldlen";
+
     public static DocPropertyAnnotatedFieldLength deserialize(BlackLabIndex index, String info) {
         return new DocPropertyAnnotatedFieldLength(index, PropertySerializeUtil.unescapePart(info));
     }
@@ -135,7 +137,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + PropertySerializeUtil.combineParts("fieldlen", fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts(ID, fieldName);
     }
 
     @Override

@@ -62,29 +62,38 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         String info = parts.length > 1 ? parts[1] : "";
         HitProperty result;
         switch (type) {
-        case "decade":
+        case HitPropertyDocumentDecade.ID:
             result = HitPropertyDocumentDecade.deserializeProp(index, ResultProperty.ignoreSensitivity(info));
             break;
-        case "docid":
+        case HitPropertyDoc.ID:
+            result = HitPropertyDoc.deserializeProp(index);
+            break;
+        case HitPropertyDocumentId.ID:
             result = HitPropertyDocumentId.deserializeProp();
             break;
-        case "field":
+        case HitPropertyDocumentStoredField.ID:
             result = HitPropertyDocumentStoredField.deserializeProp(index, ResultProperty.ignoreSensitivity(info));
             break;
-        case "hit":
+        case HitPropertyHitText.ID:
             result = HitPropertyHitText.deserializeProp(index, field, info);
             break;
-        case "before":
-        case "left": {
+        case HitPropertyBeforeHit.ID: {
             HitPropertyContextBase res = HitPropertyBeforeHit.deserializeProp(index, field, info);
-            res.setSerializeAs(type);
             result = res;
             break;
         }
-        case "after":
-        case "right": {
+        case HitPropertyLeftContext.ID: {
+            HitPropertyContextBase res = HitPropertyLeftContext.deserializeProp(index, field, info);
+            result = res;
+            break;
+        }
+        case HitPropertyAfterHit.ID: {
             HitPropertyContextBase res = HitPropertyAfterHit.deserializeProp(index, field, info);
-            res.setSerializeAs(type);
+            result = res;
+            break;
+        }
+        case HitPropertyRightContext.ID: {
+            HitPropertyContextBase res = HitPropertyRightContext.deserializeProp(index, field, info);
             result = res;
             break;
         }
@@ -96,29 +105,26 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
             // deprecated, use e.g. after:lemma:s:1
             result = HitPropertyAfterHit.deserializePropSingleWord(index, field, info);
             break;
-        case "ctx":
+        case HitPropertyContextPart.ID:
             result = HitPropertyContextPart.deserializeProp(index, field, info);
             break;
         case "context":
             // deprecated, will be serialized to (multiple) ctx
             result = HitPropertyContextPart.deserializePropContextWords(index, field, info);
             break;
-        case "capture":
+        case HitPropertyCaptureGroup.ID:
             result = HitPropertyCaptureGroup.deserializeProp(index, field, info);
             break;
-        case "hitposition":
+        case HitPropertyHitPosition.ID:
             result = HitPropertyHitPosition.deserializeProp();
             break;
-        case "doc":
-            result = HitPropertyDoc.deserializeProp(index);
-            break;
             
-        case "fieldlen":
+        case DocPropertyAnnotatedFieldLength.ID:
             throw new BlackLabRuntimeException("Grouping hit results by " + type + " is not yet supported");
             /*result = HitPropertyDocumentAnnotatedFieldLength.deserialize(ResultProperty.ignoreSensitivity(info));
             break;*/
             
-        case "numhits":
+        case DocPropertyNumberOfHits.ID:
             throw new BlackLabRuntimeException("Cannot group hit results by " + type);
             
         default:

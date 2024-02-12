@@ -13,6 +13,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public class HitPropertyDocumentDecade extends HitProperty {
 
+    public static final String ID = DocPropertyDecade.ID;
+
     /** The value we store when the decade is unknown */
     public static final int UNKNOWN_VALUE = 10_000_000;
 
@@ -69,7 +71,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + PropertySerializeUtil.combineParts("decade", fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts(ID, fieldName);
     }
 
     @Override

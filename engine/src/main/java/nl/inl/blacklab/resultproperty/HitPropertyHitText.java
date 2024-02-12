@@ -11,7 +11,9 @@ import nl.inl.blacklab.search.results.Hits;
  * A hit property for grouping on the text actually matched.
  */
 public class HitPropertyHitText extends HitPropertyContextBase {
-    
+
+    public static final String ID = "hit";
+
     static HitPropertyHitText deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         return deserializeProp(HitPropertyHitText.class, index, field, info);
     }
@@ -23,7 +25,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     // Used by HitPropertyContextBase.deserializeProp() via reflection
     @SuppressWarnings("unused")
     public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        super("hit text", "hit", index, annotation, sensitivity, false);
+        super("hit text", ID, index, annotation, sensitivity, false);
     }
 
     public HitPropertyHitText(BlackLabIndex index, MatchSensitivity sensitivity) {

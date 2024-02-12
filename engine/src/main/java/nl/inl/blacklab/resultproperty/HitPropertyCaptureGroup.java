@@ -16,6 +16,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
+    public static final String ID = "capture";
+
     static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         HitPropertyCaptureGroup hp = deserializeProp(HitPropertyCaptureGroup.class, index, field, info);
 
@@ -48,7 +50,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     }
 
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName) {
-        super("captured group", "capture", index, annotation, sensitivity, false);
+        super("captured group", ID, index, annotation, sensitivity, false);
         this.groupName = groupName;
     }
 

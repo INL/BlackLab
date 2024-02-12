@@ -17,7 +17,20 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public class HitPropertyContextPart extends HitPropertyContextBase {
 
-    public static final int MAX_CONTEXT_PART_LENGTH = 20;
+    public static final char PART_BEFORE = 'B';
+
+    public static final char PART_AFTER = 'A';
+
+    public static final char PART_MATCH_FROM_END = 'E';
+
+    public static final char PART_MATCH = 'H';
+
+    @Deprecated
+    public static final char PART_LEFT = 'L';
+
+    @Deprecated
+    public static final char PART_RIGHT = 'R';
+    public static final String ID = "ctx";
 
     static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         return deserializeProp(HitPropertyContextPart.class, index, field, info);
@@ -83,18 +96,20 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             int direction = 1;
             boolean confineToHit = false;
             switch (param.charAt(0)) {
-            case 'L':
+            case PART_BEFORE:
+            case PART_LEFT: // (old)
                 direction = -1;
                 break;
-            case 'E':
+            case PART_MATCH_FROM_END:
                 fromHitEnd = true;
                 direction = -1;
                 confineToHit = true;
                 break;
-            case 'R':
+            case PART_AFTER:
+            case PART_RIGHT: // (old)
                 fromHitEnd = true;
                 break;
-            case 'H':
+            case PART_MATCH:
             default:
                 confineToHit = true;
                 break;
@@ -127,11 +142,12 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
         @Override
         public String toString() {
-            String anchor = fromHitEnd ? (direction == 1 ? "R" : "E") : (direction == 1 ? "H" : "L");
+            char anchor = fromHitEnd ? (direction == 1 ? PART_AFTER : PART_MATCH_FROM_END) :
+                    (direction == 1 ? PART_MATCH : PART_BEFORE);
             int from = first + (direction == 1 ? 1 : 0); // (1-based)
             int to = last + (direction == 1 ? 1 : 0);
             if (from == to)
-                return anchor + from;
+                return "" + anchor + from;
             return anchor + from + "-" + (to == -1 ? "" : to);
         }
 
@@ -180,7 +196,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     }
 
     public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextPart part) {
-        super("context part", "ctx", index, annotation, sensitivity, false);
+        super("context part", ID, index, annotation, sensitivity, false);
         this.part = part;
         this.compareInReverse = part != null && part.compareInReverse();
     }

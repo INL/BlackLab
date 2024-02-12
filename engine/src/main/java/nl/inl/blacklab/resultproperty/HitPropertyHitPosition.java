@@ -8,6 +8,8 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyHitPosition extends HitProperty {
 
+    public static final String ID = "hitposition";
+
     static HitPropertyHitPosition deserializeProp() {
         return new HitPropertyHitPosition();
     }
@@ -49,7 +51,7 @@ public class HitPropertyHitPosition extends HitProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "hitposition";
+        return serializeReverse() + ID;
     }
     
     @Override

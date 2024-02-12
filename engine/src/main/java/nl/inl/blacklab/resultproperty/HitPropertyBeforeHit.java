@@ -16,6 +16,8 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyBeforeHit extends HitPropertyContextBase {
 
+    public static final String ID = "before";
+
     /** How many tokens of context-before to compare */
     protected int numberOfTokens;
 
@@ -35,19 +37,31 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     }
 
     // Used by HitPropertyContextBase.deserializeProp() via reflection
-    @SuppressWarnings("unused")
     public HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        this(index, annotation, sensitivity, -1);
+        this(index, annotation, sensitivity, -1, ID);
     }
 
     public HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens) {
-        super("context before", "left", index, annotation, sensitivity, true);
+        this(index, annotation, sensitivity, numberOfTokens, ID);
+    }
+
+    // Used by HitPropertyContextBase.deserializeProp() via reflection
+    HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String serializeName) {
+        this(index, annotation, sensitivity, -1, serializeName);
+    }
+
+    HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens, String serializeName) {
+        super("context before", serializeName, index, annotation, sensitivity, true);
         this.numberOfTokens = numberOfTokens >= 1 ? numberOfTokens : index.defaultContextSize().before();
     }
 
     @Override
     void deserializeParam(String param) {
-        numberOfTokens = Integer.parseInt(param);
+        try {
+            numberOfTokens = Integer.parseInt(param);
+        } catch (NumberFormatException e) {
+            numberOfTokens = index.defaultContextSize().before();
+        }
     }
 
     @Override

@@ -16,6 +16,8 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyAfterHit extends HitPropertyContextBase {
 
+    public static final String ID = "after";
+
     /** How many tokens of context-after to compare */
     protected int numberOfTokens;
 
@@ -37,17 +39,31 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     // Used by HitPropertyContextBase.deserializeProp() via reflection
     @SuppressWarnings("unused")
     public HitPropertyAfterHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        this(index, annotation, sensitivity, -1);
+        this(index, annotation, sensitivity, -1, ID);
     }
 
     public HitPropertyAfterHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens) {
-        super("context after", "right", index, annotation, sensitivity, false);
+        this(index, annotation, sensitivity, numberOfTokens, ID);
+    }
+
+    // Used by HitPropertyContextBase.deserializeProp() via reflection
+    @SuppressWarnings("unused")
+    HitPropertyAfterHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String serializeName) {
+        this(index, annotation, sensitivity, -1, serializeName);
+    }
+
+    HitPropertyAfterHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens, String serializeName) {
+        super("context after", serializeName, index, annotation, sensitivity, false);
         this.numberOfTokens = numberOfTokens >= 1 ? numberOfTokens : index.defaultContextSize().after();
     }
 
     @Override
     void deserializeParam(String param) {
-        numberOfTokens = Integer.parseInt(param);
+        try {
+            numberOfTokens = Integer.parseInt(param);
+        } catch (NumberFormatException e) {
+            numberOfTokens = index.defaultContextSize().after();
+        }
     }
 
     @Override

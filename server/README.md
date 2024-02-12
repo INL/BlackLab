@@ -13,9 +13,9 @@ Find hits for a word:
 
   http://corpus.example.com/blacklab-server/mycorpus/hits?patt="easy"
 
-Group hits by left context:
+Group hits by word before match:
 
-  http://corpus.example.com/blacklab-server/mycorpus/hits?patt="easy"&group=left
+  http://corpus.example.com/blacklab-server/mycorpus/hits?patt="easy"&group=before:word:s:1
 
 Highlight in original content:
 

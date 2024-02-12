@@ -110,32 +110,32 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
         String info = parts.length > 1 ? parts[1] : "";
         DocProperty result;
         switch (type) {
-        case "decade":
+        case DocPropertyDecade.ID:
             result = DocPropertyDecade.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
-        case "numhits":
+        case DocPropertyNumberOfHits.ID:
             result = DocPropertyNumberOfHits.deserialize();
             break;
-        case "field":
+        case DocPropertyStoredField.ID:
             result = DocPropertyStoredField.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
-        case "fieldlen":
+        case DocPropertyAnnotatedFieldLength.ID:
             result = DocPropertyAnnotatedFieldLength.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
 
-        case "docid":
-        case "doc":
+        case HitPropertyDocumentId.ID:
+        case HitPropertyDoc.ID:
             throw new BlackLabRuntimeException("Grouping doc results by " + type + " is not yet supported");
 
-        case "hit":
-        case "before":
-        case "left":
-        case "after":
-        case "right":
-        case "wordleft":
-        case "wordright":
-        case "context":
-        case "hitposition":
+        case HitPropertyHitText.ID:
+        case HitPropertyBeforeHit.ID:
+        case HitPropertyLeftContext.ID:
+        case HitPropertyAfterHit.ID:
+        case HitPropertyRightContext.ID:
+        case "wordleft":  // deprecated
+        case "wordright": // deprecated
+        case "context":   // deprecated
+        case HitPropertyHitPosition.ID:
             throw new BlackLabRuntimeException("Cannot group doc results by " + type);
 
         default:

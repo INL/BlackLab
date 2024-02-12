@@ -10,6 +10,9 @@ import nl.inl.blacklab.search.results.Hits;
  */
 @Deprecated
 public class HitPropertyRightContext extends HitPropertyAfterHit {
+
+    public static final String ID = "right";
+
     HitPropertyRightContext(HitPropertyAfterHit prop, Hits hits, boolean invert) {
         super(prop, hits, invert);
     }
@@ -17,11 +20,11 @@ public class HitPropertyRightContext extends HitPropertyAfterHit {
     public HitPropertyRightContext(BlackLabIndex index,
             Annotation annotation,
             MatchSensitivity sensitivity) {
-        super(index, annotation, sensitivity);
+        super(index, annotation, sensitivity, ID);
     }
 
     public HitPropertyRightContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity,
             int numberOfTokens) {
-        super(index, annotation, sensitivity, numberOfTokens);
+        super(index, annotation, sensitivity, numberOfTokens, ID);
     }
 }

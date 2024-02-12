@@ -34,13 +34,17 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
+import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
+import nl.inl.blacklab.resultproperty.HitGroupPropertySize;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
+import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitPropertyAfterHit;
+import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -358,7 +362,7 @@ public class QueryTool {
                         showOutput = true;
                         showStats = false;
                         defaultPageSize = 1000;
-                        alwaysSortBy = "right:word:s,hitposition"; // for reproducibility
+                        alwaysSortBy = "after:word:s,hitposition"; // for reproducibility
                         showDocIds = false; // doc ids are randomly assigned
                         showMatchInfo = false; // (temporary)
                     } else if (mode.matches("p(erformance)?")) {
@@ -1261,9 +1265,9 @@ public class QueryTool {
      */
     private void sortGroups(String sortBy) {
         HitGroupProperty crit = null;
-        if (sortBy.equals("identity") || sortBy.equals("id"))
+        if (sortBy.equals(HitGroupPropertyIdentity.ID) || sortBy.equals("id"))
             crit = HitGroupProperty.identity();
-        else if (sortBy.startsWith("size"))
+        else if (sortBy.startsWith(HitGroupPropertySize.ID))
             crit = HitGroupProperty.size();
         if (crit == null) {
             errprintln("Invalid group sort criterium: " + sortBy
@@ -1294,7 +1298,7 @@ public class QueryTool {
         HitProperty crit = getCrit(groupBy, annotationName, 1);
         groups = hits.group(crit, -1);
         showSetting = ShowSetting.GROUPS;
-        sortGroups("size");
+        sortGroups(HitGroupPropertySize.ID);
         timings.record("group");
         reportTime();
     }
@@ -1319,15 +1323,19 @@ public class QueryTool {
         case "hit":
             crit = new HitPropertyHitText(index, annotation);
             break;
-        case "before":
-        case "left":
+        case HitPropertyBeforeHit.ID:
             crit = new HitPropertyBeforeHit(index, annotation, null, numberOfContextTokens);
             break;
-        case "after":
-        case "right":
+        case HitPropertyLeftContext.ID:
+            crit = new HitPropertyLeftContext(index, annotation, null, numberOfContextTokens);
+            break;
+        case HitPropertyAfterHit.ID:
             crit = new HitPropertyAfterHit(index, annotation, null, numberOfContextTokens);
             break;
-        case "doc":
+        case HitPropertyRightContext.ID:
+            crit = new HitPropertyRightContext(index, annotation, null, numberOfContextTokens);
+            break;
+        case HitPropertyDocumentId.ID:
             crit = new HitPropertyDocumentId();
             break;
         case "lempos": // special case for testing

@@ -78,7 +78,7 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
         }
         String propName = ResultProperty.ignoreSensitivity(serialized);
         HitGroupProperty result;
-        if (propName.equalsIgnoreCase("identity"))
+        if (propName.equalsIgnoreCase(HitGroupPropertyIdentity.ID))
             result = propIdentity;
         else
             result = propSize;

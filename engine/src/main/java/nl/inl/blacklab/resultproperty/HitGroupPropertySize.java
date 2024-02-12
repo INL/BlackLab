@@ -3,7 +3,9 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.search.results.HitGroup;
 
 public class HitGroupPropertySize extends HitGroupProperty {
-    
+
+    public static final String ID = "size";
+
     HitGroupPropertySize(HitGroupPropertySize prop, boolean invert) {
         super(prop, invert);
     }
@@ -30,7 +32,7 @@ public class HitGroupPropertySize extends HitGroupProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "size";
+        return serializeReverse() + ID;
     }
 
     @Override

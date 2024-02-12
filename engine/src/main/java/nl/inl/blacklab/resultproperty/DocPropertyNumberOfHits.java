@@ -10,6 +10,9 @@ import nl.inl.blacklab.search.results.DocResult;
  * documents with 1 hit in a group, documents with 2 hits in another group, etc.
  */
 public class DocPropertyNumberOfHits extends DocProperty {
+
+    public static final String ID = "numhits";
+
     public static DocPropertyNumberOfHits deserialize() {
         return new DocPropertyNumberOfHits();
     }
@@ -52,7 +55,7 @@ public class DocPropertyNumberOfHits extends DocProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "numhits";
+        return serializeReverse() + ID;
     }
 
     @Override

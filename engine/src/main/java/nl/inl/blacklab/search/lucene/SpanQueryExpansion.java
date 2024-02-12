@@ -304,7 +304,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         boolean expandToLeft = direction == Direction.LEFT;
         if (onTheRight != expandToLeft && !(clause instanceof SpanQueryAnyToken)) {
             throw new IllegalArgumentException("Cannot internalize " + clause + " into " + this + " on the "
-                    + (onTheRight ? "right" : "left") + "side");
+                    + (onTheRight ? "after" : "before") + "side");
         }
         if (onTheRight == expandToLeft) {
             // "Gobble up" a clause into the clause we're expanding.
