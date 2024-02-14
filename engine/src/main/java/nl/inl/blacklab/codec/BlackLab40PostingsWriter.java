@@ -20,6 +20,7 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.NormsProducer;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexFileNames;
@@ -243,7 +244,21 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         }
     }
 
-    class ForwardIndexWriter implements AutoCloseable {
+    interface TermOccurrenceAction extends AutoCloseable {
+        boolean startField(FieldInfo fieldInfo);
+        void endField() throws IOException;
+        void startTerm(BytesRef term) throws IOException;
+        void endTerm();
+        void startDocument(int docId, int nOccurrences);
+        void endDocument() throws IOException;
+        void termOccurrence(int position, BytesRef payload) throws IOException;
+        void finalize() throws IOException;
+
+        @Override
+        void close() throws IOException;
+    }
+
+    class ForwardIndexWriter implements TermOccurrenceAction {
 
         Map<String, FieldMutable> fiFields = new HashMap<>();
 
@@ -278,9 +293,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
 
         // Per field
-
-        /** Doc lengths map for current annotated field (e.g. "contents", so NOT current lucene field) */
-        Map<Integer, Integer> docLengths;
 
         /** Term index offset */
         FieldMutable offsets;
@@ -321,14 +333,20 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             outTokensIndexFile.close();
         }
 
-        void startField(String luceneField) {
+        public boolean startField(FieldInfo fieldInfo) {
+
+            // Should this field get a forward index?
+            boolean storeForwardIndex = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
+            if (!storeForwardIndex)
+                return false;
+
             // Make sure doc lengths are shared between all annotations for a single annotated field.
-            docLengths = docLengthsPerAnnotatedField.computeIfAbsent(
-                    AnnotatedFieldNameUtil.getBaseName(luceneField), __ -> new HashMap<>());
+            Map<Integer, Integer> docLengths = docLengthsPerAnnotatedField.computeIfAbsent(
+                    AnnotatedFieldNameUtil.getBaseName(fieldInfo.name), __ -> new HashMap<>());
 
             // Write the term vector file and keep track of where we can find term occurrences per document,
             // so we can turn this into the actual forward index below.
-            offsets = fiFields.computeIfAbsent(luceneField, FieldMutable::new);
+            offsets = fiFields.computeIfAbsent(fieldInfo.name, FieldMutable::new);
 
             // We're creating a forward index for this field.
             // That also means that the payloads will include an "is-primary-value" indicator,
@@ -346,15 +364,16 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             // temporary termvector file where the occurrences for each term can be
             // found.
             lengthsAndOffsetsPerDocument =
-                    field2docTermVecFileOffsets.computeIfAbsent(luceneField,
+                    field2docTermVecFileOffsets.computeIfAbsent(fieldInfo.name,
                             __ -> new LengthsAndOffsetsPerDocument(docLengths));
 
             termsList = new ArrayList<>();
 
             currentTermId = 0;
+            return true;
         }
 
-        private void endField() throws IOException {
+        public void endField() throws IOException {
             // begin writing term IDs and sort orders
             Collators collators = Collators.defaultCollator();
             int[] sensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.SENSITIVE));
@@ -425,7 +444,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             }
         }
 
-        public void writeForwardIndex() throws IOException {
+        public void finalize() throws IOException {
             CodecUtil.writeFooter(outTempTermVectorFile);
 
             // Reverse the reverse index to create forward index
@@ -476,6 +495,63 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         }
     }
 
+    private class RelationInfoWriter implements TermOccurrenceAction {
+
+        @Override
+        public boolean startField(FieldInfo fieldInfo) {
+            // Is this the relation annotation? Then we want to store relation info such as attribute values,
+            // so we can look them up for individual relations matched.
+            boolean storeRelationInfo = false;
+            String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(fieldInfo.name);
+            if (nameComponents.length > 1 && AnnotatedFieldNameUtil.isRelationAnnotation(nameComponents[1])) {
+                // Yes, store relation info.
+                storeRelationInfo = true;
+            }
+            return storeRelationInfo;
+        }
+
+        @Override
+        public void endField() throws IOException {
+
+        }
+
+        @Override
+        public void startTerm(BytesRef term) throws IOException {
+
+        }
+
+        @Override
+        public void endTerm() {
+
+        }
+
+        @Override
+        public void startDocument(int docId, int nOccurrences) {
+
+        }
+
+        @Override
+        public void endDocument() throws IOException {
+
+        }
+
+        @Override
+        public void termOccurrence(int position, BytesRef payload) throws IOException {
+
+        }
+
+        @Override
+        public void finalize() throws IOException {
+
+        }
+
+        @Override
+        public void close() throws IOException {
+
+        }
+
+    }
+
     /**
      * Write our additions to the default postings (i.e. the forward index)
      *
@@ -492,8 +568,10 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      * This method also records metadata about fields in the FieldInfo attributes.
      */
     private void write(FieldInfos fieldInfos, Fields fields) {
-
-        try (ForwardIndexWriter fiw = new ForwardIndexWriter()) {
+        List<TermOccurrenceAction> allActions = new ArrayList<>();
+        try {
+            allActions.add(new ForwardIndexWriter());
+            allActions.add(new RelationInfoWriter());
 
             // Write our postings extension information
 
@@ -517,7 +595,14 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                 if (!storeForwardIndex && !storeRelationInfo)
                     continue;
 
-                fiw.startField(luceneField);
+                // Determine what actions to perform for this field
+                List<TermOccurrenceAction> actions = new ArrayList<>();
+                for (TermOccurrenceAction action: allActions) {
+                    if (action.startField(fieldInfos.fieldInfo(luceneField)))
+                        actions.add(action);
+                }
+                if (actions.isEmpty())
+                    continue;
 
                 // For each term in this field...
                 PostingsEnum postingsEnum = null; // we'll reuse this for efficiency
@@ -528,7 +613,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     if (term == null)
                         break;
 
-                    fiw.startTerm(term);
+                    for (TermOccurrenceAction action: actions) action.startTerm(term);
 
                     // For each document containing this term...
                     postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
@@ -542,22 +627,29 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                         // (the first value at this token position, which we will store in the
                         //  forward index). Also determine docLength.
                         int nOccurrences = postingsEnum.freq();
-                        fiw.startDocument(docId, nOccurrences);
+                        for (TermOccurrenceAction action: actions)
+                            action.startDocument(docId, nOccurrences);
                         for (int i = 0; i < nOccurrences; i++) {
                             int position = postingsEnum.nextPosition();
                             BytesRef payload = postingsEnum.getPayload();
-                            fiw.termOccurrence(position, payload);
+                            for (TermOccurrenceAction action: actions) action.termOccurrence(position, payload);
                         }
-                        fiw.endDocument();
+                        for (TermOccurrenceAction action: actions) action.endDocument();
                     }
-                    fiw.endTerm();
+                    for (TermOccurrenceAction action: actions) action.endTerm();
                 }
-                fiw.endField();
+                for (TermOccurrenceAction action: actions) action.endField();
             } // for each field
 
-            fiw.writeForwardIndex();
+            for (TermOccurrenceAction action: allActions) action.finalize();
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
+        } finally {
+            try {
+                for (TermOccurrenceAction action: allActions) action.close();
+            } catch (IOException e) {
+                throw new BlackLabRuntimeException(e);
+            }
         }
     }
 
