@@ -60,6 +60,12 @@ public class AnnotationWriter {
      */
     protected int lastValuePosition = -1;
 
+    /** If this is the _relation annotation: unique id to be assigned to the next relation added.
+     * This is stored in the payload and can be used to look up information about the relation, such as
+     * attributes.
+     */
+    private int nextRelationId = 0;
+
     /**
      * A annotation may be indexed in different ways (sensitivities). This specifies
      * names and filters for each way.
@@ -415,7 +421,8 @@ public class AnnotationWriter {
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = RelationInfo.create(false, startPos, startPos, endPos, endPos);
+        RelationInfo matchInfo = RelationInfo.create(false, startPos, startPos,
+                endPos, endPos, nextRelationId++);
         String fullRelationType;
         fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
                 tagName :
@@ -425,7 +432,8 @@ public class AnnotationWriter {
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
+        RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd,
+                nextRelationId++);
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort

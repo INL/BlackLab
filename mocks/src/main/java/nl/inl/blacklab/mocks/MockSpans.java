@@ -187,7 +187,7 @@ public class MockSpans extends BLSpans {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
             RelationInfo relInfo = RelationInfo.create(false, aStart[i], aStart[i],
-                    aEnd[i], aEnd[i], "test");
+                    aEnd[i], aEnd[i], -1, "test");
             BytesRef payload = relInfo.serialize();
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);

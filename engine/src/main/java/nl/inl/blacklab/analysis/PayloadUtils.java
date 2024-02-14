@@ -207,7 +207,7 @@ public class PayloadUtils {
             int targetEnd) {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         RelationInfo.serializeRelation(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
-                new OutputStreamDataOutput(os));
+                -1, new OutputStreamDataOutput(os));
         return new BytesRef(os.toByteArray());
     }
 

@@ -516,8 +516,8 @@ The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an imple
 The payload for a relation consists of the following fields:
 
 * `relOtherStart: ZInt`: relative position of the (start of the) other end. Default: `1`.
-* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. If `0x08` is set, `targetField` will follow the flags field. The other bits are reserved for future use and must not be set. Default: `0`.
-* `targetField: VInt`: (only present if flag `0x08` set) annotated field the target points to. Uses the forward index field numbering. Default: `0`
+* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. If `0x08` is set, `relationId` will follow the flags field. The other bits are reserved for future use and must not be set. Default: `0`.
+* `relationId: VInt`: (only present if flag `0x08` set) Unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future.
 * `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
 * `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
 
@@ -534,11 +534,11 @@ In the future, we will likely want to include unique relation ids (for some rela
 
 _(NOTE: this feature is planned but not yet implemented)_
 
-Relations with attributes are index twice: once with the attributes as part of the term (so we can find instances with specific attribute values efficiently)and once without the attributes (so queries that don't filter on attributes are efficient even if there's a unique id attribute).
+Relations with attributes are indexed twice: once with the attributes as part of the term (so we can find instances with specific attribute values efficiently) and once without the attributes (so queries that don't filter on attributes are efficient even if there's a unique id attribute).
 
 This causes problems when we want to group by an attribute value of a tag we matched, because we don't always have those available, depending on the query.
 
-There could also be other things we want to look up about a relation in the future, such as its parent or children.
+There could also be other things we want to look up about a relation in the future, like its ties to other relations: in the case of inline tags: parent, children, ancestors, descendants, etc. In the case of dependency relations: perhaps information about transitive connections to other relations, etc.
 
 We want to enable this by adding a unique relation id to the payload that allows us to look up additional information in a separate file.
 

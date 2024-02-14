@@ -38,7 +38,8 @@ public class TestMatchInfo {
                 sourceStart = targetStart;
                 sourceEnd = targetEnd;
             }
-            RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+            RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
+                    -1);
 
             // Encode the payload
             byte[] payload = matchInfo.serialize().bytes;

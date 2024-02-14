@@ -24,19 +24,19 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 public class RelationInfo extends MatchInfo {
 
     public static RelationInfo create() {
-        return new RelationInfo(false, -1, -1, -1, -1, null, null, "", "");
+        return new RelationInfo(false, -1, -1, -1, -1, -1, null, null, "", "");
     }
 
     public static RelationInfo createWithFields(String sourceField, String targetField) {
-        return new RelationInfo(false, -1, -1, -1, -1, null, null, sourceField, targetField);
+        return new RelationInfo(false, -1, -1, -1, -1, -1, null, null, sourceField, targetField);
     }
 
-    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, null, null, "", "");
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId) {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, null, null, "", "");
     }
 
-    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, String fullRelationType) {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, null, "", "");
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, String fullRelationType) {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, fullRelationType, null, "", "");
     }
 
     /** Include attributes in relation info? We wanted to do this but can't anymore
@@ -53,7 +53,7 @@ public class RelationInfo extends MatchInfo {
     }
 
     public static void serializeRelation(boolean onlyHasTarget, int sourceStart, int sourceEnd,
-            int targetStart, int targetEnd, DataOutput dataOutput) {
+            int targetStart, int targetEnd, int relationId, DataOutput dataOutput) {
 
         assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
         // Determine values to write from our source and target, and the position we're being indexed at
@@ -65,8 +65,11 @@ public class RelationInfo extends MatchInfo {
         boolean useAlternateDefaultLength = thisLength == DEFAULT_LENGTH_ALT && otherLength == DEFAULT_LENGTH_ALT;
         int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
 
+        boolean writeRelationId = relationId >= 0;
+
         byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
-                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0));
+                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0)
+                | (writeRelationId ? FLAG_RELATION_ID : 0));
 
         // Only write as much as we need (omitting default values from the end)
         boolean writeOtherLength = otherLength != defaultLength;
@@ -78,6 +81,8 @@ public class RelationInfo extends MatchInfo {
                 dataOutput.writeZInt(relOtherStart);
             if (writeFlags)
                 dataOutput.writeByte(flags);
+            if (writeRelationId)
+                dataOutput.writeVInt(relationId);
             if (writeThisLength)
                 dataOutput.writeVInt(thisLength);
             if (writeOtherLength)
@@ -188,6 +193,11 @@ public class RelationInfo extends MatchInfo {
      */
     public static final byte FLAG_DEFAULT_LENGTH_ALT = 0x04;
 
+    /** Is a unique id stored for this relation?
+     * (always set for new indexes)
+     */
+    public static final byte FLAG_RELATION_ID = 0x08;
+
     /** Does this relation only have a target? (i.e. a root relation) */
     private boolean onlyHasTarget;
 
@@ -206,6 +216,9 @@ public class RelationInfo extends MatchInfo {
     /** Where does the target of the relation end? */
     private int targetEnd;
 
+    /** Unique relation id, or -1 if unknown/not assigned */
+    private int relationId = -1;
+
     /** Our relation type, or null if not set (set during search by SpansRelations) */
     private String fullRelationType;
 
@@ -216,7 +229,7 @@ public class RelationInfo extends MatchInfo {
     private final String targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
-            String fullRelationType, Map<String, String> attributes, String sourceField, String targetField) {
+            int relationId, String fullRelationType, Map<String, String> attributes, String sourceField, String targetField) {
         super(sourceField);
         this.fullRelationType = fullRelationType;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
@@ -236,11 +249,12 @@ public class RelationInfo extends MatchInfo {
         this.sourceEnd = sourceEnd;
         this.targetStart = targetStart;
         this.targetEnd = targetEnd;
+        this.relationId = relationId;
     }
 
     public RelationInfo copy() {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType,
-                attributes, getField(), targetField);
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId,
+                fullRelationType, attributes, getField(), targetField);
     }
 
     /**
@@ -262,6 +276,10 @@ public class RelationInfo extends MatchInfo {
                     // Use alternate default length
                     thisLength = DEFAULT_LENGTH_ALT;
                     otherLength = DEFAULT_LENGTH_ALT;
+                }
+                if ((flags & FLAG_RELATION_ID) != 0) {
+                    // Read relation id
+                    relationId = dataInput.readVInt();
                 }
                 if (!dataInput.eof()) {
                     thisLength = dataInput.readVInt();
@@ -289,7 +307,7 @@ public class RelationInfo extends MatchInfo {
     public BytesRef serialize() {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         DataOutput dataOutput = new OutputStreamDataOutput(os);
-        serializeRelation(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, dataOutput);
+        serializeRelation(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, dataOutput);
         return new BytesRef(os.toByteArray());
     }
 
@@ -393,6 +411,10 @@ public class RelationInfo extends MatchInfo {
         this.fullRelationType = RelationUtil.fullTypeFromIndexedTerm(term);
         if (INCLUDE_ATTRIBUTES_IN_RELATION_INFO)
             this.attributes = RelationUtil.attributesFromIndexedTerm(term);
+    }
+
+    public int getRelationId() {
+        return relationId;
     }
 
     /**
