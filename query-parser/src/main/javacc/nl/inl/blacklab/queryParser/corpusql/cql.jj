@@ -11,6 +11,11 @@ options
     STATIC=false;
     JAVA_UNICODE_ESCAPE=true;
     //USER_CHAR_STREAM=true;
+
+    // Debug options
+    //DEBUG_PARSER = true;
+    //DEBUG_LOOKAHEAD = true;
+    //DEBUG_TOKEN_MANAGER = true;
 }
 
 PARSER_BEGIN(GeneratedCorpusQueryLanguageParser)
@@ -253,7 +258,7 @@ TextPattern relationQuery():
             return parent;
         return wrapper.relationQuery(parent, childRels);
     }
-|   parent=rootRelationType()
+|   LOOKAHEAD(3) parent=rootRelationType()
     {
         return parent;
     }
@@ -437,7 +442,7 @@ TextPattern sequence():
     TextPattern following = null;
 }
 {
-    query=captureQuery() [ LOOKAHEAD(2) following=sequence() { query = new TextPatternSequence(query, following); } ]
+    query=captureQuery() [ LOOKAHEAD(3) following=sequence() { query = new TextPatternSequence(query, following); } ]
     {
         return query;
     }
@@ -538,7 +543,7 @@ TextPattern position():
     String f = null;
 }
 {
-    m=positionWord() [f=flags()]        { return m; }
+    m=positionWord() [ f=flags()]        { return m; }
 |   <DEFAULT_VALUE>                     { return TextPatternDefaultValue.get(); }
 |   "[" [ m=positionLong() ] "]"
     {
