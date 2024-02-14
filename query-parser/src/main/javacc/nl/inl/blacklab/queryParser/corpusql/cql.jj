@@ -92,9 +92,9 @@ TOKEN [IGNORE_CASE]:
 |   <CONTAINING: "containing" >
 |   <DEFAULT_VALUE: "_">
     /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
-|   <ROOT_DEP_OP: "^-" ( ~["-"] (~["-"] | "-" ~[">"] )* )? "->" (["A"-"Z","a"-"z","_","0"-"9"])* >
-|   <DEP_OP: ("!")? "-" ( ~["-"] (~["-"] | "-" ~[">"] )* )? "->" (["A"-"Z","a"-"z","_","0"-"9"])* >
-|   <ALIGNMENT_OP: "=" ( ~["="] (~["="] | "=" ~[">"] )* )? "=>" (["A"-"Z","a"-"z","_","0"-"9"])* >
+|   <ROOT_DEP_OP: "^-" ( ~["-"] (~["-"] | "-" ~[">"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
+|   <DEP_OP: ("!")? "-" ( ~["-"] (~["-"] | "-" ~[">"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
+|   <ALIGNMENT_OP: "=" ( ~["="] (~["="] | "=" ~[">"] )* )? "=>" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |   <NUMBER: (["0"-"9"])+ >
@@ -149,7 +149,7 @@ TextPattern constrainedQuery():
     MatchFilter b = null;
 }
 {
-    a=complexQuery() [ "::" b=constraint() ]
+    a=relationQuery() [ "::" b=constraint() ]
     {
         if (b == null)
             return a;
@@ -232,69 +232,6 @@ MatchFilter constraintValue():
     }
 }
 
-TextPattern complexQuery():
-{
-    TextPattern a = null, b = null;
-    Token op = null;
-    Operation oper = Operation.CONTAINING;
-}
-{
-    a=simpleQuery() [ op=queryOperator() b=complexQuery() ]
-    {
-        if (op == null)
-            return a;
-        if (op.toString().equals("within")) {
-            // a within b
-            oper = Operation.WITHIN;
-        }
-
-        return new TextPatternPositionFilter(a, b, oper);
-    }
-}
-
-Token queryOperator():
-{
-    Token t = null;
-}
-{
-    (t=<WITHIN> | t=<CONTAINING>)
-    {
-        return t;
-    }
-}
-
-/* a simple query (not including containing, within, etc.) */
-TextPattern simpleQuery():
-{
-    TextPattern query = null, rest = null;
-    Token b = null;
-}
-{
-    query=sequence() [ b=booleanOperator() rest=simpleQuery() ]
-    {
-        if (b == null)
-            return query;
-        if (b.toString().equals("->"))
-            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
-        if (b.toString().equals("&"))
-            return new TextPatternAnd(query, rest);
-        return new TextPatternOr(query, rest);
-    }
-}
-
-/* a sequence of token constraints */
-TextPattern sequence():
-{
-    TextPattern query = null;
-    TextPattern following = null;
-}
-{
-    query=relationQuery() [ LOOKAHEAD(2) following=sequence() { query = new TextPatternSequence(query, following); } ]
-    {
-        return query;
-    }
-}
-
 
 TextPattern relationQuery():
 {
@@ -304,7 +241,7 @@ TextPattern relationQuery():
     String relType = null;
 }
 {   LOOKAHEAD(3)
-    parent=captureQuery()
+    parent=complexQuery()
     [
         LOOKAHEAD(3)
         childRel=childRelation()                        { childRels.add(childRel); }
@@ -434,6 +371,56 @@ Integer[] repetitionAmount():
     }
 }
 
+TextPattern complexQuery():
+{
+    TextPattern a = null, b = null;
+    Token op = null;
+    Operation oper = Operation.CONTAINING;
+}
+{
+    a=simpleQuery() [ op=queryOperator() b=complexQuery() ]
+    {
+        if (op == null)
+            return a;
+        if (op.toString().equals("within")) {
+            // a within b
+            oper = Operation.WITHIN;
+        }
+
+        return new TextPatternPositionFilter(a, b, oper);
+    }
+}
+
+Token queryOperator():
+{
+    Token t = null;
+}
+{
+    (t=<WITHIN> | t=<CONTAINING>)
+    {
+        return t;
+    }
+}
+
+/* a simple query (not including containing, within, etc.) */
+TextPattern simpleQuery():
+{
+    TextPattern query = null, rest = null;
+    Token b = null;
+}
+{
+    query=sequence() [ b=booleanOperator() rest=simpleQuery() ]
+    {
+        if (b == null)
+            return query;
+        if (b.toString().equals("->"))
+            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
+        if (b.toString().equals("&"))
+            return new TextPatternAnd(query, rest);
+        return new TextPatternOr(query, rest);
+    }
+}
+
 /* boolean operator: and, or or implication */
 Token booleanOperator():
 {
@@ -441,6 +428,19 @@ Token booleanOperator():
 }
 {
     (t="&" | t="|" | t="->")  { return t; }
+}
+
+/* a sequence of token constraints */
+TextPattern sequence():
+{
+    TextPattern query = null;
+    TextPattern following = null;
+}
+{
+    query=captureQuery() [ LOOKAHEAD(2) following=sequence() { query = new TextPatternSequence(query, following); } ]
+    {
+        return query;
+    }
 }
 
 /* sequence part: one part in a sequence, possibly with a repetition operator */

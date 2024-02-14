@@ -150,4 +150,14 @@ public class Concordances {
         }
         return conc;
     }
+
+    public ConcordanceType getConcordanceType() {
+        return kwics == null ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
+    }
+
+    public Kwics getKwics() {
+        if (kwics == null)
+            throw new UnsupportedOperationException("Kwics not available when concordances are retrieved from content store");
+        return kwics;
+    }
 }

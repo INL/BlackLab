@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * A (variable-size) list of captured relations, e.g. all relations in a sentence.
@@ -42,8 +43,8 @@ public class RelationListInfo extends MatchInfo {
     }
 
     @Override
-    public String toString() {
-        return "listrel(" + relations + ")";
+    public String toString(String defaultField) {
+        return "listrel(" + relations.stream().map(r -> r.toString(defaultField)).collect(Collectors.joining(", ")) + ")";
     }
 
     @Override

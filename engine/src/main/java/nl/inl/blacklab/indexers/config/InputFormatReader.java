@@ -558,6 +558,11 @@ public class InputFormatReader extends YamlJsonReader {
                 case "tokenIdPath":
                     t.setTokenIdPath(str(e));
                     break;
+                case "includeAttributes":
+                    List<String> inclAttr = new ArrayList<>();
+                    readStringList(e, inclAttr);
+                    t.setIncludeAttributes(inclAttr);
+                    break;
                 case "excludeAttributes":
                     List<String> exclAttr = new ArrayList<>();
                     readStringList(e, exclAttr);

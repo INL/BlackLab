@@ -29,7 +29,7 @@ public class RelationOperatorInfo {
      * Examples: --> ; -nmod-> ; nl==>de
      */
     private static final Pattern PATT_RELATION_OPERATOR = Pattern.compile(
-            "^[-=](.*)[-=]>([a-zA-Z0-9_]*)$");
+            "^[-=](.*)[-=]>([a-zA-Z0-9_-]*)$");
 
     /**
      * Create an info struct from the operator string.
@@ -162,12 +162,11 @@ public class RelationOperatorInfo {
         String regex = RelationUtil.optPrependDefaultClass(typeRegex, context);
         if (targetVersion == null || targetVersion.isEmpty())
             return regex;
-        String[] classAndType = RelationUtil.classAndType(regex);
-        String relationClass = classAndType[0];
-        String relationType = classAndType[1];
+        String relationClass = RelationUtil.classFromFullType(regex);
+        String relationType = RelationUtil.typeFromFullType(regex);
         // A target version was set. Target version must be added to or replaced in type regex.
         // Replace or add target version in relation class
-        relationClass = AnnotatedFieldNameUtil.getParallelFieldVersion(relationClass, targetVersion);
+        relationClass = AnnotatedFieldNameUtil.changeParallelFieldVersion(relationClass, targetVersion);
         return RelationUtil.fullTypeRegex(relationClass, relationType);
     }
 }

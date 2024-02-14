@@ -182,7 +182,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public String getRelationClass() {
         // Return default value for relation class if not specified
-        return relationClass != null ? relationClass : RelationUtil.CLASS_DEFAULT_INDEX;
+        return relationClass != null ? relationClass : RelationUtil.DEFAULT_CLASS;
     }
 
     public void setRelationClass(String relationClass) {
@@ -200,7 +200,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      */
     public String resolveTargetField(String defaultTargetField, String targetVersion) {
         String f = targetField.isEmpty() ? defaultTargetField : targetField;
-        return AnnotatedFieldNameUtil.getParallelFieldVersion(f, targetVersion);
+        return AnnotatedFieldNameUtil.changeParallelFieldVersion(f, targetVersion);
     }
 
     /**
@@ -223,7 +223,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         } else if (AnnotatedFieldNameUtil.isSameParallelBaseField(defaultTargetField, actualTargetField)) {
             // Cross-field relation to a different version of the same parallel field,
             // e.g. contents__nl --> contents__de
-            String actualTargetVersion = AnnotatedFieldNameUtil.splitParallelFieldName(actualTargetField)[1];
+            String actualTargetVersion = AnnotatedFieldNameUtil.versionFromParallelFieldName(actualTargetField);
             return getRelationClass() + AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + actualTargetVersion;
         } else {
             // Cross-field relation to a different field

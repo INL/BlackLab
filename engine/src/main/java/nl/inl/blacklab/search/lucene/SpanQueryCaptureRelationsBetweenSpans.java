@@ -299,6 +299,8 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         List<Target> newTargets = Target.rewriteTargets(targets, reader);
         if (rewritten == null && newTargets == targets)
             return this; // nothing to rewrite
+        if (rewritten == null)
+            rewritten = clauses;
         return new SpanQueryCaptureRelationsBetweenSpans(rewritten.get(0), newTargets);
     }
 

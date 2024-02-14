@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -37,35 +38,39 @@ import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.HitGroupPropertySize;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyAfterHit;
+import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
 import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
-import nl.inl.blacklab.resultproperty.HitPropertyAfterHit;
 import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
-import nl.inl.blacklab.search.results.QueryTimings;
-import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.ContentAccessor;
+import nl.inl.blacklab.search.DocFragment;
 import nl.inl.blacklab.search.DocUtil;
+import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -74,9 +79,12 @@ import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.FileUtil;
@@ -93,6 +101,10 @@ import nl.inl.util.XmlUtil;
 public class QueryTool {
 
     static final Charset INPUT_FILE_ENCODING = StandardCharsets.UTF_8;
+    public static final String START_MATCH = "[match]";
+    public static final String END_MATCH = "[/match]";
+
+    public static final String MATCH = "match";
 
     /** Our output writer. */
     public final PrintWriter out;
@@ -112,8 +124,8 @@ public class QueryTool {
     /** Show doc ids in the results? (makes results incomparable between indexes)  */
     static boolean showDocIds = true;
 
-    /** Show doc ids in the results? (makes results incomparable between indexes)  */
-    static boolean showMatchInfo = true;
+    /** Show match info in the results? */
+    static boolean showMatchInfo = false;
 
     /** How many results to show per page? (default is increased for correctness testing) */
     static int defaultPageSize = 20;
@@ -373,6 +385,7 @@ public class QueryTool {
                         // Regular: we want results and timing
                         showOutput = true;
                         showStats = true;
+                        showMatchInfo = true;
                     } else {
                         System.err.println("Unknown mode: " + mode);
                         usage();
@@ -403,6 +416,7 @@ public class QueryTool {
                     break;
                 case "-v":
                     verbose = true;
+                    showMatchInfo = true;
                     break;
                 default:
                     System.err.println("Unknown option: " + arg);
@@ -696,7 +710,8 @@ public class QueryTool {
                     else
                         concParts = conc.parts();
                     outprintln(
-                            "\n" + WordUtils.wrap(concParts[0] + "[" + concParts[1] + "]" + concParts[2], 80));
+                            "\n" + WordUtils.wrap(concParts[0] + hlStart(MATCH) +
+                                    concParts[1] + hlEnd(MATCH) + concParts[2], 80));
                 }
             } else if (lcased.startsWith("highlight ")) {
                 int hitId = parseInt(lcased.substring(8), 1) - 1;
@@ -735,10 +750,10 @@ public class QueryTool {
                 docs = null;
             } else if (lcased.startsWith("concfi ")) {
                 String v = lcased.substring(7);
-                concType = isTrue(v) ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE;
+                concType = parseBoolean(v) ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE;
             } else if (lcased.startsWith("stripxml ")) {
                 String v = lcased.substring(9);
-                stripXML = isTrue(v);
+                stripXML = parseBoolean(v);
             } else if (lcased.startsWith("sensitive ")) {
                 String v = lcased.substring(10);
                 MatchSensitivity sensitivity;
@@ -765,7 +780,7 @@ public class QueryTool {
                         + (sensitivity.isDiacriticsSensitive() ? "diacritics-sensitive" : "diacritics-insensitive"));
             } else if (lcased.startsWith("doctitle ")) {
                 String v = lcased.substring(9);
-                showDocTitle = v.equals("on") || v.equals("yes") || v.equals("true");
+                showDocTitle = parseBoolean(v);
                 System.out.println("Show document titles: " + (showDocTitle ? "ON" : "OFF"));
             } else if (lcased.equals("struct") || lcased.equals("structure")) {
                 showIndexMetadata();
@@ -835,28 +850,39 @@ public class QueryTool {
                 }
             } else if (lcased.startsWith("showconc ")) {
                 String v = lcased.substring(9);
-                showConc = v.equals("on") || v.equals("yes") || v.equals("true");
+                showConc = parseBoolean(v);
                 System.out.println("Show concordances: " + (showConc ? "ON" : "OFF"));
-            } else if (lcased.startsWith("verbose ")) {
-                String v = lcased.substring(8);
-                verbose = v.equals("on") || v.equals("yes") || v.equals("true");
+            } else if (lcased.equals("v") || lcased.startsWith("verbose ")) {
+                if (lcased.equals("v"))
+                    verbose = true;
+                else
+                    verbose = parseBoolean(lcased.substring(8));
+                if (verbose)
+                    showMatchInfo = true;
                 outprintln("Verbose: " + (verbose ? "ON" : "OFF"));
             } else if (lcased.startsWith("total ")) {
                 String v = lcased.substring(6);
-                determineTotalNumberOfHits = v.equals("on") || v.equals("yes") || v.equals("true");
+                determineTotalNumberOfHits = parseBoolean(v);
                 outprintln("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
-            } else if (lcased.matches("^(patt)?field ")) {
-                String v = lcased.replaceAll("^(patt)?field ", "").trim();
+            } else if (lcased.matches("^(patt)?field\\b.*")) {
+                String v = lcased.replaceAll("^(patt)?field\\s?", "").trim();
                 if (v.isEmpty()) {
                     contentsField = index.mainAnnotatedField();
                     outprintln("Searching main annotated field: " + contentsField.name());
                 } else {
                     AnnotatedFields annotatedFields = index.metadata().annotatedFields();
+                    if (!annotatedFields.exists(v)) {
+                        // See if it's a version (e.g. different language in parallel corpus) of the main annotated field
+                        String v2 = AnnotatedFieldNameUtil.changeParallelFieldVersion(index.mainAnnotatedField().name(), v);
+                        if (annotatedFields.exists(v2))
+                            v = v2;
+                    }
                     if (annotatedFields.exists(v)) {
                         contentsField = annotatedFields.get(v);
                         outprintln("Searching annotated field: " + contentsField.name());
-                    } else
+                    } else {
                         errprintln("Annotated field '" + v + "' does not exist.");
+                    }
                 }
             } else {
                 // Not a command; assume it's a query
@@ -868,7 +894,7 @@ public class QueryTool {
             processCommand(restCommand);
     }
 
-    private boolean isTrue(String v) {
+    private boolean parseBoolean(String v) {
         return v.equals("on") || v.equals("yes") || v.equals("true");
     }
 
@@ -932,12 +958,10 @@ public class QueryTool {
         IndexMetadata s = index.metadata();
         outprintln("INDEX STRUCTURE FOR INDEX " + index.name() + "\n");
         out.println("ANNOTATED FIELDS");
+        showAnnotatedField(s.mainAnnotatedField()); // show the main field first
         for (AnnotatedField cf: s.annotatedFields()) {
-            out.println("- " + cf.name());
-            for (Annotation annot: cf.annotations()) {
-                out.println("  * Annotation: " + describeAnnotation(annot));
-            }
-            out.println("  * " + (cf.hasContentStore() ? "Includes" : "No") + " content store");
+            if (cf != s.mainAnnotatedField())
+                showAnnotatedField(cf);
         }
 
         out.println("\nMETADATA FIELDS");
@@ -958,6 +982,14 @@ public class QueryTool {
             out.println("- " + field.name() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
                     + special);
         }
+    }
+
+    private void showAnnotatedField(AnnotatedField cf) {
+        out.println("- " + cf.name());
+        for (Annotation annot: cf.annotations()) {
+            out.println("  * Annotation: " + describeAnnotation(annot));
+        }
+        out.println("  * " + (cf.hasContentStore() ? "Includes" : "No") + " content store");
     }
 
     /** If JLine is available, this holds the ConsoleReader object */
@@ -1536,6 +1568,9 @@ public class QueryTool {
 
         public final Map<String, MatchInfo> matchInfos;
 
+        /** Hits in other fields (parallel corpora) */
+        public final Map<String, HitToShow> foreignHits = new TreeMap<>();
+
         public HitToShow(int doc, String left, String hitText, String right, Map<String, MatchInfo> matchInfos) {
             super();
             this.doc = doc;
@@ -1543,6 +1578,10 @@ public class QueryTool {
             this.hitText = hitText;
             this.right = right;
             this.matchInfos = matchInfos;
+        }
+
+        public void addForeign(String fieldName, HitToShow hitToShow) {
+            foreignHits.put(fieldName, hitToShow);
         }
     }
 
@@ -1575,30 +1614,43 @@ public class QueryTool {
         Hits window = hitsToShow.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
-        List<HitToShow> toShow = new ArrayList<>();
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
         Concordances concordances = window.concordances(contextSize, concType);
-        for (Hit hit : window) {
-            Concordance conc = concordances.get(hit);
+        Kwics kwics = concType == ConcordanceType.FORWARD_INDEX ? concordances.getKwics() : null;
+        List<HitToShow> toShow = new ArrayList<>();
+        for (Hit hit: window) {
+            HitToShow hitToShow;
+            if (kwics != null) {
+                Map<String, MatchInfo> matchInfo = window.hasMatchInfo() ? window.getMatchInfoMap(hit) :
+                        Collections.emptyMap();
+                hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
 
-            // Filter out the XML tags
-            String left, hitText, right;
-            left = stripXML ? XmlUtil.xmlToPlainText(conc.left()) : conc.left();
-            hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
-            right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
-
-            Map<String, MatchInfo> matchInfo = null;
-            if (window.hasMatchInfo())
-                matchInfo = window.getMatchInfoMap(hit);
-            toShow.add(new HitToShow(hit.doc(), left, hitText, right, matchInfo));
-            if (leftContextMaxSize < left.length())
-                leftContextMaxSize = left.length();
+                Map<String, Kwic> fkwics = kwics.getForeignKwics(hit);
+                if (fkwics != null) {
+                    for (Map.Entry<String, Kwic> e: fkwics.entrySet()) {
+                        String fieldName = e.getKey();
+                        AnnotatedField annotatedField = index.metadata().annotatedFields().get(fieldName);
+                        if (annotatedField == null)
+                            throw new RuntimeException();
+                        Kwic kwic = e.getValue();
+                        Hit fhit = Hit.create(hit.doc(), kwic.fragmentStartInDoc(), kwic.fragmentEndInDoc(),
+                                hit.matchInfo());
+                        hitToShow.addForeign(fieldName, showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
+                    }
+                }
+            } else {
+                hitToShow = showHitFromContentStore(hit, concordances, window);
+            }
+            toShow.add(hitToShow);
+            if (leftContextMaxSize < hitToShow.left.length())
+                leftContextMaxSize = hitToShow.left.length();
         }
 
         // Display hits
-        String format = "%4d. [%04d] %" + leftContextMaxSize + "s[%s]%s\n";
-        if (showDocTitle || !showDocIds)
-            format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
+        String optFormatDocId = showDocTitle || !showDocIds ? "" : " [doc %04d]";
+        String format = "%4d." + optFormatDocId +
+                " %" + leftContextMaxSize + "s" + hlStart(MATCH) + "%s" +
+                hlEnd(MATCH) + "%s\n";
         int currentDoc = -1;
         String titleField = index.metadata().custom().get("titleField", "");
         long hitNr = window.windowStats().first() + 1;
@@ -1619,10 +1671,15 @@ public class QueryTool {
                 outprintf(format, hitNr, hit.left, hit.hitText, hit.right);
             else
                 outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
-            hitNr++;
+            for (Map.Entry<String, HitToShow> e: hit.foreignHits.entrySet()) {
+                String fieldName = e.getKey();
+                HitToShow fhit = e.getValue();
+                outprintf("    %s: %s%s%s\n", fieldName, fhit.left, fhit.hitText, fhit.right);
+            }
             if (hit.matchInfos != null && showMatchInfo) {
                 outprintln("MATCH INFO: " + matchInfoToString(hit.matchInfos));
             }
+            hitNr++;
         }
         timings.record("kwics");
 
@@ -1651,7 +1708,126 @@ public class QueryTool {
         outprintln(msg);
     }
 
-    private static String matchInfoToString(Map<String, MatchInfo> matchInfos) {
+    private HitToShow showHitFromForwardIndex(Hit hit, Kwic kwic, Map<String, MatchInfo> matchInfo, AnnotatedField annotatedField) {
+        // NOTE: if annotatedField == null, it means this hit is in the main field searched;
+        //       it would only ever be non-null for parallel corpora where some match info can be captured in another
+        //       field than the main search field.
+        String mainAnnotName = annotatedField.mainAnnotation().name();
+        DocFragment fragMatch = kwic.fragMatch();
+        DocFragment fragBefore = kwic.fragBefore();
+        String punctAfter = fragMatch.getValue(0, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+        String before = getContextPart(fragBefore, matchInfo, annotatedField, hit.start() - fragBefore.length(), mainAnnotName, true,
+                punctAfter);
+        String match = getContextPart(fragMatch, matchInfo, annotatedField, hit.start(), mainAnnotName, false, null);
+        String after = getContextPart(kwic.fragAfter(), matchInfo, annotatedField, hit.end(), mainAnnotName, true, null);
+        return new HitToShow(hit.doc(), before, match, after, matchInfo);
+    }
+
+    private static String getContextPart(DocFragment fragment, Map<String, MatchInfo> matchInfo,
+            AnnotatedField annotatedField, int pos, String mainAnnot, boolean includePunctBefore, String punctAfter) {
+        StringBuilder contextPart = new StringBuilder();
+        for (int i = 0; i < fragment.length(); i++) {
+            List<String> open = new ArrayList<>();
+            List<String> close = new ArrayList<>();
+            for (Map.Entry<String, MatchInfo> e: matchInfo.entrySet()) {
+                MatchInfo mi = e.getValue();
+                String name = e.getKey();
+                addMatchInfoIndicator(annotatedField, pos, mi, name, open, close, -1);
+            }
+            if (i > 0 || includePunctBefore) {
+                contextPart
+                        .append(fragment.getValue(i, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
+            }
+            Collections.reverse(close);
+            contextPart
+                    .append(StringUtils.join(open, ""))
+                    .append(fragment.getValue(i, mainAnnot))
+                    .append(StringUtils.join(close, ""));
+            pos++;
+        }
+        if (punctAfter != null) {
+            contextPart.append(punctAfter);
+        }
+        return contextPart.toString();
+    }
+
+    private static void addMatchInfoIndicator(AnnotatedField annotatedField, int pos, MatchInfo mi, String name,
+            List<String> open, List<String> close, int number) {
+        if (number > 0)
+            name += "#" + number;
+        String namePrefix = "", nameSuffix = "";
+        int start = -1, end = -1;
+        if (mi instanceof RelationListInfo) {
+            int i = 1;
+            for (RelationInfo rel: ((RelationListInfo) mi).getRelations()) {
+                addMatchInfoIndicator(annotatedField, pos, rel, name, open, close, i);
+                i++;
+            }
+        } else if (mi instanceof RelationInfo && mi.getType() == MatchInfo.Type.RELATION) { // (rel, not tag)
+            // For relations, we have to either highlight the source or the target, which may be in different
+            // fields.
+            RelationInfo rel = (RelationInfo) mi;
+
+            boolean isSourceField = rel.getField().equals(annotatedField.name());
+            if ((pos == rel.getSourceStart() || pos + 1 == rel.getSourceEnd()) && isSourceField) {
+                // Highlight relation source
+                start = rel.getSourceStart();
+                end = rel.getSourceEnd();
+                String relType = RelationUtil.typeFromFullType(rel.getFullRelationType());
+                if (relType.length() > 5) {
+                    relType = relType.substring(0, 5).replaceAll("[\\s_\\-]+$", "");
+                    relType += "…";
+                }
+                String optRelType = (name.contains(relType) ? "" : " " + relType);
+                nameSuffix = optRelType + " →";
+            }
+            boolean isTargetField = rel.getTargetField().equals(annotatedField.name());
+            if ((pos == rel.getTargetStart() || pos + 1 == rel.getTargetEnd()) && isTargetField) {
+                // Highlight relation target
+                start = rel.getTargetStart();
+                end = rel.getTargetEnd();
+                namePrefix = "→";
+            }
+        } else if (mi.getField().equals(annotatedField.name())) {
+            // Match info is in this field; not a relation, so just use the full span
+            start = mi.getSpanStart();
+            end = mi.getSpanEnd();
+        } else {
+            // Some other field; ignore
+            return;
+        }
+        if (start == pos)
+            open.add(hlStart(namePrefix + name + nameSuffix));
+        if (end == pos + 1)
+            close.add(hlEnd(name));
+    }
+
+    private static String hlStart(String name) {
+        return "[" + name + "]";
+    }
+
+    private static String hlEnd(String name) {
+        return "[/" + name + "]";
+    }
+
+    private HitToShow showHitFromContentStore(Hit hit, Concordances concordances, Hits window) {
+        HitToShow hitToShow;
+        Concordance conc = concordances.get(hit);
+
+        // Filter out the XML tags
+        String left, hitText, right;
+        left = stripXML ? XmlUtil.xmlToPlainText(conc.left()) : conc.left();
+        hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
+        right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
+
+        Map<String, MatchInfo> matchInfo = null;
+        if (window.hasMatchInfo())
+            matchInfo = window.getMatchInfoMap(hit);
+        hitToShow = new HitToShow(hit.doc(), left, hitText, right, matchInfo);
+        return hitToShow;
+    }
+
+    private String matchInfoToString(Map<String, MatchInfo> matchInfos) {
         return matchInfos.entrySet().stream()
                 .sorted( (a, b) -> {
                     MatchInfo ma = a.getValue();
@@ -1680,7 +1856,7 @@ public class QueryTool {
                     MatchInfo mi = e.getValue();
                     if (mi == null)
                         return "(null)";
-                    return e.getKey() + "=" + mi;
+                    return e.getKey() + "=" + mi.toString(contentsField.name());
                 })
                 .collect(Collectors.joining(", "));
     }

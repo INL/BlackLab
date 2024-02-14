@@ -103,8 +103,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_OPERATION = "operation"; // posfilter, ngrams
     private static final String KEY_PARENT = "parent";
     private static final String KEY_PRODUCER = "producer";
-    private static final String KEY_REL_SPAN_MODE = "spanmode";
-    private static final String KEY_REL_TYPE = "reltype";
+    private static final String KEY_REL_SPAN_MODE = "spanMode";
+    private static final String KEY_REL_TYPE = "relType";
     private static final String KEY_SENSITIVITY = "sensitivity";
     private static final String KEY_SETTINGS = "settings";
     private static final String KEY_START = "start";

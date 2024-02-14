@@ -47,6 +47,7 @@ class TokenStreamWithOffsets extends TokenStream {
 
     public TokenStreamWithOffsets(List<String> tokens, IntList increments, IntList startChar,
             IntList endChar) {
+        assert onlyIncrease(startChar, endChar);
         clearAttributes();
         termAttr = addAttribute(CharTermAttribute.class);
         offsetAttr = addAttribute(OffsetAttribute.class);
@@ -57,6 +58,21 @@ class TokenStreamWithOffsets extends TokenStream {
         incrementIt = increments.intIterator();
         startCharIt = startChar.intIterator();
         endCharIt = endChar.intIterator();
+    }
+
+    private boolean onlyIncrease(IntList startChar, IntList endChar) {
+        int prevStart = -1;
+        int prevEnd = -1;
+        for (int i = 0; i < startChar.size(); i++) {
+            int start = startChar.get(i);
+            int end = endChar.get(i);
+            if (start < prevStart || end < prevEnd) {
+                return false;
+            }
+            prevStart = start;
+            prevEnd = end;
+        }
+        return true;
     }
 
     @Override

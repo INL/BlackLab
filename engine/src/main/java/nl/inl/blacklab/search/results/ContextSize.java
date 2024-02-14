@@ -38,9 +38,6 @@ public class ContextSize {
     /**
      * Get ContexSize.
      *
-     * WARNING: right now, only before() is used (for both before and after context size)!
-     * The other functionality will be added in the future.
-     *
      * @param before context size before hit
      * @param after context size after hit
      * @param includeHit should the hit itself be included in the context or not?
@@ -54,9 +51,6 @@ public class ContextSize {
     /**
      * Get ContexSize.
      *
-     * WARNING: right now, only before() is used (for both before and after context size)!
-     * The other functionality will be added in the future.
-     *
      * @param before context size before hit
      * @param after context size after hit
      * @param includeHit should the hit itself be included in the context or not?
@@ -68,9 +62,6 @@ public class ContextSize {
 
     /**
      * Get ContexSize.
-     *
-     * WARNING: right now, only before() is used (for both before and after context size)!
-     * The other functionality will be added in the future.
      *
      * Hit is always included in the context with this method.
      *
@@ -207,7 +198,7 @@ public class ContextSize {
                 MatchInfo mi = matchInfos[i];
                 if (mi.getType() == MatchInfo.Type.INLINE_TAG) {
                     String relType = ((RelationInfo) mi).getFullRelationType();
-                    String tagName = RelationUtil.classAndType(relType)[1];
+                    String tagName = RelationUtil.typeFromFullType(relType);
                     if (tagName.equals(matchInfoName)) {
                         return mi;
                     }

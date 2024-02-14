@@ -90,19 +90,15 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         // Find the target field from the relation class (e.g. for class al__de, target field will be something like
         // contents__de)
-        String relClass = RelationUtil.classAndType(relationType)[0];
-        String version = AnnotatedFieldNameUtil.splitParallelFieldName(relClass)[1];
-        String targetField = StringUtils.isEmpty(version) ? null :
-                AnnotatedFieldNameUtil.getParallelFieldVersion(context.getDefaultField(), version);
+        // Be careful not to interpret special relations class __tag as a parallel field!
+        String relClass = RelationUtil.classFromFullType(relationType);
+        String version = relClass.equals(RelationUtil.CLASS_INLINE_TAG) ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
+        String targetField = StringUtils.isEmpty(version) ? sourceField :
+                AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField(), version);
 
-        if (context.getOverriddenField() != null || targetField != null) {
-            // When capturing relations, remember that we're producing hits in a different field.
-            // (used with parallel corpora)
-            boolean isOverridden = !sourceField.equals(context.getDefaultField());
-            relationInfo = RelationInfo.createWithFields(sourceField, isOverridden, targetField);
-        }
-        if (relationInfo == null)
-            relationInfo = RelationInfo.createWithFields(context.getDefaultField(), false, null);
+        // When capturing relations, remember that we're producing hits in a different field.
+        // (used with parallel corpora)
+        relationInfo = RelationInfo.createWithFields(sourceField, targetField);
         // Register our group
         if (!captureAs.isEmpty())
             this.groupIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.RELATION, sourceField);

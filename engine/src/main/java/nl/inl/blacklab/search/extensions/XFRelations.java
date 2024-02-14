@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -27,6 +28,10 @@ public class XFRelations implements ExtensionFunctionClass {
     public static final String FUNC_RSPAN = "rspan";
     public static final String FUNC_RCAPTURE = "rcapture";
     public static final String FUNC_RCAPTURE2 = "rcapture2";
+
+    /** Default name for match info if no explicit capture name is set for a relation operator, and none could be
+        derived from the relation type filter expression. */
+    public static final String DEFAULT_CAPTURE_NAME = "rel";
 
     /**
      * Find relations matching type and target.
@@ -86,9 +91,12 @@ public class XFRelations implements ExtensionFunctionClass {
     public static String determineCaptureAs(QueryExecutionContext context, String relationType) {
         // Autodetermine capture name if no explicit name given.
         // Discard relation class if specified, keep Unicode letters from relationType, and add unique number
-        String captureName = RelationUtil.classAndType(relationType)[1].replaceAll("[^\\p{L}]", "");
+        String targetVersion = AnnotatedFieldNameUtil.versionFromParallelFieldName(RelationUtil.classFromFullType(relationType));
+        String captureName = RelationUtil.typeFromFullType(relationType).replaceAll("[^\\p{L}-]", "");
         if (captureName.isEmpty())
-            captureName = FUNC_REL;
+            captureName = DEFAULT_CAPTURE_NAME;
+        if (!targetVersion.isEmpty())
+            captureName += AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + targetVersion;
         return context.ensureUniqueCapture(captureName);
     }
 

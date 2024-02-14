@@ -216,7 +216,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
             String baseWithVersion = AnnotatedFieldNameUtil.getBaseName(clause.getField());
             // In parallel corpora, a query may contain clauses that search in different
             // versions of the same field (e.g. "contents__en" and "contents__nl").
-            String base = AnnotatedFieldNameUtil.splitParallelFieldName(baseWithVersion)[0];
+            String base = AnnotatedFieldNameUtil.baseFromParallelFieldName(baseWithVersion);
             if (baseFieldName == null) {
                 baseFieldName = base;
                 baseFieldNameWithVersion = baseWithVersion;

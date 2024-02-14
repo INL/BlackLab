@@ -124,11 +124,24 @@ public class AnnotatedFieldWriter {
         return addAnnotation(name, sensitivity, false, createForwardIndex);
     }
 
+    /**
+     * Add a final start/end char identical to the one before.
+     *
+     * Used for the final dummy token. When this is added, we've processed other
+     * fields in the meantime, so our character position is unavailable.
+     */
+    public void addFinalStartEndChars() {
+        addStartChar(start.isEmpty() ? 0 : start.get(start.size() - 1));
+        addEndChar(end.isEmpty() ? 0 : end.get(end.size() - 1));
+    }
+
     public void addStartChar(int startChar) {
+        assert start.isEmpty() || startChar >= start.get(start.size() - 1);
         start.add(startChar);
     }
 
     public void addEndChar(int endChar) {
+        assert end.isEmpty() || endChar >= end.get(end.size() - 1);
         end.add(endChar);
     }
 

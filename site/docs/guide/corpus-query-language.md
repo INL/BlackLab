@@ -259,12 +259,27 @@ This is NOT valid (may not produce an error, but the results are undefined):
 ## Relations querying
 
 ::: tip Supported from v4.0
-Indexing and searching relations is supported starting from BlackLab 4.0 (and current development snapshots).
+Indexing and searching relations will be supported from BlackLab 4.0 (and current development snapshots).
 :::
 
-If your input data contains relations, such as dependency relations, you can query those as well. One advantage of this style of querying is that it's much easier to find nonadjacent words related to one another, or two related words regardless of what order they occur in.
+Relations show how (groups of) words are related to one another. One of the most common types of relations is the dependency relation, which shows grammatical dependency between words.
 
-Querying relations is essentially done by building a partial tree of relations constraints.
+If your corpus contains relations, you can query those as well. One advantage of this style of querying is that it's much easier to find nonadjacent words related to one another, or two related words regardless of what order they occur in.
+
+::: details How to index relations
+
+Indexing relations is explained [here](/guide/how-to-configure-indexing.html#indexing-dependency-relations).
+
+:::
+
+Querying relations is essentially done by building a partial tree of relations constraints. BlackLab will try and find this structure in the corpus. Relations queries can be combined with "regular" token-level queries as well.
+
+::: tip Treebank systems
+
+BlackLab supports limited relations querying, but is not as powerful as a full
+treebank system, which is primarily designed for this style of search. Links to some treebank systems can be found [here](https://github.com/INL/BlackLab/blob/dev/doc/technical/design/design-relations-queries.md#research-into-treebank-systems). For BlackLab's relations querying limitations, see [below](#limitation-descendant-search).
+
+:::
 
 ### An example dependency tree
 
@@ -464,6 +479,102 @@ If you only want to capture certain relations, you specify a third parameter tha
 
     'elephant' within rcapture(<s/>, 'relations', 'fam::.*')
 
+#### Cross-field relations
+
+It is possible to have a corpus with multiple annotated fields, with relations that point from a position or span in one field to another. Annotated fields should be named e.g. `contents__original` and `contents__corrected` for this to work, and a relation from the first to the second field could be found like this:
+
+    'mistpyed' -->corrected 'mistyped'
+
+As you can see, the target version is appended to the relation operator. The source version is determined by the main annotated field searched (the `field` parameter for BlackLab Server; will default to the main annotated field, which is the first one you defined in your indexing configuration).
+
+Cross-field relations are used to enable parallel corpora, which we'll discuss next.
+
+
+## Parallel corpus querying
+
+::: tip Supported from v4.0
+Indexing and searching parallel corpoora will be supported from BlackLab 4.0 (and current development snapshots).
+:::
+
+A parallel corpus is a corpus that contains multiple versions of the corpus content, usually from different languages and/or time periods, and record the alignment between the versions at different levels (e.g. paragraph, sentence, word).
+
+For example, you could have a parallel corpus of EU Parliament discussions in the various European languages, or a parallel corpus of different translations of a classic work such as Homer's Odyssey.
+
+::: details How to index a parallel corpus
+
+Indexing parallel corpora is explained [here](/guide/how-to-configure-indexing.html#indexing-parallel-corpora).
+
+:::
+
+BlackLab's parallel corpus functionality uses cross-field relations to find alignments between the content versions available in your corpus.
+
+The alignments operator `==>` is specifically to find alignments between versions in your corpus. It essentially means "capture all relations between (part of) the left and right span". It will capture a list of relations in the response.
+
+### Basic parallel querying
+
+For example, if your corpus contains fields `contents__en` (English version) and `contents__nl` (Dutch version), and English is the default field (the first one defined in your indexing config), you can find the Dutch translation of an English word using:
+
+    'cat' ==>nl _
+
+The hit for this query will be `cat` in the English field, and the match info will contain a group named `rel` with all alignment relations found (just the one in this case, between the word `cat` and its Dutch equivalent). The hit response structure will also contain an `otherFields` section containing the corresponding Dutch content fragment. The location of the Dutch word aligned with the English word `cat` can be found from the relation in the `rel` capture, which includes `targetField`, `targetStart` and `targetEnd`.
+
+Assuming your data has both sentence and word alignments, and you want to find all alignments for a sentence containing `cat`, you could use:
+
+    <s/> containing 'cat' ==>nl _
+
+This should find aligning English and Dutch sentences, including any word alignments between words in those sentences.
+
+### Switching the main search field
+
+If you want to search the Dutch version instead, and find alignments with the English version, you would use this query:
+
+    'kat' ==>en _
+
+But of course, the main search field shouldn't be `contents__en` in this case; we want to switch it to `contents__nl`. You can specify a main search field other than the default with the BLS parameter `field`. In this case, if you specify `field=nl`. BlackLab will automatically recognize that you're specifying a version of the main annotated field and use the correct 'real' field, probably `contents__nl` in this case.
+
+
+### Filtering the target span
+
+In the previous example, we used `_` as the target span. This is the default, and means "the best matching span".
+
+But you can also specify a different target span. For example, to find where _fluffy_ was translated to _pluizig_: 
+
+    'fluffy' ==>nl 'pluizig'
+
+This will execute the left and right queries on their respective fields and match the hits by their alignment relations.
+
+### Multiple alignment queries
+
+You can also use multiple alignment operators in a single query to match to more than one other version:
+
+    'fluffy' ==>nl 'pluizig' ;
+             ==>de 'flauschig'
+
+### Only matching some (alignment) relations
+
+Just like with other relations queries, you can filter by type:
+
+    'fluffy' =word=>nl 'pluizig'
+
+This will only find relations of type `word`. The type filter will automatically determine the capture name as well, so any relation(s) found will be captured as `word` in this case instead of `rel` (unless an explicit name is assigned, see below).
+
+### Renaming the relations capture
+
+You can use a override the default name `rel` for the alignment operator's captures:
+
+    <s/> alignments:==>nl _
+
+Now the alignment relations will be captured in a group named `alignments`.
+
+
+### Capturing in target fields
+
+You can capture parts of the target query like normal, e.g.:
+
+    "and" w1:[] ==>nl "en" w2:[]
+
+There will be one match info named `w1` for the primary field searched (English in this case), and one named `w2` for the target field (Dutch). 
+
 
 ## Advanced subjects
 
@@ -481,19 +592,19 @@ Inside token brackets `[ ]`:
 
 At the sequence level (i.e. outside token brackets):
 
-| Operator                     | Description                      | Associativity |
-|------------------------------|----------------------------------|---------------|
-| `!`                          | logical not                      | right-to-left |
-| `[ ]`                        | token brackets                   | left-to-right |
-| `( )`                        | function call                    | left-to-right |
-| `*` `+` `?`<br>`{n}` `{n,m}` | repetition                       | left-to-right |
-| `:`                          | capture                          | right-to-left |
-| `< />` `< >` `</ >`          | span (start/end)                 | left-to-right |
-| `-..-> .. ; ..`<br>`^-->`    | child relations<br>root relation | right-to-left |
-| `[] []`                      | sequence<br>(implied operator)   | left-to-right |
-| `\|` `&`                     | union/intersection               | left-to-right |
-| `within` `containing`        | position filter                  | right-to-left |
-| `::`                         | capture constraint               | left-to-right |
+| Operator                                     | Description                                   | Associativity |
+|----------------------------------------------|-----------------------------------------------|---------------|
+| `!`                                          | logical not                                   | right-to-left |
+| `[ ]`                                        | token brackets                                | left-to-right |
+| `( )`                                        | function call                                 | left-to-right |
+| `*` `+` `?`<br>`{n}` `{n,m}`                 | repetition                                    | left-to-right |
+| `:`                                          | capture                                       | right-to-left |
+| `< />` `< >` `</ >`                          | span (start/end)                              | left-to-right |
+| `[] []`                                      | sequence<br>(implied operator)                | left-to-right |
+| `\|` `&`                                     | union/intersection                            | left-to-right |
+| `within` `containing`                        | position filter                               | right-to-left |
+| `--> [ ; --> ]`<br>`^-->`<br>`==> [ ; ==> ]` | child relations<br>root relation<br>alignment | right-to-left |
+| `::`                                         | capture constraint                            | left-to-right |
 
 NOTES:
 - you can always use grouping parens `( )` (at either token or sequence level) to override this precedence.

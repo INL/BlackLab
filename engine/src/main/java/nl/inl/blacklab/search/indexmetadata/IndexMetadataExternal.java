@@ -85,7 +85,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
         if (createNewIndex && config != null) {
             // Create an index metadata file from this config.
             ObjectNode jsonRoot = createIndexMetadataFromConfig(config);
-            extractFromJson(jsonRoot, null, true);
+            decodeFromJson(jsonRoot, null, true);
             save();
         } else {
             // Read existing metadata or create empty new one
@@ -174,7 +174,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
             // Read the metadata file
             jsonRoot = readMetadataFile(metadataFile);
         }
-        extractFromJson(jsonRoot, reader, usedTemplate);
+        decodeFromJson(jsonRoot, reader, usedTemplate);
         if (!createNewIndex) { // new index doesn't have this information yet
             detectMainAnnotation(reader);
         }
@@ -398,7 +398,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
      *            anymore.
      * @throws IndexVersionMismatch if the index is too old or too new to open with this BlackLab version
      */
-    protected void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexVersionMismatch {
+    private void decodeFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexVersionMismatch {
         ensureNotFrozen();
 
         // Read and interpret index metadata file

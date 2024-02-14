@@ -10,7 +10,7 @@ public class TestRelationUtil {
     @Test
     public void testInlineTagRelationType() {
         String rt = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, "word");
-        String tagName = RelationUtil.classAndType(rt)[1];
+        String tagName = RelationUtil.typeFromFullType(rt);
         Assert.assertEquals("word", tagName);
     }
 

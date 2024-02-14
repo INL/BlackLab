@@ -28,7 +28,11 @@ public class ConfigInlineTag {
      */
     private String tokenIdPath = null;
 
+    /** Don't index attributes in this list (unless includeAttributes is set). */
     private Set<String> excludeAttributes = Collections.emptySet();
+
+    /** If set: ignore excludeAttributes and don't index attributes not in this list. */
+    private List<String> includeAttributes = null;
 
     public ConfigInlineTag() {
     }
@@ -81,5 +85,13 @@ public class ConfigInlineTag {
 
     public Set<String> getExcludeAttributes() {
         return excludeAttributes;
+    }
+
+    public void setIncludeAttributes(List<String> includeAttributes) {
+        this.includeAttributes = includeAttributes;
+    }
+
+    public List<String> getIncludeAttributes() {
+        return includeAttributes;
     }
 }

@@ -83,8 +83,13 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             return nodeInfo.compareOrder(word);
         }
 
-        public boolean indexAttribute(String displayName) {
-            return !config.getExcludeAttributes().contains(displayName);
+        public boolean indexAttribute(String name) {
+            if (config.getIncludeAttributes() != null) {
+                // If includeAttributes is set, attribute must be in the list and excludeAttributes is ignored.
+                return config.getIncludeAttributes().contains(name);
+            }
+            // Otherwise, index all attributes not in excludeAttributes.
+            return !config.getExcludeAttributes().contains(name);
         }
     }
 
@@ -183,7 +188,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         Pattern xIncludeTag = Pattern.compile("<xi:include\\s+href=\"([^\"]+)\"\\s*/>");
         CharSequence doc = CharBuffer.wrap(documentContent);
         Matcher matcher = xIncludeTag.matcher(doc);
-        StringBuilder result = new StringBuilder();
+        StringBuilder result = new StringBuilder(documentContent.length / 2 * 3);
         int pos = 0;
         boolean anyFound = false;
         while (matcher.find()) {

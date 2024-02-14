@@ -482,7 +482,7 @@ public final class LuceneUtil {
         try {
             for (LeafReaderContext leafReader : reader.leaves()) {
                 Terms terms = leafReader.reader().terms(fieldName);
-                if (maxTermsPerLeafReader < terms.size())
+                if (terms != null && maxTermsPerLeafReader < terms.size())
                     maxTermsPerLeafReader = terms.size();
             }
         } catch (IOException e) {

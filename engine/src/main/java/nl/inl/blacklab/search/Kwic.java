@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class Kwic {
 
-    private final DocContentsFromForwardIndex fragment;
+    private final DocFragment fragment;
 
     /** Token number (from start of fragment) where the hit begins. */
     private final int hitStart;
@@ -40,7 +40,7 @@ public class Kwic {
      * @param fragmentStartInDoc where the fragment starts, in word positions
      */
     public Kwic(List<Annotation> annotations, List<String> tokens, int matchStart, int matchEnd, int fragmentStartInDoc) {
-        fragment = new DocContentsFromForwardIndex(annotations, tokens);
+        fragment = new DocFragment(annotations, tokens);
         this.hitStart = matchStart;
         this.hitEnd = matchEnd;
         this.fragmentStartInDoc = fragmentStartInDoc;
@@ -100,6 +100,18 @@ public class Kwic {
      */
     public List<String> tokens() {
         return fragment.tokens();
+    }
+
+    public DocFragment fragBefore() {
+        return fragment.subFragment(0, hitStart);
+    }
+
+    public DocFragment fragMatch() {
+        return fragment.subFragment(hitStart, hitEnd);
+    }
+
+    public DocFragment fragAfter() {
+        return fragment.subFragment(hitEnd, fragment.length());
     }
 
     /**
@@ -260,7 +272,7 @@ public class Kwic {
         return fragmentStartInDoc + fragment.length();
     }
 
-    public DocContentsFromForwardIndex fragment() {
+    public DocFragment fragment() {
         return fragment;
     }
 

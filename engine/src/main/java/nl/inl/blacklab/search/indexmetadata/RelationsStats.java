@@ -24,9 +24,9 @@ public class RelationsStats {
     public String getDefaultClass() {
         return classes.keySet().stream()
                 .filter(cls -> !cls.equals(RelationUtil.CLASS_INLINE_TAG))
-                .map(cls -> AnnotatedFieldNameUtil.splitParallelFieldName(cls)[0])
+                .map(cls -> AnnotatedFieldNameUtil.baseFromParallelFieldName(cls))
                 .findFirst()
-                .orElse(RelationUtil.CLASS_DEFAULT_SEARCH);
+                .orElse(RelationUtil.DEFAULT_CLASS);
     }
 
     /**
@@ -92,8 +92,7 @@ public class RelationsStats {
         private Map<String, TypeStats> relationTypes = new TreeMap<>();
 
         void add(String term, long freq) {
-            String[] classAndType = RelationUtil.classAndType(RelationUtil.fullTypeFromIndexedTerm(term));
-            String relationType = classAndType[1];
+            String relationType = RelationUtil.typeFromFullType(RelationUtil.fullTypeFromIndexedTerm(term));
             // Add the relation type
             TypeStats typeStats = relationTypes.computeIfAbsent(relationType, k -> new TypeStats());
             typeStats.add(term, freq);
@@ -172,7 +171,7 @@ public class RelationsStats {
                     null, false);
         } else {
             // New integrated index with spans indexed as relations as well.
-            relationClass = RelationUtil.classAndType(RelationUtil.fullTypeFromIndexedTerm(term))[0];
+            relationClass = RelationUtil.classFromFullType(RelationUtil.fullTypeFromIndexedTerm(term));
         }
         ClassStats relClassStats = classes.computeIfAbsent(relationClass, k -> new ClassStats());
         relClassStats.add(term, freq);

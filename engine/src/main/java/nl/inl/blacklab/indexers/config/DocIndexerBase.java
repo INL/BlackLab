@@ -374,8 +374,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                     if (prop.hasPayload())
                         prop.addPayload(null);
                     if (prop == propMain) {
-                        field.addStartChar(getCharacterPosition());
-                        field.addEndChar(getCharacterPosition());
+                        field.addFinalStartEndChars();
                     }
                 }
             }

@@ -14,22 +14,16 @@ public class RelationUtil {
     /** Relation class used for inline tags. Deliberately obscure to avoid collisions with "real" relations. */
     public static final String CLASS_INLINE_TAG = "__tag";
 
-    /** Relation class to use for relations if not specified. */
-    public static final String CLASS_DEFAULT_INDEX = "rel";
-
-    /** Default fallback class to use when searching.
-     *  Actually the default class is index-specific; it is alphabetically
-     *  the first non-__tag class, with the version stripped off if it's a
-     *  cross-field class in a parallel corpus. This means that if your corpus
-     *  has only one class of relations, you never have to specify it but can
-     *  rely on the default.
-     */
-    public static final String CLASS_DEFAULT_SEARCH = CLASS_DEFAULT_INDEX;
+    /** Relation class to use for relations if not specified (both during indexing and searching). */
+    public static final String DEFAULT_CLASS = "rel";
 
     /** Relation class to use for dependency relations (by convention). */
     public static final String CLASS_DEPENDENCY = "dep";
 
-    /** Relation class to use for alignment relations in parallel corpus (by convention). */
+    /** Relation class to use for alignment relations in parallel corpus (by convention).
+     * Note that this will be suffixed with the target version, e.g. "al__de" for an alignment
+     * relation to the field "contents__de".
+     */
     @SuppressWarnings("unused")
     public static final String CLASS_ALIGNMENT = "al";
 
@@ -237,7 +231,7 @@ public class RelationUtil {
      * @param fullRelationType full relation type
      * @return relation class and relation type
      */
-    public static String[] classAndType(String fullRelationType) {
+    private static String[] classAndType(String fullRelationType) {
         int sep = fullRelationType.indexOf(CLASS_TYPE_SEPARATOR);
         if (sep < 0)
             return new String[] { "", fullRelationType };
@@ -245,6 +239,34 @@ public class RelationUtil {
             fullRelationType.substring(0, sep),
             fullRelationType.substring(sep + CLASS_TYPE_SEPARATOR.length())
         };
+    }
+
+    /**
+     * Get the relation class from a full relation type [regex]
+     * <p>
+     * Relations are indexed with a full type, consisting of a relation class and a relation type.
+     * The class is used to distinguish between different groups of relations, e.g. inline tags
+     * and dependency relations.
+     *
+     * @param fullRelationType full relation type
+     * @return relation class
+     */
+    public static String classFromFullType(String fullRelationType) {
+        return classAndType(fullRelationType)[0];
+    }
+
+
+    /**
+     * Get the relation type from a full relation type [regex]
+     * <p>
+     * Relations are indexed with a full type, consisting of a relation class and a relation type.
+     * The type is used to distinguish between different types of relations within a class.
+     *
+     * @param fullRelationType full relation type
+     * @return relation type
+     */
+    public static String typeFromFullType(String fullRelationType) {
+        return classAndType(fullRelationType)[1];
     }
 
     /**

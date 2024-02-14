@@ -20,6 +20,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
@@ -463,6 +464,13 @@ public class WebserviceParamsImpl implements WebserviceParams {
     public AnnotatedField getAnnotatedField() {
         String fieldName = getFieldName();
         AnnotatedField field = blIndex().annotatedField(fieldName);
+        if (field == null) {
+            // See if field is actually a different version in a parallel corpus of the main field, e.g. "nl" if the
+            // field is "contents__nl"
+            String fieldVersion = AnnotatedFieldNameUtil.changeParallelFieldVersion(blIndex().mainAnnotatedField().name(),
+                    fieldName);
+            field = blIndex().annotatedField(fieldVersion);
+        }
         if (field == null)
             field = blIndex().mainAnnotatedField();
         return field;

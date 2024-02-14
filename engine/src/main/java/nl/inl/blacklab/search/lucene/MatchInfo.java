@@ -50,25 +50,33 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         return a.equals(b);
     }
 
-    /** Field this match info is from (parallel corpora), or null if default field. */
-    private String overriddenField;
+    /** Field this match info is from.
+     *  If this is not a parallel corpus, this will always be the field that was searched.
+     *  Never null.
+     */
+    private final String field;
 
-    MatchInfo(String overriddenField) {
-        this.overriddenField = overriddenField;
+    MatchInfo(String field) {
+        assert field != null;
+        this.field = field;
     }
 
-    public String getOverriddenField() {
-        return overriddenField;
+    public String getField() {
+        return field;
     }
 
-    protected String toStringOptFieldName() {
-        return getOverriddenField() == null ? "" : " (" + getOverriddenField() + ")";
+    protected String toStringOptFieldName(String defaultField) {
+        return field.equals(defaultField) ? "" : " (" + getField() + ")";
     }
 
     public abstract Type getType();
 
     @Override
-    public abstract String toString();
+    public String toString() {
+        return toString("");
+    }
+
+    public abstract String toString(String defaultField);
 
     @Override
     public int compareTo(MatchInfo o) {
@@ -102,14 +110,15 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         /** What type of match info is this? (span, tag, relation, list of relations) */
         private Type type;
 
-        /** Is this match info for another field (parallel corpora)? Will be null if not. */
-        private String overriddenField;
+        /** What field is this match info for? Never null. */
+        private String field;
 
-        public Def(int index, String name, Type type, String overriddenField) {
+        public Def(int index, String name, Type type, String field) {
             this.index = index;
             this.name = name;
             this.type = type;
-            this.overriddenField = overriddenField;
+            assert field != null;
+            this.field = field;
         }
 
         public int getIndex() {
@@ -124,8 +133,8 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
             return type;
         }
 
-        public String getOverriddenField() {
-            return overriddenField;
+        public String getField() {
+            return field;
         }
 
         public void updateType(Type type) {

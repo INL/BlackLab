@@ -24,19 +24,19 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 public class RelationInfo extends MatchInfo {
 
     public static RelationInfo create() {
-        return new RelationInfo(false, -1, -1, -1, -1, null, null, null, false, null);
+        return new RelationInfo(false, -1, -1, -1, -1, null, null, "", "");
     }
 
-    public static RelationInfo createWithFields(String sourceField, boolean sourceIsOverridden, String targetField) {
-        return new RelationInfo(false, -1, -1, -1, -1, null, null, sourceField, sourceIsOverridden, targetField);
+    public static RelationInfo createWithFields(String sourceField, String targetField) {
+        return new RelationInfo(false, -1, -1, -1, -1, null, null, sourceField, targetField);
     }
 
     public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, null, null, null, false, null);
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, null, null, "", "");
     }
 
     public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, String fullRelationType) {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, null, null, false, null);
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType, null, "", "");
     }
 
     /** Include attributes in relation info? We wanted to do this but can't anymore
@@ -98,6 +98,14 @@ public class RelationInfo extends MatchInfo {
     public boolean hasTarget() {
         assert targetStart >= 0 && targetEnd >= 0 || targetStart < 0 && targetEnd < 0 : "targetStart and targetEnd inconsistent";
         return targetStart >= 0;
+    }
+
+    public String getRelationClass() {
+        return RelationUtil.classFromFullType(getFullRelationType());
+    }
+
+    public String getRelationType() {
+        return RelationUtil.typeFromFullType(getFullRelationType());
     }
 
     /**
@@ -204,18 +212,16 @@ public class RelationInfo extends MatchInfo {
     /** Tag attributes (if any), or empty if not set (set during search by SpansRelations) */
     private Map<String, String> attributes;
 
-    /** Field this points from. May or may not be overridden from default field. */
-    private final String sourceField;
-
     /** Field this points to, or null if same as source field. */
     private final String targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
-            String fullRelationType, Map<String, String> attributes, String sourceField, boolean sourceIsOverridden, String targetField) {
-        super(sourceIsOverridden ? sourceField : null);
+            String fullRelationType, Map<String, String> attributes, String sourceField, String targetField) {
+        super(sourceField);
         this.fullRelationType = fullRelationType;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
-        this.sourceField = sourceField;
+        assert sourceField != null;
+        assert targetField != null;
         this.targetField = targetField;
         this.onlyHasTarget = onlyHasTarget;
         if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd) && (sourceStart != targetStart || sourceEnd != targetStart)) {
@@ -233,9 +239,8 @@ public class RelationInfo extends MatchInfo {
     }
 
     public RelationInfo copy() {
-        boolean sourceIsOverridden = sourceField != null && sourceField.equals(getOverriddenField());
         return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, fullRelationType,
-                attributes, sourceField, sourceIsOverridden, targetField);
+                attributes, getField(), targetField);
     }
 
     /**
@@ -316,12 +321,8 @@ public class RelationInfo extends MatchInfo {
         return Math.max(sourceEnd, targetEnd);
     }
 
-    public String getSourceField() {
-        return sourceField;
-    }
-
     public String getTargetField() {
-        return targetField == null ? sourceField : targetField;
+        return targetField;
     }
 
     public int spanStart(SpanMode mode) {
@@ -407,41 +408,33 @@ public class RelationInfo extends MatchInfo {
         return attributes;
     }
 
-    private String toStringOptSourceTargetFields() {
-        if (sourceField == null)
-            return "";
-        if (getOverriddenField() == null) {
+    private String toStringOptSourceTargetFields(String defaultField) {
+        if (getField().equals(defaultField)) {
             // Source field is the default field, don't mention it separately
-            if (targetField == null) {
+            if (targetField.equals(defaultField)) {
                 // Both are default
                 return "";
             } else {
                 // Source is default, target is not
-                return "(-> " + targetField + ")";
+                return " (-> " + targetField + ")";
             }
         } else {
             // Source field is not the default field
-            if (targetField == null) {
-                // Source is not default, target is
-                return "(" + sourceField + ")";
-            } else {
-                // Both are not default
-                return "(" + sourceField + " -> " + targetField + ")";
-            }
-
+            return " (" + getField() + " -> " + targetField + ")";
         }
     }
 
     @Override
-    public String toString() {
+    public String toString(String defaultField) {
         // Inline tag
         if (isTag()) {
-            String tagName = fullRelationType == null ? "UNKNOWN" : RelationUtil.classAndType(fullRelationType)[1];
+            String tagName = fullRelationType == null ? "UNKNOWN" : RelationUtil.typeFromFullType(fullRelationType);
             String attr = attributes == null || attributes.isEmpty() ? "" :
                     " " + attributes.entrySet().stream()
                             .map(e -> e.getKey() + "=\"" + e.getValue() + "\"")
                             .collect(Collectors.joining(" "));
-            return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )" + toStringOptFieldName();
+            return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )" +
+                    toStringOptFieldName(defaultField);
         }
 
         // Relation
@@ -451,7 +444,8 @@ public class RelationInfo extends MatchInfo {
             return "rel( ^-" + fullRelationType + "-> " + target + ")";
         int sourceLen = sourceEnd - sourceStart;
         String source = sourceStart + (sourceLen != 1 ? "-" + sourceEnd : "");
-        return "rel(" + source + " -" + fullRelationType + "-> " + target + ")" + toStringOptSourceTargetFields();
+        return "rel(" + source + " -" + fullRelationType + "-> " + target + ")" +
+                toStringOptSourceTargetFields(defaultField);
     }
 
     @Override

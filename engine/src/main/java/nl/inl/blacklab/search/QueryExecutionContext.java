@@ -80,15 +80,15 @@ public class QueryExecutionContext {
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures) {
         this.index = index;
         this.fieldName = version == null ? fieldName :
-                AnnotatedFieldNameUtil.getParallelFieldVersion(fieldName, version);
+                AnnotatedFieldNameUtil.changeParallelFieldVersion(fieldName, version);
         this.version = version;
         this.annotationName = annotationName;
         AnnotatedField field = index.annotatedField(this.fieldName);
         if (field == null)
-            throw new IllegalArgumentException("Annotated field doesn't exist: null");
+            throw new IllegalArgumentException("Annotated field doesn't exist: " + this.fieldName);
         Annotation annotation = field.annotation(annotationName);
         if (annotation == null)
-            throw new IllegalArgumentException("Annotation doesn't exist: null");
+            throw new IllegalArgumentException("Annotation doesn't exist: " + annotationName + " on field " + fieldName);
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
         this.defaultRelationClass = defaultRelationClass;
@@ -112,10 +112,10 @@ public class QueryExecutionContext {
 
     public QueryExecutionContext withRelationAnnotation() {
         if (!field().hasXmlTags())
-            throw new RuntimeException("Field has no relation annotation!");
+            throw new RuntimeException("Field " + field().name() + " has no relation annotation!");
         String name = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
         if (field().annotation(name) == null)
-            throw new RuntimeException("Field has no relation annotation named " + name + "!");
+            throw new RuntimeException("Field " + field().name() + " has no relation annotation named " + name + "!");
         return withAnnotationAndSensitivity(field().annotation(name), null);
     }
 

@@ -24,25 +24,22 @@ public class HitQueryContext {
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
     private final String defaultField;
 
-    /** If non-null, this part of the query searches a different field (parallel corpora) */
-    private final String overriddenField;
+    /** The field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
+    private final String field;
 
     public HitQueryContext(BLSpans spans, String defaultField) {
-        this(spans, defaultField, null);
+        this(spans, defaultField, defaultField);
     }
 
-    private HitQueryContext(BLSpans spans, String defaultField, String overriddenField) {
+    private HitQueryContext(BLSpans spans, String defaultField, String field) {
         this.rootSpans = spans;
         this.defaultField = defaultField;
-        this.overriddenField = overriddenField;
-    }
-
-    boolean fieldWasOverridden() {
-        return getOverriddenField() != null && !getOverriddenField().equals(getDefaultField());
+        assert field != null;
+        this.field = field;
     }
 
     public HitQueryContext withSpans(BLSpans spans) {
-        HitQueryContext result = new HitQueryContext(spans, defaultField, overriddenField);
+        HitQueryContext result = new HitQueryContext(spans, defaultField, field);
         result.matchInfoDefs = matchInfoDefs;
         return result;
     }
@@ -76,7 +73,7 @@ public class HitQueryContext {
      * @return the group's assigned index
      */
     public int registerMatchInfo(String name, MatchInfo.Type type) {
-        return registerMatchInfo(name, type, null);
+        return registerMatchInfo(name, type, getField());
     }
 
     /**
@@ -84,12 +81,11 @@ public class HitQueryContext {
      *
      * @param name the group's name
      * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
-     * @param actualField if null, use the (possibly overridden) field from this context.
-     *                    Otherwise use the field specified here. Used e.g. when capturing relation, which should always
+     * @param field the group's field. Never null. Used e.g. when capturing relation, which should always
      *                    be captured in the source field, even if the span mode is target (and the context reflects that).
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name, MatchInfo.Type type, String actualField) {
+    public int registerMatchInfo(String name, MatchInfo.Type type, String field) {
         Optional<MatchInfo.Def> mi = matchInfoDefs.stream()
                 .filter(mid -> mid.getName().equals(name))
                 .findFirst();
@@ -97,12 +93,7 @@ public class HitQueryContext {
             mi.get().updateType(type); // update type (e.g. if group is referred to before we know its type)
             return mi.get().getIndex(); // already registered, reuse
         }
-        String field = overriddenField;
-        if (actualField != null) {
-            // Use a different field than this context specifies.
-            // (e.g. always capture relations in source field even if span mode is target)
-            field = actualField.equals(defaultField) ? null : actualField;
-        }
+        assert field != null;
         MatchInfo.Def newMatchInfo = new MatchInfo.Def(matchInfoDefs.size(), name, type, field);
         matchInfoDefs.add(newMatchInfo);
         return newMatchInfo.getIndex(); // index in array
@@ -140,14 +131,14 @@ public class HitQueryContext {
     }
 
     /**
-     * Get the overridden field for this part of the query (if any).
+     * Get the field for this part of the query.
      *
-     * Used for parallel corpora. Will always return null in non-parallel corpora.
+     * Used for parallel corpora.
      *
-     * @return the field this part of the query searches, or null if it's just the main field we're querying
+     * @return the field this part of the query searches
      */
-    public String getOverriddenField() {
-        return overriddenField;
+    public String getField() {
+        return field;
     }
 
     public String getDefaultField() {

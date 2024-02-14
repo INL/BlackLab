@@ -349,6 +349,8 @@ public class AnnotationWriter {
      */
     private void insertValueAtIndex(int index, String value, int positionIncrement, BytesRef payload) {
         values.add(index, value);
+        if (positionIncrement < 0)
+            throw new RuntimeException("ERROR insertValueAtPosition(" + index + ", " + value + ", " + positionIncrement + ", payload): Negative position increment!");
         increments.addAtIndex(index, positionIncrement);
         if (hasPayload())
             payloads.add(index, payload);
@@ -359,7 +361,7 @@ public class AnnotationWriter {
             // correct it.
             int newPosIncr = increments.get(index + 1) - positionIncrement;
             if (newPosIncr < 0)
-                throw new RuntimeException("ERROR insertValueAtPosition(value, index, posIncr): Next token got a negative posIncrement!");
+                throw new RuntimeException("ERROR insertValueAtPosition(" + index + ", " + value + ", " + positionIncrement + ", payload): Next token got a negative posIncrement: " + newPosIncr);
             increments.set(index + 1, newPosIncr);
         }
     }

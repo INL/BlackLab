@@ -271,7 +271,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     }
 
     public boolean isTagQuery() {
-        String relationClass = RelationUtil.classAndType(relationType)[0];
+        String relationClass = RelationUtil.classFromFullType(relationType);
         return relationClass.equals(RelationUtil.CLASS_INLINE_TAG);
     }
 
@@ -333,7 +333,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     }
 
     public String getElementName() {
-        return RelationUtil.classAndType(relationType)[1];
+        return RelationUtil.typeFromFullType(relationType);
     }
 
     @Override

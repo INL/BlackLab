@@ -439,22 +439,59 @@ public final class AnnotatedFieldNameUtil {
      * @param fieldName field name to split
      * @return array with two elements: field base name and version
      */
-    public static String[] splitParallelFieldName(String fieldName) {
-        if (fieldName.contains(PARALLEL_VERSION_SEPARATOR))
+    private static String[] splitParallelFieldName(String fieldName) {
+        // Careful not to interpret special relation class name __tag as a parallel version!
+        if (fieldName.contains(PARALLEL_VERSION_SEPARATOR) && !fieldName.startsWith(PARALLEL_VERSION_SEPARATOR))
             return fieldName.split(PARALLEL_VERSION_SEPARATOR, 2);
         else
             return new String[] { fieldName, "" };
     }
 
+
+    /**
+     * Get the field base name from a parallel field name.
+     * <p>
+     * If the field name doesn't have a version suffix, the
+     * fieldName is returned unchanged.
+     * <p>
+     * Examples:
+     * - "contents__de" will return "contents"
+     * - "contents" will return "contents"
+     *
+     * @param fieldName field name to split
+     * @return field base name
+     */
+    public static String baseFromParallelFieldName(String fieldName) {
+        return splitParallelFieldName(fieldName)[0];
+    }
+
+
+    /**
+     * Get the field base name from a parallel field name.
+     * <p>
+     * If the field name doesn't have a version suffix, the
+     * empty string is returned.
+     * <p>
+     * Examples:
+     * - "contents__de" will return "de"
+     * - "contents" will return ""
+     *
+     * @param fieldName field name to split
+     * @return version
+     */
+    public static String versionFromParallelFieldName(String fieldName) {
+        return splitParallelFieldName(fieldName)[1];
+    }
+
     /**
      * Get the parallel field name for a field name and version.
      *
-     * @param fieldBaseName field base name
+     * @param baseName field base name
      * @param version version
      * @return parallel field name
      */
-    public static String getParallelFieldName(String fieldBaseName, String version) {
-        return fieldBaseName + PARALLEL_VERSION_SEPARATOR + version;
+    public static String getParallelFieldName(String baseName, String version) {
+        return baseName + PARALLEL_VERSION_SEPARATOR + version;
     }
 
     /**
@@ -465,14 +502,14 @@ public final class AnnotatedFieldNameUtil {
      * - getParallelFieldVersion("contents", "de") will return "contents__de"
      * - getParallelFieldVersion("contents", "") will return "contents"
      *
-     * @param fieldName a parallel field name with a version suffix
-     * @param version version to substitute
+     * @param parallelFieldName a parallel field name with a version suffix
+     * @param newVersion version to substitute
      * @return the parallel field name with the indicated version
      */
-    public static String getParallelFieldVersion(String fieldName, String version) {
-        if (version == null || version.isEmpty())
-            return fieldName;
-        return splitParallelFieldName(fieldName)[0] + PARALLEL_VERSION_SEPARATOR + version;
+    public static String changeParallelFieldVersion(String parallelFieldName, String newVersion) {
+        if (newVersion == null || newVersion.isEmpty())
+            return parallelFieldName;
+        return baseFromParallelFieldName(parallelFieldName) + PARALLEL_VERSION_SEPARATOR + newVersion;
     }
 
     /**
@@ -487,8 +524,8 @@ public final class AnnotatedFieldNameUtil {
      * @return true if they have the same parallel base field, false if not
      */
     public static boolean isSameParallelBaseField(String field1, String field2) {
-        String f1 = splitParallelFieldName(field1)[0];
-        String f2 = splitParallelFieldName(field2)[0];
+        String f1 = baseFromParallelFieldName(field1);
+        String f2 = baseFromParallelFieldName(field2);
         return f1.equals(f2);
     }
 

@@ -35,8 +35,8 @@ public class SpanInfo extends MatchInfo {
     }
 
     @Override
-    public String toString() {
-        return "span(" + getSpanStart() + "-" + getSpanEnd() + ")" + toStringOptFieldName();
+    public String toString(String defaultField) {
+        return "span(" + getSpanStart() + "-" + getSpanEnd() + ")" + toStringOptFieldName(defaultField);
     }
 
     @Override

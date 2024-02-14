@@ -359,7 +359,8 @@ public class ResponseStreamer {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
             }
-            ds.entry(KEY_FIELD_NAME, summaryFields.getSearchField());
+            String searchField = summaryFields.getSearchField();
+            ds.entry(KEY_FIELD_NAME, searchField);
             List<MatchInfo.Def> matchInfoDefs = summaryFields.getMatchInfoDefs();
             if (!matchInfoDefs.isEmpty()) {
                 // Report the match infos in the query, their types, and the field they apply to (if different from
@@ -369,8 +370,8 @@ public class ResponseStreamer {
                     ds.startDynEntry(def.getName()).startMap();
                     {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
-                        if (def.getOverriddenField() != null)
-                            ds.entry(KEY_FIELD_NAME, def.getOverriddenField());
+                        if (!def.getField().equals(searchField))
+                            ds.entry(KEY_FIELD_NAME, def.getField());
                     }
                     ds.endMap().endDynEntry();
                 }
@@ -570,7 +571,7 @@ public class ResponseStreamer {
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                hit(docPid, hit, hits.field().name(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
                         result.getAnnotationsToWrite());
             }
             ds.endItem();
@@ -578,11 +579,11 @@ public class ResponseStreamer {
         ds.endList().endEntry();
     }
 
-    private void hit(String docPid, Hit hit, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
+    private void hit(String docPid, Hit hit, String searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList) {
         boolean isSnippet = false;
 
-        outputHitOrSnippet(docPid, hit, matchInfo, context, concordanceContext, annotationsToList,
+        outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }
 
@@ -608,11 +609,12 @@ public class ResponseStreamer {
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        outputHitOrSnippet(docPid, hit, matchInfo, context, concordanceContext, annotationsToList,
+        String searchField = result.getHits().field().name();
+        outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, Hit hit, Map<String, MatchInfo> matchInfos,
+    private void outputHitOrSnippet(String docPid, Hit hit, String searchField, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;
@@ -640,7 +642,7 @@ public class ResponseStreamer {
         }
 
         // If there's any match info for this field, include it here
-        optMatchInfos(matchInfos, mi -> mi.getOverriddenField() == null);
+        optMatchInfos(matchInfos, mi -> mi.getField().equals(searchField));
 
         if (concordanceContext.isConcordances()) {
             // Add concordance from original XML
@@ -681,8 +683,7 @@ public class ResponseStreamer {
                         {
                             ds.entry(KEY_SPAN_START, kwic.fragmentStartInDoc());
                             ds.entry(KEY_SPAN_END, kwic.fragmentEndInDoc());
-                            optMatchInfos(matchInfos, mi -> mi.getOverriddenField() != null &&
-                                    mi.getOverriddenField().equals(field));
+                            optMatchInfos(matchInfos, mi -> mi.getField().equals(field));
                             ds.startEntry(KEY_MATCHING_PART_OF_HIT);
                             ds.contextList(kwic.annotations(), annotationsToList, kwic.tokens());
                             ds.endEntry();
@@ -777,7 +778,7 @@ public class ResponseStreamer {
         ds.startMap();
         {
             String fullRelationType = inlineTag.getFullRelationType();
-            String tagName = RelationUtil.classAndType(fullRelationType)[1];
+            String tagName = RelationUtil.typeFromFullType(fullRelationType);
             ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.INLINE_TAG.jsonName());
             ds.entry("tagName", tagName);
             optAttributes(ds, inlineTag);
@@ -804,7 +805,8 @@ public class ResponseStreamer {
         ds.startMap();
         {
             ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.RELATION.jsonName());
-            ds.entry("relType", relationInfo.getFullRelationType());
+            ds.entry("relClass", relationInfo.getRelationClass());
+            ds.entry("relType", relationInfo.getRelationType());
             optAttributes(ds, relationInfo);
             if (!relationInfo.isRoot()) {
                 ds.entry("sourceStart", relationInfo.getSourceStart());
@@ -815,7 +817,7 @@ public class ResponseStreamer {
             ds.entry(KEY_SPAN_START, relationInfo.getSpanStart());
             ds.entry(KEY_SPAN_END, relationInfo.getSpanEnd());
 
-            if (!relationInfo.getSourceField().equals(relationInfo.getTargetField())) {
+            if (!relationInfo.getField().equals(relationInfo.getTargetField())) {
                 // Report targetField for cross-field relations
                 ds.entry("targetField", relationInfo.getTargetField());
             }
