@@ -30,7 +30,7 @@ public class ResultListInputFormats {
         inputFormats = new ArrayList<>();
         for (InputFormat inputFormat: DocumentFormats.getFormats()) {
             try {
-                String userId = FinderInputFormatUserFormats.getFormatNameFromIdentifier(inputFormat.getIdentifier());
+                String userId = FinderInputFormatUserFormats.getUserIdFromFormatIdentifier(inputFormat.getIdentifier());
                 // Other user's formats are not explicitly enumerated (but should still be considered public)
                 if (!userId.equals(userInfo.getUserId()))
                     continue;
