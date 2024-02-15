@@ -629,7 +629,8 @@ public class ResponseStreamer {
         // If any groups were captured, include them in the response
         // (legacy, replaced by matchInfos)
         if (!isNewApi) {
-            Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfos, MatchInfo.Type.SPAN);
+            Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfos,
+                    m -> m.getType() == MatchInfo.Type.SPAN || m.getType() == MatchInfo.Type.INLINE_TAG);
             if (!capturedGroups.isEmpty()) {
                 ds.startEntry("captureGroups").startList();
                 for (Map.Entry<String, MatchInfo> capturedGroup: capturedGroups) {
@@ -825,10 +826,10 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, MatchInfo.Type type) {
+    private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, Predicate<MatchInfo> predicate) {
         return matchInfo == null ? Collections.emptySet() :
                 matchInfo.entrySet().stream()
-                        .filter(e -> e.getValue() != null && e.getValue().getType() == type)
+                        .filter(e -> e.getValue() != null && predicate.test(e.getValue()))
                         .collect(Collectors.toSet());
     }
 

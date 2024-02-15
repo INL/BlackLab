@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
  */
 public class RelationTarget implements TextPatternStruct {
 
-    /** How to find relations (type filter, negation, etc.) */
+    /** How to find relations (type filter, negation, alignment, etc.) */
     private final RelationOperatorInfo opInfo;
 
     /** What the relation target must match */
@@ -66,7 +66,7 @@ public class RelationTarget implements TextPatternStruct {
         // Auto-determine capture name if none was given
         String captureName = captureAs;
         if (StringUtils.isEmpty(captureName))
-            captureName = XFRelations.determineCaptureAs(context, relationType);
+            captureName = XFRelations.determineCaptureAs(context, relationType, opInfo.isAlignment());
 
         BLSpanQuery translated = XFRelations.createRelationQuery(
                 context.queryInfo(),

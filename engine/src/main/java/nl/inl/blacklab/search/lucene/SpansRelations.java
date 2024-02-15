@@ -92,7 +92,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         // contents__de)
         // Be careful not to interpret special relations class __tag as a parallel field!
         String relClass = RelationUtil.classFromFullType(relationType);
-        String version = relClass.equals(RelationUtil.CLASS_INLINE_TAG) ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
+        boolean isInlineTag = relClass.equals(RelationUtil.CLASS_INLINE_TAG);
+        String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
         String targetField = StringUtils.isEmpty(version) ? sourceField :
                 AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField(), version);
 
@@ -100,8 +101,10 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         // (used with parallel corpora)
         relationInfo = RelationInfo.createWithFields(sourceField, targetField);
         // Register our group
-        if (!captureAs.isEmpty())
-            this.groupIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.RELATION, sourceField);
+        if (!captureAs.isEmpty()) {
+            MatchInfo.Type type = isInlineTag ? MatchInfo.Type.SPAN : MatchInfo.Type.RELATION;
+            this.groupIndex = context.registerMatchInfo(captureAs, type, sourceField);
+        }
     }
 
     @Override

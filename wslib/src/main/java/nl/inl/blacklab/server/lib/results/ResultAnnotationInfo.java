@@ -17,6 +17,8 @@ public class ResultAnnotationInfo {
         this.showValues = showValues;
         if (showValues && !index.isEmpty()) {
             terms = WebserviceOperations.getAnnotationValues(index, annotation, limitValues);
+        } else {
+            terms = TruncatableFreqList.dummy();
         }
     }
 

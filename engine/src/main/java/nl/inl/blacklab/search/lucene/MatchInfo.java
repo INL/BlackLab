@@ -144,7 +144,7 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
                 // will be known at one location in the query, so this will eventually get set.
                 return;
             }
-            assert this.type == null || type == this.type;
+            assert this.type == null || type == this.type : "Trying to overwrite match info '" + name + "' type from " + this.type + " to " + type;
             this.type = type;
         }
     }

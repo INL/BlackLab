@@ -471,7 +471,7 @@ If you want to capture all relations in the sentence containing your match, use:
 
 What actually happens here is that all relations in the matched clause are returned as _rels_ in the match info.
 
-You can pass a second parameter with the match info name for the list of captured relations (defaults to _rels_):
+You can pass a second parameter with the match info name for the list of captured relations (defaults to _captured_rels_):
 
     'elephant' within rcapture(<s/>, 'relations')
 
@@ -516,7 +516,7 @@ For example, if your corpus contains fields `contents__en` (English version) and
 
     'cat' ==>nl _
 
-The hit for this query will be `cat` in the English field, and the match info will contain a group named `rel` with all alignment relations found (just the one in this case, between the word `cat` and its Dutch equivalent). The hit response structure will also contain an `otherFields` section containing the corresponding Dutch content fragment. The location of the Dutch word aligned with the English word `cat` can be found from the relation in the `rel` capture, which includes `targetField`, `targetStart` and `targetEnd`.
+The hit for this query will be `cat` in the English field, and the match info will contain a group named `rels` with all alignment relations found (just the one in this case, between the word `cat` and its Dutch equivalent). The hit response structure will also contain an `otherFields` section containing the corresponding Dutch content fragment. The location of the Dutch word aligned with the English word `cat` can be found from the relation in the `rel` capture, which includes `targetField`, `targetStart` and `targetEnd`.
 
 Assuming your data has both sentence and word alignments, and you want to find all alignments for a sentence containing `cat`, you could use:
 
@@ -556,11 +556,11 @@ Just like with other relations queries, you can filter by type:
 
     'fluffy' =word=>nl 'pluizig'
 
-This will only find relations of type `word`. The type filter will automatically determine the capture name as well, so any relation(s) found will be captured as `word` in this case instead of `rel` (unless an explicit name is assigned, see below).
+This will only find relations of type `word`. The type filter will automatically determine the capture name as well, so any relation(s) found will be captured as `word` in this case instead of `rels` (unless an explicit name is assigned, see below).
 
 ### Renaming the relations capture
 
-You can use a override the default name `rel` for the alignment operator's captures:
+You can use a override the default name `rels` for the alignment operator's captures:
 
     <s/> alignments:==>nl _
 

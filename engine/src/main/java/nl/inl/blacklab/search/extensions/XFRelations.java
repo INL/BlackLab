@@ -33,6 +33,9 @@ public class XFRelations implements ExtensionFunctionClass {
         derived from the relation type filter expression. */
     public static final String DEFAULT_CAPTURE_NAME = "rel";
 
+    /** Default for relations captured using rcapture()  (or e.g. context=s) */
+    public static final String DEFAULT_RCAP_NAME = "captured_" + DEFAULT_CAPTURE_NAME + "s";
+
     /**
      * Find relations matching type and target.
      * <p>
@@ -55,7 +58,7 @@ public class XFRelations implements ExtensionFunctionClass {
 
         // Auto-determine capture name if none was given
         if (StringUtils.isEmpty(captureAs))
-            captureAs = determineCaptureAs(context, relationType);
+            captureAs = determineCaptureAs(context, relationType, false);
 
         return createRelationQuery(queryInfo, context, relationType, matchTarget, direction, captureAs, spanMode,
                 null);
@@ -88,13 +91,13 @@ public class XFRelations implements ExtensionFunctionClass {
         }
     }
 
-    public static String determineCaptureAs(QueryExecutionContext context, String relationType) {
+    public static String determineCaptureAs(QueryExecutionContext context, String relationType, boolean multiple) {
         // Autodetermine capture name if no explicit name given.
         // Discard relation class if specified, keep Unicode letters from relationType, and add unique number
         String targetVersion = AnnotatedFieldNameUtil.versionFromParallelFieldName(RelationUtil.classFromFullType(relationType));
         String captureName = RelationUtil.typeFromFullType(relationType).replaceAll("[^\\p{L}-]", "");
         if (captureName.isEmpty())
-            captureName = DEFAULT_CAPTURE_NAME;
+            captureName = DEFAULT_CAPTURE_NAME + (multiple ? "s" : "");
         if (!targetVersion.isEmpty())
             captureName += AnnotatedFieldNameUtil.PARALLEL_VERSION_SEPARATOR + targetVersion;
         return context.ensureUniqueCapture(captureName);
@@ -187,9 +190,9 @@ public class XFRelations implements ExtensionFunctionClass {
         QueryExtensions.register(FUNC_RSPAN, XFRelations::rspan, QueryExtensions.ARGS_QS,
                 Arrays.asList(null, "full"));
         QueryExtensions.register(FUNC_RCAPTURE, XFRelations::rcapture, QueryExtensions.ARGS_QSS,
-                Arrays.asList(null, "rels", ".*"), true);
+                Arrays.asList(null, DEFAULT_RCAP_NAME, ".*"), true);
         QueryExtensions.register(FUNC_RCAPTURE2, XFRelations::rcaptureWithinCapture, QueryExtensions.ARGS_QSSS,
-                Arrays.asList(null, null, "rels", ".*"), true);
+                Arrays.asList(null, null, DEFAULT_RCAP_NAME, ".*"), true);
     }
 
 }

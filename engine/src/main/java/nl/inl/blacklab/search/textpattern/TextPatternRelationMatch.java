@@ -76,7 +76,7 @@ public class TextPatternRelationMatch extends TextPattern {
         // Auto-determine capture name from relation type if none was given
         String captureName = target.getCaptureAs();
         if (StringUtils.isEmpty(captureName))
-            captureName = XFRelations.determineCaptureAs(context, relationType);
+            captureName = XFRelations.determineCaptureAs(context, relationType, true);
 
         // replace _ with any ngram
         TextPattern targetNoDefVal = TextPatternDefaultValue.replaceWithAnyToken(target.getTarget());

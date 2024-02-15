@@ -89,7 +89,8 @@ public class ResultDocSnippet {
                     new TextPatternTags(captureInlineTagAs, null, TextPatternTags.Adjust.FULL_TAG, captureInlineTagAs),
                     SpanQueryPositionFilter.Operation.WITHIN);
             // Also capture any relations that are in the tag
-            pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, captureInlineTagAs, "rels"));
+            pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, captureInlineTagAs,
+                    XFRelations.DEFAULT_RCAP_NAME));
             QueryExecutionContext queryContext = QueryExecutionContext.get(index,
                     params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {
