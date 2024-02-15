@@ -285,7 +285,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
         return userId + ":" + ConfigInputFormat.stripExtensions(fileName);
     }
 
-    private static String getUserIdFromFormatIdentifier(String formatIdentifier) throws IllegalUserFormatIdentifier {
+    public static String getUserIdFromFormatIdentifier(String formatIdentifier) throws IllegalUserFormatIdentifier {
         return getUserIdOrFormatName(formatIdentifier, false);
     }
 
