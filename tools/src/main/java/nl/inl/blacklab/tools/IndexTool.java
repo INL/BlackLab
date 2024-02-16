@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -25,9 +26,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -291,7 +292,7 @@ public class IndexTool {
         //  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
         //  and the parent(s) of the input and index dirs)
         File currentWorkingDir = new File(System.getProperty("user.dir"));
-        List<File> formatDirs = new ArrayList<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
+        Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
         if (!formatDirs.contains(indexDirParent))
             formatDirs.add(indexDirParent);
 

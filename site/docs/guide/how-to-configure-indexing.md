@@ -295,7 +295,7 @@ metadata:
 
 By default, BlackLab Server will not allow whole documents to be retrieved using `/docs/PID/contents`. This is to prevent accidentally distributing unlicensed copyrighted material.
 
-You can allow retrieving whole documents by enabling the `contentViewable` setting in the index format configuration file, or directly in the `indexmetadata.yaml` file in the index directory. Also see the next section.
+You can allow retrieving whole documents by enabling the `corpusConfig.contentViewable` setting in the index format configuration file, or directly in the `indexmetadata.yaml` file in the index directory. Also see the next section.
 
 This setting can also be changed for individual documents by setting a metadat field with the name `contentViewable` to `true` or `false`.
 
