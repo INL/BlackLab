@@ -46,9 +46,13 @@ public class RelationInfo extends MatchInfo {
      *  in the payload, but this will take more space and it's not clear if this is worth it. */
     public static final boolean INCLUDE_ATTRIBUTES_IN_RELATION_INFO = false;
 
-    public static void serializeInlineTag(int start, int end, DataOutput dataOutput) throws IOException {
+    public static void serializeInlineTag(int start, int end, int relationId, DataOutput dataOutput) throws IOException {
         int relativePositionOfLastToken = end - start;
         dataOutput.writeZInt(relativePositionOfLastToken);
+        if (relationId >= 0) {
+            dataOutput.writeByte((byte)(FLAG_RELATION_ID | DEFAULT_FLAGS));
+            dataOutput.writeVInt(relationId);
+        }
         // (rest of RelationInfo members have the default value so we skip them)
     }
 
@@ -90,6 +94,18 @@ public class RelationInfo extends MatchInfo {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static int getRelationId(ByteArrayDataInput dataInput) throws IOException {
+        dataInput.readZInt(); // skip relOtherStart
+        if (!dataInput.eof()) {
+            byte flags = dataInput.readByte();
+            if ((flags & FLAG_RELATION_ID) != 0) {
+                // Flag indicates a relation id was stored. Read it an return.
+                return dataInput.readVInt();
+            }
+        }
+        return -1;
     }
 
     /**

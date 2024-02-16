@@ -33,6 +33,7 @@ import org.apache.lucene.index.SegmentWriteState;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.store.ByteArrayDataOutput;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
@@ -47,6 +48,8 @@ import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
  * BlackLab FieldsConsumer: writes postings information to the index,
@@ -262,11 +265,11 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
         Map<String, FieldMutable> fiFields = new HashMap<>();
 
-        private final IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
-        private final IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT);
-        private final IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.TERMINDEX_EXT);
-        private final IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT);
-        private final IndexOutput termsOrderFile = createOutput(BlackLab40PostingsFormat.TERMORDER_EXT);
+        private final IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.FI_TOKENS_INDEX_EXT);
+        private final IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.FI_TOKENS_EXT);
+        private final IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.FI_TERMINDEX_EXT);
+        private final IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.FI_TERMS_EXT);
+        private final IndexOutput termsOrderFile = createOutput(BlackLab40PostingsFormat.FI_TERMORDER_EXT);
 
         // We'll keep track of doc lengths so we can preallocate our forward index structure.
         // (we do this per annotated field, e.g. contents, NOT per annotation, e.g. contents%word@s,
@@ -289,7 +292,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
 
         /** Temporary term vector file that will be reversed to form the forward index */
-        private final IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT);
+        private final IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.FI_TERMVEC_TMP_EXT);
 
 
         // Per field
@@ -324,8 +327,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
         @Override
         public void close() throws IOException {
-            outTempTermVectorFile.close();
-
             termsOrderFile.close();
             termsFile.close();
             termIndexFile.close();
@@ -430,6 +431,10 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         }
 
         public void termOccurrence(int position, BytesRef payload) throws IOException {
+            // Go through each occurrence of term in this doc,
+            // gathering the positions where this term occurs as a "primary value"
+            // (the first value at this token position, which we will store in the
+            //  forward index). Also determine docLength.
             if (position >= currentDocLength)
                 currentDocLength = position + 1;
             // Is this a primary value or a secondary one?
@@ -446,11 +451,12 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
         public void finalize() throws IOException {
             CodecUtil.writeFooter(outTempTermVectorFile);
+            outTempTermVectorFile.close();
 
             // Reverse the reverse index to create forward index
             // (this time we iterate per field and per document first, then reconstruct the document by
             //  looking at each term's occurrences. This produces our forward index)
-            try (IndexInput inTermVectorFile = openInput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
+            try (IndexInput inTermVectorFile = openInput(BlackLab40PostingsFormat.FI_TERMVEC_TMP_EXT)) {
 
                 // For each field...
                 for (Entry<String, LengthsAndOffsetsPerDocument> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
@@ -474,11 +480,11 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                 }
             } finally {
                 // Clean up after ourselves
-                deleteIndexFile(BlackLab40PostingsFormat.TERMVEC_TMP_EXT);
+                deleteIndexFile(BlackLab40PostingsFormat.FI_TERMVEC_TMP_EXT);
             }
 
             // Write fields file, now that we know all the relevant offsets
-            try (IndexOutput fieldsFile = createOutput(BlackLab40PostingsFormat.FIELDS_EXT)) {
+            try (IndexOutput fieldsFile = createOutput(BlackLab40PostingsFormat.FI_FIELDS_EXT)) {
                 // for each field that has a forward index...
                 for (Field field : fiFields.values()) {
                     // write the information to fields file, see integrated.md
@@ -496,6 +502,58 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     }
 
     private class RelationInfoWriter implements TermOccurrenceAction {
+
+        /** Information per unique relation id.
+         *  for each document and relation id: offset in attrset file */
+        private final IndexOutput outDocsFile = createOutput(BlackLab40PostingsFormat.RI_DOCS_EXT);
+
+        /** Information per unique relation id.
+         *  for each document and relation id: offset in attrset file */
+        private final IndexOutput outRelationsFile = createOutput(BlackLab40PostingsFormat.RI_RELATIONS_EXT);
+
+        /** Attribute sets files.
+         * Contains:
+         * - list of attribute names (will be read into memory on index opening)
+         * - for each attribute in each set: attr name index and index in attr string offsets file */
+        private final IndexOutput outAttrSetsFile = createOutput(BlackLab40PostingsFormat.RI_ATTR_SETS_EXT);
+
+        /** All the attribute names (will be read into memory on index opening) */
+        private final IndexOutput outAttrNamesFile = createOutput(BlackLab40PostingsFormat.RI_ATTR_NAMES_EXT);
+
+        /** Attribute values (strings) */
+        private final IndexOutput outAttrValuesFile = createOutput(BlackLab40PostingsFormat.RI_ATTR_VALUES_EXT);
+
+        /** Index of attribute name in attrnames file */
+        private final Map<String, Integer> indexFromAttributeName = new HashMap<>();
+
+        /** Offsets of attribute values in attrvalues file */
+        private final Map<String, Long> attrValueOffsets = new HashMap<>();
+
+        /** Offsets of attribute set in the attrsets file. */
+        private Map<SortedMap<Integer, Long>, Long> idFromAttributeSet = new HashMap<>();
+
+        // PER TERM
+
+        /** Offset of attribute set for current term in attrset file */
+        private long currentTermAttrSetOffset = -1;
+
+        // PER DOCUMENT
+
+        /** Offset in attrset file for each relation id in current doc */
+        private ArrayList<Long> currentDocAttrSetOffsetPerRelationId;
+
+        RelationInfoWriter() throws IOException {
+        }
+
+        @Override
+        public void close() throws IOException {
+            // Close the index files we've been writing to
+            outDocsFile.close();
+            outRelationsFile.close();
+            outAttrSetsFile.close();
+            outAttrNamesFile.close();
+            outAttrValuesFile.close();
+        }
 
         @Override
         public boolean startField(FieldInfo fieldInfo) {
@@ -517,37 +575,109 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
         @Override
         public void startTerm(BytesRef term) throws IOException {
-
+            String termStr = term.utf8ToString();
+            boolean ignoreTerm = RelationUtil.isOptimizationTerm(termStr);
+            if (!ignoreTerm) {
+                // Decode the term so we can store the attribute values and refer to them from each occurrence by relation id.
+                Map<String, String> attributes = RelationUtil.attributesFromIndexedTerm(termStr);
+                SortedMap<Integer, Long> currentTermAttributes = new TreeMap<>();
+                for (Entry<String, String> e: attributes.entrySet()) {
+                    String attrName = e.getKey();
+                    String attrValue = e.getValue();
+                    // Look up the attribute name index, storing the attribute name if this is the first time we see it
+                    int attrNameIndex = indexFromAttributeName.computeIfAbsent(attrName, k -> {
+                        try {
+                            long offset = outAttrNamesFile.getFilePointer();
+                            outAttrNamesFile.writeString(attrName);
+                            return (int) offset;
+                        } catch (IOException e1) {
+                            throw new BlackLabRuntimeException(e1);
+                        }
+                    });
+                    // Look up the attribute value offset, storing the attribute name if this is the first time we see it
+                    long attrValueOffset = attrValueOffsets.computeIfAbsent(attrValue, k -> {
+                        try {
+                            long offset = outAttrValuesFile.getFilePointer();
+                            outAttrValuesFile.writeString(attrValue);
+                            return offset;
+                        } catch (IOException e1) {
+                            throw new BlackLabRuntimeException(e1);
+                        }
+                    });
+                    currentTermAttributes.put(attrNameIndex, attrValueOffset);
+                }
+                // Look up this attribute set's offset, storing the attribute set if this is the first time we see it
+                currentTermAttrSetOffset = idFromAttributeSet.computeIfAbsent(currentTermAttributes, k -> {
+                    try {
+                        long offset = outAttrSetsFile.getFilePointer();
+                        outAttrSetsFile.writeInt(currentTermAttributes.size());
+                        for (Entry<Integer, Long> e: currentTermAttributes.entrySet()) {
+                            outAttrSetsFile.writeInt(e.getKey());    // attribute name id
+                            outAttrSetsFile.writeLong(e.getValue()); // attribute value offset
+                        }
+                        return offset;
+                    } catch (IOException e1) {
+                        throw new BlackLabRuntimeException(e1);
+                    }
+                });
+            }
         }
 
         @Override
         public void endTerm() {
-
+            currentTermAttrSetOffset = -1;
         }
 
         @Override
         public void startDocument(int docId, int nOccurrences) {
-
+            currentDocAttrSetOffsetPerRelationId = new ArrayList<>(1000);
         }
 
         @Override
         public void endDocument() throws IOException {
+            // Write the offset in the relations file for this document to the docs file
+            outDocsFile.writeLong(outRelationsFile.getFilePointer());
 
+            // Write the attribute set offsets per relation to the relations file
+            outRelationsFile.writeInt(currentDocAttrSetOffsetPerRelationId.size());
+            for (long offset: currentDocAttrSetOffsetPerRelationId) {
+                outRelationsFile.writeLong(offset);
+            }
+            currentDocAttrSetOffsetPerRelationId = null;
         }
 
         @Override
         public void termOccurrence(int position, BytesRef payload) throws IOException {
-
+            if (payload == null)
+                return;
+            // Get the relation id from the payload and store the offset to this term's attribute value set.
+            // We could also store other info about this occurrence here, such as info about an inline tag's parent and
+            // children.
+            ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
+            int relationId = RelationInfo.getRelationId(dataInput);
+            if (relationId >= 0) {
+                int n = currentDocAttrSetOffsetPerRelationId.size();
+                int extraElementsNeeded = relationId + 1 - n;
+                if (extraElementsNeeded > 0) {
+                    // Make sure we have enough space in the list
+                    currentDocAttrSetOffsetPerRelationId.ensureCapacity(n);
+                    for (int i = 0; i < extraElementsNeeded; i++)
+                        currentDocAttrSetOffsetPerRelationId.add(0L);
+                }
+                currentDocAttrSetOffsetPerRelationId.set(relationId, currentTermAttrSetOffset);
+            }
         }
 
         @Override
         public void finalize() throws IOException {
 
-        }
 
-        @Override
-        public void close() throws IOException {
-
+            // Write the footers to our files
+            CodecUtil.writeFooter(outDocsFile);
+            CodecUtil.writeFooter(outRelationsFile);
+            CodecUtil.writeFooter(outAttrSetsFile);
+            CodecUtil.writeFooter(outAttrNamesFile);
+            CodecUtil.writeFooter(outAttrValuesFile);
         }
 
     }

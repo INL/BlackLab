@@ -39,12 +39,12 @@ public class TermsIntegratedSegment implements AutoCloseable {
         try {
             this.segmentReader = segmentReader;
             this.ord = ord;
-            this._termIndexFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMINDEX_EXT);
-            this._termsFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMS_EXT);
-            this._termOrderFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMORDER_EXT);
+            this._termIndexFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.FI_TERMINDEX_EXT);
+            this._termsFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.FI_TERMS_EXT);
+            this._termOrderFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.FI_TERMORDER_EXT);
 
             // OPT: read cache these fields somewhere so we don't read them once per annotation
-            try (IndexInput fieldInput = segmentReader.openIndexFile(BlackLab40PostingsFormat.FIELDS_EXT)) {
+            try (IndexInput fieldInput = segmentReader.openIndexFile(BlackLab40PostingsFormat.FI_FIELDS_EXT)) {
                 while (fieldInput.getFilePointer() < (fieldInput.length() - CodecUtil.footerLength())) {
                     BlackLab40PostingsWriter.Field f = new BlackLab40PostingsWriter.Field(fieldInput);
                     if (f.getFieldName().equals(luceneField)) {

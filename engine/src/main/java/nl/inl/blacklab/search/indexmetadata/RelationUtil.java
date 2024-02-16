@@ -106,9 +106,14 @@ public class RelationUtil {
         return fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
     }
 
+    public static boolean isOptimizationTerm(String indexedTerm) {
+        return indexedTerm.endsWith(IS_OPTIMIZATION_INDICATOR);
+    }
+
     public static Map<String, String> attributesFromIndexedTerm(String indexedTerm) {
-        int i = indexedTerm.indexOf(ATTR_SEPARATOR);
-        boolean isFinalChar = i == indexedTerm.length() - 1;
+        int i = indexedTerm.indexOf(ATTR_SEPARATOR); // if <0, there's no attributes (older index where rel name isn't always terminated)
+        boolean isFinalChar = i == indexedTerm.length() - 1; // if true, there's no attributes
+        // if true, this is an optimization term and there's no attributes
         boolean isFinalCharBeforeOptIndicator = i == indexedTerm.length() - 2 && indexedTerm.charAt(i + 1) == IS_OPTIMIZATION_INDICATOR.charAt(0);
         if (i < 0 || isFinalChar || isFinalCharBeforeOptIndicator)
             return Collections.emptyMap();

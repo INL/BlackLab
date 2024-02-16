@@ -212,6 +212,48 @@ This file will have an extension of `.blfi.tokens`.
 | INT_PER_TOKEN       |    1 | One 4-byte integer for each token in the document.                              |
 | ALL_TOKENS_THE_SAME |    2 | A single 4-byte value representing the value of all the tokens in the document. |
 
+
+## Relation info
+
+Relation info files currently have a codec name of `BlackLab40Postings` and a version of 1. (Additional versions or codecs may be added in the future)
+
+The relation info ensures that we can always look up any attributes for any relations matched (including "inline tags" such as `<s/>`, which most often have attributes).
+
+### docs - where to find information about each document
+
+- For each document:
+  - For each annotated field:
+    * field id (based on order in the fields file) (byte)
+    * offset in the relations file (long)
+
+### relations - Information per unique relation id.
+
+For each document+field:
+- number of relations (int)
+- For each relation id (first one is relation id 0):
+  - offset in attrset file (long)
+
+### attrset - Information per unique attribute value.
+
+- For each unique attribute set:
+  - number of attributes in set (int)
+  - For each attribute in this set:
+    - attribute name id (int)
+    - attribute value offset (long)
+
+### attrname - Attribute names
+
+This file will be read into memory when the index is opened, so it's quick to look up attribute names by index.
+
+- For each unique attribute name (id 0 is the first attribute):
+  - name (string)
+
+### attrvalues - Attribute values
+
+- For each unique attribute value:
+  - value (string)
+
+
 ## Content store
 
 Content store files currently have a codec name of `BlackLab40ContentStore` and a version of 1. (Additional versions or codecs may be added in the future)

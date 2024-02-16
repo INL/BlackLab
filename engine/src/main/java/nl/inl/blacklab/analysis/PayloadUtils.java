@@ -187,16 +187,17 @@ public class PayloadUtils {
      *
      * @param startPosition  start position (inclusive), or the first token of the span
      * @param endPosition    end position (exclusive), or the first token after the span
-     * @param indexType
+     * @param indexType      type of index we're writing
+     * @param relationId     unique id for this relation, to look up attributes later
      * @return payload to store
      */
-    public static BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType) {
+    public static BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType, int relationId) {
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
             return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
 
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            RelationInfo.serializeInlineTag(startPosition, endPosition, new OutputStreamDataOutput(os));
+            RelationInfo.serializeInlineTag(startPosition, endPosition, relationId, new OutputStreamDataOutput(os));
             return new BytesRef(os.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -204,10 +205,10 @@ public class PayloadUtils {
     }
 
     public static BytesRef relationPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
-            int targetEnd) {
+            int targetEnd, int relationId) {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         RelationInfo.serializeRelation(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
-                -1, new OutputStreamDataOutput(os));
+                relationId, new OutputStreamDataOutput(os));
         return new BytesRef(os.toByteArray());
     }
 

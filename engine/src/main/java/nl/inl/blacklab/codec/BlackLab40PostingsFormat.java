@@ -39,35 +39,48 @@ public class BlackLab40PostingsFormat extends PostingsFormat {
     /** Current version */
     static final int VERSION_CURRENT = 1;
 
-    /** Every file extension will be prefixed with this to indicate it is part of the forward index. */
-    private static final String EXT_PREFIX = "blfi.";
+    /** Every forward index file extension will be prefixed with this to indicate it is part of the forward index. */
+    private static final String EXT_FI_PREFIX = "blfi.";
 
     /** Extension for the fields file. This stores the annotated field name and the offset
         in the term index file where the term offsets ares stored.*/
-    public static final String FIELDS_EXT = EXT_PREFIX + "fields";
+    public static final String FI_FIELDS_EXT = EXT_FI_PREFIX + "fields";
 
     /** Extension for the term index file, that stores the offset in the terms file where
         the term strings start for each term (in each annotated field). */
-    public static final String TERMINDEX_EXT = EXT_PREFIX + "termindex";
+    public static final String FI_TERMINDEX_EXT = EXT_FI_PREFIX + "termindex";
 
     /** Extension for the terms file, where the term strings are stored. */
-    public static final String TERMS_EXT = EXT_PREFIX + "terms";
+    public static final String FI_TERMS_EXT = EXT_FI_PREFIX + "terms";
 
     /** Extension for the terms order file, where indices for different sorts of the term strings are stored.
      * pos2IDInsensitive, id2PosInsensitive, pos2IDSensitive, id2PosSensitive */
-    public static final String TERMORDER_EXT = EXT_PREFIX + "termorder";
+    public static final String FI_TERMORDER_EXT = EXT_FI_PREFIX + "termorder";
 
     /** Extension for the tokens index file, that stores the offsets in the tokens file
         where the tokens for each document are stored. */
-    static final String TOKENS_INDEX_EXT = EXT_PREFIX + "tokensindex";
+    static final String FI_TOKENS_INDEX_EXT = EXT_FI_PREFIX + "tokensindex";
 
     /** Extension for the tokens file, where a term id is stored for each position in each document. */
-    static final String TOKENS_EXT = EXT_PREFIX + "tokens";
+    static final String FI_TOKENS_EXT = EXT_FI_PREFIX + "tokens";
 
     /** Extension for the temporary term vector file that will be converted later.
      * The term vector file contains the occurrences for each term in each doc (and each annotated field)
      */
-    static final String TERMVEC_TMP_EXT = EXT_PREFIX + "termvec.tmp";
+    static final String FI_TERMVEC_TMP_EXT = EXT_FI_PREFIX + "termvec.tmp";
+
+    /** Every relation info file extension will be prefixed with this to indicate it is part of the relation info. */
+    private static final String EXT_RELINFO_PREFIX = "blri.";
+
+    static final String RI_DOCS_EXT = EXT_RELINFO_PREFIX + "docs";
+
+    static final String RI_RELATIONS_EXT = EXT_RELINFO_PREFIX + "relations";
+
+    static final String RI_ATTR_SETS_EXT = EXT_RELINFO_PREFIX + "attrsets";
+
+    static final String RI_ATTR_NAMES_EXT = EXT_RELINFO_PREFIX + "attrnames";
+
+    static final String RI_ATTR_VALUES_EXT = EXT_RELINFO_PREFIX + "attrvalues";
 
     /** The PostingsFormat we're wrapping and we delegate most requests to. */
     private final PostingsFormat delegatePostingsFormat;

@@ -422,7 +422,7 @@ public class AnnotationWriter {
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo matchInfo = RelationInfo.create(false, startPos, startPos,
-                endPos, endPos, nextRelationId++);
+                endPos, endPos, getNextRelationId());
         String fullRelationType;
         fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
                 tagName :
@@ -433,7 +433,7 @@ public class AnnotationWriter {
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd,
-                nextRelationId++);
+                getNextRelationId());
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort
@@ -455,7 +455,7 @@ public class AnnotationWriter {
             // classic external index; tag name and attributes are indexed separately
             payload = relationInfo.getSpanEnd() >= 0 ?
                     PayloadUtils.inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
-                            BlackLabIndex.IndexType.EXTERNAL_FILES) :
+                            BlackLabIndex.IndexType.EXTERNAL_FILES, getNextRelationId()) :
                     null;
             addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
             tagIndexInAnnotation = lastValueIndex();
@@ -477,6 +477,9 @@ public class AnnotationWriter {
                 // Also index a version without attributes. We'll use this for faster search if we don't filter on
                 // attributes. The indexed term will be tagged as an optimization term, so it won't be counted when we
                 // determine statistics.
+                // NOTE: this should always be indexed AFTER the version with attributes; that version will be
+                //       used to store the attribute info when writing the index files. When we encounter this second
+                //       version, we've already seen any attributes the relation has and can just skip this.
                 addValueAtPosition(RelationUtil.indexTerm(fullRelationType, null, true),
                         relationInfo.getSourceStart(), payload);
                 indexedTwice = true;
@@ -490,5 +493,9 @@ public class AnnotationWriter {
             }
         }
         return tagIndexInAnnotation;
+    }
+
+    public int getNextRelationId() {
+        return nextRelationId++;
     }
 }
