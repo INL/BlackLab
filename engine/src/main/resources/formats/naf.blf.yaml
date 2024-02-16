@@ -21,9 +21,7 @@ annotatedFields:
 
     description: Contents of the documents.
 
-    containerPath: .//text
-
-    wordPath: .//wf
+    wordPath: .//text//wf
 
     tokenIdPath: "@id"
 
@@ -41,7 +39,7 @@ annotatedFields:
         forwardIndex: true
 
     standoffAnnotations:
-      - path: terms/term      # Element containing what to index (relative to documentPath)
+      - path: .//terms/term      # Element containing what to index (relative to documentPath)
         tokenRefPath: "./span/target/@id" # What token position(s) to index these values at
           # (may have multiple matches per path element; values will
         # be indexed at all those positions)

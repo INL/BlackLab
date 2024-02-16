@@ -434,7 +434,7 @@ annotatedFields:
       valuePath: .
       sensitivity: sensitive_insensitive
     standoffAnnotations:
-    - path: standoff/annotation      # Element containing what to index (relative to documentPath)
+    - path: standoff/annotation      # Element containing what to index (relative to containerPath)
       tokenRefPath: "@ref" # What token position(s) to index these values at
                                      # (may have multiple matches per path element; values will 
                                      # be indexed at all those positions)
@@ -619,7 +619,6 @@ namespaces:
     xml: http://www.w3.org/XML/1998/namespace
 annotatedFields:
     contents:
-        containerPath: text
         # Both <w/> and <pc/> tags should be indexed as separate token positions
         wordPath: .//w|.//pc
 
