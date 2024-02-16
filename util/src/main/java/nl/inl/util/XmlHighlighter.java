@@ -384,7 +384,7 @@ public class XmlHighlighter {
         // Regex for finding all XML tags.
         // Group 1 indicates if this is an open or close tag
         // Group 2 is the tag name
-        Pattern xmlTagsAndComments = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*-->");
+        Pattern xmlTagsAndComments = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*?-->");
 
         Matcher matcher = xmlTagsAndComments.matcher(elementContent);
         List<TagLocation> openTagStack = new ArrayList<>(); // keep track of open tags
