@@ -76,6 +76,19 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     /**
+     * Is the specified Lucene field a relations field?
+     *
+     * If yes, we should store relations info for this field.
+     *
+     * @param fieldInfo Lucene field to check
+     * @return true if it's a relations field
+     */
+    public static boolean isRelationsField(FieldInfo fieldInfo) {
+        String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(fieldInfo.name);
+        return nameComponents.length > 1 && AnnotatedFieldNameUtil.isRelationAnnotation(nameComponents[1]);
+    }
+
+    /**
      * Set this field type to be a forward index field
      * @param type field type
      */

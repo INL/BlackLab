@@ -180,7 +180,6 @@ This is a temporary file. It is eventually replaced by the tokens file.
 - For each field annotation:
   * For each term:
     - For each doc term occurs in:
-      * Doc id (int)
       * Number of occurrences (int n)
       - For each occurrence:
         * Position (int)
@@ -219,19 +218,18 @@ Relation info files currently have a codec name of `BlackLab40Postings` and a ve
 
 The relation info ensures that we can always look up any attributes for any relations matched (including "inline tags" such as `<s/>`, which most often have attributes).
 
-### docs - where to find information about each document
+### fields - where to find information about each Lucene field
 
-- For each document:
-  - For each annotated field:
-    * field id (based on order in the fields file) (byte)
-    * offset in the relations file (long)
+**NOTE:** the Lucene field we're talking about here represents the special `_relation` annotation on an annotated field. For example: `contents%_relation@s`).
 
-### relations - Information per unique relation id.
+**NOTE:** we don't store number of fields; we just read until the end of the file.
 
-For each document+field:
-- number of relations (int)
-- For each relation id (first one is relation id 0):
-  - offset in attrset file (long)
+- For each relations field:
+    * Lucene field name (str), e.g. "contents%_relation@s"
+    * number of unique relations (terms, a combination of relation name and attributes, if any) in this field (int)
+    * offset of field in docs file (long)
+
+This file will have an extension of `.blri.fields`.
 
 ### attrset - Information per unique attribute value.
 
@@ -252,6 +250,30 @@ This file will be read into memory when the index is opened, so it's quick to lo
 
 - For each unique attribute value:
   - value (string)
+
+### tmprelations - Attribute set offset per term (temporary)
+
+This is a temporary file. It is eventually replaced by the relations file.
+
+* For each term:
+    - For each doc term occurs in:
+        * Number of occurrences (int)
+        - For each occurrence:
+            * Unique relation id (int)
+
+### docs - where to find information about each document
+
+- For each document:
+    - For each annotated field:
+        * field id (based on order in the fields file) (byte)
+        * offset in the relations file (long)
+
+### relations - Information per unique relation id.
+
+For each document+field:
+- number of relations (int)
+- For each relation id (first one is relation id 0):
+    - offset in attrset file (long)
 
 
 ## Content store

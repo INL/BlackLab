@@ -18,6 +18,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
+import nl.inl.blacklab.codec.TermsIntegratedSegment;
 import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.

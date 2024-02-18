@@ -82,6 +82,11 @@ public class BlackLab40PostingsFormat extends PostingsFormat {
 
     static final String RI_ATTR_VALUES_EXT = EXT_RELINFO_PREFIX + "attrvalues";
 
+    /** Extension for the temporary relations file that will be converted later.
+     * The temporary file contains the attribute set id for each unique relation+attributes in each doc (and each annotated field)
+     */
+    static final String RI_RELATIONS_TMP_EXT = EXT_RELINFO_PREFIX + "relations.tmp";
+
     /** The PostingsFormat we're wrapping and we delegate most requests to. */
     private final PostingsFormat delegatePostingsFormat;
 

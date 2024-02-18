@@ -1,4 +1,4 @@
-package nl.inl.blacklab.forwardindex;
+package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -7,10 +7,7 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.codec.BlackLab40PostingsFormat;
-import nl.inl.blacklab.codec.BlackLab40PostingsReader;
-import nl.inl.blacklab.codec.BlackLab40PostingsWriter;
-import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
+import nl.inl.blacklab.codec.SegmentForwardIndex.ForwardIndexField;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
@@ -27,7 +24,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public class TermsIntegratedSegment implements AutoCloseable {
     private boolean isClosed = false;
     private BlackLab40PostingsReader segmentReader;
-    private BlackLab40PostingsWriter.Field field;
+    private ForwardIndexField field;
     private final int ord;
 
     private IndexInput _termIndexFile;
@@ -46,7 +43,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
             // OPT: read cache these fields somewhere so we don't read them once per annotation
             try (IndexInput fieldInput = segmentReader.openIndexFile(BlackLab40PostingsFormat.FI_FIELDS_EXT)) {
                 while (fieldInput.getFilePointer() < (fieldInput.length() - CodecUtil.footerLength())) {
-                    BlackLab40PostingsWriter.Field f = new BlackLab40PostingsWriter.Field(fieldInput);
+                    ForwardIndexField f = new ForwardIndexField(fieldInput);
                     if (f.getFieldName().equals(luceneField)) {
                         this.field = f;
                         break;
@@ -101,7 +98,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
          * such as how many terms in the field in this segment,
          * file offsets where to find the data in the segment's files, etc.
          */
-        private final Field field;
+        private final ForwardIndexField field;
 
         /** Ord (ordinal) of the segment */
         private final int ord;
@@ -203,7 +200,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
         return this.ord;
     }
 
-    public Field field() {
+    public ForwardIndexField field() {
         return this.field;
     }
 }

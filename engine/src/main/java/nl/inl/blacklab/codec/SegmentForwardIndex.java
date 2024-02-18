@@ -10,10 +10,10 @@ import java.util.Map;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
+import org.apache.lucene.store.IndexOutput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
@@ -37,7 +37,7 @@ class SegmentForwardIndex implements AutoCloseable {
     private final BlackLab40PostingsReader fieldsProducer;
 
     /** Contains field names and offsets to term index file, where the terms for the field can be found */
-    private final Map<String, Field> fieldsByName = new LinkedHashMap<>();
+    private final Map<String, ForwardIndexField> fieldsByName = new LinkedHashMap<>();
 
 
     /** Contains indexes into the tokens file for all field and documents */
@@ -53,7 +53,7 @@ class SegmentForwardIndex implements AutoCloseable {
         try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.FI_FIELDS_EXT)) {
             long size = fieldsFile.length();
             while (fieldsFile.getFilePointer() < (size - CodecUtil.footerLength())) {
-                Field f = new Field(fieldsFile);
+                ForwardIndexField f = new ForwardIndexField(fieldsFile);
                 this.fieldsByName.put(f.getFieldName(), f);
             }
         }
@@ -90,6 +90,54 @@ class SegmentForwardIndex implements AutoCloseable {
      */
     ForwardIndexSegmentReader reader() {
         return new Reader();
+    }
+
+    /**
+     * Information about a Lucene field that represents a BlackLab annotation in the forward index.
+     * A Field's information is only valid for the segment (leafreadercontext) of the index it was read from.
+     * Contains offsets into files comprising the terms strings and forward index information.
+     * Such as where in the term strings file the strings for this field begin.
+     * See integrated.md
+    */
+    public static class ForwardIndexField {
+        private final String fieldName;
+        protected int numberOfTerms;
+        protected long termOrderOffset;
+        protected long termIndexOffset;
+        protected long tokensIndexOffset;
+
+        protected ForwardIndexField(String fieldName) {  this.fieldName = fieldName; }
+
+        /** Read our values from the file */
+        public ForwardIndexField(IndexInput file) throws IOException {
+            this.fieldName = file.readString();
+            this.numberOfTerms = file.readInt();
+            this.termOrderOffset = file.readLong();
+            this.termIndexOffset = file.readLong();
+            this.tokensIndexOffset = file.readLong();
+        }
+
+        public ForwardIndexField(String fieldName, int numberOfTerms, long termIndexOffset, long termOrderOffset, long tokensIndexOffset) {
+            this.fieldName = fieldName;
+            this.numberOfTerms = numberOfTerms;
+            this.termOrderOffset = termOrderOffset;
+            this.termIndexOffset = termIndexOffset;
+            this.tokensIndexOffset = tokensIndexOffset;
+        }
+
+        public String getFieldName() { return fieldName; }
+        public int getNumberOfTerms() { return numberOfTerms; }
+        public long getTermIndexOffset() { return termIndexOffset; }
+        public long getTermOrderOffset() { return termOrderOffset; }
+        public long getTokensIndexOffset() { return tokensIndexOffset; }
+
+        public void write(IndexOutput file) throws IOException {
+            file.writeString(getFieldName());
+            file.writeInt(getNumberOfTerms());
+            file.writeLong(getTermOrderOffset());
+            file.writeLong(getTermIndexOffset());
+            file.writeLong(getTokensIndexOffset());
+        }
     }
 
     /**
