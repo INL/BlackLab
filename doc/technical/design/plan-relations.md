@@ -515,13 +515,11 @@ The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an imple
 
 The payload for a relation consists of the following fields:
 
+* `relationId: VInt`: Unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future.
 * `relOtherStart: ZInt`: relative position of the (start of the) other end. Default: `1`.
-* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. If `0x08` is set, `relationId` will follow the flags field. The other bits are reserved for future use and must not be set. Default: `0`.
-* `relationId: VInt`: (only present if flag `0x08` set) Unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future.
+* `flags: byte`: If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. The other bits are reserved for future use and must not be set. Default: `0`.
 * `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
 * `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
-
-The purpose of `targetField` is to enable having alignment relations between languages in parallel corpora. Each language would be stored in its own annotated field, e.g. `contents_en` might contain English, `contents_nl` Dutch, etc. Relations could be stored in one of the fields, or all of the fields.
 
 Fields may be omitted from the end if they have the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 0, otherLength: 0 }`.
 
@@ -543,7 +541,7 @@ There could also be other things we want to look up about a relation in the futu
 We want to enable this by adding a unique relation id to the payload that allows us to look up additional information in a separate file.
 
 How this changes the relation encoding:
-- we add a flag `0x10`; if set, a unique `relationId` is stored in the payload. It would be stored after `flags` (and after `targetField`, if present). This ensures BlackLab remains compatible with older corpora; however, corpora encoded this way are not compatible with older versions of BlackLab (as they would not be able to correctly decode the payload).
+- we add a flag `0x10`; if set, a unique `relationId` is stored in the payload. It would be stored after `flags`. This ensures BlackLab remains compatible with older corpora; however, corpora encoded this way are not compatible with older versions of BlackLab (as they would not be able to correctly decode the payload).
 - `relationId` is a unique number (for this annotated field), assigned when the relation is parsed and added, that can be used to look up information about the relation, such as its attributes, in separate index files.
 - The index files with relation info is created while writing the indexed terms _with_ attributes to the segment (because that term contains all the information we need to create it, whereas the optimization terms obviously do not). Both versions of the term are added with the same `relationId`, of course. 
 

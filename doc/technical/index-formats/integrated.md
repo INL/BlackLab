@@ -184,10 +184,12 @@ This is a temporary file. It is eventually replaced by the tokens file.
       - For each occurrence:
         * Position (int)
 
+NOTE: we could use `VInt` here to save space (fixed-length fields only matter for random access lookup like the tokens file).
+
 ### tokensindex - where to find tokens (forward index) for each document
 
 - For each field annotation:
-  * For each document:
+  * For each document (fixed-length record so can access doc X quickly):
     - offset in the tokens file (long)
     - number of tokens in the document (int)
     - encoding used (byte)
@@ -206,10 +208,10 @@ This file will have an extension of `.blfi.tokens`.
 
 ### Tokens encodings
 
-| Name                | Code | Description                                                                     |
-|---------------------|-----:|---------------------------------------------------------------------------------|
-| INT_PER_TOKEN       |    1 | One 4-byte integer for each token in the document.                              |
-| ALL_TOKENS_THE_SAME |    2 | A single 4-byte value representing the value of all the tokens in the document. |
+| Name                | Code | Description                                                                                                           |
+|---------------------|-----:|-----------------------------------------------------------------------------------------------------------------------|
+| INT_PER_TOKEN       |    1 | One fixed-size integer for each token in the document. The codec parameter specifies the number of bytes per integer. |
+| ALL_TOKENS_THE_SAME |    2 | A single 4-byte value representing the value of all the tokens in the document.                                       |
 
 
 ## Relation info
@@ -231,50 +233,61 @@ The relation info ensures that we can always look up any attributes for any rela
 
 This file will have an extension of `.blri.fields`.
 
-### attrset - Information per unique attribute value.
+### docs - where to find information about each document
+
+- For each relations field:
+  * For each document:
+    - offset in the relations file (long)
+    - number of relations (int)
+
+This file will have an extension of `.blri.docs`.
+
+### relations - Information per unique relation id.
+
+- For each relations field:
+  * For each document:
+    - For each relation id (first one is relation id 0):
+      * offset in attrset file (long)
+
+This file will have an extension of `.blri.relations`.
+
+### attrsets - Information per unique attribute value.
 
 - For each unique attribute set:
-  - number of attributes in set (int)
-  - For each attribute in this set:
+  * number of attributes in set (int)
+  * For each attribute in this set:
     - attribute name id (int)
     - attribute value offset (long)
 
-### attrname - Attribute names
+This file will have an extension of `.blri.attrsets`.
+
+### attrnames - Attribute names
 
 This file will be read into memory when the index is opened, so it's quick to look up attribute names by index.
 
 - For each unique attribute name (id 0 is the first attribute):
-  - name (string)
+  * name (string)
+
+This file will have an extension of `.blri.attrnames`.
 
 ### attrvalues - Attribute values
 
 - For each unique attribute value:
-  - value (string)
+  * value (string)
+
+This file will have an extension of `.blri.attrvalues`.
 
 ### tmprelations - Attribute set offset per term (temporary)
 
 This is a temporary file. It is eventually replaced by the relations file.
 
-* For each term:
-    - For each doc term occurs in:
-        * Number of occurrences (int)
-        - For each occurrence:
-            * Unique relation id (int)
+- For each term:
+  * For each doc term occurs in:
+    - Number of occurrences (int)
+    * For each occurrence:
+      - Unique relation id (int)
 
-### docs - where to find information about each document
-
-- For each document:
-    - For each annotated field:
-        * field id (based on order in the fields file) (byte)
-        * offset in the relations file (long)
-
-### relations - Information per unique relation id.
-
-For each document+field:
-- number of relations (int)
-- For each relation id (first one is relation id 0):
-    - offset in attrset file (long)
-
+This file will have an extension of `.blri.relations.tmp`.
 
 ## Content store
 

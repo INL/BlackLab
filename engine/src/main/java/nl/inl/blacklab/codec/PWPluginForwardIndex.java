@@ -417,15 +417,19 @@ class PWPluginForwardIndex implements PWPlugin {
         // Reverse the reverse index to create forward index
         // (this time we iterate per field and per document first, then reconstruct the document by
         //  looking at each term's occurrences. This produces our forward index)
-        try (IndexInput inTermVectorFile = postingsWriter.openInput(BlackLab40PostingsFormat.FI_TERMVEC_TMP_EXT)) {
+        try (IndexInput inTermVectorFile = postingsWriter.openInput(BlackLab40PostingsFormat.FI_TERMVEC_TMP_EXT);
+                IndexOutput fieldsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.FI_FIELDS_EXT)) {
 
             // For each field...
             for (Entry<String, LengthsAndOffsetsPerDocument> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
                 String luceneField = fieldEntry.getKey();
                 LengthsAndOffsetsPerDocument docPosOffsets = fieldEntry.getValue();
 
-                // Record starting offset of field in tokensindex file (written to fields file later)
-                fiFields.get(luceneField).setTokensIndexOffset(outTokensIndexFile.getFilePointer());
+                // Record starting offset of field in tokensindex file,
+                // and write the field information to the fields file
+                FieldMutable fieldMutable = fiFields.get(luceneField);
+                fieldMutable.setTokensIndexOffset(outTokensIndexFile.getFilePointer());
+                fieldMutable.write(fieldsFile);
 
                 // Make sure we know our document lengths
                 String annotatedFieldName = AnnotatedFieldNameUtil.getBaseName(luceneField);
@@ -439,19 +443,10 @@ class PWPluginForwardIndex implements PWPlugin {
                     writeTokensInDoc(outTokensIndexFile, outTokensFile, termIds);
                 }
             }
+            CodecUtil.writeFooter(fieldsFile);
         } finally {
             // Clean up after ourselves
             postingsWriter.deleteIndexFile(BlackLab40PostingsFormat.FI_TERMVEC_TMP_EXT);
-        }
-
-        // Write fields file, now that we know all the relevant offsets
-        try (IndexOutput fieldsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.FI_FIELDS_EXT)) {
-            // for each field that has a forward index...
-            for (ForwardIndexField field: fiFields.values()) {
-                // write the information to fields file, see integrated.md
-                field.write(fieldsFile);
-            }
-            CodecUtil.writeFooter(fieldsFile);
         }
 
         CodecUtil.writeFooter(outTokensIndexFile);

@@ -23,7 +23,6 @@ import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 
@@ -35,8 +34,6 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 class PWPluginRelationInfo implements PWPlugin {
 
     private final BlackLab40PostingsWriter postingsWriter;
-
-    private Map<String, FieldMutable> fiFields = new HashMap<>();
 
     /**
      * Information per unique relation id.
@@ -92,18 +89,16 @@ class PWPluginRelationInfo implements PWPlugin {
      * We keep track of number of relations so we can preallocate our relations offsets structure
      * when writing the final relations file.
      */
-    private final Map<String, Map<Integer, Integer>> docLengthsPerAnnotatedField = new HashMap<>();
+    private final Map<String, Map<Integer, Integer>> maxRelationIdsPerAnnotatedField = new HashMap<>();
 
     /** For each field and document id, record the temp relations file offsets (list of longs). */
-    private final Map<String, LengthsAndOffsetsPerDocument> field2docTempRelFileOffsets = new LinkedHashMap<>();
+    private final Map<String, OffsetsAndMaxRelationIdPerDocument> field2docTempRelFileOffsets = new LinkedHashMap<>();
 
 
     // PER FIELD
 
-    private FieldMutable currentField;
-
     /** List of offsets in temp relations file for each doc id */
-    private LengthsAndOffsetsPerDocument offsetsPerDocument;
+    private OffsetsAndMaxRelationIdPerDocument offsetsAndMaxRelationIdPerDocument;
 
 
     // PER TERM
@@ -156,15 +151,10 @@ class PWPluginRelationInfo implements PWPlugin {
         if (!BlackLabIndexIntegrated.isRelationsField(fieldInfo))
             return false;
 
-        // Make sure doc lengths are shared between all annotations for a single annotated field.
-        Map<Integer, Integer> docLengths = docLengthsPerAnnotatedField.computeIfAbsent(
-                AnnotatedFieldNameUtil.getBaseName(fieldInfo.name), __ -> new HashMap<>());
+        Map<Integer, Integer> maxRelationIds = maxRelationIdsPerAnnotatedField.computeIfAbsent(
+                fieldInfo.name, __ -> new HashMap<>());
 
-        currentField = fiFields.computeIfAbsent(fieldInfo.name, FieldMutable::new);
-
-        currentField.setDocsOffset(outDocsFile.getFilePointer());
-
-        offsetsPerDocument = field2docTempRelFileOffsets.computeIfAbsent(fieldInfo.name, __ -> new LengthsAndOffsetsPerDocument(docLengths));
+        offsetsAndMaxRelationIdPerDocument = field2docTempRelFileOffsets.computeIfAbsent(fieldInfo.name, __ -> new OffsetsAndMaxRelationIdPerDocument(maxRelationIds));
 
         return true;
     }
@@ -256,7 +246,7 @@ class PWPluginRelationInfo implements PWPlugin {
     public void endDocument() throws IOException {
         // Write the unique relation ids for this term in this document to the temp file
         // (will be reversed later to create the final relations file)
-        offsetsPerDocument.putTempFileOffset(currentDocId, currentTermAttrSetOffset,
+        offsetsAndMaxRelationIdPerDocument.putTempFileOffset(currentDocId, currentTermAttrSetOffset,
                 outTempRelationsFile.getFilePointer());
         outTempRelationsFile.writeInt(currentDocOccurrencesWritten);
         if (currentDocOccurrencesWritten > 0) {
@@ -275,6 +265,7 @@ class PWPluginRelationInfo implements PWPlugin {
         ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
         int relationId = RelationInfo.getRelationId(dataInput);
         if (relationId >= 0) {
+            offsetsAndMaxRelationIdPerDocument.updateMaxRelationId(currentDocId, relationId);
             currentDocPositionsOutput.writeInt(relationId);
             currentDocOccurrencesWritten++;
         }
@@ -286,35 +277,34 @@ class PWPluginRelationInfo implements PWPlugin {
         outTempRelationsFile.close();
         outTempRelationsFile = null;
 
-
         // Reverse the reverse index to create forward index
         // (this time we iterate per field and per document first, then reconstruct the document by
         //  looking at each term's occurrences. This produces our forward index)
+        Map<String, Long> field2DocsFileOffset = new HashMap<>();
         try (IndexInput inTempRelationsFile = postingsWriter.openInput(BlackLab40PostingsFormat.RI_RELATIONS_TMP_EXT)) {
 
             // For each field...
-            for (Entry<String, LengthsAndOffsetsPerDocument> fieldEntry: field2docTempRelFileOffsets.entrySet()) {
+            for (Entry<String, OffsetsAndMaxRelationIdPerDocument> fieldEntry: field2docTempRelFileOffsets.entrySet()) {
                 String luceneField = fieldEntry.getKey();
-                LengthsAndOffsetsPerDocument docOffsets = fieldEntry.getValue();
+                OffsetsAndMaxRelationIdPerDocument docOffsets = fieldEntry.getValue();
 
                 // Record starting offset of field in tokensindex file (written to fields file later)
-                fiFields.get(luceneField).setDocsOffset(outDocsFile.getFilePointer());
+                field2DocsFileOffset.put(luceneField, outDocsFile.getFilePointer());
 
                 // Make sure we know our document lengths
-                String annotatedFieldName = AnnotatedFieldNameUtil.getBaseName(luceneField);
-                Map<Integer, Integer> docLengths = docLengthsPerAnnotatedField.get(annotatedFieldName);
+                Map<Integer, Integer> maxRelationIds = maxRelationIdsPerAnnotatedField.get(luceneField);
 
                 // For each document...
                 for (int docId = 0; docId < postingsWriter.maxDoc(); docId++) {
-                    final int docLength = docLengths.getOrDefault(docId, 0);
+                    final int maxRelationId = maxRelationIds.getOrDefault(docId, 0);
                     FileOffsetPerTermId offsets = docOffsets.get(docId);
-                    long[] attrSetOffsets = getRelationAttrSetOffsets(docLength, inTempRelationsFile, offsets);
+                    long[] attrSetOffsets = getRelationAttrSetOffsets(maxRelationId, inTempRelationsFile, offsets);
                     writeTokensInDoc(outDocsFile, outRelationsFile, attrSetOffsets);
                 }
             }
         } finally {
             // Clean up after ourselves
-            postingsWriter.deleteIndexFile(BlackLab40PostingsFormat.FI_TERMVEC_TMP_EXT);
+            postingsWriter.deleteIndexFile(BlackLab40PostingsFormat.RI_RELATIONS_TMP_EXT);
         }
 
         /*
@@ -339,30 +329,31 @@ class PWPluginRelationInfo implements PWPlugin {
         CodecUtil.writeFooter(outAttrValuesFile);
     }
 
-    static long[] getRelationAttrSetOffsets(int docLength,
-            IndexInput inTermVectorFile, FileOffsetPerTermId termPosOffsets)
+    static long[] getRelationAttrSetOffsets(int maxRelationId,
+            IndexInput inTempRelationsFile, FileOffsetPerTermId termPosOffsets)
             throws IOException {
 
-        final long[] tokensInDoc = new long[docLength]; // reconstruct the document here
+        final long[] offsetsInDoc = new long[maxRelationId + 1]; // reconstruct the document here
 
         // NOTE: sometimes docs won't have any values for a field, but we'll
         //   still write all NO_TERMs in this case. This is similar to sparse
         //   fields (e.g. the field that stores <p> <s> etc.) which also have a
         //   lot of NO_TERMs.
-        Arrays.fill(tokensInDoc, Terms.NO_TERM);
+        Arrays.fill(offsetsInDoc, Terms.NO_TERM);
 
         // For each term...
         for (Entry<Long, Long> entry: termPosOffsets.entrySet()) {
-            inTermVectorFile.seek(entry.getValue());
-            int nOccurrences = inTermVectorFile.readInt();
+            long attributeSetOffset = entry.getKey();
+            Long tempRelationsFileOffset = entry.getValue();
+            inTempRelationsFile.seek(tempRelationsFileOffset);
+            int nOccurrences = inTempRelationsFile.readInt();
             // For each occurrence...
             for (int i = 0; i < nOccurrences; i++) {
-                int relationId = inTermVectorFile.readInt();
-                long attributeSetOffset = entry.getKey();
-                tokensInDoc[relationId] = attributeSetOffset;
+                int relationId = inTempRelationsFile.readInt();
+                offsetsInDoc[relationId] = attributeSetOffset;
             }
         }
-        return tokensInDoc;
+        return offsetsInDoc;
     }
 
     /**
@@ -373,17 +364,17 @@ class PWPluginRelationInfo implements PWPlugin {
      * Chooses the most appropriate encoding for the tokens and records this choice in
      * the tokens index file.
      *
-     * @param outTokensIndexFile token index file
-     * @param outTokensFile      tokens file
-     * @param tokensInDoc        tokens to write
+     * @param outDocsFile       docs file
+     * @param outRelationsFile  relations file
+     * @param offsetsForDoc     offsets into attribute set file for this document
      * @throws IOException       When failing to write
      */
-    static void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, long[] tokensInDoc)
+    static void writeTokensInDoc(IndexOutput outDocsFile, IndexOutput outRelationsFile, long[] offsetsForDoc)
             throws IOException {
         long max = 0, min = 0;
-        boolean allTheSame = tokensInDoc.length > 0; // if no tokens, then not all the same.
+        boolean allTheSame = offsetsForDoc.length > 0; // if no tokens, then not all the same.
         long last = -1;
-        for (long token: tokensInDoc) {
+        for (long token: offsetsForDoc) {
             max = Math.max(max, token);
             min = Math.min(min, token);
             allTheSame = allTheSame && (last == -1 || last == token);
@@ -410,12 +401,12 @@ class PWPluginRelationInfo implements PWPlugin {
         }
 
         // Write offset in the tokens file, doc length in tokens and tokens codec used
-        outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
-        outTokensIndexFile.writeInt(tokensInDoc.length);
-        outTokensIndexFile.writeByte(tokensCodec.code);
-        outTokensIndexFile.writeByte(tokensCodecParameter);
+        outDocsFile.writeLong(outRelationsFile.getFilePointer());
+        outDocsFile.writeInt(offsetsForDoc.length);
+        outDocsFile.writeByte(tokensCodec.code);
+        outDocsFile.writeByte(tokensCodecParameter);
 
-        if (tokensInDoc.length == 0) {
+        if (offsetsForDoc.length == 0) {
             return; // done.
         }
 
@@ -424,66 +415,32 @@ class PWPluginRelationInfo implements PWPlugin {
         case VALUE_PER_TOKEN:
             switch (TokensCodec.VALUE_PER_TOKEN_PARAMETER.fromCode(tokensCodecParameter)) {
             case BYTE:
-                for (long token: tokensInDoc) {
-                    outTokensFile.writeByte((byte) token);
+                for (long token: offsetsForDoc) {
+                    outRelationsFile.writeByte((byte) token);
                 }
                 break;
             case SHORT:
-                for (long token: tokensInDoc) {
-                    outTokensFile.writeShort((short) token);
+                for (long token: offsetsForDoc) {
+                    outRelationsFile.writeShort((short) token);
                 }
                 break;
             case THREE_BYTES:
-                for (long token : tokensInDoc) {
-                    ThreeByteInt.write((b) -> outTokensFile.writeByte(b), (int)token);
+                for (long token : offsetsForDoc) {
+                    ThreeByteInt.write((b) -> outRelationsFile.writeByte(b), (int)token);
                 }
                 break;
             case INT:
-                for (long token: tokensInDoc) {
-                    outTokensFile.writeLong(token);
+                for (long token: offsetsForDoc) {
+                    outRelationsFile.writeLong(token);
                 }
                 break;
             default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
             }
             break;
         case ALL_TOKENS_THE_SAME:
-            outTokensFile.writeLong(tokensInDoc[0]);
+            outRelationsFile.writeLong(offsetsForDoc[0]);
             break;
         }
-    }
-
-    public static class RelationInfoField {
-        private final String fieldName;
-        protected long docsOffset;
-
-        public RelationInfoField(String fieldName, long docsOffset) {
-            this.fieldName = fieldName;
-            this.docsOffset = docsOffset;
-        }
-
-        private RelationInfoField(String fieldName) {
-            this(fieldName, -1);
-        }
-
-        /** Read our values from the file */
-        public RelationInfoField(IndexInput file) throws IOException {
-            this.fieldName = file.readString();
-            this.docsOffset = file.readLong();
-        }
-
-        public String getFieldName() { return fieldName; }
-        public long getDocsOffset() { return docsOffset; }
-
-        public void write(IndexOutput file) throws IOException {
-            file.writeString(getFieldName());
-            file.writeLong(getDocsOffset());
-        }
-    }
-
-    static class FieldMutable extends RelationInfoField {
-        public FieldMutable(String fieldName) { super(fieldName); }
-
-        public void setDocsOffset(long offset) { this.docsOffset = offset; }
     }
 
     /**
@@ -502,16 +459,16 @@ class PWPluginRelationInfo implements PWPlugin {
      * Tokens length is shared between all Lucene fields belonging to a single annotated
      * field, because those all have the same length.
      */
-    static class LengthsAndOffsetsPerDocument {
+    static class OffsetsAndMaxRelationIdPerDocument {
         /** For each document id (key), the length in tokens of the annotated field this Lucene field is a part of.
          *  (shared with other annotations on this annotated field) */
-        private final Map<Integer, Integer> docId2annotatedFieldTokenLengths;
+        private final Map<Integer, Integer> docId2MaxRelationId;
 
         /** For each document id (key), record the term vector file offsets (value). */
         private final SortedMap<Integer, FileOffsetPerTermId> docId2TermVecFileOffsets = new TreeMap<>();
 
-        LengthsAndOffsetsPerDocument(Map<Integer, Integer> docId2annotatedFieldTokenLengths) {
-            this.docId2annotatedFieldTokenLengths = docId2annotatedFieldTokenLengths;
+        OffsetsAndMaxRelationIdPerDocument(Map<Integer, Integer> docId2MaxRelationId) {
+            this.docId2MaxRelationId = docId2MaxRelationId;
         }
 
         void putTempFileOffset(int docId, long attributeSetOffset, long tempFilePointer) {
@@ -520,8 +477,8 @@ class PWPluginRelationInfo implements PWPlugin {
             vecFileOffsetsPerTermId.put(attributeSetOffset, tempFilePointer);
         }
 
-        void updateFieldLength(int docId, int length) {
-            docId2annotatedFieldTokenLengths.compute(docId, (k, v) -> v == null ? length : Math.max(v, length));
+        void updateMaxRelationId(int docId, int relationId) {
+            docId2MaxRelationId.compute(docId, (k, v) -> v == null ? relationId : Math.max(v, relationId));
         }
 
         FileOffsetPerTermId get(int docId) {

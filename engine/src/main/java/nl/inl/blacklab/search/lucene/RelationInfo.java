@@ -47,13 +47,7 @@ public class RelationInfo extends MatchInfo {
     public static final boolean INCLUDE_ATTRIBUTES_IN_RELATION_INFO = false;
 
     public static void serializeInlineTag(int start, int end, int relationId, DataOutput dataOutput) throws IOException {
-        int relativePositionOfLastToken = end - start;
-        dataOutput.writeZInt(relativePositionOfLastToken);
-        if (relationId >= 0) {
-            dataOutput.writeByte((byte)(FLAG_RELATION_ID | DEFAULT_FLAGS));
-            dataOutput.writeVInt(relationId);
-        }
-        // (rest of RelationInfo members have the default value so we skip them)
+        serializeRelation(false, start, start, end, end, relationId, dataOutput);
     }
 
     public static void serializeRelation(boolean onlyHasTarget, int sourceStart, int sourceEnd,
@@ -69,11 +63,8 @@ public class RelationInfo extends MatchInfo {
         boolean useAlternateDefaultLength = thisLength == DEFAULT_LENGTH_ALT && otherLength == DEFAULT_LENGTH_ALT;
         int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
 
-        boolean writeRelationId = relationId >= 0;
-
         byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
-                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0)
-                | (writeRelationId ? FLAG_RELATION_ID : 0));
+                | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0));
 
         // Only write as much as we need (omitting default values from the end)
         boolean writeOtherLength = otherLength != defaultLength;
@@ -81,12 +72,11 @@ public class RelationInfo extends MatchInfo {
         boolean writeFlags = writeThisLength || flags != DEFAULT_FLAGS;
         boolean writeRelOtherStart = writeFlags || relOtherStart != DEFAULT_REL_OTHER_START;
         try {
+            dataOutput.writeVInt(relationId);
             if (writeRelOtherStart)
                 dataOutput.writeZInt(relOtherStart);
             if (writeFlags)
                 dataOutput.writeByte(flags);
-            if (writeRelationId)
-                dataOutput.writeVInt(relationId);
             if (writeThisLength)
                 dataOutput.writeVInt(thisLength);
             if (writeOtherLength)
@@ -97,15 +87,7 @@ public class RelationInfo extends MatchInfo {
     }
 
     public static int getRelationId(ByteArrayDataInput dataInput) throws IOException {
-        dataInput.readZInt(); // skip relOtherStart
-        if (!dataInput.eof()) {
-            byte flags = dataInput.readByte();
-            if ((flags & FLAG_RELATION_ID) != 0) {
-                // Flag indicates a relation id was stored. Read it an return.
-                return dataInput.readVInt();
-            }
-        }
-        return -1;
+        return dataInput.readVInt();
     }
 
     /**
@@ -177,13 +159,6 @@ public class RelationInfo extends MatchInfo {
     private static final int DEFAULT_REL_OTHER_START = 1;
 
     /**
-     * Default value for the flags byte.
-     * This means the relation was indexed at the source, and has both a source and target.
-     * This is the most common case (e.g. always true for inline tags), so we use it as the default.
-     */
-    private static final byte DEFAULT_FLAGS = 0;
-
-    /**
      * Default length for the source and target.
      * Inline tags are always stored with a 0-length source and target.
      * Dependency relations will usually store 1 (a single word), unless
@@ -209,10 +184,13 @@ public class RelationInfo extends MatchInfo {
      */
     public static final byte FLAG_DEFAULT_LENGTH_ALT = 0x04;
 
-    /** Is a unique id stored for this relation?
-     * (always set for new indexes)
+    /**
+     * Default value for the flags byte.
+     * This means the relation has both a source and target, and has an id.
+     * Older indexes had 0 as their default flags value, meaning they don't have unique relations ids.
+     * This is the most common case (e.g. always true for inline tags), so we use it as the default.
      */
-    public static final byte FLAG_RELATION_ID = 0x08;
+    private static final byte DEFAULT_FLAGS = 0;
 
     /** Does this relation only have a target? (i.e. a root relation) */
     private boolean onlyHasTarget;
@@ -278,12 +256,14 @@ public class RelationInfo extends MatchInfo {
      *
      * @param currentTokenPosition the position we're currently at
      * @param dataInput data to deserialize
+     * @param defaultFlagsForIndex default flags value for this index
      * @throws IOException on corrupted payload
      */
     public void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput) throws IOException {
         // Read values from payload (or use defaults for missing values)
         int relOtherStart = DEFAULT_REL_OTHER_START, thisLength = DEFAULT_LENGTH, otherLength = DEFAULT_LENGTH;
         byte flags = DEFAULT_FLAGS;
+        relationId = dataInput.readVInt();
         if (!dataInput.eof()) {
             relOtherStart = dataInput.readZInt();
             if (!dataInput.eof()) {
@@ -292,10 +272,6 @@ public class RelationInfo extends MatchInfo {
                     // Use alternate default length
                     thisLength = DEFAULT_LENGTH_ALT;
                     otherLength = DEFAULT_LENGTH_ALT;
-                }
-                if ((flags & FLAG_RELATION_ID) != 0) {
-                    // Read relation id
-                    relationId = dataInput.readVInt();
                 }
                 if (!dataInput.eof()) {
                     thisLength = dataInput.readVInt();
