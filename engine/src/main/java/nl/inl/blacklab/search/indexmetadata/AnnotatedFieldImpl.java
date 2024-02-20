@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -106,13 +105,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     @XmlTransient
     private final AnnotationsImpl annotations = new AnnotationsImpl();
-
-    /** The map of available relation classes and types and their frequencies. */
-    @XmlTransient
-    private final Map<String, Map<String, Long>> relations = new HashMap<>();
-
-    @XmlTransient
-    private boolean relationsInitialized = false;
 
     /** The available relation classes, types and their frequencies, plus attribute info. */
     @XmlTransient
