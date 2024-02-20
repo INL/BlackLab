@@ -32,6 +32,7 @@ public class TestMatchInfo {
             int sourceEnd = sourceStart + random.nextInt(RND_BOUND);
             int targetStart = random.nextInt(RND_BOUND);
             int targetEnd = targetStart + random.nextInt(RND_BOUND);
+            int relationId = random.nextInt(RND_BOUND);
             if (onlyHasTarget) {
                 // We'll index the same values for source and target in this case,
                 // even though source shouldn't be used.
@@ -39,7 +40,7 @@ public class TestMatchInfo {
                 sourceEnd = targetEnd;
             }
             RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
-                    -1);
+                    relationId);
 
             // Encode the payload
             byte[] payload = matchInfo.serialize().bytes;

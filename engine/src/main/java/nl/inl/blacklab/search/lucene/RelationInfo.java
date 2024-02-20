@@ -23,6 +23,8 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  */
 public class RelationInfo extends MatchInfo {
 
+    public static final int PAYLOAD_RELATION_ID_THRESHOLD = -20000;
+
     public static RelationInfo create() {
         return new RelationInfo(false, -1, -1, -1, -1, -1, null, null, "", "");
     }
@@ -69,14 +71,14 @@ public class RelationInfo extends MatchInfo {
         // Only write as much as we need (omitting default values from the end)
         boolean writeOtherLength = otherLength != defaultLength;
         boolean writeThisLength = writeOtherLength || thisLength != defaultLength;
-        boolean writeFlags = writeThisLength || flags != DEFAULT_FLAGS;
-        boolean writeRelOtherStart = writeFlags || relOtherStart != DEFAULT_REL_OTHER_START;
+        boolean writeRelOtherStart = writeThisLength || relOtherStart != DEFAULT_REL_OTHER_START;
+        boolean writeFlags = writeRelOtherStart || flags != DEFAULT_FLAGS;
         try {
-            dataOutput.writeVInt(relationId);
-            if (writeRelOtherStart)
-                dataOutput.writeZInt(relOtherStart);
+            dataOutput.writeZInt(relationIdToPayloadNumber(relationId));
             if (writeFlags)
                 dataOutput.writeByte(flags);
+            if (writeRelOtherStart)
+                dataOutput.writeZInt(relOtherStart);
             if (writeThisLength)
                 dataOutput.writeVInt(thisLength);
             if (writeOtherLength)
@@ -86,8 +88,47 @@ public class RelationInfo extends MatchInfo {
         }
     }
 
+    /**
+     * Encode relationId for storing in payload.
+     *
+     * The reason for this encoding is that there's two encodings for the relations payload:
+     * the old pre-release one with relOtherStart as the first number, and the newer one
+     * with relatioNid as the first number. This encoding allows us to distinguish the two.
+     * Eventually we'll drop support for the old approach and store new indexes without this
+     * encoding.
+     *
+     * @param relationId relation id (-1 if none, >= 0 otherwise)
+     * @return encoded number
+     */
+    private static int relationIdToPayloadNumber(int relationId) {
+        assert relationId >= -1;
+        return -relationId + PAYLOAD_RELATION_ID_THRESHOLD;
+    }
+
+
+    /**
+     * Decode relationId for storing in payload.
+     *
+     * See {@link #relationIdToPayloadNumber} for details.
+     *
+     * @param number number from payload which may be a relation id
+     * @return decoded number; if -1 or higher, it's a relation id (although -1 means "none")
+     */
+    private static int payloadNumberToRelationId(int number) {
+        return -number + PAYLOAD_RELATION_ID_THRESHOLD;
+    }
+
+    /**
+     * Read the relation id from the payload (if present).
+     *
+     * @param dataInput payload
+     * @return relation id
+     */
     public static int getRelationId(ByteArrayDataInput dataInput) throws IOException {
-        return dataInput.readVInt();
+        int relationId = payloadNumberToRelationId(dataInput.readZInt());
+        if (relationId >= -1)
+            return relationId;
+        return -1;
     }
 
     /**
@@ -184,6 +225,9 @@ public class RelationInfo extends MatchInfo {
      */
     public static final byte FLAG_DEFAULT_LENGTH_ALT = 0x04;
 
+    /** Do relations have a unique id? If so, the payload structure is slightly different for efficiency. */
+    public static final byte FLAG_RELATION_ID = 0x08;
+
     /**
      * Default value for the flags byte.
      * This means the relation has both a source and target, and has an id.
@@ -210,8 +254,8 @@ public class RelationInfo extends MatchInfo {
     /** Where does the target of the relation end? */
     private int targetEnd;
 
-    /** Unique relation id, or -1 if unknown/not assigned */
-    private int relationId = -1;
+    /** Unique relation id */
+    private int relationId;
 
     /** Our relation type, or null if not set (set during search by SpansRelations) */
     private String fullRelationType;
@@ -256,16 +300,28 @@ public class RelationInfo extends MatchInfo {
      *
      * @param currentTokenPosition the position we're currently at
      * @param dataInput data to deserialize
-     * @param defaultFlagsForIndex default flags value for this index
      * @throws IOException on corrupted payload
      */
     public void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput) throws IOException {
         // Read values from payload (or use defaults for missing values)
         int relOtherStart = DEFAULT_REL_OTHER_START, thisLength = DEFAULT_LENGTH, otherLength = DEFAULT_LENGTH;
         byte flags = DEFAULT_FLAGS;
-        relationId = dataInput.readVInt();
         if (!dataInput.eof()) {
-            relOtherStart = dataInput.readZInt();
+            // NOTE: older pre-release indexes didn't have relationId. In order to both remain compatible with these
+            //       indexes, at least for a little while, but also keep payload storage efficient, we use a trick
+            //       to decide which of two payload layouts we're dealing with. If the first number is <= 20000, it's
+            //       a newer payload, the first number encodes the relationId, and relOtherStart follows after flags.
+            //       This way we can read older and newer payloads without issues but still store them efficiently.
+            int firstNumber = dataInput.readZInt(); // either relationId or relOtherStart, depending on flags
+            int potentialRelationId = payloadNumberToRelationId(firstNumber);
+            boolean isNewIndex = potentialRelationId >= -1;
+            if (isNewIndex) {
+                // New index, with relationId as the first number and relOtherStart following after flags.
+                this.relationId = potentialRelationId;
+            } else {
+                // Older pre-release index, without relationId and the first number being relOtherStart.
+                relOtherStart = firstNumber;
+            }
             if (!dataInput.eof()) {
                 flags = dataInput.readByte();
                 if ((flags & FLAG_DEFAULT_LENGTH_ALT) != 0) {
@@ -274,9 +330,15 @@ public class RelationInfo extends MatchInfo {
                     otherLength = DEFAULT_LENGTH_ALT;
                 }
                 if (!dataInput.eof()) {
-                    thisLength = dataInput.readVInt();
+                    if (isNewIndex) {
+                        // New index has relOtherStart after flags (because first number is now relationId)
+                        relOtherStart = dataInput.readZInt();
+                    }
                     if (!dataInput.eof()) {
-                        otherLength = dataInput.readVInt();
+                        thisLength = dataInput.readVInt();
+                        if (!dataInput.eof()) {
+                            otherLength = dataInput.readVInt();
+                        }
                     }
                 }
             }
@@ -455,7 +517,7 @@ public class RelationInfo extends MatchInfo {
         int targetLen = targetEnd - targetStart;
         String target = targetStart + (targetLen != 1 ? "-" + targetEnd : "");
         if (isRoot())
-            return "rel( ^-" + fullRelationType + "-> " + target + ")";
+            return "rel( ^-" + (fullRelationType == null ? "??" : "") + "-> " + target + ")";
         int sourceLen = sourceEnd - sourceStart;
         String source = sourceStart + (sourceLen != 1 ? "-" + sourceEnd : "");
         return "rel(" + source + " -" + fullRelationType + "-> " + target + ")" +

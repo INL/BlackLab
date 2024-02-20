@@ -515,9 +515,9 @@ The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an imple
 
 The payload for a relation consists of the following fields:
 
-* `relationId: VInt`: Unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future.
-* `relOtherStart: ZInt`: relative position of the (start of the) other end. Default: `1`.
+* if the first number `X`'s value is `<= -20000`, `relationId = -X - 20000` (Unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future). If `X` is above this number, this is an older pre-release index and the number means `relOtherStart` (relative position of the (start of the) other end). Default value: `1`. (eventually we'll drop support for pre-release indexes and use the first number for `relationId` only, without the `-20000` trickery, which is icky and also takes extra space).
 * `flags: byte`: If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. The other bits are reserved for future use and must not be set. Default: `0`.
+* only if the first number was `relationId` (see above), `flags` is followed by `relOtherStart: ZInt`: relative position of the (start of the) other end. Default: `1`. If the first number was `relOtherStart`, it will obviously not be repeated here.
 * `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
 * `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
 
