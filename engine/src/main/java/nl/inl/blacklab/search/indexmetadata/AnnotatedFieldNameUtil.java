@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import nl.inl.blacklab.Constants;
@@ -13,19 +11,27 @@ import nl.inl.blacklab.search.BlackLabIndex;
  */
 public final class AnnotatedFieldNameUtil {
 
-    public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
+    /** Used in classic external index format to store forward index id in Lucene doc */
+    public static final String BOOKKEEP_FORWARD_INDEX_ID = "fiid";
 
     /** Used in classic external index format to store content store id in Lucene doc */
-    private static final String CONTENT_ID_BOOKKEEP_NAME = "cid";
+    public static final String BOOKKEEP_CONTENT_ID = "cid";
 
     /** Used in integrated index format to store content in Lucene doc */
-    public static final String CONTENT_STORE_BOOKKEEP_NAME = "cs";
+    public static final String BOOKKEEP_CONTENT_STORE = "cs";
 
-    private static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
+    /** Records the length of the annotated field in number of tokens
+     *  (could also be read from the forward index - maybe drop this field in the future?)
+     */
+    public static final String BOOKKEEP_LENGTH_TOKENS = "length_tokens";
 
-    private static final String DOC_START_OFFSET_BOOKKEEP_NAME = "doc_start_offset";
+    /** Start offset of document in stored content. Used for parallel corpora, where multiple versions are stored in
+     *  1 content store. */
+    public static final String BOOKKEEP_DOC_START_OFFSET = "doc_start_offset";
 
-    private static final String DOC_END_OFFSET_BOOKKEEP_NAME = "doc_end_offset";
+    /** End offset of document in stored content. Used for parallel corpora, where multiple versions are stored in
+     *  1 content store. */
+    public static final String BOOKKEEP_DOC_END_OFFSET = "doc_end_offset";
 
     /** Used as a default value if no name has been specified (legacy indexers only) */
     public static final String DEFAULT_MAIN_ANNOT_NAME = Constants.DEFAULT_MAIN_ANNOT_NAME;
@@ -86,15 +92,6 @@ public final class AnnotatedFieldNameUtil {
     /** Length of BOOKKEEPING_SEP */
     static final int BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
 
-    /**
-     * What are the names of the bookkeeping subfields (i.e. content id, forward
-     * index id, etc.)
-     */
-    private final static List<String> BOOKKEEPING_SUBFIELDS = Arrays.asList(
-            CONTENT_ID_BOOKKEEP_NAME,
-            FORWARD_INDEX_ID_BOOKKEEP_NAME,
-            LENGTH_TOKENS_BOOKKEEP_NAME);
-
     private AnnotatedFieldNameUtil() {
     }
 
@@ -120,39 +117,20 @@ public final class AnnotatedFieldNameUtil {
         return name.equals(LEGACY_TAGS_ANNOT_NAME) || name.equals(RELATIONS_ANNOT_NAME);
     }
 
-    public enum BookkeepFieldType {
-        CONTENT_ID,
-        FORWARD_INDEX_ID,
-        LENGTH_TOKENS
-    }
-
-    public static BookkeepFieldType whichBookkeepingSubfield(String bookkeepName) {
-        switch (BOOKKEEPING_SUBFIELDS.indexOf(bookkeepName)) {
-        case 0:
-            return BookkeepFieldType.CONTENT_ID;
-        case 1:
-            return BookkeepFieldType.FORWARD_INDEX_ID;
-        case 2:
-            return BookkeepFieldType.LENGTH_TOKENS;
-        default:
-            throw new IllegalArgumentException("Unknown bookkeeping field: " + bookkeepName);
-        }
-    }
-
     public static String contentStoreField(String fieldName) {
-        return bookkeepingField(fieldName, CONTENT_STORE_BOOKKEEP_NAME);
+        return bookkeepingField(fieldName, BOOKKEEP_CONTENT_STORE);
     }
 
     public static String contentIdField(String fieldName) {
-        return bookkeepingField(fieldName, CONTENT_ID_BOOKKEEP_NAME);
+        return bookkeepingField(fieldName, BOOKKEEP_CONTENT_ID);
     }
 
     public static String forwardIndexIdField(String annotFieldName) {
-        return bookkeepingField(annotFieldName, FORWARD_INDEX_ID_BOOKKEEP_NAME);
+        return bookkeepingField(annotFieldName, BOOKKEEP_FORWARD_INDEX_ID);
     }
 
     public static String lengthTokensField(String fieldName) {
-        return bookkeepingField(fieldName, LENGTH_TOKENS_BOOKKEEP_NAME);
+        return bookkeepingField(fieldName, BOOKKEEP_LENGTH_TOKENS);
     }
 
     /** Offset where the document starts in the content
@@ -160,7 +138,7 @@ public final class AnnotatedFieldNameUtil {
      *   file stored in the content store that contains all the languages)
      */
     public static String docStartOffsetField(String fieldName) {
-        return bookkeepingField(fieldName, DOC_START_OFFSET_BOOKKEEP_NAME);
+        return bookkeepingField(fieldName, BOOKKEEP_DOC_START_OFFSET);
     }
 
     /** Offset where the document ends in the content
@@ -168,7 +146,7 @@ public final class AnnotatedFieldNameUtil {
      *   file stored in the content store that contains all the languages)
      */
     public static String docEndOffsetField(String fieldName) {
-        return bookkeepingField(fieldName, DOC_END_OFFSET_BOOKKEEP_NAME);
+        return bookkeepingField(fieldName, BOOKKEEP_DOC_END_OFFSET);
     }
 
     /**

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -264,28 +265,49 @@ public class DocUtil {
         int startAtChar = startEndCharPos[0];
         int endAtChar = startEndCharPos[1];
         String content = contentsByCharPos(index, docId, null, field, startAtChar, endAtChar);
+        int highlightFromOffset = startAtChar < 0 ? 0 : startAtChar;
+        boolean fixUnbalancedTags = startAtWord != -1 || endAtWord != -1; // fix required if part of content
+        return highlightContent(index, docId, hits, fixUnbalancedTags, highlightFromOffset, content);
+    }
 
-        boolean wholeDocument = startAtWord == -1 && endAtWord == -1;
-        boolean mustFixUnbalancedTags = !wholeDocument;
-
+    private static String highlightContent(BlackLabIndex index, int docId, Hits hits, boolean fixUnbalancedTags,
+            int highlightFromOffset, String content) {
         // Do we have anything to highlight, or do we have an XML fragment that needs balancing?
         ResultsStats hitsStats = hits.hitsStats();
-        if (hitsStats.processedAtLeast(1) || mustFixUnbalancedTags) {
+        if (hitsStats.processedAtLeast(1) || fixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitSpans = null;
             if (hitsStats.processedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
                 hitSpans = getCharacterOffsets(index, docId, hits);
             XmlHighlighter hl = new XmlHighlighter();
             hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
-            if (startAtChar == -1)
-                startAtChar = 0;
-            content = hl.highlight(content, hitSpans, startAtChar);
+            content = hl.highlight(content, hitSpans, highlightFromOffset);
         }
         return content;
     }
 
+    /**
+     * Highlight entire document (version).
+     *
+     * This takes parallel corpora into account, where a single contents store for the entire
+     * input file containing all the versions exists, and each version stores a start and end offset.
+     *
+     * @param index our index
+     * @param contentsField field to get contents for
+     * @param docId document id
+     * @param hits hits to highlight
+     * @return document with highlighting
+     */
+    public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, Hits hits) {
+        Document doc = index.luceneDoc(docId);
+        IndexableField docStartOffsetField = doc.getField(contentsField.docStartOffsetField());
+        int docStartOffset = docStartOffsetField == null ? 0 : docStartOffsetField.numericValue().intValue();
+        String contents = index.contentAccessor(contentsField).getDocumentContents(contentsField.name(), docId, doc);
+        return highlightContent(index, docId, hits, false, docStartOffset, contents);
+    }
+
     private static String[] getSubstringsFromDocument(BlackLabIndex index,
-            int docId, Document d, Field field, int[] starts, int[] ends) {
+            int docId, Document d, AnnotatedField field, int[] starts, int[] ends) {
         try {
             ContentAccessor contentAccessor = index.contentAccessor(field);
             if (contentAccessor == null) {
@@ -302,7 +324,7 @@ public class DocUtil {
                 return content;
             } else {
                 // Content accessor set. Use it to retrieve the content.
-                d = fetchDocumentIfRequired(index, docId, d, contentAccessor.getField());
+                d = fetchDocumentIfRequired(index, docId, d, field);
                 return contentAccessor.getSubstringsFromDocument(docId, d, starts, ends);
             }
         } catch (IOException e) {
@@ -325,7 +347,7 @@ public class DocUtil {
      * @return concordances
      */
     public static List<Concordance> makeConcordancesFromContentStore(BlackLabIndex index, int docId,
-            Field field, int[] startsOfWords, int[] endsOfWords, XmlHighlighter hl) {
+            AnnotatedField field, int[] startsOfWords, int[] endsOfWords, XmlHighlighter hl) {
         // Determine starts and ends
         int n = startsOfWords.length / 2;
         int[] starts = new int[n];
@@ -392,8 +414,8 @@ public class DocUtil {
                 return content;
             } else {
                 d = fetchDocumentIfRequired(index, docId, d, field);
-                int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
-                return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
+                //int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
+                return index.contentAccessor(field).getDocumentContents(field.name(), docId, d);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -409,11 +431,18 @@ public class DocUtil {
      * @param field field to get content for
      * @return Lucene document
      */
-    private static Document fetchDocumentIfRequired(BlackLabIndex index, int docId, Document d, Field field)
+    private static Document fetchDocumentIfRequired(BlackLabIndex index, int docId, Document d, AnnotatedField field)
             throws IOException {
-        if (d == null && index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
-            // We need the document (classic index format so we need to look op content store id)
-            d = index.reader().document(docId, Set.of(field.contentIdField()));
+        String docStartOffset = field.docStartOffsetField();
+        String docEndOffset = field.docEndOffsetField();
+        if (d == null) {
+            if (index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+                // We need the document (classic index format so we need to look op content store id)
+                d = index.reader().document(docId, Set.of(field.contentIdField(), docStartOffset, docEndOffset));
+            } else {
+                // Integrated index. Fetch doc start/end offset if present (parallel corpora).
+                d = index.reader().document(docId, Set.of(docStartOffset, docEndOffset));
+            }
         }
         return d;
     }

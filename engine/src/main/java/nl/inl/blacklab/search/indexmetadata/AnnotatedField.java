@@ -30,7 +30,31 @@ public interface AnnotatedField extends Field {
 
     RelationsStats getRelationsStats(BlackLabIndex index, long limitValues);
 
-    String tokenLengthField();
+    /**
+     * Returns the Lucene field that contains the length (in tokens) of this field,
+     * or null if there is no such field.
+     *
+     * @return the field name or null if lengths weren't stored
+     */
+    default String tokenLengthField() {
+        return AnnotatedFieldNameUtil.lengthTokensField(name());
+    }
+
+    /**
+     * For parallel corpora: the field with the offset at which the doc version starts.
+     * @return start offset field
+     */
+    default String docStartOffsetField() {
+        return AnnotatedFieldNameUtil.docStartOffsetField(name());
+    }
+
+    /**
+     * For parallel corpora: the field with the offset at which the doc version ends.
+     * @return end offset field
+     */
+    default String docEndOffsetField() {
+        return AnnotatedFieldNameUtil.docEndOffsetField(name());
+    }
 
     @Override
     default String contentsFieldName() {
@@ -40,8 +64,4 @@ public interface AnnotatedField extends Field {
             offsetsSensitivity = main.sensitivity(MatchSensitivity.SENSITIVE);
         return offsetsSensitivity.luceneField();
     }
-
-    default Annotation punctAnnotation() {
-		return hasXmlTags() ? annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME): null;
-	}
 }

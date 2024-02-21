@@ -1,8 +1,10 @@
 package nl.inl.blacklab.search;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Field;
 
 /**
@@ -13,12 +15,38 @@ public class ContentAccessor {
 
     private ContentStore contentStore;
 
-    private String contentIdField = null;
+    private String contentIdField;
 
     public ContentAccessor(Field field, ContentStore contentStore) {
         this.field = field;
         contentIdField = field.contentIdField();
         this.contentStore = contentStore;
+    }
+
+    /**
+     * Get the entire document contents.
+     *
+     * This takes into account parallel corpora, where one of the annotated fields stores all the versions
+     * of the original document, and we keep track of the start/end offsets for each version.
+     *
+     * @param annotatedFieldName annotated field name, e.g. "contents" or "contents__nl" (might be different from this
+     *                           ContentAccessor's field because parallel corpora store entire file with all versions in
+     *                           the main annotated field)
+     * @param docId the Lucene document id
+     * @param doc the Lucene document
+     * @return the entire document contents
+     */
+    public String getDocumentContents(String annotatedFieldName, int docId, Document doc) {
+        int start = -1, end = -1;
+        IndexableField startOffset = doc.getField(AnnotatedFieldNameUtil.docStartOffsetField(annotatedFieldName));
+        if (startOffset != null) {
+            // We actually want part of the original input document (usually one version in a parallel corpus)
+            // get the start/end offsets
+            start = startOffset.numericValue().intValue();
+            String endOffsetField = AnnotatedFieldNameUtil.docEndOffsetField(annotatedFieldName);
+            end = doc.getField(endOffsetField).numericValue().intValue();
+        }
+        return getSubstringsFromDocument(docId, doc, new int[] { start }, new int[] { end })[0];
     }
 
     public Field getField() {

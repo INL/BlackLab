@@ -25,11 +25,11 @@ public class XmlHighlighter {
      * tag.
      */
     public enum UnbalancedTagsStrategy {
-    ADD_TAG,
-    REMOVE_TAG
+        ADD_TAG,
+        REMOVE_TAG
     }
 
-    enum TagType {
+    private enum TagType {
         EXISTING_TAG, // an existing tag
         HIGHLIGHT_START, // insert <hl> tag here
         HIGHLIGHT_END, // insert </hl> tag here
@@ -42,7 +42,7 @@ public class XmlHighlighter {
      * Helper class for highlighting: stores a span in the original content, be it a
      * place to insert a highlight tag, or an existing tag in the original XML.
      */
-    static class TagLocation implements Comparable<TagLocation> {
+    private static class TagLocation implements Comparable<TagLocation> {
         /** Counter for assigning unique id to objectNum */
         private static long n = 0;
         
@@ -214,12 +214,7 @@ public class XmlHighlighter {
         boolean addVisibleChars = true; // keep adding text content until we reach the preferred length
         boolean wasCut = false;
         for (TagLocation tag : tags) {
-            if (tag.start < positionInContent) {
-                System.out.println("ERROR IN HIGHLIGHTING");
-                // NOTE: before, this used to happen very occasionally. Probably fixed now,
-                // but just in case it's not, let's avoid a nasty exception.
-                continue; // skip tag
-            }
+            assert tag.start >= positionInContent; // tags should be in order and not overlap
             if (addVisibleChars) {
                 String visibleChars = xmlContent.substring(positionInContent, tag.start);
                 if (visibleCharsAdded + visibleChars.length() >= stopAfterChars) {
@@ -281,6 +276,7 @@ public class XmlHighlighter {
         if (inHighlightTag == 0) {
             b.append(startHighlightTag);
         }
+        assert !openHighlightTags.containsKey(tag.start); // no two tags at one location..?
         openHighlightTags.put(tag.start, tag);
         inHighlightTag++;
         assert openHighlightTags.size() == inHighlightTag;
@@ -289,6 +285,7 @@ public class XmlHighlighter {
     /** Decrement depth; End highlight if we're at level 0 */
     private void endHighlight(TagLocation tag) {
         inHighlightTag--;
+        assert openHighlightTags.containsKey(tag.matchingTagStart); // we should have a matching start tag
         openHighlightTags.remove(tag.matchingTagStart);
         assert openHighlightTags.size() == inHighlightTag;
         if (inHighlightTag == 0) {
@@ -355,6 +352,7 @@ public class XmlHighlighter {
             final int b = hit.getEndChar() - offset;
             if (b > length)
                 continue; // outside highlighting range
+            assert b >= a;
             TagLocation start = new TagLocation(TagType.HIGHLIGHT_START, a, a);
             start.matchingTagStart = b;
             tags.add(start);

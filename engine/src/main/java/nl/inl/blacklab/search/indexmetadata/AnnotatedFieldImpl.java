@@ -21,9 +21,7 @@ import org.apache.lucene.index.IndexReader;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 import nl.inl.util.LuceneUtil;
 
 /** An annotated field */
@@ -136,17 +134,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         return annotations;
     }
 
-    /**
-     * Returns the Lucene field that contains the length (in tokens) of this field,
-     * or null if there is no such field.
-     *
-     * @return the field name or null if lengths weren't stored
-     */
-    @Override
-    public String tokenLengthField() {
-        return AnnotatedFieldNameUtil.lengthTokensField(fieldName);
-    }
-
     @Override
     public boolean hasRelationAnnotation() {
         return xmlTags;
@@ -185,22 +172,24 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     
         if (annotName == null && parts.length >= 3) {
             // Bookkeeping field
-            BookkeepFieldType bookkeepingFieldIndex = AnnotatedFieldNameUtil
-                    .whichBookkeepingSubfield(parts[3]);
-            switch (bookkeepingFieldIndex) {
-            case CONTENT_ID:
+            String bookkeepName = parts[3];
+            switch (parts[3]) {
+            case AnnotatedFieldNameUtil.BOOKKEEP_CONTENT_ID:
+            case AnnotatedFieldNameUtil.BOOKKEEP_CONTENT_STORE:
                 // Annotated field has content store
+                // (old external index has content id, new integrated index has content store field)
                 contentStore = true;
                 return;
-            case FORWARD_INDEX_ID:
+            case AnnotatedFieldNameUtil.BOOKKEEP_FORWARD_INDEX_ID:
                 // Main annotation has forward index
                 // [should never happen anymore, because main annotation always has a name now]
                 throw new IllegalStateException("Found lucene field " + fi.name + " with forward index id, but no annotation name!");
-            case LENGTH_TOKENS:
+            case AnnotatedFieldNameUtil.BOOKKEEP_LENGTH_TOKENS:
                 // Annotated field always has length in tokens
                 return;
+            default:
+                throw new IllegalArgumentException("Unknown bookkeeping field: " + bookkeepName);
             }
-            throw new BlackLabRuntimeException();
         }
     
         // Not a bookkeeping field; must be a annotation (alternative).
@@ -214,7 +203,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
                 annotation.addAlternative(sensitivity);
             } else {
                 // Annotation bookkeeping field
-                if (parts[3].equals(AnnotatedFieldNameUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
+                if (parts[3].equals(AnnotatedFieldNameUtil.BOOKKEEP_FORWARD_INDEX_ID)) {
                     annotation.setForwardIndex(true);
                 } else
                     throw new IllegalArgumentException("Unknown annotation bookkeeping field " + parts[3]);
