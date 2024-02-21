@@ -77,26 +77,18 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         case HitPropertyHitText.ID:
             result = HitPropertyHitText.deserializeProp(index, field, info);
             break;
-        case HitPropertyBeforeHit.ID: {
-            HitPropertyContextBase res = HitPropertyBeforeHit.deserializeProp(index, field, info);
-            result = res;
+        case HitPropertyBeforeHit.ID:
+            result = HitPropertyBeforeHit.deserializeProp(index, field, info);
             break;
-        }
-        case HitPropertyLeftContext.ID: {
-            HitPropertyContextBase res = HitPropertyLeftContext.deserializeProp(index, field, info);
-            result = res;
+        case HitPropertyLeftContext.ID:
+            result = HitPropertyLeftContext.deserializeProp(index, field, info);
             break;
-        }
-        case HitPropertyAfterHit.ID: {
-            HitPropertyContextBase res = HitPropertyAfterHit.deserializeProp(index, field, info);
-            result = res;
+        case HitPropertyAfterHit.ID:
+            result = HitPropertyAfterHit.deserializeProp(index, field, info);
             break;
-        }
-        case HitPropertyRightContext.ID: {
-            HitPropertyContextBase res = HitPropertyRightContext.deserializeProp(index, field, info);
-            result = res;
+        case HitPropertyRightContext.ID:
+            result = HitPropertyRightContext.deserializeProp(index, field, info);
             break;
-        }
         case "wordleft":
             // deprecated, use e.g. before:lemma:s:1
             result = HitPropertyBeforeHit.deserializePropSingleWord(index, field, info);

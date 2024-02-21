@@ -33,7 +33,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     private int groupIndex = -1;
 
     HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+        super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName));
         groupName = prop.groupName;
 
         // Determine group index. We don't use the one from prop (if any), because
@@ -41,6 +41,23 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoIndex(groupName);
         if (groupIndex < 0)
             throw new IllegalArgumentException("Unknown group name '" + groupName + "'");
+    }
+
+    /**
+     * Determine what field the given match info is from.
+     *
+     * Only relevant for parallel corpora, where you can capture information from
+     * other fields.
+     *
+     * @param hits     the hits object
+     * @param groupName the match info group name
+     * @return the field name
+     */
+    private static String determineMatchInfoField(Hits hits, String groupName) {
+        return hits.matchInfoDefs().stream()
+                .filter(d -> d.getName().equals(groupName))
+                .map(d -> d.getField())
+                .findFirst().orElse(null);
     }
 
     // Used by HitPropertyContextBase.deserializeProp() via reflection

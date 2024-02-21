@@ -12,7 +12,6 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -81,31 +80,35 @@ public abstract class HitPropertyContextBase extends HitProperty {
         // just ignore extra param by default when deserializing
     }
 
-    protected final Terms terms;
+    protected Terms terms;
 
-    protected final Annotation annotation;
+    protected Annotation annotation;
 
-    protected MatchSensitivity sensitivity;
+    protected final MatchSensitivity sensitivity;
 
-    protected String name;
+    protected final String name;
 
-    protected String serializeName;
+    protected final String serializeName;
 
-    protected BlackLabIndex index;
+    protected final BlackLabIndex index;
 
     public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert) {
+        this(prop, hits, invert, null);
+    }
+
+    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
         super(prop, hits, invert);
-        this.terms = prop.terms;
-        this.annotation = prop.annotation;
-        if (hits != null && !hits.field().equals(this.annotation.field())) {
-            throw new IllegalArgumentException(
-                    "Hits passed to HitProperty must be in the field it was declared with! (declared with "
-                            + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
-        }
+        this.index = hits == null ? prop.index : hits.index();
+        this.annotation = determineAnnotation(prop.index, prop.annotation, overrideField);
+        this.terms = index.annotationForwardIndex(this.annotation).terms();
+//        if (hits != null && !hits.field().equals(this.annotation.field())) {
+//            throw new IllegalArgumentException(
+//                    "Hits passed to HitProperty must be in the field it was declared with! (declared with "
+//                            + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
+//        }
         this.sensitivity = prop.sensitivity;
         this.name = prop.name;
         this.serializeName = prop.serializeName;
-        this.index = hits == null ? prop.index : hits.index();
         this.compareInReverse = prop.compareInReverse;
         initForwardIndex();
         if (prop.hits == hits) {
@@ -113,6 +116,14 @@ public abstract class HitPropertyContextBase extends HitProperty {
             contextTermId = prop.contextTermId;
             contextSortOrder = prop.contextSortOrder;
         }
+    }
+
+    private static Annotation determineAnnotation(BlackLabIndex index, Annotation annotation, String overrideField) {
+        if (overrideField != null && !overrideField.equals(annotation.field().name())) {
+            // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
+            annotation = index.annotatedField(overrideField).annotation(annotation.name());
+        }
+        return annotation;
     }
 
     public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
@@ -125,6 +136,12 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.terms = index.annotationForwardIndex(this.annotation).terms();
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.compareInReverse = compareInReverse;
+        initForwardIndex();
+    }
+
+    private void setAnnotation(Annotation annotation) {
+        this.annotation = annotation;
+        this.terms = index.annotationForwardIndex(this.annotation).terms();
         initForwardIndex();
     }
 
@@ -161,10 +178,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     void initForwardIndex() {
-        if (hits != null) {
-            ForwardIndex fi = index.forwardIndex(hits.queryInfo().field());
-            afi = fi.get(annotation);
-        }
+        afi = index.annotationForwardIndex(annotation);
     }
 
     protected synchronized void fetchContext(StartEndSetter setStartEnd) {
