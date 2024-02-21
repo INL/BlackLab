@@ -102,16 +102,16 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
     /** Match info definition: name, type, (optionally) overridden field */
     public static class Def {
         /** This group's index in the captured group array */
-        private int index;
+        private final int index;
 
         /** This group's name */
-        private String name;
+        private final String name;
 
         /** What type of match info is this? (span, tag, relation, list of relations) */
         private Type type;
 
         /** What field is this match info for? Never null. */
-        private String field;
+        private final String field;
 
         public Def(int index, String name, Type type, String field) {
             this.index = index;
@@ -144,7 +144,8 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
                 // will be known at one location in the query, so this will eventually get set.
                 return;
             }
-            assert this.type == null || type == this.type : "Trying to overwrite match info '" + name + "' type from " + this.type + " to " + type;
+            assert this.type == null || type == this.type :
+                    "Trying to overwrite match info '" + name + "' type from " + this.type + " to " + type;
             this.type = type;
         }
     }

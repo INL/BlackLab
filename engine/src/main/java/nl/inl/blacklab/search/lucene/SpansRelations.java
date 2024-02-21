@@ -102,7 +102,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         relationInfo = RelationInfo.createWithFields(sourceField, targetField);
         // Register our group
         if (!captureAs.isEmpty()) {
-            MatchInfo.Type type = isInlineTag ? MatchInfo.Type.SPAN : MatchInfo.Type.RELATION;
+            MatchInfo.Type type = isInlineTag ? MatchInfo.Type.INLINE_TAG : MatchInfo.Type.RELATION;
             this.groupIndex = context.registerMatchInfo(captureAs, type, sourceField);
         }
     }

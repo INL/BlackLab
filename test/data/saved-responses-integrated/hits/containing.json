@@ -533,7 +533,7 @@
       },
       "matchInfos": {
         "u": {
-          "type": "span"
+          "type": "tag"
         }
       }
     },
