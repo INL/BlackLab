@@ -720,7 +720,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         // "Detect" main contents field and main annotations of annotated fields
         AnnotatedFieldImpl mainAnnotatedField = null;
         for (AnnotatedField d: annotatedFields()) {
-            if (mainAnnotatedField == null || d.name().equals("contents"))
+            if (mainAnnotatedField == null)
                 mainAnnotatedField = (AnnotatedFieldImpl) d;
         }
         if (mainAnnotatedField != null)

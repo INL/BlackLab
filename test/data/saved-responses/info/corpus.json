@@ -91,6 +91,7 @@
     "titleField": "title"
   },
   "indexName": "test",
+  "mainAnnotatedField": "contents",
   "metadataFieldGroups": [
     {
       "fields": [

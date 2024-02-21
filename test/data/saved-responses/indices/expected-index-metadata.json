@@ -28,6 +28,7 @@
     "authorField": "",
     "dateField": ""
   },
+  "mainAnnotatedField": "contents",
   "annotatedFields": {
     "contents": {
       "fieldName": "contents",

@@ -1413,6 +1413,7 @@ public class ResponseStreamer {
                         .endMap().endEntry();
             }
 
+            ds.entry("mainAnnotatedField", result.getMainAnnotatedField());
             ds.startEntry("annotatedFields").startMap();
             for (ResultAnnotatedField annotatedField: result.getAnnotatedFields()) {
                 // internal fields.

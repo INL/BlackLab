@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -689,7 +690,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         // (looks for fields with char offset information stored)
         AnnotatedFieldImpl mainAnnotatedField = null;
         for (AnnotatedField d: annotatedFields()) {
-            if (mainAnnotatedField == null || d.name().equals("contents"))
+            if (mainAnnotatedField == null || d.name().equals(DocIndexerLegacy.DEFAULT_CONTENTS_FIELD_NAME))
                 mainAnnotatedField = (AnnotatedFieldImpl) d;
 
             if (tokenCount() > 0) // Only detect if index is not empty

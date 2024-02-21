@@ -23,6 +23,10 @@ import nl.inl.util.UnicodeStream;
  * Abstract base class for a DocIndexer processing XML files.
  */
 public abstract class DocIndexerLegacy extends DocIndexerAbstract {
+
+    /** Annotated field name for default contents field */
+    public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
+
     /**
      * Write content chunks per 10M (i.e. don't keep all content in memory at all
      * times)

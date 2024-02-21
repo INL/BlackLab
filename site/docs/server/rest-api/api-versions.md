@@ -48,6 +48,8 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
   - New key added (`/`): `apiVersion` (valid values: `3.0`, `4.0`, `5.0`; assume `3.0` if missing)
   - In addition to `indices`, the new `corpora` key was added that provides the same information in a slightly different format. You should use `corpora` instead of `indices` for future compatibility.
   - In addition to being reported under `fieldInfo`, `pidField` is now also a top-level key. You should use this version of the key for future compatibility. (the other special fields in `fieldInfo` will be moved to `custom` in v5)
+- Corpus info page:
+  - `mainAnnotatedField` indicates which of the annotated fields is the main search field. This is useful if there's more than one annotated field, e.g. in case of parallel corpora.
 - Search (hits) operations:
   - The `patt` parameter may also be specified as a JSON query structure. This will be detected automatically, or you can set `pattlang` to `json` to make it explicit.
   - In the JSON response, `summary` will now include a `pattern` object containing: a `json` key that giving the JSON query structure; a `bcql` key giving the (re-)serialized pattern in BlackLab Corpus Query Language; a `fieldName` key giving the search field, e.g. `"contents"`; and a `matchInfos` key giving the match info groups from the query with their types (span, tag, relation, list). You can use this to convert between the two representations, e.g. for query builders (or use the new `/parse-pattern` endpoint, see below). The XML response does not contain the `json` object.

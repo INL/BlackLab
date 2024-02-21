@@ -68,8 +68,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     private final Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
 
     /**
-     * A field named "contents", or, if that doesn't exist, the first annotated field
-     * added.
+     * The first annotated field added is designated as main annotated field.
      */
     private AnnotatedFieldWriter mainAnnotatedField;
 
@@ -158,13 +157,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     protected AnnotatedFieldWriter getMainAnnotatedField() {
         if (mainAnnotatedField == null) {
-            // The "main annotated field" is the field that stores the document content id.
-            // The main annotated field is a field named "contents" or, if that does not exist, the first
-            // annotated field
+            // The main annotated field is the first annotated field
             for (AnnotatedFieldWriter field : annotatedFields.values()) {
                 if (mainAnnotatedField == null)
-                    mainAnnotatedField = field;
-                else if (field.name().equals("contents"))
                     mainAnnotatedField = field;
             }
         }

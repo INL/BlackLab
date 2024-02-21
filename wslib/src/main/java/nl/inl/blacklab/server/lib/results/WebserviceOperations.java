@@ -709,7 +709,7 @@ public class WebserviceOperations {
                     listValuesFor.contains(annotation.name()), params.getLimitValues());
             annotInfos.put(annotation.name(), ai);
         }
-        return new ResultAnnotatedField(includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);
+        return new ResultAnnotatedField(params.blIndex(), includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);
     }
 
     public static ResultIndexStatus resultIndexStatus(WebserviceParams params) {
@@ -786,6 +786,8 @@ public class WebserviceOperations {
         for (AnnotatedField field: metadata.annotatedFields()) {
             afs.add(annotatedField(params, field, false));
         }
+        Collections.sort(afs, ResultAnnotatedField::compare);
+        String mainAnnotatedField = metadata.mainAnnotatedField().name();
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
             mfs.add(metadataField(params, f, null));
@@ -794,7 +796,7 @@ public class WebserviceOperations {
         Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(
                 params.blIndex());
 
-        return new ResultIndexMetadata(progress, afs, mfs, metadataFieldGroups);
+        return new ResultIndexMetadata(progress, afs, mainAnnotatedField, mfs, metadataFieldGroups);
     }
 
     public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {
