@@ -81,25 +81,21 @@ filter on the attributes. This version is marked with a `\u0004` appended to the
 
 ### Payload
 
-The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)).
+The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the target end to save space.
 
-Below we use "this" and "other" to refer to the source and target of the relation. This structure allows for storing relations either at the source or target. However, we've decided to only ever store relations at the source, so "this" is always the source and "other" is always the target.
+Relation payloads are always stored at the source position.
 
 The payload for a relation consists of the following fields:
 
-* `relOtherStart: ZInt`: relative position of the (start of the) other end (target end). Default: `1`.
-* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source (this flag will always be `0`). If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. If `0x08` is set, `targetField` will follow the flags field. The other bits are reserved for future use and must not be set. Default: `0`.
-* `targetField: VInt`: (only present if flag `0x08` set) annotated field the target points to. Uses the forward index field numbering. Default: `0`
-* `thisLength: VInt`: length of this end of the relation (source). For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
-* `otherLength: VInt`: length of the other end of the relation (target). For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
+* if the first number `X`'s value is `<= -20000`, `relationId = -X - 20000` (Unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future). If `X` is above this number, this is an older pre-release index and the number means `relTargetStart` (relative position of the (start of the) target end). Default value: `1`. (eventually we'll drop support for pre-release indexes and use the first number for `relationId` only, without the `-20000` trickery, which is icky and also takes extra space).
+* `flags: byte`: If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `sourceLength` and `targetLength`. The other bits are reserved for future use and must not be set. Default: `0`.
+* only if the first number was `relationId` (see above), `flags` is followed by `relTargetStart: ZInt`: relative position of the (start of the) target end. Default: `1`. If the first number was `relTargetStart`, it will obviously not be repeated here.
+* `sourceLength: VInt`: length of the source end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, it will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
+* `targetLength: VInt`: length of the target end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, this will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
 
-The purpose of `targetField` is to enable having alignment relations between languages in parallel corpora. Each language would be stored in its own annotated field, e.g. `contents_en` might contain English, `contents_nl` Dutch, etc. Relations could be stored in one of the fields, or all of the fields.
+Fields may be omitted from the end if they have the default value. Therefore, an empty payload means `{ relTargetStart: 1, flags: 0, sourceLength: 0, targetLength: 0 }`.
 
-Fields omitted from the end automatically get the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 0, otherLength: 0 }`.
-
-As another example, the payload `0x81; 0x04` would mean `{ relOtherStart: 1, flags: 4, thisLength: 1, otherLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`.
-
-In the future, we might want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
+As another example, the payload `0x81; 0x04` would mean `{ relTargetStart: 1, flags: 4, sourceLength: 1, targetLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`.
 
 ### Calculate Lucene span from relation term
 
