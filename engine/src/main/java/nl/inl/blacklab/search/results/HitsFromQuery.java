@@ -2,9 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -309,20 +307,6 @@ public class HitsFromQuery extends HitsMutable {
     @Override
     protected long resultsProcessedTotal() {
         return hitsProcessedTotal();
-    }
-
-
-    /**
-     * Return debug info.
-     */
-    public Map<String, Object> getDebugInfo() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("className", getClass().getName());
-        result.put("globalHitsCounted", globalHitsCounted);
-        result.put("allSourceSpansFullyRead", allSourceSpansFullyRead);
-        result.put("spansReaders-size", spansReaders.size());
-        result.put("spansReaders-done", spansReaders.stream().map(r -> r.isDone).collect(Collectors.toList()));
-        return result;
     }
 
     @Override

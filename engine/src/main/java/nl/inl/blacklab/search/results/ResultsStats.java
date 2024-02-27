@@ -1,8 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.Collections;
-import java.util.Map;
-
 public abstract class ResultsStats implements SearchResult {
 
     /** Used to return from cache entry if search hasn't been started yet. */
@@ -130,11 +127,4 @@ public abstract class ResultsStats implements SearchResult {
         return 1;
     }
 
-    /**
-     * Return debug info.
-     */
-    @Override
-    public Map<String, Object> getDebugInfo() {
-        return Collections.emptyMap();
-    }
 }
