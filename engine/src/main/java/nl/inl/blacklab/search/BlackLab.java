@@ -313,7 +313,6 @@ public final class BlackLab {
      * <li>$BLACKLAB_CONFIG_DIR (if env. var. is defined)</li>
      * <li>$HOME/.blacklab</li>
      * <li>/etc/blacklab</li>
-     * <li>/vol1/etc/blacklab (legacy, will be removed)</li>
      * <li>/tmp (legacy, will be removed)</li>
      * </ul>>
      *
@@ -338,7 +337,6 @@ public final class BlackLab {
             }
             configDirs.add(new File(System.getProperty("user.home"), ".blacklab"));
             configDirs.add(new File("/etc/blacklab"));
-            configDirs.add(new File("/vol1/etc/blacklab")); // TODO: remove, INT-specific
             configDirs.add(new File(System.getProperty("java.io.tmpdir")));
         }
         return new ArrayList<>(configDirs);
