@@ -365,6 +365,13 @@ class Output {
             // Verbose batch mode, show command before output
             line("COMMAND: " + cmd);
         }
+
+        // In stats mode, print comments (unless silenced)
+        if (cmd.startsWith("#")) {
+            // Comment
+            stats(cmd);
+        }
+
     }
 
     public void stats(String str) {

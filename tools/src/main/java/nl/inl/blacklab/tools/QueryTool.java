@@ -14,6 +14,6 @@ public class QueryTool {
      * @throws ErrorOpeningIndex if index could not be opened
      */
     public static void main(String[] args) throws ErrorOpeningIndex {
-        QueryToolImpl.run(args);
+        QueryToolImpl.queryToolMain(args);
     }
 }

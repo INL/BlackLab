@@ -3,10 +3,6 @@ package nl.inl.blacklab.querytool;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -22,6 +18,7 @@ import org.apache.commons.text.WordUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -76,8 +73,6 @@ import nl.inl.util.Timer;
 public class QueryToolImpl {
 
     static final Charset INPUT_FILE_ENCODING = StandardCharsets.UTF_8;
-    public static final String START_MATCH = "[match]";
-    public static final String END_MATCH = "[/match]";
 
     public static final String MATCH = "match";
 
@@ -125,6 +120,8 @@ public class QueryToolImpl {
 
     /** We record the timings of different parts of the operation here. */
     private QueryTimings timings = new QueryTimings();
+
+    private boolean exitProgram = false;
 
     /** What results view do we want to see? */
     enum ShowSetting {
@@ -174,126 +171,21 @@ public class QueryToolImpl {
      *
      * @param args program arguments
      */
-    public static void run(String[] args) throws ErrorOpeningIndex {
+    public static void queryToolMain(String[] args) throws ErrorOpeningIndex {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
         LogUtil.setupBasicLoggingConfig(Level.WARN);
 
-        // Parse command line
-        File indexDir = null;
-        File inputFile = null;
-        String encoding = Charset.defaultCharset().name();
-        Boolean showStats = null; // default not overridden (default depends on batch mode or not)
         Output output = new Output();
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i].trim();
-            if (arg.startsWith("--")) {
-                if (arg.equals("--mode")) {
-                    if (i + 1 == args.length) {
-                        System.err.println("--mode option needs argument");
-                        Output.usage();
-                        return;
-                    }
-                    String mode = args[i + 1].toLowerCase();
-                    if (mode.matches("c(orrectness)?")) {
-                        // Correctness testing: we want results, no timing and larger pagesize
-                        output.setShowOutput(true);
-                        showStats = false;
-                        defaultPageSize = 1000;
-                        alwaysSortBy = "after:word:s,hitposition"; // for reproducibility
-                        output.setShowDocIds(false); // doc ids are randomly assigned
-                        output.setShowMatchInfo(false); // (temporary)
-                    } else if (mode.matches("p(erformance)?")) {
-                        // Performance testing: we want timing and no results
-                        output.setShowOutput(false);
-                        showStats = true;
-                    } else if (mode.matches("a(ll)?")) {
-                        // Regular: we want results and timing
-                        output.setShowOutput(true);
-                        showStats = true;
-                        output.setShowMatchInfo(true);
-                    } else {
-                        System.err.println("Unknown mode: " + mode);
-                        Output.usage();
-                        return;
-                    }
-                    i++;
-                }
-            } else if (arg.startsWith("-")) {
-                switch (arg) {
-                case "-e":
-                    if (i + 1 == args.length) {
-                        System.err.println("-e option needs argument");
-                        Output.usage();
-                        return;
-                    }
-                    encoding = args[i + 1];
-                    i++;
-                    break;
-                case "-f":
-                    if (i + 1 == args.length) {
-                        System.err.println("-f option needs argument");
-                        Output.usage();
-                        return;
-                    }
-                    inputFile = new File(args[i + 1]);
-                    i++;
-                    System.err.println("Batch mode; reading commands from " + inputFile);
-                    break;
-                case "-v":
-                    output.setVerbose(true);
-                    output.setShowMatchInfo(true);
-                    break;
-                default:
-                    System.err.println("Unknown option: " + arg);
-                    Output.usage();
-                    return;
-                }
-            } else {
-                if (indexDir != null) {
-                    System.err.println("Can only specify 1 index directory");
-                    Output.usage();
-                    return;
-                }
-                indexDir = new File(arg);
-            }
-        }
-        if (indexDir == null) {
-            Output.usage();
+        Config config = Config.fromCommandline(args, output); // configure Output and get Config object
+        if (config.getError() != null) {
+            output.error(config.getError());
+            output.usage();
             return;
         }
 
-        // By default we don't show stats in batch mode, but we do in interactive mode
-        // (batch mode is useful for correctness testing, where you don't want stats;
-        //  use --mode performance to get stats but no results in batch mode)
-        boolean showStatsDefaultValue = inputFile == null;
-        output.setShowStats(showStats == null ? showStatsDefaultValue : showStats);
-
-
-        if (!indexDir.exists() || !indexDir.isDirectory()) {
-            System.err.println("Index dir " + indexDir.getPath() + " doesn't exist.");
-            return;
-        }
-
-        // Use correct output encoding
-        try {
-            // Yes
-            output.setOutputWriter(new PrintWriter(new OutputStreamWriter(System.out, encoding), true));
-            output.setErrorWriter(new PrintWriter(new OutputStreamWriter(System.err, encoding), true));
-            output.line("Using output encoding " + encoding + "\n");
-        } catch (UnsupportedEncodingException e) {
-            // Nope; fall back to default
-            output.setOutputWriter(new PrintWriter(new OutputStreamWriter(System.out, Charset.defaultCharset()), true));
-            output.setErrorWriter(new PrintWriter(new OutputStreamWriter(System.err, Charset.defaultCharset()), true));
-            output.error("Unknown encoding " + encoding + "; using default");
-        }
-
-        if (inputFile != null)
-            output.setBatchMode(true);
-        try (BufferedReader in = inputFile == null ? new BufferedReader(new InputStreamReader(System.in, encoding))
-                : FileUtil.openForReading(inputFile, INPUT_FILE_ENCODING)) {
-            QueryToolImpl c = new QueryToolImpl(indexDir, in, output);
-            output.printHelp(c.getCurrentParser());
-            c.commandProcessor();
+        try (BufferedReader in = config.getInput()) {
+            QueryToolImpl c = new QueryToolImpl(config.getIndexDir(), in, output);
+            c.run();
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -303,11 +195,11 @@ public class QueryToolImpl {
      * Construct the query tool object.
      *
      * @param indexDir directory our index is in
-     * @param in where to read commands from
+     * @param input where to read commands from
      * @param output where and how to produce output
      * @throws ErrorOpeningIndex if we couldn't open the index
      */
-    public QueryToolImpl(File indexDir, BufferedReader in, Output output) throws ErrorOpeningIndex {
+    public QueryToolImpl(File indexDir, BufferedReader input, Output output) throws ErrorOpeningIndex {
         this.output = output;
         printProgramHead();
         try {
@@ -319,13 +211,13 @@ public class QueryToolImpl {
         // Create the BlackLab index object
         Timer t = new Timer();
         index = BlackLab.open(indexDir);
-        output.line("Opening index took " + t.elapsedDescription());
+        output.verbose("Opening index took " + t.elapsedDescription());
         contentsField = index.mainAnnotatedField();
 
         contextSize = index.defaultContextSize();
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
-        commandReader = new CommandReader(in, output);
+        commandReader = new CommandReader(input, output);
     }
 
     /**
@@ -350,43 +242,14 @@ public class QueryToolImpl {
     /**
      * Parse and execute commands and queries.
      */
-    public void commandProcessor() {
+    public void run() {
+        output.printHelp(getCurrentParser());
 
-        while (true) {
+        while (!exitProgram) {
             String prompt = getCurrentParser().getPrompt() + "> ";
-            String cmd;
-            try {
-                cmd = commandReader.readCommand(prompt);
-            } catch (IOException e1) {
-                throw BlackLabRuntimeException.wrap(e1);
-            }
+            String cmd = commandReader.readCommand(prompt);
             if (cmd == null)
                 break;
-            cmd = cmd.trim();
-            if (cmd.equals("exit"))
-                break;
-            output.command(cmd); // (in batch mode, commands are shown in output)
-
-            boolean printStat = true;
-            if (cmd.startsWith("-")) {
-                // Silent, don't output stats
-                printStat = false;
-                cmd = cmd.substring(1).trim();
-            }
-
-            if (cmd.startsWith("#")) {
-                // Comment
-                if (printStat)
-                    output.stats(cmd);
-                continue;
-            }
-
-            // Comment after command? Strip.
-            cmd = cmd.replaceAll("\\s#.+$", "").trim();
-            if (cmd.isEmpty()) {
-                output.stats(""); // output empty lines in stats
-                continue; // no actual command on line, skip
-            }
 
             Timer t = new Timer();
             timings.clear();
@@ -398,7 +261,7 @@ public class QueryToolImpl {
                 // Report exception but don't crash right away, so we can try other queries while debugging.
                 e.printStackTrace();
             }
-            if (printStat)
+            if (!commandReader.lastCommandWasSilenced())
                 output.stats((commandWasQuery ? "" : "@ ") + cmd + "\t" + t.elapsed() + "\t" + statInfo);
 
             System.err.flush(); // if there were error messages, make sure they are shown right away
@@ -417,26 +280,42 @@ public class QueryToolImpl {
         }
     }
 
-    public void processCommand(String fullCmd) {
-        fullCmd = fullCmd.trim();
-        if (!fullCmd.isEmpty() && fullCmd.charAt(0) == '#') // comment (batch mode)
-            return;
+    public void processCommand(String cmd) {
+        cmd = cmd.trim();
 
-        // See if we want to loop a command
-        if (fullCmd.startsWith("repeat ")) {
-            fullCmd = fullCmd.substring(7);
-            Pattern p = Pattern.compile("^\\d+\\s");
-            Matcher m = p.matcher(fullCmd);
-            if (m.find()) {
-                String strNum = m.group();
-                fullCmd = fullCmd.substring(strNum.length());
-                int repCount = parseInt(strNum.trim(), 1);
-                output.line("Repeating " + repCount + " times: " + fullCmd);
+        // Strips comments
+        // (note that for mid-line comment, whitespace before hash is required, so hash in query doesn't count)
+        cmd = cmd.replaceAll("(?:^|\\s)#.+$", "").trim();
+        if (cmd.isEmpty()) {
+            output.stats(""); // output empty lines in stats
+            return; // no actual command on line, skip
+        }
+
+        // Split into action and arguments
+        Matcher m = Pattern.compile("^(\\S+)(?:\\s+(.+))?$").matcher(cmd);
+        if (!m.matches()) {
+            output.error("Invalid command: " + cmd);
+            return;
+        }
+        String action = m.group(1).toLowerCase();
+        String arguments = m.group(2) != null ? m.group(2) : "";
+
+        if (action.equals("exit")) {
+            exitProgram = true;
+            return;
+        } else if (action.equals("repeat")) {
+            // We want to loop a command
+            Pattern p = Pattern.compile("^(\\d+)\\s+(.+)$");
+            Matcher m2 = p.matcher(arguments);
+            if (m2.find()) {
+                int repCount = parseInt(m2.group(1), 1);
+                String commandToRepeat = m.group(2);
+                output.line("Repeating " + repCount + " times: " + commandToRepeat);
                 for (int i = 0; i < repCount; i++) {
-                    processCommand(fullCmd);
+                    processCommand(commandToRepeat);
                 }
             } else {
-                output.error("Repeat command should have a repetition count.");
+                output.error("Malformed repeat command, correct is e.g.: repeat 3 [lemma='test']");
             }
             return;
         }
@@ -444,238 +323,253 @@ public class QueryToolImpl {
         // In batch mode, we can use the chain operator (&&) to
         // time several commands together. See if we're chaining
         // commands here.
-        String cmd, restCommand = null;
-        int commandSeparatorIndex = fullCmd.indexOf("&&");
-        if (commandSeparatorIndex >= 0) {
-            cmd = fullCmd.substring(0, commandSeparatorIndex).trim();
-            restCommand = fullCmd.substring(commandSeparatorIndex + 2).trim();
-        } else {
-            cmd = fullCmd;
+        if (cmd.contains("&&")) {
+            for (String part : cmd.split("&&")) {
+                processCommand(part);
+            }
+            return;
         }
 
-        String lcased = cmd.toLowerCase();
-        if (!lcased.isEmpty()) {
-            if (lcased.equals("clear") || lcased.equals("reset")) {
-                hits = null;
-                docs = null;
-                groups = null;
-                sortedHits = null;
-                collocations = null;
-                filterQuery = null;
-                showSetting = ShowSetting.HITS;
-                output.line("Query and results cleared.");
-            } else if (lcased.equals("prev") || lcased.equals("p")) {
-                prevPage();
-            } else if (lcased.equals("next") || lcased.equals("n")) {
-                nextPage();
-            } else if (lcased.startsWith("page ")) {
-                showPage(parseInt(lcased.substring(5), 1) - 1);
-            } else if (lcased.startsWith("pagesize ")) {
-                resultsPerPage = parseInt(lcased.substring(9), 1);
-                firstResult = 0;
-                showResultsPage();
-            } else if (lcased.startsWith("context ")) {
-                contextSize = ContextSize.get(parseInt(lcased.substring(8), 0), Integer.MAX_VALUE);
-                collocations = null;
-                showResultsPage();
-            } else if (lcased.startsWith("snippet ")) {
-                int hitId = parseInt(lcased.substring(8), 1) - 1;
-                Hits currentHitSet = getCurrentSortedHitSet();
-                if (hitId >= currentHitSet.size()) {
-                    output.error("Hit number out of range.");
-                } else {
-                    Hits singleHit = currentHitSet.window(hitId, 1);
-                    Concordances concordances = singleHit.concordances(snippetSize, concType);
-                    Hit h = currentHitSet.get(hitId);
-                    Concordance conc = concordances.get(h);
-                    String[] concParts;
-                    if (stripXML)
-                        concParts = conc.partsNoXml();
-                    else
-                        concParts = conc.parts();
-                    output.line(
-                            "\n" + WordUtils.wrap(concParts[0] + Output.hlStart(MATCH) +
-                                    concParts[1] + Output.hlEnd(MATCH) + concParts[2], 80));
-                }
-            } else if (lcased.startsWith("snippetsize ")) {
-                snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0), Integer.MAX_VALUE);
-                output.line("Snippets will show " + snippetSize + " words of context.");
-            } else if (lcased.startsWith("doc ")) {
-                int docId = parseInt(lcased.substring(4), 0);
-                showMetadata(docId);
-            } else if (lcased.startsWith("doccontents ")) {
-                // Get plain document contents (no highlighting)
-                int docId = parseInt(lcased.substring(4), 0);
-                showContents(docId);
-            } else if (lcased.startsWith("highlight ")) {
-                // Get highlighted document contents
-                int docId = parseInt(lcased.substring(8), 1) - 1;
-                Hits currentHitSet = getCurrentSortedHitSet();
-                if (currentHitSet == null) {
-                    output.error("No set of hits for highlighting.");
-                } else {
-                    Hits hitsInDoc = hits.getHitsInDoc(docId);
-                    output.line(WordUtils.wrap(DocUtil.highlightDocument(index, contentsField, docId, hitsInDoc), 80));
-                }
-            } else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
-                if (cmd.length() <= 7) {
-                    filterQuery = null; // clear filter
-                    output.line("Filter cleared.");
-                } else {
-                    String filterExpr = cmd.substring(7);
-                    try {
-                        filterQuery = LuceneUtil.parseLuceneQuery(index, filterExpr, index.analyzer(), "title");
-                        output.line("Filter created: " + filterQuery);
-                        output.verbose(filterQuery.getClass().getName());
-                    } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-                        output.error("Error parsing filter query: " + e.getMessage());
-                    }
-                }
-                docs = null;
-            } else if (lcased.startsWith("concfi ")) {
-                String v = lcased.substring(7);
-                concType = parseBoolean(v) ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE;
-            } else if (lcased.startsWith("stripxml ")) {
-                String v = lcased.substring(9);
-                stripXML = parseBoolean(v);
-            } else if (lcased.startsWith("sensitive ")) {
-                String v = lcased.substring(10);
-                MatchSensitivity sensitivity;
-                switch (v) {
-                case "on":
-                case "yes":
-                case "true":
-                    sensitivity = MatchSensitivity.SENSITIVE;
-                    break;
-                case "case":
-                    sensitivity = MatchSensitivity.DIACRITICS_INSENSITIVE;
-                    break;
-                case "diac":
-                case "diacritics":
-                    sensitivity = MatchSensitivity.CASE_INSENSITIVE;
-                    break;
-                default:
-                    sensitivity = MatchSensitivity.INSENSITIVE;
-                    break;
-                }
-                index.setDefaultMatchSensitivity(sensitivity);
-                output.line("Search defaults to "
-                        + (sensitivity.isCaseSensitive() ? "case-sensitive" : "case-insensitive") + " and "
-                        + (sensitivity.isDiacriticsSensitive() ? "diacritics-sensitive" : "diacritics-insensitive"));
-            } else if (lcased.startsWith("doctitle ")) {
-                boolean b = parseBoolean(lcased.substring(9));
-                output.setShowDocTitle(b);
-                System.out.println("Show document titles: " + (b ? "ON" : "OFF"));
-            } else if (lcased.equals("struct") || lcased.equals("structure")) {
-                output.showIndexMetadata(index);
-            } else if (lcased.startsWith("sort by ")) {
-                sortBy(cmd.substring(8));
-            } else if (lcased.startsWith("sort ")) {
-                sortBy(cmd.substring(5));
-            } else if (lcased.startsWith("group by ")) {
-                String[] parts = lcased.substring(9).split(StringUtil.REGEX_WHITESPACE, 2);
-                groupBy(parts[0], parts.length > 1 ? parts[1] : null);
-            } else if (lcased.startsWith("group ")) {
-                if (lcased.substring(6).matches("\\d+")) {
-                    firstResult = 0; // reset for paging through group
-                    changeShowSettings(lcased);
-                } else {
-                    String[] parts = lcased.substring(6).split(StringUtil.REGEX_WHITESPACE, 2);
-                    groupBy(parts[0], parts.length > 1 ? parts[1] : null);
-                }
-            } else if (lcased.equals("groups") || lcased.equals("hits") || lcased.equals("docs")
-                    || lcased.startsWith("colloc")) {
-                changeShowSettings(cmd);
-            } else if (lcased.equals("switch") || lcased.equals("sw")) {
-                currentParserIndex++;
-                if (currentParserIndex >= parsers.size())
-                    currentParserIndex = 0;
-                output.line("Switching to " + getCurrentParser().getName() + ".\n");
-                output.printQueryHelp(getCurrentParser());
-            } else if (lcased.equals("help") || lcased.equals("?")) {
-                output.printHelp(getCurrentParser());
-            } else if (lcased.startsWith("sleep")) {
-                try {
-                    Thread.sleep((int) (Float.parseFloat(lcased.substring(6)) * 1000));
-                } catch (NumberFormatException e1) {
-                    output.error("Sleep takes a float, the number of seconds to sleep");
-                } catch (InterruptedException e) {
-                    // OK
-                }
-            } else if (lcased.startsWith("wordlist")) {
-                if (cmd.length() == 8) {
-                    // Show loaded wordlists
-                    output.line("Available word lists:");
-                    for (String listName : wordLists.keySet()) {
-                        output.line(" " + listName);
-                    }
-                } else {
-                    // Load new wordlist or display existing wordlist
-                    String[] parts = cmd.substring(9).trim().split(StringUtil.REGEX_WHITESPACE, 2);
-                    String name = "word", fn = parts[0];
-                    if (parts.length == 2) {
-                        name = parts[1];
-                    }
-                    File f = new File(fn);
-                    if (f.exists()) {
-                        // Second arg is a file
-                        wordLists.put(name, FileUtil.readLines(f));
-                        output.line("Loaded word list '" + name + "'");
-                    } else {
-                        if (wordLists.containsKey(fn)) {
-                            // Display existing wordlist
-                            for (String word : wordLists.get(fn)) {
-                                output.line(" " + word);
-                            }
-                        } else {
-                            output.error("File " + fn + " not found.");
-                        }
-                    }
-                }
-            } else if (lcased.startsWith("showconc ")) {
-                boolean b = parseBoolean(lcased.substring(9));
-                output.setShowConc(b);
-                System.out.println("Show concordances: " + (b ? "ON" : "OFF"));
-            } else if (lcased.equals("v") || lcased.startsWith("verbose ")) {
-                if (lcased.equals("v"))
-                    output.setVerbose(true);
+        switch (action) {
+        case "clear":
+        case "reset":
+            hits = null;
+            docs = null;
+            groups = null;
+            sortedHits = null;
+            collocations = null;
+            filterQuery = null;
+            showSetting = ShowSetting.HITS;
+            output.line("Query and results cleared.");
+            break;
+        case "prev":
+        case "p":
+            prevPage();
+            break;
+        case "next":
+        case "n":
+            nextPage();
+            break;
+        case "page":
+            showPage(parseInt(arguments, 1) - 1);
+            break;
+        case "pagesize":
+            resultsPerPage = parseInt(arguments, 1);
+            firstResult = 0;
+            showResultsPage();
+            break;
+        case "context":
+            contextSize = ContextSize.get(parseInt(arguments, 0), Integer.MAX_VALUE);
+            collocations = null;
+            showResultsPage();
+            break;
+        case "snippet": {
+            int hitId = parseInt(arguments, 1) - 1;
+            Hits currentHitSet = getCurrentSortedHitSet();
+            if (hitId >= currentHitSet.size()) {
+                output.error("Hit number out of range.");
+            } else {
+                Hits singleHit = currentHitSet.window(hitId, 1);
+                Concordances concordances = singleHit.concordances(snippetSize, concType);
+                Hit h = currentHitSet.get(hitId);
+                Concordance conc = concordances.get(h);
+                String[] concParts;
+                if (stripXML)
+                    concParts = conc.partsNoXml();
                 else
-                    output.setVerbose(parseBoolean(lcased.substring(8)));
-                if (output.isVerbose())
-                    output.setShowMatchInfo(true);
-                output.line("Verbose: " + (output.isVerbose() ? "ON" : "OFF"));
-            } else if (lcased.startsWith("total ")) {
-                String v = lcased.substring(6);
-                determineTotalNumberOfHits = parseBoolean(v);
-                output.line("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
-            } else if (lcased.matches("^(patt)?field\\b.*")) {
-                String v = lcased.replaceAll("^(patt)?field\\s?", "").trim();
-                if (v.isEmpty()) {
-                    contentsField = index.mainAnnotatedField();
-                    output.line("Searching main annotated field: " + contentsField.name());
-                } else {
-                    AnnotatedFields annotatedFields = index.metadata().annotatedFields();
-                    if (!annotatedFields.exists(v)) {
-                        // See if it's a version (e.g. different language in parallel corpus) of the main annotated field
-                        String v2 = AnnotatedFieldNameUtil.changeParallelFieldVersion(index.mainAnnotatedField().name(), v);
-                        if (annotatedFields.exists(v2))
-                            v = v2;
-                    }
-                    if (annotatedFields.exists(v)) {
-                        contentsField = annotatedFields.get(v);
-                        output.line("Searching annotated field: " + contentsField.name());
-                    } else {
-                        output.error("Annotated field '" + v + "' does not exist.");
-                    }
+                    concParts = conc.parts();
+                output.line(
+                        "\n" + WordUtils.wrap(concParts[0] + Output.hlStart(MATCH) +
+                                concParts[1] + Output.hlEnd(MATCH) + concParts[2], 80));
+            }
+            break;
+        }
+        case "snippetsize":
+            snippetSize = ContextSize.get(parseInt(arguments, 0), Integer.MAX_VALUE);
+            output.line("Snippets will show " + snippetSize + " words of context.");
+            break;
+        case "doc":
+            showMetadata(parseInt(arguments, 0));
+            break;
+        case "doccontents":
+            // Get plain document contents (no highlighting)
+            showContents(parseInt(arguments, 0));
+            break;
+        case "highlight ": {
+            // Get highlighted document contents
+            int docId = parseInt(arguments, 1) - 1;
+            Hits currentHitSet = getCurrentSortedHitSet();
+            if (currentHitSet == null) {
+                output.error("No set of hits for highlighting.");
+            } else {
+                Hits hitsInDoc = hits.getHitsInDoc(docId);
+                output.line(WordUtils.wrap(DocUtil.highlightDocument(index, contentsField, docId, hitsInDoc), 80));
+            }
+            break;
+        }
+        case "filter":
+            if (arguments.isEmpty()) {
+                filterQuery = null; // clear filter
+                output.line("Filter cleared.");
+            } else {
+                try {
+                    filterQuery = LuceneUtil.parseLuceneQuery(index, arguments, index.analyzer(), "title");
+                    output.line("Filter created: " + filterQuery);
+                    output.verbose(filterQuery.getClass().getName());
+                } catch (ParseException e) {
+                    output.error("Error parsing filter query: " + e.getMessage());
+                }
+            }
+            docs = null;
+            break;
+        case "concfi":
+            concType = parseBoolean(arguments) ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE;
+            break;
+        case "stripxml":
+            stripXML = parseBoolean(arguments);
+            break;
+        case "sensitive":
+            MatchSensitivity sensitivity;
+            switch (arguments) {
+            case "on":
+            case "yes":
+            case "true":
+                sensitivity = MatchSensitivity.SENSITIVE;
+                break;
+            case "case":
+                sensitivity = MatchSensitivity.DIACRITICS_INSENSITIVE;
+                break;
+            case "diac":
+            case "diacritics":
+                sensitivity = MatchSensitivity.CASE_INSENSITIVE;
+                break;
+            default:
+                sensitivity = MatchSensitivity.INSENSITIVE;
+                break;
+            }
+            index.setDefaultMatchSensitivity(sensitivity);
+            output.line("Search defaults to "
+                    + (sensitivity.isCaseSensitive() ? "case-sensitive" : "case-insensitive") + " and "
+                    + (sensitivity.isDiacriticsSensitive() ? "diacritics-sensitive" : "diacritics-insensitive"));
+            break;
+        case "doctitle":
+            boolean b = parseBoolean(arguments);
+            output.setShowDocTitle(b);
+            System.out.println("Show document titles: " + (b ? "ON" : "OFF"));
+            break;
+        case "struct":
+        case "structure":
+            output.showIndexMetadata(index);
+            break;
+        case "sort":
+            sortBy(arguments);
+            break;
+        case "group":
+            if (arguments.matches("\\d+")) {
+                firstResult = 0; // reset for paging through group
+                changeShowSettings("group " + arguments);
+            } else {
+                String[] parts = arguments.split(StringUtil.REGEX_WHITESPACE, 2);
+                groupBy(parts[0], parts.length > 1 ? parts[1] : null);
+            }
+            break;
+        case "groups":
+        case "hits":
+        case "docs":
+        case "colloc":
+            changeShowSettings(action);
+            break;
+        case "switch":
+        case "sw":
+            currentParserIndex++;
+            if (currentParserIndex >= parsers.size())
+                currentParserIndex = 0;
+            output.line("Switching to " + getCurrentParser().getName() + ".\n");
+            output.printQueryHelp(getCurrentParser());
+            break;
+        case "help":
+            output.printHelp(getCurrentParser());
+            break;
+        case "sleep":
+            try {
+                Thread.sleep((int) (Float.parseFloat(arguments) * 1000));
+            } catch (NumberFormatException e1) {
+                output.error("Sleep takes a float, the number of seconds to sleep");
+            } catch (InterruptedException e) {
+                // OK
+            }
+            break;
+        case "wordlist":
+            if (arguments.isEmpty()) {
+                // Show loaded wordlists
+                output.line("Available word lists:");
+                for (String listName : wordLists.keySet()) {
+                    output.line(" " + listName);
                 }
             } else {
-                // Not a command; assume it's a query
-                parseAndExecuteQuery(cmd);
+                // Load new wordlist or display existing wordlist
+                String[] parts = arguments.trim().split(StringUtil.REGEX_WHITESPACE, 2);
+                String name = "word", fn = parts[0];
+                if (parts.length == 2) {
+                    name = parts[1];
+                }
+                File f = new File(fn);
+                if (f.exists()) {
+                    // Second arg is a file
+                    wordLists.put(name, FileUtil.readLines(f));
+                    output.line("Loaded word list '" + name + "'");
+                } else {
+                    if (wordLists.containsKey(fn)) {
+                        // Display existing wordlist
+                        for (String word : wordLists.get(fn)) {
+                            output.line(" " + word);
+                        }
+                    } else {
+                        output.error("File " + fn + " not found.");
+                    }
+                }
             }
+            break;
+        case "showconc":
+            output.setShowConc(parseBoolean(arguments));
+            System.out.println("Show concordances: " + (output.isShowConc() ? "ON" : "OFF"));
+            break;
+        case "verbose":
+        case "v":
+            output.setVerbose(arguments.isEmpty() || parseBoolean(arguments));
+            if (output.isVerbose())
+                output.setShowMatchInfo(true);
+            output.line("Verbose: " + (output.isVerbose() ? "ON" : "OFF"));
+            break;
+        case "total":
+            determineTotalNumberOfHits = parseBoolean(arguments);
+            output.line("Determine total number of hits: " + (determineTotalNumberOfHits ? "ON" : "OFF"));
+            break;
+        case "field":
+            if (arguments.isEmpty()) {
+                contentsField = index.mainAnnotatedField();
+                output.line("Searching main annotated field: " + contentsField.name());
+            } else {
+                AnnotatedFields annotatedFields = index.metadata().annotatedFields();
+                if (!annotatedFields.exists(arguments)) {
+                    // See if it's a version (e.g. different language in parallel corpus) of the main annotated field
+                    String v2 = AnnotatedFieldNameUtil.changeParallelFieldVersion(index.mainAnnotatedField().name(), arguments);
+                    if (annotatedFields.exists(v2))
+                        arguments = v2;
+                }
+                if (annotatedFields.exists(arguments)) {
+                    contentsField = annotatedFields.get(arguments);
+                    output.line("Searching annotated field: " + contentsField.name());
+                } else {
+                    output.error("Annotated field '" + arguments + "' does not exist.");
+                }
+            }
+            break;
+        default:
+            // Not a command; assume it's a query
+            parseAndExecuteQuery(cmd);
+            break;
         }
-
-        if (restCommand != null)
-            processCommand(restCommand);
     }
 
     private Parser getCurrentParser() {
@@ -739,22 +633,9 @@ public class QueryToolImpl {
 
             // See if we want to choose any random words
             if (query.contains("@@")) {
-                StringBuilder resultString = new StringBuilder();
-                Pattern regex = Pattern.compile("@@[A-Za-z0-9_\\-]+");
-                Matcher regexMatcher = regex.matcher(query);
-                while (regexMatcher.find()) {
-                    // You can vary the replacement text for each match on-the-fly
-                    String wordListName = regexMatcher.group().substring(2);
-                    List<String> list = wordLists.get(wordListName);
-                    if (list == null) {
-                        output.error("Word list '" + wordListName + "' not found!");
-                        return;
-                    }
-                    int randomIndex = (int) (Math.random() * list.size());
-                    regexMatcher.appendReplacement(resultString, list.get(randomIndex));
-                }
-                regexMatcher.appendTail(resultString);
-                query = resultString.toString();
+                query = chooseRandomWords(query);
+                if (query == null)
+                    return;
             }
 
             Parser parser = getCurrentParser();
@@ -763,7 +644,6 @@ public class QueryToolImpl {
                 output.error("No query to execute.");
                 return;
             }
-            //pattern = pattern.rewrite();
             output.verbose("TextPattern: " + pattern);
 
             // If the query included filter clauses, use those. Otherwise use the global filter, if any.
@@ -810,6 +690,26 @@ public class QueryToolImpl {
             output.error("Cannot execute query; " + e.getMessage());
             output.error("(Type 'help' for examples or see https://inl.github.io/BlackLab/development/query-tool.html)");
         }
+    }
+
+    private String chooseRandomWords(String query) {
+        StringBuilder resultString = new StringBuilder();
+        Pattern regex = Pattern.compile("@@[A-Za-z0-9_\\-]+");
+        Matcher regexMatcher = regex.matcher(query);
+        while (regexMatcher.find()) {
+            // You can vary the replacement text for each match on-the-fly
+            String wordListName = regexMatcher.group().substring(2);
+            List<String> list = wordLists.get(wordListName);
+            if (list == null) {
+                output.error("Word list '" + wordListName + "' not found!");
+                return null;
+            }
+            int randomIndex = (int) (Math.random() * list.size());
+            regexMatcher.appendReplacement(resultString, list.get(randomIndex));
+        }
+        regexMatcher.appendTail(resultString);
+        query = resultString.toString();
+        return query;
     }
 
     /**

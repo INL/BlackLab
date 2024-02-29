@@ -6,6 +6,10 @@ import java.lang.reflect.Method;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
+/** Read QueryTool commands from a Reader.
+ *
+ * With optional JLine support (if on classpath)
+ */
 class CommandReader {
 
     private final BufferedReader in;
@@ -27,44 +31,69 @@ class CommandReader {
      */
     private boolean jlineChecked = false;
 
+    /** Was the last command explicitly silenced? (batch mode) */
+    private boolean silenced;
+
     public CommandReader(BufferedReader in, Output output) {
         this.in = in;
         this.output = output;
     }
 
-    public String readCommand(String prompt) throws IOException {
-        if (!output.isBatchMode() && jlineConsoleReader == null && !jlineChecked) {
-            jlineChecked = true;
-            try {
-                Class<?> c = Class.forName("jline.ConsoleReader");
-                jlineConsoleReader = c.getConstructor().newInstance();
+    public String readCommand(String prompt) {
+        try {
+            if (!output.isBatchMode() && jlineConsoleReader == null && !jlineChecked) {
+                jlineChecked = true;
+                try {
+                    Class<?> c = Class.forName("jline.ConsoleReader");
+                    jlineConsoleReader = c.getConstructor().newInstance();
 
-                // Disable bell
-                c.getMethod("setBellEnabled", boolean.class).invoke(jlineConsoleReader, false);
+                    // Disable bell
+                    c.getMethod("setBellEnabled", boolean.class).invoke(jlineConsoleReader, false);
 
-                // Fetch and store the readLine method
-                jlineReadLineMethod = c.getMethod("readLine", String.class);
+                    // Fetch and store the readLine method
+                    jlineReadLineMethod = c.getMethod("readLine", String.class);
 
-                output.line("Command line editing enabled.");
-            } catch (ClassNotFoundException e) {
-                // Can't init JLine; too bad, fall back to stdin
-                output.line("Command line editing not available; to enable, place jline jar in classpath.");
-            } catch (ReflectiveOperationException e) {
-                throw new BlackLabRuntimeException("Could not init JLine console reader", e);
+                    output.line("Command line editing enabled.");
+                } catch (ClassNotFoundException e) {
+                    // Can't init JLine; too bad, fall back to stdin
+                    output.line("Command line editing not available; to enable, place jline jar in classpath.");
+                } catch (ReflectiveOperationException e) {
+                    throw new BlackLabRuntimeException("Could not init JLine console reader", e);
+                }
             }
-        }
 
-        if (jlineConsoleReader != null) {
-            try {
-                return (String) jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
-            } catch (ReflectiveOperationException e) {
-                throw new BlackLabRuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
+            String cmd;
+            if (jlineConsoleReader != null) {
+                try {
+                    cmd = (String) jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
+                } catch (ReflectiveOperationException e) {
+                    throw new BlackLabRuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
+                }
+            } else {
+                if (!output.isBatchMode())
+                    output.noNewLine(prompt);
+                output.flush();
+                cmd = in.readLine();
             }
+            return outputCommandIfNotSilenced(cmd);
+        } catch (IOException e1) {
+            throw BlackLabRuntimeException.wrap(e1);
         }
+    }
 
-        if (!output.isBatchMode())
-            output.noNewLine(prompt);
-        output.flush();
-        return in.readLine();
+    String outputCommandIfNotSilenced(String cmd) {
+        silenced = false;
+        if (cmd.startsWith("-")) {
+            // Silent, don't output stats
+            silenced = true;
+            cmd = cmd.substring(1).trim();
+        }
+        if (!silenced)
+            output.command(cmd); // (show command depending on mode))
+        return cmd;
+    }
+
+    public boolean lastCommandWasSilenced() {
+        return silenced;
     }
 }
