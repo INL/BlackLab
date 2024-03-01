@@ -3,8 +3,6 @@ package nl.inl.blacklab.server.lib.results;
 import java.io.File;
 import java.io.InputStream;
 import java.text.Collator;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,6 +19,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -79,9 +79,9 @@ import nl.inl.util.LuceneUtil;
 
 public class WebserviceOperations {
 
-    private static final int MAX_FIELD_VALUES_TO_RETURN = 500;
+    static final Logger logger = LogManager.getLogger(WebserviceOperations.class);
 
-    private static RuleBasedCollator fieldValueSortCollator = null;
+    private static final int MAX_FIELD_VALUES_TO_RETURN = 500;
 
     private WebserviceOperations() {}
 
@@ -355,51 +355,51 @@ public class WebserviceOperations {
      */
     public static Map<String, Long> getFieldValuesInOrder(MetadataField fd, MetadataFieldValues values) {
         Map<String, String> displayValues = fd.custom().get("displayValues", Collections.emptyMap());
+        List<String> displayOrder = fd.custom().get("displayOrder", Collections.emptyList());
 
         // Show values in display order (if defined)
         // If not all values are mentioned in display order, show the rest at the end,
         // sorted by their displayValue (or regular value if no displayValue specified)
         Map<String, Long> fieldValues = new LinkedHashMap<>();
         Map<String, Long> valueDistribution = values.valueList().getValues();
-        Set<String> valuesLeft = new HashSet<>(valueDistribution.keySet());
-        for (String value : fd.custom().get("displayOrder", Collections.<String>emptyList())) {
-            fieldValues.put(value, valueDistribution.get(value));
-            valuesLeft.remove(value);
-        }
-        List<String> sortedLeft = new ArrayList<>(valuesLeft);
-        final Collator defaultCollator = getFieldValueSortCollator();
-        sortedLeft.sort((o1, o2) -> {
-            String d1 = displayValues.getOrDefault(o1, o1);
-            String d2 = displayValues.getOrDefault(o2, o2);
-            //return d1.compareTo(d2);
-            return defaultCollator.compare(d1, d2);
-        });
-        for (String value : sortedLeft) {
-            fieldValues.put(value, valueDistribution.get(value));
-        }
-        return fieldValues;
-    }
-
-    /**
-     * Returns a collator that sort field values "properly", ignoring parentheses.
-     *
-     * @return the collator
-     */
-    static Collator getFieldValueSortCollator() {
-        if (fieldValueSortCollator == null) {
-            fieldValueSortCollator = (RuleBasedCollator) BlackLab.defaultCollator();
-            try {
-                // Make sure it ignores parentheses when comparing
-                String rules = fieldValueSortCollator.getRules();
-                // Set parentheses equal to NULL, which is ignored.
-                rules += "&\u0000='('=')'";
-                fieldValueSortCollator = new RuleBasedCollator(rules);
-            } catch (ParseException e) {
-                // Oh well, we'll use the collator as-is
-                //throw new RuntimeException();//DEBUG
+        final Collator collator = BlackLab.getFieldValueSortCollator();
+        if (!displayOrder.isEmpty()) {
+            Set<String> valuesLeft = new HashSet<>(valueDistribution.keySet());
+            for (String value: displayOrder) {
+                fieldValues.put(value, valueDistribution.get(value));
+                valuesLeft.remove(value);
+            }
+            List<String> sortedLeft = new ArrayList<>(valuesLeft);
+            sortedLeft.sort((o1, o2) -> {
+                String d1 = displayValues.getOrDefault(o1, o1);
+                String d2 = displayValues.getOrDefault(o2, o2);
+                return collator.compare(d1, d2);
+            });
+            for (String value: sortedLeft) {
+                fieldValues.put(value, valueDistribution.get(value));
+            }
+        } else {
+            // No displayOrder
+            if (!displayValues.isEmpty()) {
+                List<String> sortedLeft = new ArrayList<>(valueDistribution.keySet());
+                sortedLeft.sort((o1, o2) -> {
+                    String d1 = displayValues.getOrDefault(o1, o1);
+                    String d2 = displayValues.getOrDefault(o2, o2);
+                    return collator.compare(d1, d2);
+                });
+                for (String value: sortedLeft) {
+                    fieldValues.put(value, valueDistribution.get(value));
+                }
+            } else {
+                // No displayValues either
+                List<String> sortedLeft = new ArrayList<>(valueDistribution.keySet());
+                sortedLeft.sort(collator::compare);
+                for (String value: sortedLeft) {
+                    fieldValues.put(value, valueDistribution.get(value));
+                }
             }
         }
-        return fieldValueSortCollator;
+        return fieldValues;
     }
 
     /**
@@ -742,6 +742,7 @@ public class WebserviceOperations {
     }
 
     public static ResultMetadataField metadataField(WebserviceParams params, MetadataField fieldDesc, String indexName) {
+        logger.info("        " + fieldDesc.name());
         MetadataFieldValues values = fieldDesc.values(params.getLimitValues());
         Map<String, Long> fieldValues = getFieldValuesInOrder(fieldDesc, values);
         return new ResultMetadataField(indexName, fieldDesc, true, fieldValues,
@@ -779,23 +780,28 @@ public class WebserviceOperations {
     }
 
     public static ResultIndexMetadata indexMetadata(WebserviceParams params) {
+        logger.info("START indexMetadata");
         ResultIndexStatus progress = resultIndexStatus(params);
         IndexMetadata metadata = progress.getMetadata();
 
+        logger.info("    get annotated fields");
         List<ResultAnnotatedField> afs = new ArrayList<>();
         for (AnnotatedField field: metadata.annotatedFields()) {
             afs.add(annotatedField(params, field, false));
         }
         Collections.sort(afs, ResultAnnotatedField::compare);
         String mainAnnotatedField = metadata.mainAnnotatedField().name();
+        logger.info("    get metadata fields");
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
             mfs.add(metadataField(params, f, null));
         }
 
+        logger.info("    get metadata field groups");
         Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(
                 params.blIndex());
 
+        logger.info("    construct response object");
         return new ResultIndexMetadata(progress, afs, mainAnnotatedField, mfs, metadataFieldGroups);
     }
 

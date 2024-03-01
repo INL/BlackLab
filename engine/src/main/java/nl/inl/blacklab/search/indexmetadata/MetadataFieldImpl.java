@@ -79,14 +79,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     }
 
     MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory) {
-        this(fieldName, type, factory, null);
-    }
-
-    MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory, MetadataFieldValues values) {
         super(fieldName);
         this.type = type;
         this.factory = factory;
-        this.values = values;
+        ensureValuesCreated();
     }
 
 	/**
@@ -139,10 +135,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         return UnknownCondition.fromStringValue(strUnknownCondition);
     }
 
-    public synchronized MetadataFieldValues values(long maxValues) {
+    public MetadataFieldValues values(long maxValues) {
         if (values == null || !values.canTruncateTo(maxValues))
             values = factory.create(name(), type, maxValues);
-        return values.truncate(maxValues);
+        return values.truncated(maxValues);
     }
 
     /**
@@ -203,9 +199,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         }
     }
 
-    synchronized void setValues(JsonNode values) {
+    void setValues(JsonNode values) {
         if (factory instanceof MetadataFieldValuesInMetadataFile.Factory) {
-            // We're reading values from indexmetadata.yaml (old external index)
             ensureNotFrozen();
             ensureValuesCreated();
             this.values.setValues(values);
@@ -230,8 +225,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         custom.put("displayValues", map);
     }
 
-    synchronized void setValueListComplete(boolean valueListComplete) {
-        if (factory instanceof MetadataFieldValuesInMetadataFile.Factory) {
+    void setValueListComplete(boolean valueListComplete) {
+        if (this.values.shouldAddValuesWhileIndexing()) {
             // We're reading values from indexmetadata.yaml (old external index)
             ensureNotFrozen();
             ensureValuesCreated();
@@ -283,6 +278,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName, MetadataFieldValues.Factory factory) {
         super.fixAfterDeserialization(index, fieldName);
         this.factory = factory;
+        assert values == null;
+        ensureValuesCreated();
         setKeepTrackOfValues(false); // integrated uses DocValues for this
     }
 }

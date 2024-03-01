@@ -108,11 +108,14 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     private final AnnotationsImpl annotations = new AnnotationsImpl();
 
     /** The map of available relation classes and types and their frequencies. */
+    @XmlTransient
     private final Map<String, Map<String, Long>> relations = new HashMap<>();
 
+    @XmlTransient
     private boolean relationsInitialized = false;
 
     /** The available relation classes, types and their frequencies, plus attribute info. */
+    @XmlTransient
     private RelationsStats cachedRelationsStats;
 
     // For JAXB deserialization

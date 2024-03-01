@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.Bits;
 
@@ -46,20 +45,16 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
     private final String fieldName;
 
     public MetadataFieldValuesFromIndex(IndexReader reader, String fieldName, boolean isNumeric, long limitValues) {
-        this(reader, fieldName, isNumeric, new TruncatableFreqList(limitValues));
+        this.fieldName = fieldName;
+        this.isNumeric = isNumeric;
+        this.values = new TruncatableFreqList(limitValues);
+        determineValueDistribution(reader);
     }
 
     public MetadataFieldValuesFromIndex(String fieldName, boolean isNumeric, TruncatableFreqList values) {
-        this(null, fieldName, isNumeric, values);
-    }
-
-    private MetadataFieldValuesFromIndex(IndexReader reader, String fieldName, boolean isNumeric,
-            TruncatableFreqList values) {
         this.fieldName = fieldName;
         this.isNumeric = isNumeric;
         this.values = values;
-        if (reader != null)
-            determineValueDistribution(reader);
     }
 
     @Override
@@ -68,27 +63,28 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
     }
 
     @Override
-    public MetadataFieldValues truncate(long maxValues) {
-        TruncatableFreqList newValues = values.truncate(maxValues);
+    public boolean shouldAddValuesWhileIndexing() { return false; }
+
+    @Override
+    public MetadataFieldValues truncated(long maxValues) {
+        TruncatableFreqList newValues = values.truncated(maxValues);
         if (newValues == values)
             return this;
         return new MetadataFieldValuesFromIndex(fieldName, isNumeric, newValues);
     }
 
     private void determineValueDistribution(IndexReader reader) {
-        try {
-            // OPT: is this worth parallellizing?
-            for (LeafReaderContext rc : reader.leaves()) {
-                LeafReader r = rc.reader();
-                Bits liveDocs = r.getLiveDocs();
-                getDocValues(r, isNumeric, liveDocs, values);
+        reader.leaves().stream().forEach(rc -> {
+            try {
+                getDocValues(rc.reader(), isNumeric, values);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        });
     }
 
-    private void getDocValues(LeafReader r, boolean numeric, Bits liveDocs, TruncatableFreqList values) throws IOException {
+    private void getDocValues(LeafReader r, boolean numeric, TruncatableFreqList values) throws IOException {
+        Bits liveDocs = r.getLiveDocs();
         DocIdSetIterator dv = DocValuesUtil.docValuesIterator(r, fieldName, numeric);
         if (dv != null) { // If null, the documents in this segment do not contain any values for this field
             while (true) {

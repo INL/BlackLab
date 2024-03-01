@@ -1,9 +1,9 @@
 package nl.inl.util;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class LimitUtil {
 
@@ -24,8 +24,8 @@ public class LimitUtil {
         return source.entrySet().stream()
                 .limit(limitValue)
                 .map(entry -> Map.entry(entry.getKey(), limit(entry.getValue(), limitValue)))
-                .collect(TreeMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()),
-                        (mapTarget, mapSource) -> mapTarget.putAll(mapSource));
+                .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()),
+                        Map::putAll);
     }
 
     private static <T> List<T> limitList(List<T> list, long maxItems) {

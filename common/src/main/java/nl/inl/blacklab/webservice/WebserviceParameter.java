@@ -100,7 +100,7 @@ public enum WebserviceParameter {
     REL_SEPARATE_SPANS("separatespans", "separate-spans"), // report spans separately from other relations [yes]
 
     // for listing values (metadata, annotations, relations, attributes)
-    LIMIT_VALUES("limitvalues"),        // truncate lists/maps of values to this length [1000]
+    LIMIT_VALUES("limitvalues"),        // truncate lists/maps of values to this length [200]
 
     // relations querying options
     REL_ADJUST_HITS("adjusthits", "adjust-hits"),  // adjust hits to cover all tokens involved in relation [no]
@@ -128,7 +128,8 @@ public enum WebserviceParameter {
      */
     final static private Map<WebserviceParameter, String> defaultValues;
 
-    public static final int DEF_VAL_LIMIT_VALUES = 1000;
+    /** Default value for limitvalues parameter (how many metadata/annotation values to return) */
+    public static final int DEF_VAL_LIMIT_VALUES = 200;
 
     static {
         // Default values for the parameters. Note that if no default is set, the default will be the empty string.

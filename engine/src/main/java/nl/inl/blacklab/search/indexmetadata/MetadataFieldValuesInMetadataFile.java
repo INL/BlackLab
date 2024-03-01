@@ -56,7 +56,10 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
     }
 
     @Override
-    public MetadataFieldValues truncate(long maxValues) {
+    public boolean shouldAddValuesWhileIndexing() { return false; }
+
+    @Override
+    public MetadataFieldValues truncated(long maxValues) {
         // Ignore this for the legacy external index format
         return this;
     }

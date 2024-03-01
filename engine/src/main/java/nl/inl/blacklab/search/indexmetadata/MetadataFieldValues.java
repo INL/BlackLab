@@ -10,9 +10,11 @@ import com.fasterxml.jackson.databind.JsonNode;
  */
 public interface MetadataFieldValues {
 
-    MetadataFieldValues truncate(long maxValues);
+    MetadataFieldValues truncated(long maxValues);
 
     boolean canTruncateTo(long maxValues);
+
+    boolean shouldAddValuesWhileIndexing();
 
     @FunctionalInterface
     interface Factory {

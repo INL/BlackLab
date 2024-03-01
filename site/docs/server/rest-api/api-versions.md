@@ -57,7 +57,7 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
   - `before`/`after` are the new, preferred alternatives to `left`/`right`,e.g. when sorting/grouping on context. Not all languages are LTR, so this makes more sense. Existing endpoints still use `left`/`right` in the response for compatibility, but new endpoints have been updated as well. These properties can now get a number of tokens as an extra parameter, e.g. `before:lemma:i:2`.
   - For grouping on context, `wordleft`/`wordright` have been deprecated. Use `before`/`after` with 1 token instead.
   - `context` is the new name for the `wordsaroundhit` parameter and supports more options (separate before/after, whole sentence, etc.)
-- Pages that list values for fields, tags, etc. now support the `limitvalues` parameter. This parameter defaults to `1000`, but can be set higher if you need really long value lists.
+- Pages that list values for fields, tags, etc. now support the `limitvalues` parameter. This parameter defaults to `200`, but can be set higher if you need really long value lists.
 - New endpoints were added for all operations on corpora, at `/corpora/CORPUSNAME/...` (for now alongside existing endpoints `/CORPUSNAME`). These endpoints are available in BlackLab v4 but only "speak" API v5 (see below). You should move to these endpoints for future compatibility.
 - A new endpoint `/parse-pattern` was added that allows you to parse a CorpusQL or JSON query structure pattern without actually executing the search.
 - A new endpoint `.../CORPUSNAME/relations` that will return all the spans ("inline tags") and relations indexed in the corpus.

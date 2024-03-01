@@ -6,6 +6,8 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -73,6 +75,7 @@ public final class BlackLab {
     private static boolean globalSettingsApplied = false;
 
     public static final String FEATURE_INTEGRATE_EXTERNAL_FILES = "integrateExternalFiles";
+    private static RuleBasedCollator fieldValueSortCollator = null;
 
     /**
      * Create a new engine instance.
@@ -442,4 +445,26 @@ public final class BlackLab {
     }
 
     private BlackLab() { }
+
+    /**
+     * Returns a collator that sort field values "properly", ignoring parentheses.
+     *
+     * @return the collator
+     */
+    public static Collator getFieldValueSortCollator() {
+        if (fieldValueSortCollator == null) {
+            fieldValueSortCollator = (RuleBasedCollator) defaultCollator();
+            try {
+                // Make sure it ignores parentheses when comparing
+                String rules = fieldValueSortCollator.getRules();
+                // Set parentheses equal to NULL, which is ignored.
+                rules += "&\u0000='('=')'";
+                fieldValueSortCollator = new RuleBasedCollator(rules);
+            } catch (ParseException e) {
+                // Oh well, we'll use the collator as-is
+                //throw new RuntimeException();//DEBUG
+            }
+        }
+        return fieldValueSortCollator;
+    }
 }

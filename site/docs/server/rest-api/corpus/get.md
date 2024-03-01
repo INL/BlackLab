@@ -6,9 +6,9 @@ Return the corpus metadata, including size, document format, annotated and metad
 
 **Method** : `GET`
 
-| Parameter       | Description                                                    |
-|-----------------|----------------------------------------------------------------|
-| `limitvalues`   | Maximum number of values to return for fields. Default: `1000` |
+| Parameter       | Description                                                  |
+|-----------------|--------------------------------------------------------------|
+| `limitvalues`   | Maximum number of values to return for fields. Default: `200` |
 
 ## Success Response
 

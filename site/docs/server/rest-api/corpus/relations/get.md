@@ -16,7 +16,7 @@ Return an overview of spans ("inline tags") and relations classes and types in t
 | `classes`       | Comma-separated list of relations classes to return. If omitted, return all relations classes.                                                  |
 | `onlyspans`     | If `true`, only returns spans. Equivalent to `classes=__tag`. Default: `false`                                                                  |
 | `separatespans` | If `true` (the default), return spans differently than other relations. Set to `false` to return them as a regular relation with class `__tag`. |
-| `limitvalues`   | Maximum number of values to return for attributes. Default: `1000`                                                                              |
+| `limitvalues`   | Maximum number of values to return for attributes. Default: `200`                                                                                |
 
 
 ## Success Response
