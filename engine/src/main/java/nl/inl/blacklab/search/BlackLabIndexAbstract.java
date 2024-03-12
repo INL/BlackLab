@@ -742,7 +742,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public boolean isOpen() {
-        return indexWriter.isOpen();
+        return indexWriter != null && indexWriter.isOpen();
     }
 
     protected void deleteFromForwardIndices(Document d) {
