@@ -1,14 +1,10 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.ByteArrayInputStream;
-import java.io.CharArrayReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -17,8 +13,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
@@ -39,6 +33,7 @@ import nl.inl.blacklab.indexers.config.saxon.CharPositionsTracker;
 import nl.inl.blacklab.indexers.config.saxon.DocumentReference;
 import nl.inl.blacklab.indexers.config.saxon.MyContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
+import nl.inl.blacklab.indexers.config.saxon.XIncludeResolver;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
@@ -157,62 +152,17 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     private void readDocument() {
         try {
-            File file = document.getFile();
-            Charset charset = document.getCharset();
-            char[] documentContent = document.getContents();
-            if (documentContent == null) {
-                try (FileReader reader = new FileReader(file, charset)) {
-                    documentContent = IOUtils.toCharArray(reader);
-                }
-            }
-            File baseDir = file == null ? currentXIncludeDir : file.getParentFile();
-            documentContent = resolveXInclude(documentContent, baseDir);
-            charPositions = new CharPositionsTracker(documentContent);
-            contents = SaxonHelper.parseDocument(
-                    new CharArrayReader(documentContent), new MyContentHandler(charPositions));
+            document = document.withXIncludesResolved(currentXIncludeDir);
+            XIncludeResolver xincludeResolver = document.getXIncludeResolver();
+            charPositions = xincludeResolver.getCharPositionsTracker();
+            Reader reader = xincludeResolver.getDocumentReader();
+            contents = SaxonHelper.parseDocument(reader, new MyContentHandler(charPositions));
             XPath xPath = SaxonHelper.getXPathFactory().newXPath();
             finder = new XPathFinder(xPath,
                     config.isNamespaceAware() ? config.getNamespaces() : null);
-                document = new DocumentReference(documentContent, charset, file);
-        } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
+        } catch (XPathException | SAXException | ParserConfigurationException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-    }
-
-    private char[] resolveXInclude(char[] documentContent, File dir) {
-        // Implement XInclude support.
-        // We need to do this before parsing so our character position tracking keeps working.
-        // This basic support uses regex; we can improve it later if needed.
-        // <xi:include href="../content/en_1890_Darby.1Chr.xml"/>
-
-        Pattern xIncludeTag = Pattern.compile("<xi:include\\s+href=\"([^\"]+)\"\\s*/>");
-        CharSequence doc = CharBuffer.wrap(documentContent);
-        Matcher matcher = xIncludeTag.matcher(doc);
-        StringBuilder result = new StringBuilder(documentContent.length / 2 * 3);
-        int pos = 0;
-        boolean anyFound = false;
-        while (matcher.find()) {
-            anyFound = true;
-            // Append the part before the XInclude tag
-            result.append(doc.subSequence(pos, matcher.start()));
-            try {
-                // Append the included file
-                String href = matcher.group(1);
-                File f = new File(href);
-                if (!f.isAbsolute())
-                    f = new File(dir, href);
-                InputStream is = new FileInputStream(f);
-                result.append(IOUtils.toString(is, StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-            pos = matcher.end();
-        }
-        if (!anyFound)
-            return documentContent;
-        // Append the rest of the document
-        result.append(doc.subSequence(pos, doc.length()));
-        return result.toString().toCharArray();
     }
 
     @Override
