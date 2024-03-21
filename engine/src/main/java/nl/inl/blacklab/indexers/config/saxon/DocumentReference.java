@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -36,16 +37,24 @@ public class DocumentReference {
      */
     private boolean deleteFileOnExit = false;
 
+    /** Helper for resolving XIncludes */
+    private XIncludeResolver xincludeResolver;
+
     public DocumentReference(char[] contents, Charset charset, File file) {
-        this(contents, charset, file, true);
+        this(contents, charset, file, true, null);
     }
 
     public DocumentReference(char[] contents, Charset charset, File file, boolean swapIfTooLarge) {
+        this(contents, charset, file, swapIfTooLarge, null);
+    }
+
+    public DocumentReference(char[] contents, Charset charset, File file, boolean swapIfTooLarge, XIncludeResolver xIncludeResolver) {
         this.contents = contents;
         this.charset = charset;
         this.file = file;
         if (swapIfTooLarge)
             swapIfTooLarge();
+        this.xincludeResolver = xIncludeResolver;
     }
 
     public void swapIfTooLarge() {
@@ -94,6 +103,26 @@ public class DocumentReference {
     }
 
     public char[] getContents() {
+        if (contents == null) {
+            try {
+                try (FileReader reader = new FileReader(file, charset)) {
+                    return IOUtils.toCharArray(reader);
+                }
+            } catch (IOException e) {
+                throw new BlackLabRuntimeException(e);
+            }
+        }
         return contents;
+    }
+
+    public DocumentReference withXIncludesResolved(File currentXIncludeDir) {
+        this.xincludeResolver = new XIncludeResolverSeparate(this, currentXIncludeDir);
+        return this;
+//        this.xincludeResolver = new XIncludeResolverConcatenate(this, currentXIncludeDir);
+//        return xincludeResolver.getDocumentReference(); // in case there were XIncludes
+    }
+
+    public XIncludeResolver getXIncludeResolver() {
+        return xincludeResolver;
     }
 }
