@@ -27,6 +27,9 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     private static final String REGEX_PROCESSOR_SAXON = "saxon(ica)?";
 
+    /** When referring to unresolved token ids, what prefix should we use to avoid too many similar warnings? */
+    private static final int TOKEN_ID_PREFIX_LENGTH = 7;
+
     /** Create a new XPath-based indexer.
      * <p>
      * Chooses XML processor based on the fileTypeOptions.
@@ -45,11 +48,18 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         return new DocIndexerVTD(); // VTD is still the default for now
     }
 
-    synchronized static void warnOnce(String message) {
-        if (!reportedWarnings.contains(message)) {
+    /** Don't issue warnings again if they starts with the same prefix. */
+    synchronized static void warnOnce(String message, String prefix) {
+        if (!reportedWarnings.contains(prefix)) {
             logger.warn(message);
-            reportedWarnings.add(message);
+            logger.warn("  (above warning is only issued once)");
+            reportedWarnings.add(prefix);
         }
+    }
+
+    /** Don't issue warning again if the message is the same */
+    synchronized static void warnOnce(String message) {
+        warnOnce(message, message);
     }
 
     /**
@@ -203,9 +213,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             xpathForEachStringValue(standoff.getTokenRefPath(), standoffNode, (tokenPositionId) -> {
                 if (!tokenPositionId.isEmpty()) {
                     Span span = tokenPositionsMap.get(tokenPositionId);
-                    if (span == null)
-                        warn("Standoff annotation contains unresolved reference to token position: '" + tokenPositionId + "'");
-                    else
+                    if (span == null) {
+                        warnUnresolvedTokenId(tokenPositionId,
+                                "Standoff annotation contains unresolved reference to token position");
+                    } else
                         indexAtPositions.add(span);
                 }
             });
@@ -229,7 +240,8 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 xpathForEachStringValue(standoff.getSpanEndPath(), standoffNode, (tokenId) -> {
                     Span tokenPos = tokenPositionsMap.get(tokenId);
                     if (tokenPos == null) {
-                        warn("Standoff annotation contains unresolved reference to span end token: '" + tokenId + "'");
+                        warnUnresolvedTokenId(tokenId,
+                                "Standoff annotation contains unresolved reference to span end token");
                     } else {
                         endOrTargetArr[0] = tokenPos;
                     }
@@ -275,6 +287,16 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 }
             }
         });
+    }
+
+    private static void warnUnresolvedTokenId(String tokenId, String baseMessage) {
+        // Warn about unresolved reference, but only once per token id prefix.
+        // (so e.g. missing document isn't reported a million times)
+        String tokenIdPrefix = tokenId.substring(0, TOKEN_ID_PREFIX_LENGTH);
+        String tokenIdRest = tokenId.substring(TOKEN_ID_PREFIX_LENGTH);
+        String prefix = baseMessage + ": '" + tokenIdPrefix;
+        String message = prefix + tokenIdRest + "'";
+        warnOnce(message, prefix);
     }
 
     protected void processSubannotations(ConfigAnnotation parentAnnot, T context,
