@@ -2,9 +2,10 @@ package nl.inl.util;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,11 +68,11 @@ public class XmlHighlighter {
         final int end;
 
         /**
-         * Start position of matching tag (the close to this open tag, or vice versa) in
-         * original content. A negative value indicates that this tag was unmatched
+         * Our matching tag (the close to this open tag, or vice versa) in
+         * original content. Null indicates that this tag was unmatched
          * (which might happen if we're highlighting snippets of a document).
          */
-        int matchingTagStart;
+        TagLocation matchingTag;
 
         /**
          * Unique id for each tag; used as a tie-breaker so sorting is always the same,
@@ -89,7 +90,7 @@ public class XmlHighlighter {
             this.type = type;
             this.start = start;
             this.end = end;
-            matchingTagStart = -1; // unmatched tag (until we find its match)
+            matchingTag = null; // unmatched tag (until we find its match)
             objectNum = getNextUniqueId();
         }
 
@@ -111,41 +112,21 @@ public class XmlHighlighter {
         }
 
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + end;
-            result = prime * result + matchingTagStart;
-            result = prime * result + ((name == null) ? 0 : name.hashCode());
-            result = prime * result + (int) (objectNum ^ (objectNum >>> 32));
-            result = prime * result + start;
-            result = prime * result + ((type == null) ? 0 : type.hashCode());
-            return result;
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            TagLocation that = (TagLocation) o;
+            return start == that.start && end == that.end && objectNum == that.objectNum && type == that.type
+                    && matchingTag == that.matchingTag // don't compare objects here (infinite recursion)
+                    && Objects.equals(name, that.name);
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            TagLocation other = (TagLocation) obj;
-            if (end != other.end)
-                return false;
-            if (matchingTagStart != other.matchingTagStart)
-                return false;
-            if (name == null) {
-                if (other.name != null)
-                    return false;
-            } else if (!name.equals(other.name))
-                return false;
-            if (objectNum != other.objectNum)
-                return false;
-            if (start != other.start)
-                return false;
-            return type == other.type;
+        public int hashCode() {
+            // don't include matchingTag object in hashcode (infinite recursion)
+            return Objects.hash(type, start, end, matchingTag == null ? 0L : matchingTag.objectNum, objectNum, name);
         }
 
         @Override
@@ -186,7 +167,7 @@ public class XmlHighlighter {
     /**
      * The highlight tags we're inside of, indexed by their start position.
      */
-    Map<Integer, TagLocation> openHighlightTags = new HashMap<>();
+    Set<TagLocation> openHighlightTags = new HashSet<>();
 
     /**
      * Given XML content and a sorted list of existing tags and highlight tags to be
@@ -276,8 +257,8 @@ public class XmlHighlighter {
         if (inHighlightTag == 0) {
             b.append(startHighlightTag);
         }
-        assert !openHighlightTags.containsKey(tag.start); // no two tags at one location..?
-        openHighlightTags.put(tag.start, tag);
+        //assert !openHighlightTags.contains(tag); // no two tags at one location..?
+        openHighlightTags.add(tag);
         inHighlightTag++;
         assert openHighlightTags.size() == inHighlightTag;
     }
@@ -285,8 +266,8 @@ public class XmlHighlighter {
     /** Decrement depth; End highlight if we're at level 0 */
     private void endHighlight(TagLocation tag) {
         inHighlightTag--;
-        assert openHighlightTags.containsKey(tag.matchingTagStart); // we should have a matching start tag
-        openHighlightTags.remove(tag.matchingTagStart);
+        assert openHighlightTags.contains(tag.matchingTag); // we should have a matching start tag
+        openHighlightTags.remove(tag.matchingTag);
         assert openHighlightTags.size() == inHighlightTag;
         if (inHighlightTag == 0) {
             b.append(endHighlightTag);
@@ -305,9 +286,14 @@ public class XmlHighlighter {
 
         if (inHighlightTag > 0) {
             // We should possibly suspend highlighting for this tag to maintain well-formedness.
-            // Check the current (outer) highlighting span and see if our matching tag is inside or outside the highlighting spans.
-            boolean matchingTagOutsideHighlight = openHighlightTags.values().stream()
-                    .allMatch(hl -> hl.start > tag.matchingTagStart || hl.matchingTagStart <= tag.matchingTagStart);
+            // Check the current (outer) highlighting span and see if our matching tag is inside or outside the
+            // highlighting spans.
+            boolean matchingTagOutsideHighlight = openHighlightTags.stream()
+                    .allMatch(hl -> {
+                        int tagMatchingStart = tag.matchingTag == null ? -1 : tag.matchingTag.start;
+                        int hlMatchingStart = hl.matchingTag == null ? -1 : hl.matchingTag.start;
+                        return hl.start > tagMatchingStart || hlMatchingStart <= tagMatchingStart;
+                    });
             if (matchingTagOutsideHighlight) {
                 // Matching tag is outside this highlighting span; highlighting must be suspended to maintain well-formedness.
                 suspendHighlighting = true;
@@ -354,10 +340,10 @@ public class XmlHighlighter {
                 continue; // outside highlighting range
             assert b >= a;
             TagLocation start = new TagLocation(TagType.HIGHLIGHT_START, a, a);
-            start.matchingTagStart = b;
-            tags.add(start);
             TagLocation end = new TagLocation(TagType.HIGHLIGHT_END, b, b);
-            end.matchingTagStart = a;
+            start.matchingTag = end;
+            end.matchingTag = start;
+            tags.add(start);
             tags.add(end);
         }
     }
@@ -406,7 +392,7 @@ public class XmlHighlighter {
                     tagLocation.name = matcher.group(2); // remember in case there's no close tag
                 } else {
                     // Self-closing tag. Don't add to stack, link to self
-                    tagLocation.matchingTagStart = tagLocation.start;
+                    tagLocation.matchingTag = tagLocation;
                 }
             } else {
                 // Close tag. Did we encounter a matching open tag?
@@ -432,8 +418,8 @@ public class XmlHighlighter {
                 }
                 if (openTag != null) {
                     // Link the matching tags together
-                    openTag.matchingTagStart = tagLocation.start;
-                    tagLocation.matchingTagStart = openTag.start;
+                    openTag.matchingTag = tagLocation;
+                    tagLocation.matchingTag = openTag;
                 }
             }
 
