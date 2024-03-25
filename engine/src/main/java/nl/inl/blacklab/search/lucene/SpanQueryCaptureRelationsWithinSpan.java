@@ -145,6 +145,10 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
             if (spans == null)
                 return null;
             BLSpans relations = relationsWeight.getSpans(context, requiredPostings);
+            if (relations == null) {
+                // This can happen if these relations don't occur in this segment of the index
+                return spans;
+            }
             return new SpansCaptureRelationsWithinSpan(spans, relations, captureRelsInside,
                     captureRelsAs);
         }
