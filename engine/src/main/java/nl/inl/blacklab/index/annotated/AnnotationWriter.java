@@ -33,9 +33,6 @@ import nl.inl.util.CollUtil;
  */
 public class AnnotationWriter {
 
-    /** Maximum length a value is allowed to be. */
-    private static final int MAXIMUM_VALUE_LENGTH = 1000;
-
     private final AnnotatedFieldWriter fieldWriter;
 
     private final AnnotationSensitivities sensitivitySetting;
@@ -281,12 +278,6 @@ public class AnnotationWriter {
                     "inline tags. To work properly with the new index format, update it to use " +
                     "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
 
-        }
-
-        if (value.length() > MAXIMUM_VALUE_LENGTH) {
-            // Let's keep a sane maximum value length.
-            // (Lucene's is 32766, but we don't want to go that far)
-            value = value.substring(0, MAXIMUM_VALUE_LENGTH);
         }
 
         // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.

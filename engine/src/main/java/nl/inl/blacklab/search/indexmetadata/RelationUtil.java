@@ -99,7 +99,7 @@ public class RelationUtil {
                 .map(e -> e.getValue().stream()
                         .map( v -> tagAttributeIndexValue(e.getKey(), v,
                                     BlackLabIndex.IndexType.INTEGRATED))
-                        .collect(Collectors.joining()))
+                        .collect(Collectors.joining(" ")))
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
