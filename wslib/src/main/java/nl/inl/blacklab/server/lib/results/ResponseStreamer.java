@@ -112,6 +112,7 @@ public class ResponseStreamer {
     public static final String KEY_DOC_LENGTH_TOKENS = "lengthInTokens"; // v3/4: main field token count (docInfo)
     public static final String KEY_TOKEN_COUNT = "tokenCount";           // v3/4: main field token count (index info)
     public static final String KEY_TOKEN_COUNTS = "tokenCounts";         // v4/5: per-field token counts (both)
+    public static final String KEY_DOCUMENT_COUNT = "documentCount";     // v3/4/5: was added to aggregate index response in v4
     public static final String KEY_DOC_MAY_VIEW = "mayView";
     public static final String KEY_DOC_PID = "docPid";
     public static final String KEY_DOC_SNIPPET = "snippet";
@@ -1302,9 +1303,15 @@ public class ResponseStreamer {
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("timeModified", indexMetadata.timeModified());
             indexTokenCount(indexMetadata);
+            indexDocumentCount(indexMetadata);
             indexProgress(progress);
         }
         ds.endMap().endElEntry();
+    }
+
+    private void indexDocumentCount(IndexMetadata indexMetadata) {
+        if (modernizeApi)
+            ds.entry(KEY_DOCUMENT_COUNT, indexMetadata.documentCount());
     }
 
     private void indexTokenCount(IndexMetadata indexMetadata) {
@@ -1384,7 +1391,7 @@ public class ResponseStreamer {
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
             indexTokenCount(metadata);
-            ds.entry("documentCount", metadata.documentCount());
+            indexDocumentCount(metadata);
             indexProgress(result.getProgress());
 
             boolean inconsistentKeyNaming = !modernizeApi;
@@ -1503,6 +1510,7 @@ public class ResponseStreamer {
             ds.entry(KEY_STATS_STATUS, progress.getIndexStatus());
             ds.entry("timeModified", metadata.timeModified());
             indexTokenCount(metadata);
+            indexDocumentCount(metadata);
             String formatIdentifier = metadata.documentFormat();
             if (!StringUtils.isEmpty(formatIdentifier))
                 ds.entry("documentFormat", formatIdentifier);
