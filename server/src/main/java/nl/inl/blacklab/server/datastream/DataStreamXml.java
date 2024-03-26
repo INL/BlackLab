@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.datastream;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,8 +33,8 @@ public class DataStreamXml extends DataStreamAbstract {
         this.omitEmptyAnnotations = omitEmptyAnnotations;
     }
 
-    public DataStreamXml(PrintWriter out, boolean prettyPrint, ApiVersion api) {
-        super(out, prettyPrint);
+    public DataStreamXml(boolean prettyPrint, ApiVersion api) {
+        super(prettyPrint);
         this.api = api;
     }
 

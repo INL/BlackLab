@@ -32,8 +32,8 @@ public class DataStreamCsv extends DataStreamAbstract {
         }
     }
 
-    public DataStreamCsv(PrintWriter out, boolean prettyPrint) {
-        super(out, prettyPrint);
+    public DataStreamCsv(boolean prettyPrint) {
+        super(prettyPrint);
     }
 
     @Override

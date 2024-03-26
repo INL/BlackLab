@@ -3,8 +3,6 @@ package nl.inl.blacklab.server;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
@@ -22,10 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JacksonException;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -49,6 +48,7 @@ import nl.inl.blacklab.server.requesthandlers.UserRequestBls;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 public class BlackLabServer extends HttpServlet {
 
@@ -93,8 +93,7 @@ public class BlackLabServer extends HttpServlet {
                 // Determine default output type.
                 defaultOutputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(),
                         DataFormat.XML);
-
-            } catch (JsonProcessingException e) {
+            } catch (JacksonException e) {
                 throw new ConfigurationException("Invalid JSON in configuration file", e);
             } catch (IOException e) {
                 throw new ConfigurationException("Error reading configuration file", e);
@@ -196,6 +195,7 @@ public class BlackLabServer extends HttpServlet {
     }
 
     private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
+        DataFormat outputType = ServletUtil.getOutputType(request);
         try {
             request.setCharacterEncoding(REQUEST_ENCODING.name());
         } catch (UnsupportedEncodingException ex) {
@@ -204,8 +204,12 @@ public class BlackLabServer extends HttpServlet {
 
         try {
             ensureSearchManagerAvailable();
-        } catch (BlsException e) {
-            initializationErrorResponse(responseObject, e);
+        } catch (BlackLabRuntimeException | BlsException e) {
+            boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", true);
+            String strApiVersion = ServletUtil.getParameter(request, WebserviceParameter.API_VERSION.value(),
+                    ApiVersion.CURRENT.toString());
+            ApiVersion apiVersion = ApiVersion.fromValue(strApiVersion);
+            initializationErrorResponse(responseObject, e, outputType, apiVersion, prettyPrint);
             return;
         }
 
@@ -225,15 +229,12 @@ public class BlackLabServer extends HttpServlet {
         // about which handler to use
         // Note that only some requests support CSV output (hits/docs); requesting it should return an error on
         // requests that don't support it.
-        DataFormat outputType = ServletUtil.getOutputType(request);
         UserRequestBls userRequest = new UserRequestBls(this, request, responseObject);
         RequestHandler requestHandler = RequestHandler.create(userRequest, outputType);
         if (outputType == null)
             outputType = requestHandler.getOverrideType();
         if (outputType == null)
             outputType = defaultOutputType;
-
-        boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", userRequest.isDebugMode());
 
         // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
         searchManager.getAuthSystem().persistUser(userRequest, requestHandler.getUser());
@@ -243,19 +244,16 @@ public class BlackLabServer extends HttpServlet {
         String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : ResponseStreamer.BLACKLAB_RESPONSE_ROOT_ELEMENT;
 
         // === Handle the request
-        StringWriter buf = new StringWriter();
-        PrintWriter out = new PrintWriter(buf);
+        boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", userRequest.isDebugMode());
         ApiVersion api = requestHandler.apiCompatibility();
-        DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint, api);
+        DataStream ds = DataStreamAbstract.create(outputType, prettyPrint, api);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
         ds.startDocument(rootEl);
-        ResponseStreamer dstream = ResponseStreamer.get(ds, requestHandler.apiCompatibility());
-        StringWriter errorBuf = new StringWriter();
-        PrintWriter errorOut = new PrintWriter(errorBuf);
-        DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint, api);
+        ResponseStreamer dstream = ResponseStreamer.get(ds, api);
+        DataStream es = DataStreamAbstract.create(outputType, prettyPrint, api);
         es.outputProlog();
-        ResponseStreamer errorWriter = ResponseStreamer.get(es, requestHandler.apiCompatibility());
-        int errorBufLengthBefore = errorBuf.getBuffer().length();
+        ResponseStreamer errorWriter = ResponseStreamer.get(es, api);
+        int errorBufLengthBefore = es.length();
         int httpCode;
         try {
             httpCode = requestHandler.handle(dstream);
@@ -289,9 +287,12 @@ public class BlackLabServer extends HttpServlet {
         // === Write the response that was captured in buf
         try {
             Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
-            boolean errorOccurred = errorBuf.getBuffer().length() > errorBufLengthBefore;
-            StringWriter writeWhat = errorOccurred ? errorBuf : buf;
-            realOut.write(writeWhat.toString());
+            if (es.length() > errorBufLengthBefore) {
+                // an error occurred
+                realOut.write(es.getOutput());
+            } else {
+                realOut.write(ds.getOutput());
+            }
             realOut.flush();
         } catch (IOException e) {
             // Client cancelled the request midway through.
@@ -300,20 +301,22 @@ public class BlackLabServer extends HttpServlet {
         }
     }
 
-    private void initializationErrorResponse(HttpServletResponse responseObject, BlsException e) {
+    private void initializationErrorResponse(HttpServletResponse responseObject, Exception e, DataFormat outputType,
+            ApiVersion api, boolean prettyPrint) {
         // Write HTTP headers (status code, encoding, content type and cache)
         responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
-        responseObject.setContentType("text/xml");
+        responseObject.setContentType(outputType.getContentType());
         optAddAllowOriginHeader(responseObject);
         ServletUtil.writeCacheHeaders(responseObject, 0);
 
         // === Write the response that was captured in buf
         try {
+            DataStream es = DataStreamAbstract.create(outputType, prettyPrint, api);
+            es.outputProlog();
+            es.error("INTERNAL_ERROR", e.getMessage(), e);
             Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
-            realOut.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
-                    "<blacklabResponse><error><code>INTERNAL_ERROR</code><message><![CDATA[ "
-                    + e.getMessage() + " ]]></message></error></blacklabResponse>");
+            realOut.write(es.getOutput());
             realOut.flush();
         } catch (IOException e2) {
             // Client cancelled the request midway through.

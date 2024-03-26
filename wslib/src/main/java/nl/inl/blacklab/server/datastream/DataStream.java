@@ -365,6 +365,10 @@ public interface DataStream {
         endList();
     }
 
+    String getOutput();
+
+    int length();
+
     DataStream newline();
 
     DataStream space();

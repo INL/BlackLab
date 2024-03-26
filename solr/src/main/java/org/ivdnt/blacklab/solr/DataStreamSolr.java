@@ -29,6 +29,16 @@ public class DataStreamSolr implements DataStream {
     }
 
     @Override
+    public String getOutput() {
+        throw new UnsupportedOperationException("Not implemented for Solr");
+    }
+
+    @Override
+    public int length() {
+        throw new UnsupportedOperationException("Not implemented for Solr");
+    }
+
+    @Override
     public DataStream endCompact() {
         return this;
     }

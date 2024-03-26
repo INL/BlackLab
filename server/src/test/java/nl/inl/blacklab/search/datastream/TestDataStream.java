@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.datastream;
 
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
@@ -16,38 +15,38 @@ import nl.inl.blacklab.server.lib.results.ApiVersion;
 
 public class TestDataStream {
 
-    DataStream jsonStream(StringWriter sw) {
-        PrintWriter pw = new PrintWriter(sw);
-        return DataStreamAbstract.create(DataFormat.JSON, pw, false, ApiVersion.CURRENT);
+    DataStream jsonStream() {
+        return DataStreamAbstract.create(DataFormat.JSON,  false, ApiVersion.CURRENT);
     }
 
     @Test
     public void testSimpleValues() {
-        StringWriter sw = new StringWriter();
-        jsonStream(sw).value(1);
-        Assert.assertEquals("1", sw.toString());
-        sw = new StringWriter();
-        jsonStream(sw).value("test\"");
-        Assert.assertEquals("\"test\\\"\"", sw.toString());
+        DataStream dataStream = jsonStream();
+        dataStream.value(1);
+        Assert.assertEquals("1", dataStream.getOutput());
+        dataStream = jsonStream();
+        dataStream.value("test\"");
+        Assert.assertEquals("\"test\\\"\"", dataStream.getOutput());
     }
 
     @Test
     public void testList() {
-        StringWriter sw = new StringWriter();
-        jsonStream(sw).value(List.of(1, 2, 3));
-        Assert.assertEquals("[1,2,3]", sw.toString());
+        DataStream dataStream = jsonStream();
+        dataStream.value(List.of(1, 2, 3));
+        Assert.assertEquals("[1,2,3]", dataStream.getOutput());
 
-        sw = new StringWriter();
-        jsonStream(sw).value(List.of("aap", "noot"));
-        Assert.assertEquals("[\"aap\",\"noot\"]", sw.toString());
+        dataStream = jsonStream();
+        dataStream.value(List.of("aap", "noot"));
+        Assert.assertEquals("[\"aap\",\"noot\"]", dataStream.getOutput());
     }
 
     @Test
     public void testMap() {
         StringWriter sw = new StringWriter();
         Map<String, Integer> m = new TreeMap<>(Map.of("test", 1, "noot", 2, "mies", 3));
-        jsonStream(sw).value(m);
-        Assert.assertEquals("{\"mies\":3,\"noot\":2,\"test\":1}", sw.toString());
+        DataStream dataStream = jsonStream();
+        dataStream.value(m);
+        Assert.assertEquals("{\"mies\":3,\"noot\":2,\"test\":1}", dataStream.getOutput());
     }
 
 }
