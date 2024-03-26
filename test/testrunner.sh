@@ -20,11 +20,11 @@ cd "$( dirname -- "$0"; )"/
 mkdir -p data/latest-test-output data/latest-test-output-integrated
 
 # Check how to call Compose
-COMPOSE=docker-compose
-if ! command -v $COMPOSE &> /dev/null
-then
+#COMPOSE=docker-compose
+#if ! command -v $COMPOSE &> /dev/null
+#then
     COMPOSE="docker compose"
-fi
+#fi
 
 # Enable BuildKit
 export DOCKER_BUILDKIT=1
