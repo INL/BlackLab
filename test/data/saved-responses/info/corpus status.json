@@ -1,6 +1,7 @@
 {
   "description": "",
   "displayName": "test",
+  "documentCount": 3,
   "documentFormat": "voice-tei",
   "indexName": "test",
   "status": "available",

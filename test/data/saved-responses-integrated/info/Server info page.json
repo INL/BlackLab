@@ -4,6 +4,7 @@
   "blacklabVersion": "VALUE_REMOVED",
   "corpora": {
     "test": {
+      "documentCount": 3,
       "documentFormat": "voice-tei",
       "status": "available",
       "timeModified": "VALUE_REMOVED",
