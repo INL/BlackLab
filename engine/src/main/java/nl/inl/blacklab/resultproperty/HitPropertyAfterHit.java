@@ -21,12 +21,13 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     /** How many tokens of context-after to compare */
     protected int numberOfTokens;
 
-    static HitPropertyAfterHit deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        return deserializeProp(HitPropertyAfterHit.class, index, field, info);
+    static HitPropertyAfterHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        return new HitPropertyAfterHit(index, i.annotation, i.sensitivity, i.intParam);
     }
 
-    static HitPropertyAfterHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, String info) {
-        HitPropertyAfterHit hitProp = deserializeProp(HitPropertyAfterHit.class, index, field, info);
+    static HitPropertyAfterHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        HitPropertyAfterHit hitProp = deserializeProp(index, field, infos);
         hitProp.numberOfTokens = 1;
         return hitProp;
     }
@@ -36,8 +37,6 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
         this.numberOfTokens = prop.numberOfTokens;
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
-    @SuppressWarnings("unused")
     public HitPropertyAfterHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         this(index, annotation, sensitivity, -1, ID);
     }
@@ -46,7 +45,6 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
         this(index, annotation, sensitivity, numberOfTokens, ID);
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
     @SuppressWarnings("unused")
     HitPropertyAfterHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String serializeName) {
         this(index, annotation, sensitivity, -1, serializeName);

@@ -319,7 +319,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
         Optional<String> sortBy = getSortProps();
         if (sortBy.isEmpty())
             return null;
-        HitProperty sortProp = HitProperty.deserialize(blIndex(), getAnnotatedField(), sortBy.get());
+        HitProperty sortProp = HitProperty.deserialize(blIndex(), getAnnotatedField(),
+                sortBy.get(), getContext());
         return new HitSortSettings(sortProp);
     }
 
@@ -432,7 +433,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
         String hitFilterVal = getHitFilterValue();
         if (StringUtils.isEmpty(hitFilterCrit) || StringUtils.isEmpty(hitFilterVal))
             return hits();
-        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), hitFilterCrit);
+        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), hitFilterCrit,
+                getContext());
         PropertyValue value = PropertyValue.deserialize(blIndex(), getAnnotatedField(), hitFilterVal);
         return hits().filter(prop, value);
     }
@@ -546,7 +548,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
         HitGroupSettings hitGroupSettings = hitGroupSettings();
         assert hitGroupSettings != null;
         String groupProps = hitGroupSettings.groupBy();
-        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), groupProps);
+        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), groupProps,
+                getContext());
         if (prop == null)
             throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
         return prop;

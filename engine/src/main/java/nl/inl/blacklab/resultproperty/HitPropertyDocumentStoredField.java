@@ -12,10 +12,6 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     public static final String ID = DocPropertyStoredField.ID;
 
-    static HitPropertyDocumentStoredField deserializeProp(BlackLabIndex index, String info) {
-        return new HitPropertyDocumentStoredField(index, PropertySerializeUtil.unescapePart(info));
-    }
-
     final String fieldName;
 
     final private DocPropertyStoredField docPropStoredField;

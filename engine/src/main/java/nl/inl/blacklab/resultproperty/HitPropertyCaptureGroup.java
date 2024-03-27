@@ -1,5 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.List;
 import java.util.Objects;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -9,7 +10,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on a matched group.
@@ -18,14 +18,9 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
     public static final String ID = "capture";
 
-    static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        HitPropertyCaptureGroup hp = deserializeProp(HitPropertyCaptureGroup.class, index, field, info);
-
-        // Decode group name
-        String[] parts = PropertySerializeUtil.splitParts(info);
-        hp.groupName = parts.length > 2 ? parts[2] : "";
-
-        return hp;
+    static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        return new HitPropertyCaptureGroup(index, i.annotation, i.sensitivity, i.stringParam);
     }
 
     private String groupName;
@@ -60,8 +55,6 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
                 .findFirst().orElse(null);
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
-    @SuppressWarnings("unused")
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         this(index, annotation, sensitivity, "");
     }

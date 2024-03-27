@@ -2,6 +2,7 @@ package org.ivdnt.blacklab.proxy.logic.hits;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 import org.ivdnt.blacklab.proxy.helper.Util;
 import org.ivdnt.blacklab.proxy.representation.Hit;
@@ -43,27 +44,26 @@ class HitComparators {
             return result;
         }
 
-        String[] parts = PropertySerializeUtil.splitPartFirstRest(hitProp);
-        String type = parts[0].toLowerCase();
+        List<String> parts = PropertySerializeUtil.splitPartsList(hitProp);
+        String type = parts.get(0).toLowerCase();
         boolean reverse = false;
         if (type.length() > 0 && type.charAt(0) == '-') {
             reverse = true;
             type = type.substring(1);
         }
-        String info = parts.length > 1 ? parts[1] : "";
+        List<String> infos = parts.subList(1, parts.size());
         Comparator<Hit> cmp;
         switch(type) {
         case "hitposition": cmp = HIT_POSITION; break;
-        case "decade": cmp = docFieldDecade(info); break;
-        case "field": cmp = docField(info); break;
+        case "decade": cmp = docFieldDecade(infos.get(0)); break;
+        case "field": cmp = docField(infos.get(0)); break;
         case "doc": case "docid": cmp = DOC_PID; break;
         default:
             // Context property. Find annotation and sensitivity.
-            parts = PropertySerializeUtil.splitParts(info);
-            String annotation = parts[0];
+            String annotation = infos.isEmpty() ? "" : infos.get(0);
             if (annotation.length() == 0)
                 throw new UnsupportedOperationException("Specify annotation for sort/group prop!");
-            boolean sensitive = parts.length <= 1 || parts[1].equals("s");
+            boolean sensitive = infos.size() <= 1 || infos.get(1).equals("s");
             switch (type) {
             case "before":
             case "left":

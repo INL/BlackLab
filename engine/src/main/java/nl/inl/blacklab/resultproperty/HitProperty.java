@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Results;
@@ -24,8 +25,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class HitProperty implements ResultProperty<Hit>, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
-    public static HitProperty deserialize(Results<Hit, HitProperty> hits, String serialized) {
-        return deserialize(hits.index(), hits.field(), serialized);
+    public static HitProperty deserialize(Results<Hit, HitProperty> hits, String serialized, ContextSize contextSize) {
+        return deserialize(hits.index(), hits.field(), serialized, contextSize);
     }
 
     /**
@@ -36,85 +37,79 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      * @param serialized the serialized object
      * @return the HitProperty object, or null if it could not be deserialized
      */
-    public static HitProperty deserialize(BlackLabIndex index, AnnotatedField field, String serialized) {
+    public static HitProperty deserialize(BlackLabIndex index, AnnotatedField field, String serialized, ContextSize contextSize) {
         if (serialized == null || serialized.isEmpty())
             return null;
+        contextSize = ensureNumeric(index, contextSize);
 
-        if (PropertySerializeUtil.isMultiple(serialized)) {
-            boolean reverse = false;
-            if (serialized.startsWith("-(") && serialized.endsWith(")")) {
-                reverse = true;
-                serialized = serialized.substring(2, serialized.length() - 1);
-            }
-            HitProperty result = HitPropertyMultiple.deserializeProp(index, field, serialized);
-            if (reverse)
-                result = result.reverse();
-            return result;
-        }
-    
-        String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
-        String type = parts[0].toLowerCase();
+        if (PropertySerializeUtil.isMultiple(serialized))
+            return deserializeMultiple(index, field, serialized, contextSize);
+
+        List<String> parts = PropertySerializeUtil.splitPartsList(serialized);
+        String type = parts.get(0).toLowerCase();
         boolean reverse = false;
         if (type.length() > 0 && type.charAt(0) == '-') {
             reverse = true;
             type = type.substring(1);
         }
-        String info = parts.length > 1 ? parts[1] : "";
+        List<String> infos = parts.subList(1, parts.size());
         HitProperty result;
         switch (type) {
         case HitPropertyDocumentDecade.ID:
-            result = HitPropertyDocumentDecade.deserializeProp(index, ResultProperty.ignoreSensitivity(info));
+            if (infos.isEmpty())
+                throw new IllegalArgumentException("No decade specified for " + HitPropertyDocumentDecade.ID);
+            result = HitPropertyDocumentDecade.deserializeProp(index, infos.get(0));
             break;
         case HitPropertyDoc.ID:
-            result = HitPropertyDoc.deserializeProp(index);
+            result = new HitPropertyDoc(index);
             break;
         case HitPropertyDocumentId.ID:
-            result = HitPropertyDocumentId.deserializeProp();
+            result = new HitPropertyDocumentId();
             break;
         case HitPropertyDocumentStoredField.ID:
-            result = HitPropertyDocumentStoredField.deserializeProp(index, ResultProperty.ignoreSensitivity(info));
+            if (infos.isEmpty())
+                throw new IllegalArgumentException("No field specified for " + HitPropertyDocumentStoredField.ID);
+            result = new HitPropertyDocumentStoredField(index, infos.get(0));
             break;
         case HitPropertyHitText.ID:
-            result = HitPropertyHitText.deserializeProp(index, field, info);
+            result = HitPropertyHitText.deserializeProp(index, field, infos);
             break;
         case HitPropertyBeforeHit.ID:
-            result = HitPropertyBeforeHit.deserializeProp(index, field, info);
+            result = HitPropertyBeforeHit.deserializeProp(index, field, infos, contextSize);
             break;
         case HitPropertyLeftContext.ID:
-            result = HitPropertyLeftContext.deserializeProp(index, field, info);
+            result = HitPropertyLeftContext.deserializeProp(index, field, infos, contextSize);
             break;
         case HitPropertyAfterHit.ID:
-            result = HitPropertyAfterHit.deserializeProp(index, field, info);
+            result = HitPropertyAfterHit.deserializeProp(index, field, infos);
             break;
         case HitPropertyRightContext.ID:
-            result = HitPropertyRightContext.deserializeProp(index, field, info);
+            result = HitPropertyRightContext.deserializeProp(index, field, infos);
             break;
         case "wordleft":
             // deprecated, use e.g. before:lemma:s:1
-            result = HitPropertyBeforeHit.deserializePropSingleWord(index, field, info);
+            result = HitPropertyBeforeHit.deserializePropSingleWord(index, field, infos);
             break;
         case "wordright":
             // deprecated, use e.g. after:lemma:s:1
-            result = HitPropertyAfterHit.deserializePropSingleWord(index, field, info);
+            result = HitPropertyAfterHit.deserializePropSingleWord(index, field, infos);
             break;
         case HitPropertyContextPart.ID:
-            result = HitPropertyContextPart.deserializeProp(index, field, info);
+            result = HitPropertyContextPart.deserializeProp(index, field, infos);
             break;
         case "context":
             // deprecated, will be serialized to (multiple) ctx
-            result = HitPropertyContextPart.deserializePropContextWords(index, field, info);
+            result = HitPropertyContextPart.deserializePropContextWords(index, field, infos);
             break;
         case HitPropertyCaptureGroup.ID:
-            result = HitPropertyCaptureGroup.deserializeProp(index, field, info);
+            result = HitPropertyCaptureGroup.deserializeProp(index, field, infos);
             break;
         case HitPropertyHitPosition.ID:
-            result = HitPropertyHitPosition.deserializeProp();
+            result = new HitPropertyHitPosition();
             break;
             
         case DocPropertyAnnotatedFieldLength.ID:
             throw new BlackLabRuntimeException("Grouping hit results by " + type + " is not yet supported");
-            /*result = HitPropertyDocumentAnnotatedFieldLength.deserialize(ResultProperty.ignoreSensitivity(info));
-            break;*/
             
         case DocPropertyNumberOfHits.ID:
             throw new BlackLabRuntimeException("Cannot group hit results by " + type);
@@ -126,6 +121,39 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         if (reverse)
             result = result.reverse();
         return result;
+    }
+
+    static HitProperty deserializeMultiple(BlackLabIndex index, AnnotatedField field, String serialized,
+            ContextSize contextSize) {
+        boolean reverse = false;
+        if (serialized.startsWith("-(") && serialized.endsWith(")")) {
+            reverse = true;
+            serialized = serialized.substring(2, serialized.length() - 1);
+        }
+        HitProperty result = HitPropertyMultiple.deserializeProp(index, field, serialized,
+                contextSize);
+        if (reverse)
+            result = result.reverse();
+        return result;
+    }
+
+    /**
+     * Make sure we have a numeric context size for determining default context property size.
+     *
+     * If the specified context size is null, or based on an inline tag,
+     * we'll use the default context size for the index.
+     *
+     * @param index the index
+     * @param contextSize the context size to check
+     * @return the numeric context size
+     */
+    private static ContextSize ensureNumeric(BlackLabIndex index, ContextSize contextSize) {
+        if (contextSize == null || contextSize.isInlineTag()) {
+            // No context size specified, or context depends on inline tag like <s/>; just use the default context
+            // size to assign any default hitproperty context sizes.
+            contextSize = index.defaultContextSize();
+        }
+        return contextSize;
     }
 
     /** The Hits object we're looking at */

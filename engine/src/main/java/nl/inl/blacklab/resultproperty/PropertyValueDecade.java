@@ -8,14 +8,14 @@ public class PropertyValueDecade extends PropertyValueInt {
         super(value);
     }
 
-    public static PropertyValue deserialize(String info) {
-        if (info.equals("unknown"))
+    public static PropertyValue deserialize(String value) {
+        if (value.equals("unknown"))
             return new PropertyValueDecade(HitPropertyDocumentDecade.UNKNOWN_VALUE);
         int decade;
         try {
-            decade = Integer.parseInt(info);
+            decade = Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            logger.warn("PropertyValueDecade.deserialize(): '" + info + "' is not a valid integer.");
+            logger.warn("PropertyValueDecade.deserialize(): '" + value + "' is not a valid integer.");
             decade = 0;
         }
         return new PropertyValueDecade(decade);

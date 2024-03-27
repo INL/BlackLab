@@ -237,10 +237,6 @@ public class DocPropertyStoredField extends DocProperty {
         return friendlyName;
     }
 
-    public static DocPropertyStoredField deserialize(BlackLabIndex index, String info) {
-        return new DocPropertyStoredField(index, PropertySerializeUtil.unescapePart(info));
-    }
-
     @Override
     public String serialize() {
         return serializeReverse() + PropertySerializeUtil.combineParts(ID, fieldName);

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.List;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -14,16 +16,15 @@ public class HitPropertyHitText extends HitPropertyContextBase {
 
     public static final String ID = "hit";
 
-    static HitPropertyHitText deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        return deserializeProp(HitPropertyHitText.class, index, field, info);
+    static HitPropertyHitText deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        return new HitPropertyHitText(index, i.annotation, i.sensitivity);
     }
 
     HitPropertyHitText(HitPropertyHitText prop, Hits hits, boolean invert) {
         super(prop, hits, invert);
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
-    @SuppressWarnings("unused")
     public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         super("hit text", ID, index, annotation, sensitivity, false);
     }

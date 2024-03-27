@@ -663,7 +663,7 @@ public class QueryToolImpl {
             timings = search.queryInfo().timings();
 
             if (alwaysSortBy != null) {
-                search = search.sort(HitProperty.deserialize(index, contentsField, alwaysSortBy));
+                search = search.sort(HitProperty.deserialize(index, contentsField, alwaysSortBy, contextSize));
             }
 
             hits = search.execute();
@@ -911,7 +911,7 @@ public class QueryToolImpl {
                 crit = new HitPropertyDocumentStoredField(index, critType);
             } else {
                 // Regular BLS serialized hit property. Decode it.
-                crit = HitProperty.deserialize(hits, critType);
+                crit = HitProperty.deserialize(hits, critType, contextSize);
             }
             break;
         }

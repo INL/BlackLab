@@ -10,10 +10,6 @@ public class HitPropertyHitPosition extends HitProperty {
 
     public static final String ID = "hitposition";
 
-    static HitPropertyHitPosition deserializeProp() {
-        return new HitPropertyHitPosition();
-    }
-
     HitPropertyHitPosition(HitPropertyHitPosition prop, Hits hits, boolean invert) {
         super(prop, hits, invert);
     }

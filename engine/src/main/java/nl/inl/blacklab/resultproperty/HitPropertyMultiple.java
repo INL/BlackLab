@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -18,12 +19,12 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public class HitPropertyMultiple extends HitProperty implements Iterable<HitProperty> {
     
-    static HitProperty deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
+    static HitProperty deserializeProp(BlackLabIndex index, AnnotatedField field, String info, ContextSize contextSize) {
         String[] strValues = PropertySerializeUtil.splitMultiple(info);
         List<HitProperty> values = new ArrayList<>();
         for (String strValue: strValues) {
             if (!strValue.isEmpty()) {
-                values.add(HitProperty.deserialize(index, field, strValue));
+                values.add(HitProperty.deserialize(index, field, strValue, contextSize));
             }
         }
         if (values.size() == 1) {

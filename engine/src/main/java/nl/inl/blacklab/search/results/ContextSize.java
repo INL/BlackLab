@@ -21,6 +21,8 @@ public class ContextSize {
 
     public static final int SAFE_MAX_CONTEXT_SIZE = (Constants.JAVA_MAX_ARRAY_SIZE - MAX_HIT_SIZE * 2) / 2;
 
+    public static final ContextSize ZERO = get(0, 0, 0);
+
     /**
      * Context based on am inline tag containing the hit instead of the hit.
      *
@@ -295,5 +297,12 @@ public class ContextSize {
 
     public int getMaxSnippetLength() {
         return maxSnippetLength;
+    }
+
+    public int maxSnippetHitLength() {
+        int max = getMaxSnippetLength() - before() - after();
+        if (max <= 0)
+            max = before();
+        return max;
     }
 }

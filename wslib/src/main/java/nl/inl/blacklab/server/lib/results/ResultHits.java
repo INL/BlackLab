@@ -291,7 +291,7 @@ public class ResultHits {
         // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
         // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
         String sortBy = params.getSortProps().orElse(null);
-        HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
+        HitProperty sortProp = HitProperty.deserialize(hits, sortBy, params.getContext());
         if (sortProp != null)
             hits = hits.sort(sortProp);
 

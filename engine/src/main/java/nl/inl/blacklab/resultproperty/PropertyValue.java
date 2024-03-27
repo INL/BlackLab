@@ -52,23 +52,23 @@ public abstract class PropertyValue implements Comparable<Object> {
         if (PropertySerializeUtil.isMultiple(serialized))
             return PropertyValueMultiple.deserialize(index, field, serialized);
 
-        String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
-        String type = parts[0].toLowerCase();
-        String info = parts.length > 1 ? parts[1] : "";
+        List<String> parts = PropertySerializeUtil.splitPartsList(serialized);
+        String type = parts.get(0).toLowerCase();
+        List<String> infos = parts.subList(1, parts.size());
         switch (type) {
         case "cwo":
-            return PropertyValueContextWords.deserializeSingleWord(index, field, info);
+            return PropertyValueContextWords.deserializeSingleWord(index, field, infos);
         case "cws": // cws  (context words)
         case "cwsr": // cwsr (context words, reverse order. e.g. left context)
-            return PropertyValueContextWords.deserialize(index, field, info, type.equals("cwsr"));
+            return PropertyValueContextWords.deserialize(index, field, infos, type.equals("cwsr"));
         case "dec":
-            return PropertyValueDecade.deserialize(info);
+            return PropertyValueDecade.deserialize(infos.isEmpty() ? "unknown" : infos.get(0));
         case "int":
-            return PropertyValueInt.deserialize(info);
+            return PropertyValueInt.deserialize(infos.isEmpty() ? "-1" : infos.get(0));
         case "str":
-            return PropertyValueString.deserialize(info);
+            return new PropertyValueString(infos.isEmpty() ? "" : infos.get(0));
         case "doc":
-            return PropertyValueDoc.deserialize(index, info);
+            return PropertyValueDoc.deserialize(index, infos.isEmpty() ? "NO_DOC_ID_SPECIFIED" : infos.get(0));
         }
         logger.debug("Unknown HitPropValue '" + type + "'");
         return null;

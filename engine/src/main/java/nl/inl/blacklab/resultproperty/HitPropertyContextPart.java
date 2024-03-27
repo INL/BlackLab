@@ -8,14 +8,16 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A hit property for sorting on a number of tokens before a hit.
  */
 public class HitPropertyContextPart extends HitPropertyContextBase {
+
+    public static final String ID = "ctx";
 
     public static final char PART_BEFORE = 'B';
 
@@ -30,20 +32,18 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     @Deprecated
     public static final char PART_RIGHT = 'R';
-    public static final String ID = "ctx";
 
-    static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        return deserializeProp(HitPropertyContextPart.class, index, field, info);
+    static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        return new HitPropertyContextPart(index, i.annotation, i.sensitivity, i.stringParam);
     }
 
-    static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, String info) {
-        String[] parts = PropertySerializeUtil.splitParts(info);
-        String propName = parts[0];
-        if (propName.length() == 0)
-            propName = field.mainAnnotation().name();
-        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
+    static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        String propName = infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0);
+        MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1)) :
+                MatchSensitivity.SENSITIVE;
         Annotation annotation = field.annotation(propName);
-        return contextWords(index, annotation, sensitivity, parts.length > 2 ? parts[2] : "H1-");
+        return contextWords(index, annotation, sensitivity, infos.size() > 2 ? infos.get(2) : "H1-");
     }
 
     public static HitProperty contextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String wordSpec) {
@@ -91,31 +91,35 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             this.confineToHit = confineToHit;
         }
 
-        private static ContextPart forString(String param) {
+        private static ContextPart forString(String param, ContextSize defaultContextSize) {
             boolean fromHitEnd = false;
             int direction = 1;
             boolean confineToHit = false;
+            int lastWord;
             switch (param.charAt(0)) {
             case PART_BEFORE:
             case PART_LEFT: // (old)
                 direction = -1;
+                lastWord = defaultContextSize.before();
                 break;
             case PART_MATCH_FROM_END:
                 fromHitEnd = true;
                 direction = -1;
                 confineToHit = true;
+                lastWord = defaultContextSize.maxSnippetHitLength();
                 break;
             case PART_AFTER:
             case PART_RIGHT: // (old)
                 fromHitEnd = true;
+                lastWord = defaultContextSize.after();
                 break;
             case PART_MATCH:
             default:
                 confineToHit = true;
+                lastWord = defaultContextSize.maxSnippetHitLength();
                 break;
             }
             int firstWord = 0;
-            int lastWord = Integer.MAX_VALUE; // == "as much as possible"
             if (param.length() > 1) {
                 if (param.contains("-")) {
                     // Two numbers, or a number followed by a dash ("until end of part")
@@ -185,14 +189,12 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
         this.part = prop.part;
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
-    @SuppressWarnings("unused")
     public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         this(index, annotation, sensitivity, (ContextPart)null);
     }
 
     public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String partSpec) {
-        this(index, annotation, sensitivity, ContextPart.forString(partSpec));
+        this(index, annotation, sensitivity, ContextPart.forString(partSpec, index.defaultContextSize()));
     }
 
     public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextPart part) {
@@ -203,7 +205,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     @Override
     void deserializeParam(String param) {
-        part = ContextPart.forString(param);
+        part = ContextPart.forString(param, index.defaultContextSize());
         compareInReverse = part.direction == -1;
     }
 

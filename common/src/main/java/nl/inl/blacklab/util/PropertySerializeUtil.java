@@ -23,11 +23,13 @@ public final class PropertySerializeUtil {
     private PropertySerializeUtil() {
     }
 
-    public static String escapePart(String part) {
+    /** Escape dollar, comma and colon */
+    private static String escapePart(String part) {
         return part.replace("$", "$DL").replace(",", "$CM").replace(":", "$CL");
     }
 
-    public static String unescapePart(String partEscaped) {
+    /** Unescape dollar, comma and colon */
+    private static String unescapePart(String partEscaped) {
         return partEscaped.replace("$CL", ":").replace("$CM", ",").replace("$DL", "$");
     }
 
@@ -39,28 +41,10 @@ public final class PropertySerializeUtil {
         return combineParts(parts.toArray(new String[0]));
     }
 
-    /**
-     * Split string on first part and the rest.
-     *
-     * NOTE: only the first part is unescaped; the rest should be split later and unescaped at that time!
-     *
-     * @param partsCombined serialized parts
-     * @return an array of length 1 or 2, depending on whether there's more than one part
-     */
-    public static String[] splitPartFirstRest(String partsCombined) {
-        String[] parts = partsCombined.split(PART_SEPARATOR_ESC_REGEX, 2);
-        for (int i = 0; i < parts.length; i++) {
-            parts[i] = i == 0 ? unescapePart(parts[i]) : parts[i]; // only unescape first part, not the rest!
-        }
-        return parts;
-    }
-
-    public static String[] splitParts(String partsCombined) {
-        String[] parts = partsCombined.split(PART_SEPARATOR_ESC_REGEX, -1);
-        for (int i = 0; i < parts.length; i++) {
-            parts[i] = unescapePart(parts[i]);
-        }
-        return parts;
+    public static List<String> splitPartsList(String partsCombined) {
+        return Arrays.stream(partsCombined.split(PART_SEPARATOR_ESC_REGEX, -1))
+                .map(PropertySerializeUtil::unescapePart)
+                .collect(Collectors.toList());
     }
 
     public static String combineMultiple(String... values) {

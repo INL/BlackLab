@@ -18,8 +18,8 @@ public class HitPropertyDocumentDecade extends HitProperty {
     /** The value we store when the decade is unknown */
     public static final int UNKNOWN_VALUE = 10_000_000;
 
-    static HitPropertyDocumentDecade deserializeProp(BlackLabIndex index, String info) {
-        return new HitPropertyDocumentDecade(index, index.metadataField(PropertySerializeUtil.unescapePart(info)));
+    static HitPropertyDocumentDecade deserializeProp(BlackLabIndex index, String fieldName) {
+        return new HitPropertyDocumentDecade(index, index.metadataField(fieldName));
     }
 
     private final BlackLabIndex index;

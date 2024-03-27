@@ -12,10 +12,6 @@ public class HitPropertyDocumentId extends HitProperty {
 
     public static final String ID = "docid";
 
-    static HitPropertyDocumentId deserializeProp() {
-        return new HitPropertyDocumentId();
-    }
-
     HitPropertyDocumentId(HitPropertyDocumentId prop, Hits hits, boolean invert) {
         super(prop, hits, invert);
     }

@@ -1,6 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.List;
 
@@ -50,24 +49,41 @@ public abstract class HitPropertyContextBase extends HitProperty {
     /** Stores the sort order for the relevant context tokens for each hit index */
     protected BigList<int[]> contextSortOrder;
 
-    protected static <T extends HitPropertyContextBase> T deserializeProp(Class<T> cls, BlackLabIndex index,
-            AnnotatedField field, String info) {
-        String[] parts = PropertySerializeUtil.splitParts(info);
-        String propName = parts[0];
-        if (propName.length() == 0)
-            propName = field.mainAnnotation().name();
-        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
-                : MatchSensitivity.SENSITIVE;
-        Annotation annotation = field.annotation(propName);
-        try {
-            Constructor<T> ctor = cls.getConstructor(BlackLabIndex.class, Annotation.class, MatchSensitivity.class);
-            T t = ctor.newInstance(index, annotation, sensitivity);
-            if (parts.length > 2)
-                t.deserializeParam(parts[2]);  // e.g. number of tokens
-            return t;
-        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
-            throw new BlackLabRuntimeException("Couldn't deserialize hit property: " + cls.getName() + ":" + info, e);
+    /** Information deserialized from extra parameters.
+     *
+     * E.g. for before:lemma:s:1, this would be the annotation (lemma), sensitivity (s) and
+     * the extra parameter 1, the number of words.
+     */
+    protected static class DeserializeInfos {
+        Annotation annotation;
+        MatchSensitivity sensitivity;
+
+        /** One extra parameter: e.g. capture group name or number of tokens (before/after hit) */
+        String stringParam;
+        int intParam;
+
+        public DeserializeInfos(Annotation annotation, MatchSensitivity sensitivity, String stringParam) {
+            this.annotation = annotation;
+            this.sensitivity = sensitivity;
+            this.stringParam = stringParam;
+            try {
+                this.intParam = Integer.parseInt(stringParam);
+            } catch (NumberFormatException e) {
+                this.intParam = -1;
+            }
         }
+    }
+
+    protected static DeserializeInfos deserializeProp(AnnotatedField field, List<String> infos) {
+        Annotation annotation = field.annotation(infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0));
+        MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1))
+                : MatchSensitivity.SENSITIVE;
+        String param = infos.size() > 2 ? infos.get(2) : "";
+        return new DeserializeInfos(annotation, sensitivity, param);
+    }
+
+    protected static int getOrDefaultContextSize(int i, int d) {
+        return i <= 0 ? d : i;
     }
 
     /** Some context properties, e.g. context before, can get an extra parameter (number of tokens).

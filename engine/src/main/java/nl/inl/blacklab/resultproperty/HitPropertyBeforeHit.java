@@ -8,6 +8,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -21,14 +22,15 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     /** How many tokens of context-before to compare */
     protected int numberOfTokens;
 
-    static HitPropertyBeforeHit deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        return deserializeProp(HitPropertyBeforeHit.class, index, field, info);
+    static HitPropertyBeforeHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        return new HitPropertyBeforeHit(index, i.annotation, i.sensitivity, getOrDefaultContextSize(i.intParam, contextSize.before()));
     }
 
-    static HitPropertyBeforeHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, String info) {
-        HitPropertyBeforeHit hitProperty = deserializeProp(HitPropertyBeforeHit.class, index, field, info);
-        hitProperty.numberOfTokens = 1;
-        return hitProperty;
+    static HitPropertyBeforeHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        HitPropertyBeforeHit hitProp = deserializeProp(index, field, infos, ContextSize.ZERO);
+        hitProp.numberOfTokens = 1;
+        return hitProp;
     }
 
     HitPropertyBeforeHit(HitPropertyBeforeHit prop, Hits hits, boolean invert) {
@@ -36,7 +38,6 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
         this.numberOfTokens = prop.numberOfTokens;
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
     public HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         this(index, annotation, sensitivity, -1, ID);
     }
@@ -45,7 +46,6 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
         this(index, annotation, sensitivity, numberOfTokens, ID);
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
     HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String serializeName) {
         this(index, annotation, sensitivity, -1, serializeName);
     }

@@ -13,10 +13,6 @@ public class DocPropertyNumberOfHits extends DocProperty {
 
     public static final String ID = "numhits";
 
-    public static DocPropertyNumberOfHits deserialize() {
-        return new DocPropertyNumberOfHits();
-    }
-    
     DocPropertyNumberOfHits(DocPropertyNumberOfHits prop, boolean invert) {
         super(prop, invert);
     }

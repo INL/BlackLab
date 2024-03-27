@@ -10,10 +10,6 @@ public class HitPropertyDoc extends HitProperty {
 
     public static final String ID = "doc";
 
-    static HitPropertyDoc deserializeProp(BlackLabIndex index) {
-        return new HitPropertyDoc(index);
-    }
-
     private final BlackLabIndex index;
 
     HitPropertyDoc(HitPropertyDoc prop, Hits hits, boolean invert) {

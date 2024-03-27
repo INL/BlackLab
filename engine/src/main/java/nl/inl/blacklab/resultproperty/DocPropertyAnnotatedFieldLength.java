@@ -33,10 +33,6 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     public static final String ID = "fieldlen";
 
-    public static DocPropertyAnnotatedFieldLength deserialize(BlackLabIndex index, String info) {
-        return new DocPropertyAnnotatedFieldLength(index, PropertySerializeUtil.unescapePart(info));
-    }
-
     private final String fieldName;
     
     private final String friendlyName;
