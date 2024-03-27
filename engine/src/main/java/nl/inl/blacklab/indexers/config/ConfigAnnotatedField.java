@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 /**
  * This class represents an AnnotatedField (i.e. a collection of Annotations - formerly "complex field")
@@ -216,4 +217,27 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         return dummyForStoringLinkedDocument;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        ConfigAnnotatedField that = (ConfigAnnotatedField) o;
+        return dummyForStoringLinkedDocument == that.dummyForStoringLinkedDocument && Objects.equals(name,
+                that.name) && Objects.equals(displayName, that.displayName) && Objects.equals(
+                description, that.description) && Objects.equals(containerPath, that.containerPath)
+                && Objects.equals(wordPath, that.wordPath) && Objects.equals(tokenIdPath,
+                that.tokenIdPath) && Objects.equals(punctPath, that.punctPath) && Objects.equals(
+                annotations, that.annotations) && Objects.equals(standoffAnnotations, that.standoffAnnotations)
+                && Objects.equals(inlineTags, that.inlineTags) && Objects.equals(annotationsFlattened,
+                that.annotationsFlattened);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, displayName, description, containerPath, wordPath, tokenIdPath, punctPath,
+                annotations,
+                standoffAnnotations, inlineTags, annotationsFlattened, dummyForStoringLinkedDocument);
+    }
 }

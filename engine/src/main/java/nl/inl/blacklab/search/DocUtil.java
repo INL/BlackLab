@@ -2,12 +2,12 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -300,10 +300,8 @@ public class DocUtil {
      */
     public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, Hits hits) {
         Document doc = index.luceneDoc(docId);
-        IndexableField docStartOffsetField = doc.getField(contentsField.docStartOffsetField());
-        int docStartOffset = docStartOffsetField == null ? 0 : docStartOffsetField.numericValue().intValue();
-        String contents = index.contentAccessor(contentsField).getDocumentContents(contentsField.name(), docId, doc);
-        return highlightContent(index, docId, hits, false, docStartOffset, contents);
+        String contents = index.contentAccessor(contentsField).getDocumentContents(docId, doc);
+        return highlightContent(index, docId, hits, false, 0, contents);
     }
 
     private static String[] getSubstringsFromDocument(BlackLabIndex index,
@@ -415,7 +413,7 @@ public class DocUtil {
             } else {
                 d = fetchDocumentIfRequired(index, docId, d, field);
                 //int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
-                return index.contentAccessor(field).getDocumentContents(field.name(), docId, d);
+                return index.contentAccessor(field).getDocumentContents(docId, d);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -433,15 +431,13 @@ public class DocUtil {
      */
     private static Document fetchDocumentIfRequired(BlackLabIndex index, int docId, Document d, AnnotatedField field)
             throws IOException {
-        String docStartOffset = field.docStartOffsetField();
-        String docEndOffset = field.docEndOffsetField();
         if (d == null) {
             if (index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
                 // We need the document (classic index format so we need to look op content store id)
-                d = index.reader().document(docId, Set.of(field.contentIdField(), docStartOffset, docEndOffset));
+                d = index.reader().document(docId, Set.of(field.contentIdField()));
             } else {
                 // Integrated index. Fetch doc start/end offset if present (parallel corpora).
-                d = index.reader().document(docId, Set.of(docStartOffset, docEndOffset));
+                d = index.reader().document(docId, Collections.emptySet());
             }
         }
         return d;

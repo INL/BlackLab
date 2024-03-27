@@ -8,4 +8,6 @@ public interface XIncludeResolver {
     Reader getDocumentReader();
 
     CharPositionsTracker getCharPositionsTracker();
+
+    boolean anyXIncludesFound();
 }

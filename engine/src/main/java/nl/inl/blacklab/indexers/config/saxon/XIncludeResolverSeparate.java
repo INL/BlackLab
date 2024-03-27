@@ -20,13 +20,18 @@ public class XIncludeResolverSeparate implements XIncludeResolver {
 
     private final CharPositionsTrackerImpl charPositionsTracker;
 
+    private boolean anyXIncludesFound = false;
+
     public XIncludeResolverSeparate(DocumentReference document, File curDir) {
         this.document = document;
-        File file = document.getFile();
-        this.baseDir = file == null ? curDir : file.getParentFile();
+        this.baseDir = curDir;
 
         // Read through the document(s) once, capturing the character positions for each tag.
-        charPositionsTracker = new CharPositionsTrackerImpl(getDocumentReader());
+        try (Reader reader = getDocumentReader()) {
+            charPositionsTracker = new CharPositionsTrackerImpl(reader);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -37,7 +42,7 @@ public class XIncludeResolverSeparate implements XIncludeResolver {
     @Override
     public Reader getDocumentReader() {
         // Find XInclude tags and construct a list of readers
-        List<Reader> readers = findXIncludesAndConstructReaderList(document.getContents(), baseDir);
+        List<Reader> readers = findXIncludesAndConstructReaderList(document.getDocWithoutXIncludesResolved(), baseDir);
 
         return new Reader() {
             @Override
@@ -86,7 +91,9 @@ public class XIncludeResolverSeparate implements XIncludeResolver {
         Matcher matcher = xIncludeTag.matcher(doc);
         List<Reader> readers = new ArrayList<>();
         int pos = 0;
+        anyXIncludesFound = false;
         while (matcher.find()) {
+            anyXIncludesFound = true;
             // The part before the XInclude tag
             if (pos < matcher.start())
                 readers.add(new CharArrayReader(documentContent, pos, matcher.start() - pos));
@@ -107,5 +114,10 @@ public class XIncludeResolverSeparate implements XIncludeResolver {
         if (pos < documentContent.length)
             readers.add(new CharArrayReader(documentContent, pos, documentContent.length - pos));
         return readers;
+    }
+
+    @Override
+    public boolean anyXIncludesFound() {
+        return anyXIncludesFound;
     }
 }

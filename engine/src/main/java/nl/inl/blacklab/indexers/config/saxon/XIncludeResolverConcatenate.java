@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,19 +19,18 @@ public class XIncludeResolverConcatenate implements XIncludeResolver {
 
     private final DocumentReference documentReference;
 
-    private final CharArrayReader documentReader;
+    private final Reader documentReader;
 
     private final CharPositionsTracker charPositions;
 
+    private boolean anyXIncludesFound = false;
+
     public XIncludeResolverConcatenate(DocumentReference documentReference, File curDir) {
-        File file = documentReference.getFile();
-        Charset charset = documentReference.getCharset();
-        char[] documentContent = documentReference.getContents();
-        File baseDir = file == null ? curDir : file.getParentFile();
-        char[] documentContentNew = resolveXInclude(documentContent, baseDir);
+        char[] documentContent = documentReference.getDocWithoutXIncludesResolved();
+        char[] documentContentNew = resolveXInclude(documentContent, curDir);
         if (documentContentNew != documentContent) {
             documentContent = documentContentNew;
-            this.documentReference = new DocumentReference(documentContent, charset, file, true, this);
+            this.documentReference = documentReference.withXIncludeResolver(documentContent, this);
         } else {
             this.documentReference = documentReference;
         }
@@ -66,9 +64,9 @@ public class XIncludeResolverConcatenate implements XIncludeResolver {
         Matcher matcher = xIncludeTag.matcher(doc);
         StringBuilder result = new StringBuilder(documentContent.length / 2 * 3);
         int pos = 0;
-        boolean anyFound = false;
+        anyXIncludesFound = false;
         while (matcher.find()) {
-            anyFound = true;
+            anyXIncludesFound = true;
             // Append the part before the XInclude tag
             result.append(doc.subSequence(pos, matcher.start()));
             try {
@@ -84,10 +82,15 @@ public class XIncludeResolverConcatenate implements XIncludeResolver {
             }
             pos = matcher.end();
         }
-        if (!anyFound)
+        if (!anyXIncludesFound)
             return documentContent;
         // Append the rest of the document
         result.append(doc.subSequence(pos, doc.length()));
         return result.toString().toCharArray();
+    }
+
+    @Override
+    public boolean anyXIncludesFound() {
+        return anyXIncludesFound;
     }
 }

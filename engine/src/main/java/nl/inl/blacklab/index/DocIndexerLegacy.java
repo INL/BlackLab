@@ -76,7 +76,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         // storePart only works for the classic external index format.
         // for internal, we just ignore it (will be fully stored eventually by final call to store())
 
-        getDocWriter().storeInContentStore(null, new TextContent(content), captureContentFieldName, "contents");
+        getDocWriter().storeInContentStore(null, new TextContent(content.toString()), captureContentFieldName, "contents");
     }
 
     private void appendContentInternal(String str) {
@@ -399,7 +399,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
     }
 
     protected void storeDocument() {
-        TextContent document = new TextContent(content);
+        TextContent document = new TextContent(content.toString());
         String contentStoreName = captureContentFieldName;
         String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
         getDocWriter().storeInContentStore(currentDoc, document, contentIdFieldName, contentStoreName);

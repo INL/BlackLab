@@ -125,7 +125,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * default field and content store (usually "contents", with the id in field
      * "contents#cid").
      */
-    private String contentStoreName = null;
+    private String linkedDocumentContentStoreName = null;
 
     /**
      * Total words processed by this indexer. Used for reporting progress, do not
@@ -143,8 +143,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     /** Indexer that linked to us (linkedDocument), or null if not applicable. */
     protected DocIndexerBase linkingIndexer;
 
-    protected String getContentStoreName() {
-        return contentStoreName;
+    protected String getLinkedDocumentContentStoreName() {
+        return linkedDocumentContentStoreName;
     }
 
     protected void addAnnotatedField(AnnotatedFieldWriter field) {
@@ -267,7 +267,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 ldi.metadataFieldValues = metadataFieldValues;
                 if (storeWithName != null) {
                     // If specified, store in this content store and under this name instead of the default
-                    ldi.contentStoreName = storeWithName;
+                    ldi.linkedDocumentContentStoreName = storeWithName;
                 }
                 ldi.indexSpecificDocument(documentPath);
             } else {
@@ -419,6 +419,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         }
     }
 
+    protected void storeContent(ConfigAnnotatedField field, TextContent content) {
+        getDocWriter().storeInContentStore(currentDoc, content,
+                AnnotatedFieldNameUtil.contentIdField(field.getName()), field.getName());
+    }
+
     /**
      * Store the entire document at once.
      *
@@ -445,24 +450,27 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         // (Note that we do this after adding the "extra closing token", so the character
         // positions for the closing token still make (some) sense)
         String contentIdFieldName;
-        String contentStoreName = getContentStoreName();
-        if (contentStoreName == null) {
+        String contentStoreName = getLinkedDocumentContentStoreName();
+        if (contentStoreName != null) {
+            contentIdFieldName = contentStoreName + "Cid";
+        } else {
             AnnotatedFieldWriter main = getMainAnnotatedField();
-            if (main == null) {
+            if (main != null) {
+                // Regular case. Store content for the main annotated field.
+                contentStoreName = main.name();
+                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
+            } else {
+                throw new BlackLabRuntimeException("No main annotated field defined, can't store document");
+                /*
                 // We're indexing documents and storing the contents,
                 // but we don't have a main annotated field in the current indexing configuration.
                 // This happens when indexing linked metadata documents, which are stored but don't
                 // have annotated content to be indexed in a field.
-                // TODO: get rid of this special case!
+                // (OLD HACK, NOT USED ANYMORE..?)
                 contentStoreName = "metadata";
                 contentIdFieldName = "metadataCid";
-            } else {
-                // Regular case. Store content for the main annotated field.
-                contentStoreName = main.name();
-                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
+                */
             }
-        } else {
-            contentIdFieldName = contentStoreName + "Cid";
         }
         getDocWriter().storeInContentStore(currentDoc, document, contentIdFieldName, contentStoreName);
     }

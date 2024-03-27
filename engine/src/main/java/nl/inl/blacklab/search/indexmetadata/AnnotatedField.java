@@ -40,22 +40,6 @@ public interface AnnotatedField extends Field {
         return AnnotatedFieldNameUtil.lengthTokensField(name());
     }
 
-    /**
-     * For parallel corpora: the field with the offset at which the doc version starts.
-     * @return start offset field
-     */
-    default String docStartOffsetField() {
-        return AnnotatedFieldNameUtil.docStartOffsetField(name());
-    }
-
-    /**
-     * For parallel corpora: the field with the offset at which the doc version ends.
-     * @return end offset field
-     */
-    default String docEndOffsetField() {
-        return AnnotatedFieldNameUtil.docEndOffsetField(name());
-    }
-
     @Override
     default String contentsFieldName() {
         Annotation main = mainAnnotation();

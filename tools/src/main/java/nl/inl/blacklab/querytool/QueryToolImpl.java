@@ -587,7 +587,7 @@ public class QueryToolImpl {
         }
         Document doc = index.luceneDoc(docId);
         ContentAccessor ca = index.contentAccessor(contentsField);
-        output.line(ca.getDocumentContents(contentsField.name(), docId, doc));
+        output.line(ca.getDocumentContents(docId, doc));
     }
 
     private void showMetadata(int docId) {

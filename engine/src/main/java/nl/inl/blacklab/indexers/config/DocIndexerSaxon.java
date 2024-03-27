@@ -19,6 +19,7 @@ import javax.xml.xpath.XPath;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.xml.sax.SAXException;
 
 import net.sf.saxon.om.NodeInfo;
@@ -33,7 +34,6 @@ import nl.inl.blacklab.indexers.config.saxon.CharPositionsTracker;
 import nl.inl.blacklab.indexers.config.saxon.DocumentReference;
 import nl.inl.blacklab.indexers.config.saxon.MyContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
-import nl.inl.blacklab.indexers.config.saxon.XIncludeResolver;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
@@ -146,21 +146,21 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     }
 
     private void setDocument(File file, Charset charset, char[] documentContent) {
-        assert charset != null;
+        assert file == null || charset != null; // if file is set, we also need a charset
         document = new DocumentReference(documentContent, charset, file, false);
     }
 
     private void readDocument() {
         try {
             document = document.withXIncludesResolved(currentXIncludeDir);
-            XIncludeResolver xincludeResolver = document.getXIncludeResolver();
-            charPositions = xincludeResolver.getCharPositionsTracker();
-            Reader reader = xincludeResolver.getDocumentReader();
-            contents = SaxonHelper.parseDocument(reader, new MyContentHandler(charPositions));
+            charPositions = document.getCharPositionsTracker();
+            try (Reader reader = document.getDocumentReader()) {
+                contents = SaxonHelper.parseDocument(reader, new MyContentHandler(charPositions));
+            }
             XPath xPath = SaxonHelper.getXPathFactory().newXPath();
             finder = new XPathFinder(xPath,
                     config.isNamespaceAware() ? config.getNamespaces() : null);
-        } catch (XPathException | SAXException | ParserConfigurationException e) {
+        } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
@@ -204,19 +204,25 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     // process annotated field
 
+    Map<ConfigAnnotatedField, Pair<Integer, Integer>> docStartEndOffsetsPerField = new HashMap<>();
+
+    @Override
+    protected void startDocument() {
+        super.startDocument();
+        docStartEndOffsetsPerField.clear();
+    }
+
     protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
             Map<String, Span> tokenPositionsMap) {
 
         // Is this a parallel corpus annotated field?
         if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
-            // Yes; determine boundaries of this annotated field container and store them
+            // Yes; determine boundaries of this annotated field container so we can later store
+            // this version of the document in the field's content store.
             // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-            currentDoc.addStoredNumericField(
-                    AnnotatedFieldNameUtil.docStartOffsetField(annotatedField.getName()),
-                    charPositions.getNodeStartPos(container), false);
-            currentDoc.addStoredNumericField(
-                    AnnotatedFieldNameUtil.docEndOffsetField(annotatedField.getName()),
-                    charPositions.getNodeEndPos(container), false);
+            int start = charPositions.getNodeStartPos(container);
+            int end = charPositions.getNodeEndPos(container);
+            docStartEndOffsetsPerField.put(annotatedField, Pair.of(start, end));
         }
 
         // Collect information outside word tags:
@@ -412,8 +418,15 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     @Override
     protected void storeDocument() {
-        String document1 = document.get();
-        storeWholeDocument(document1);
+        if (docStartEndOffsetsPerField.isEmpty()) {
+            storeWholeDocument(document.getTextContent());
+        } else {
+            for (Map.Entry<ConfigAnnotatedField, Pair<Integer, Integer>> entry: docStartEndOffsetsPerField.entrySet()) {
+                Integer startOffset = entry.getValue().getLeft();
+                Integer endOffset = entry.getValue().getRight();
+                storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
+            }
+        }
         document.clean();
         document = null;
         // make sure we don't hold on to memory needlessly
