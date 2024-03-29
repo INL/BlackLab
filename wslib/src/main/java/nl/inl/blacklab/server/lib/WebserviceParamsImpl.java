@@ -662,12 +662,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return params.getNumberOfResultsToShow();
     }
 
-    @Override
-    @Deprecated
-    public int getWordsAroundHit() {
-        return params.getWordsAroundHit();
-    }
-
     public ContextSize getContext() {
         return params.getContext();
     }

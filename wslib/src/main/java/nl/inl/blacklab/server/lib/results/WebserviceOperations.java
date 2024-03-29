@@ -50,7 +50,6 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -323,9 +322,8 @@ public class WebserviceOperations {
      * @return collocations
      */
     public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        ContextSize contextSize = ContextSize.get(params.getWordsAroundHit(), Integer.MAX_VALUE);
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        return hits.collocations(hits.field().mainAnnotation(), contextSize, sensitivity);
+        return hits.collocations(hits.field().mainAnnotation(), params.getContext(), sensitivity);
     }
 
     /**

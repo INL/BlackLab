@@ -264,16 +264,6 @@ public abstract class QueryParamsAbstract implements QueryParams {
         return getLong(WebserviceParameter.NUMBER_OF_RESULTS);
     }
 
-    @Override
-    @Deprecated
-    public int getWordsAroundHit() {
-        // ("wordsaroundhit" is deprecated, now called "context")
-        WebserviceParameter par = has(WebserviceParameter.CONTEXT) ?
-                WebserviceParameter.CONTEXT :
-                WebserviceParameter.WORDS_AROUND_HIT;
-        return getInt(par);
-    }
-
     public ContextSize getContext() {
         // ("wordsaroundhit" is deprecated, now called "context")
         WebserviceParameter par = has(WebserviceParameter.WORDS_AROUND_HIT) ?

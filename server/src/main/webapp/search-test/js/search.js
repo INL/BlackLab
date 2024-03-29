@@ -13,7 +13,7 @@ $(document).ready(function() {
 		// Get parameters from form inputs
         let param = {};
 		const paramsFromFields = [
-		  'patt', 'filter', 'first', 'number', 'wordsaroundhit', 'sort', 'group', 'usecache', 'explain', 'waitfortotal'
+		  'patt', 'filter', 'first', 'number', 'context', 'sort', 'group', 'usecache', 'explain', 'waitfortotal'
 		];
 		paramsFromFields.forEach(name => param[name] = $(`#${name}`).val());
 		

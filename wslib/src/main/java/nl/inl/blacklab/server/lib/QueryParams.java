@@ -78,9 +78,6 @@ public interface QueryParams {
 
     long getNumberOfResultsToShow();
 
-    @Deprecated
-    int getWordsAroundHit();
-
     ContextSize getContext();
 
     ConcordanceType getConcordanceType();
