@@ -84,9 +84,9 @@ public class ResponseStreamer {
     public static final String BLACKLAB_RESPONSE_ROOT_ELEMENT = "blacklabResponse";
     static final Logger logger = LogManager.getLogger(ResponseStreamer.class);
 
-    public static final String KEY_BLACKLAB_BUILD_TIME = "blacklabBuildTime";
-
+    private static final String KEY_BLACKLAB_BUILD_TIME = "blacklabBuildTime";
     private static final String KEY_BLACKLAB_VERSION = "blacklabVersion";
+    private static final String KEY_BLACKLAB_SCM_REVISION = "blacklabScmRevision";
 
     public static final String KEY_SUMMARY = "summary";
     public static final String KEY_NUMBER_OF_HITS = "numberOfHits";
@@ -1259,32 +1259,36 @@ public class ResponseStreamer {
 
     public void serverInfo(ResultServerInfo result) {
         ds.startMap();
-        if (modernizeApi)
-            ds.entry("apiVersion", apiVersion.versionString());
-        ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
-                .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
+        {
+            if (modernizeApi)
+                ds.entry("apiVersion", apiVersion.versionString());
+            ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
+                    .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
+            if (modernizeApi)
+                ds.entry(KEY_BLACKLAB_SCM_REVISION, BlackLab.getBuildScmRevision());
 
-        if (modernizeApi) {
-            ds.startEntry("corpora").startMap();
-            for (ResultIndexStatus corpusInfo: result.getIndexStatuses()) {
-                corpusInfoEntry(corpusInfo, result.getParams().getIncludeCustomInfo());
+            if (modernizeApi) {
+                ds.startEntry("corpora").startMap();
+                for (ResultIndexStatus corpusInfo: result.getIndexStatuses()) {
+                    corpusInfoEntry(corpusInfo, result.getParams().getIncludeCustomInfo());
+                }
+                ds.endMap().endEntry();
             }
-            ds.endMap().endEntry();
-        }
-        if (!isNewApi) {
-            ds.startEntry("indices").startMap();
-            for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
-                legacyIndexInfo(indexStatus);
+            if (!isNewApi) {
+                ds.startEntry("indices").startMap();
+                for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
+                    legacyIndexInfo(indexStatus);
+                }
+                ds.endMap().endEntry();
             }
-            ds.endMap().endEntry();
-        }
 
-        userInfo(result.getUserInfo());
+            userInfo(result.getUserInfo());
 
-        if (!modernizeApi && result.isDebugMode()) {
-            ds.startEntry("cacheStatus");
-            ds.value(result.getParams().getSearchManager().getBlackLabCache().getStatus());
-            ds.endEntry();
+            if (!modernizeApi && result.isDebugMode()) {
+                ds.startEntry("cacheStatus");
+                ds.value(result.getParams().getSearchManager().getBlackLabCache().getStatus());
+                ds.endEntry();
+            }
         }
         ds.endMap();
     }
@@ -1397,8 +1401,10 @@ public class ResponseStreamer {
             boolean inconsistentKeyNaming = !modernizeApi;
             ds.startEntry("versionInfo").startMap()
                     .entry(inconsistentKeyNaming ? "blackLabBuildTime" : KEY_BLACKLAB_BUILD_TIME, metadata.indexBlackLabBuildTime())
-                    .entry(inconsistentKeyNaming ? "blackLabVersion" : KEY_BLACKLAB_VERSION, metadata.indexBlackLabVersion())
-                    .entry("indexFormat", metadata.indexFormat())
+                    .entry(inconsistentKeyNaming ? "blackLabVersion" : KEY_BLACKLAB_VERSION, metadata.indexBlackLabVersion());
+            if (modernizeApi)
+                ds.entry(KEY_BLACKLAB_SCM_REVISION, metadata.indexBlackLabScmRevision());
+            ds.entry("indexFormat", metadata.indexFormat())
                     .entry("timeCreated", metadata.timeCreated())
                     .entry("timeModified", metadata.timeModified())
                     .endMap().endEntry();

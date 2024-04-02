@@ -39,6 +39,7 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
 - Corpus info page (`/CORPUSNAME`):
     - Two keys were renamed to be more consistent: in the `versionInfo` block,
       `blacklabVersion` and `blacklabBuildTime` are now spelled with a lowercase `l`, just like on the server info page. This is unlikely to break any clients.
+    - A key was added: `blacklabScmRevision`, giving the short Git commit hash for this version of BlackLab.
 - Annotated fields:
     - `displayOrder` will no longer include internal annotations (e.g. `punct` and `_relation`, previously called `starttag`), as these are generally not meant to be displayed as search fields.
 

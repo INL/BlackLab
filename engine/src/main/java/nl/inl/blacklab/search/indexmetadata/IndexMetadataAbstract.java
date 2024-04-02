@@ -313,6 +313,11 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         return blackLabVersion;
     }
 
+    @Override
+    public String indexBlackLabScmRevision() {
+        return "UNKNOWN";
+    }
+
     /**
      * Is this a new, empty index?
      *

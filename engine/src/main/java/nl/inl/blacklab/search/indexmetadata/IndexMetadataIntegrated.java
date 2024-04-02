@@ -23,6 +23,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -222,6 +223,10 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         /** BlackLab version used to (initially) create index */
         public String blackLabVersion;
 
+        /** Scm revision (i.e. Git hash) used to (initially) create index */
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public String blackLabScmRevision;
+
         /** Format the index uses */
         public String indexFormat;
 
@@ -234,6 +239,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         public void populateWithDefaults() {
             blackLabBuildTime = BlackLab.buildTime();
             blackLabVersion = BlackLab.version();
+            blackLabScmRevision = BlackLab.getBuildScmRevision();
             timeCreated =  TimeUtil.timestamp();
             timeModified =  TimeUtil.timestamp();
             indexFormat =  LATEST_INDEX_FORMAT;
@@ -548,6 +554,16 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public String indexBlackLabVersion() {
         return versionInfo.blackLabVersion;
+    }
+
+    /**
+     * What was the SCM version (i.e. Git hash) for the BlackLab.jar used for indexing?
+     * @return the SCM version
+     */
+    @Override
+    public String indexBlackLabScmRevision() {
+        String rev = versionInfo.blackLabScmRevision;
+        return rev == null ? "UNKNOWN" : rev;
     }
 
     // Methods that mutate data

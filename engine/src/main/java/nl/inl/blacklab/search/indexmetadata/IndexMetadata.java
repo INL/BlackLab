@@ -128,6 +128,13 @@ public interface IndexMetadata extends Freezable {
 	 */
 	String indexBlackLabVersion();
 
+    /**
+     * What SCM revision (i.e. Git hash) was this indexed with?
+     *
+     * @return the SCM revision
+     */
+    String indexBlackLabScmRevision();
+
 	/**
 	 * How many tokens are in the main annotated field?
      *

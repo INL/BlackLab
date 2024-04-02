@@ -130,6 +130,11 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
+    public String indexBlackLabScmRevision() {
+        return null;
+    }
+
+    @Override
     public long tokenCount() {
         return 0;
     }

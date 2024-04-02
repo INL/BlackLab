@@ -269,6 +269,17 @@ public final class BlackLab {
         return valueFromManifest("Implementation-Version");
     }
 
+    /**
+     * Return the SCM revision this was built from.
+     *
+     * This is generally the short Git commit hash.
+     *
+     * @return SCM revision string, or UNKNOWN if it could not be found
+     */
+    public static String getBuildScmRevision() {
+        return valueFromManifest("Build-Scm-Revision");
+    }
+
     public static Collator defaultCollator() {
         return config().getSearch().getCollator().get();
     }

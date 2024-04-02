@@ -234,7 +234,8 @@
                             <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
                         <manifestEntries>
-                            <Build-Time>${buildNumber}</Build-Time>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
+                            <Build-Scm-Revision>${buildNumber}</Build-Scm-Revision>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -251,7 +252,8 @@
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
                         <manifestEntries>
-                            <Build-Time>${buildNumber}</Build-Time>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
+                            <Build-Scm-Revision>${buildNumber}</Build-Scm-Revision>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -271,10 +273,9 @@
                 <artifactId>buildnumber-maven-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
-                    <format>{0,date,yyyy-MM-dd HH:mm:ss}</format>
-                    <items>
-                        <item>timestamp</item>
-                    </items>
+                    <doCheck>false</doCheck>
+                    <doUpdate>false</doUpdate>
+                    <shortRevisionLength>7</shortRevisionLength>
                 </configuration>
                 <executions>
                     <execution>
