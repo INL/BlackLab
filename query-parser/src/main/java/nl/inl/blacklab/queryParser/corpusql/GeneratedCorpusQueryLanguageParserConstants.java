@@ -38,6 +38,58 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
   int QUOTED_STRING = 17;
   /** RegularExpression Id. */
   int SINGLE_QUOTED_STRING = 18;
+  /** RegularExpression Id. */
+  int CONSTRAINT_THING = 19;
+  /** RegularExpression Id. */
+  int EQUALS = 20;
+  /** RegularExpression Id. */
+  int NOT_EQUALS = 21;
+  /** RegularExpression Id. */
+  int GREATER_THAN_EQUALS = 22;
+  /** RegularExpression Id. */
+  int LESS_THAN_EQUALS = 23;
+  /** RegularExpression Id. */
+  int GREATER_THAN = 24;
+  /** RegularExpression Id. */
+  int LESS_THAN = 25;
+  /** RegularExpression Id. */
+  int LPAREN = 26;
+  /** RegularExpression Id. */
+  int RPAREN = 27;
+  /** RegularExpression Id. */
+  int NEGATE = 28;
+  /** RegularExpression Id. */
+  int DOT = 29;
+  /** RegularExpression Id. */
+  int COMMA = 30;
+  /** RegularExpression Id. */
+  int DELIMITER = 31;
+  /** RegularExpression Id. */
+  int COLON = 32;
+  /** RegularExpression Id. */
+  int FORWARD_SLASH = 33;
+  /** RegularExpression Id. */
+  int BACKSLASH = 34;
+  /** RegularExpression Id. */
+  int MULT = 35;
+  /** RegularExpression Id. */
+  int PLUS = 36;
+  /** RegularExpression Id. */
+  int QUESTION = 37;
+  /** RegularExpression Id. */
+  int LBRACE = 38;
+  /** RegularExpression Id. */
+  int RBRACE = 39;
+  /** RegularExpression Id. */
+  int AND = 40;
+  /** RegularExpression Id. */
+  int OR = 41;
+  /** RegularExpression Id. */
+  int ARROW_RIGHT = 42;
+  /** RegularExpression Id. */
+  int LBRACKET = 43;
+  /** RegularExpression Id. */
+  int RBRACKET = 44;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -74,15 +126,16 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "\")\"",
     "\"!\"",
     "\".\"",
+    "\",\"",
     "\";\"",
     "\":\"",
     "\"/\"",
+    "\"\\\\\"",
     "\"*\"",
     "\"+\"",
     "\"?\"",
     "\"{\"",
     "\"}\"",
-    "\",\"",
     "\"&\"",
     "\"|\"",
     "\"->\"",

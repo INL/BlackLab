@@ -15,6 +15,10 @@
     <description>
        Query parsers for BlackLab, to translate queries to TextPatterns.
     </description>
+
+    <properties>
+        <antlr4.version>4.9.3</antlr4.version>
+    </properties>
     
     <build>
     
@@ -77,7 +81,27 @@
                         <version>6.1.2</version>
                     </dependency>
                 </dependencies>
-            </plugin>   
+            </plugin>
+
+
+
+            <!-- ANTLR4 plugin for generating parsers from .g4 definition files -->
+            <plugin>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>${antlr4.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sourceDirectory>src/main/javacc/nl/inl/blacklab/queryParser</sourceDirectory>
+                    <outputDirectory>src/main/java/antlr4/</outputDirectory>
+                </configuration>
+            </plugin>
              
         </plugins>
     </build>
@@ -88,6 +112,14 @@
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-engine</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+
+        <!-- ANTLR4 runtime dependency -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>${antlr4.version}</version>
         </dependency>
         
     </dependencies>

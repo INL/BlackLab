@@ -99,7 +99,7 @@ TOKEN [IGNORE_CASE]:
     /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
 |   <ROOT_DEP_OP: "^-" ( ~["-"] (~["-"] | "-" ~[">"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <DEP_OP: ("!")? "-" ( ~["-"] (~["-"] | "-" ~[">"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
-|   <ALIGNMENT_OP: "=" ( ~["="] (~["="] | "=" ~[">"] )* )? "=>" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
+|   <ALIGNMENT_OP: "="  ( ~["="] (~["="] | "=" ~[">"] )* )? "=>" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |   <NUMBER: (["0"-"9"])+ >
@@ -107,6 +107,32 @@ TOKEN [IGNORE_CASE]:
                 ( "," (["A"-"Z","a"-"z","_","0"-"9"])+ "=" (["A"-"Z","a"-"z","_","0"-"9"])+ )* >
 |   <QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 |   <SINGLE_QUOTED_STRING: "'" (~["'","\\"] | "\\" ~[] )* "'" >
+|   <CONSTRAINT_THING: "::" >
+|   <EQUALS: "=" >
+|   <NOT_EQUALS: "!=" >
+|   <GREATER_THAN_EQUALS: ">=" >
+|   <LESS_THAN_EQUALS: "<=" >
+|   <GREATER_THAN: ">" >
+|   <LESS_THAN: "<" >
+|   <LPAREN: "(" >
+|   <RPAREN: ")" >
+|   <NEGATE: "!" >
+|   <DOT: "." >
+|   <COMMA: "," >
+|   <DELIMITER: ";">
+|   <COLON: ":" >
+|   <FORWARD_SLASH: "/" >
+|   <BACKSLASH: "\\" >
+|   <MULT: "*" >
+|   <PLUS: "+" >
+|   <QUESTION: "?" >
+|   <LBRACE: "{" >
+|   <RBRACE: "}" >
+|   <AND: "&" >
+|   <OR: "|" >
+|   <ARROW_RIGHT: "->" >
+|   <LBRACKET: "[" >
+|   <RBRACKET: "]" >
 }
 
 // --- Grammar rules start here ---
@@ -154,7 +180,7 @@ TextPattern constrainedQuery():
     MatchFilter b = null;
 }
 {
-    a=relationQuery() [ "::" b=constraint() ]
+    a=relationQuery() [ <CONSTRAINT_THING> b=constraint() ]
     {
         if (b == null)
             return a;
@@ -214,7 +240,7 @@ Token comparisonOperator():
     Token t = null;
 }
 {
-    (t="=" | t="!=" | t=">=" | t="<=" | t=">" | t="<")  { return t; }
+    (t=<EQUALS> | t=<NOT_EQUALS> | t=<GREATER_THAN_EQUALS> | t=<LESS_THAN_EQUALS> | t=<GREATER_THAN> | t=<LESS_THAN> )  { return t; }
 }
 
 MatchFilter constraintValue():
@@ -226,12 +252,12 @@ MatchFilter constraintValue():
 }
 {
     q=quotedString()                    { return new MatchFilterString(q); }
-|   "(" v=constraint() ")"              { return v; }
-|   "!" v=constraintValue()             { return new MatchFilterNot(v); }
+|   <LPAREN> v=constraint() <RPAREN>               { return v; }
+|   <NEGATE> v=constraintValue()             { return new MatchFilterNot(v); }
 |   LOOKAHEAD(2)
-    s=<NAME> "(" l=captureLabel() ")"   { return new MatchFilterFunctionCall(s.toString(), l); }
+    s=<NAME> <LPAREN> l=captureLabel() <RPAREN>   { return new MatchFilterFunctionCall(s.toString(), l); }
 |   LOOKAHEAD(2)
-    l=captureLabel() [ "." s=<NAME> ]
+    l=captureLabel() [ <DOT> s=<NAME> ]
     {
         return new MatchFilterTokenAnnotation(l, s == null ? null : s.toString());
     }
@@ -251,7 +277,7 @@ TextPattern relationQuery():
         LOOKAHEAD(3)
         childRel=childRelation()                        { childRels.add(childRel); }
         /* LOOKAHEAD( ";" ) suppresses dangling-else problem */
-        ( LOOKAHEAD( ";" ) ";" childRel=childRelation() { childRels.add(childRel); } )*
+        ( LOOKAHEAD( <DELIMITER> ) <DELIMITER> childRel=childRelation() { childRels.add(childRel); } )*
     ]
     {
         if (childRels.isEmpty())
@@ -271,7 +297,7 @@ ChildRelationStruct childRelation():
     String label = "";
 }
 {
-    [ label=captureLabel() ":" ]
+    [ label=captureLabel() <COLON> ]
     relType=relationType() target=relationQuery()
     {
         return new ChildRelationStruct(relType, target, label);
@@ -296,7 +322,7 @@ TextPattern rootRelationType():
     String label = "";
 }
 {
-    [ label=captureLabel() ":" ]
+    [ label=captureLabel() <COLON> ]
     t=<ROOT_DEP_OP> target=relationQuery()
     {
         RelationOperatorInfo relType = RelationOperatorInfo.fromOperator(t.toString());
@@ -315,7 +341,7 @@ TextPattern tag():
     Map<String, String> attr = new HashMap<String, String>();
 }
 {
-    "<" (endTagSlash="/")? tagName=<NAME> ( attributes(attr) )* (selfCloseSlash="/")? ">"
+    <LESS_THAN> (endTagSlash=<FORWARD_SLASH>)? tagName=<NAME> ( attributes(attr) )* (selfCloseSlash=<FORWARD_SLASH>)? <GREATER_THAN>
     {
         if (endTagSlash != null && selfCloseSlash != null) {
             throw new MalformedTagException();
@@ -348,7 +374,7 @@ void attributes(Map<String, String> attr):
     String value;
 }
 {
-    name=<NAME> "=" value=quotedString()
+    name=<NAME> <EQUALS> value=quotedString()
     {
         attr.put(name.toString(), value);
     }
@@ -361,11 +387,11 @@ Integer[] repetitionAmount():
     Integer[] minMax = new Integer[2];
 }
 {
-    "*"                                 { minMax[0] = 0; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
-|   "+"                                 { minMax[0] = 1; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
-|   "?"                                 { minMax[0] = 0; minMax[1] = 1; return minMax; }
-|   LOOKAHEAD(3) "{" t=<NUMBER> "}"     { minMax[0] = minMax[1] = wrapper.num(t); return minMax; }
-|   "{" t=<NUMBER> "," [ t2=<NUMBER> ] "}"
+    <MULT>                                { minMax[0] = 0; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
+|   <PLUS>                                 { minMax[0] = 1; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
+|   <QUESTION>                                 { minMax[0] = 0; minMax[1] = 1; return minMax; }
+|   LOOKAHEAD(3) <LBRACE> t=<NUMBER> <RBRACE>      { minMax[0] = minMax[1] = wrapper.num(t); return minMax; }
+|   <LBRACE> t=<NUMBER> <COMMA> [ t2=<NUMBER> ] <RBRACE>
     {
         minMax[0] = wrapper.num(t);
         if (t2 == null)
@@ -432,7 +458,7 @@ Token booleanOperator():
     Token t = null;
 }
 {
-    (t="&" | t="|" | t="->")  { return t; }
+    (t=<AND> | t=<OR> | t=<ARROW_RIGHT>)  { return t; }
 }
 
 /* a sequence of token constraints */
@@ -457,7 +483,7 @@ TextPattern captureQuery():
 {
     LOOKAHEAD(2)
     m=sequencePartNoCapture()    { return m; }
-|   label=captureLabel() ":" m=sequencePartNoCapture()    { return TextPatternCaptureGroup.get(m, label); }
+|   label=captureLabel() <COLON> m=sequencePartNoCapture()    { return TextPatternCaptureGroup.get(m, label); }
 }
 
 
@@ -468,7 +494,7 @@ TextPattern sequencePartNoCapture():
     Integer[] rep = null;
 }
 {
-    ( m=tag() | m=position() | "(" m=constrainedQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+    ( m=tag() | m=position() | <LPAREN> m=constrainedQuery() <RPAREN> | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
     {
         if (rep != null)
         {
@@ -481,7 +507,7 @@ TextPattern sequencePartNoCapture():
         }
         return m;
     }
-|   "!" m=sequencePartNoCapture()
+|   <NEGATE> m=sequencePartNoCapture()
     {
         return new TextPatternNot(m);
     }
@@ -493,7 +519,7 @@ TextPattern queryFunctionCall():
     List<Object> queryFuncParamList = Collections.emptyList();
 }
 {
-    func=<NAME> "(" [ queryFuncParamList=commaSeparatedParamList() ] ")"
+    func=<NAME> <LPAREN> [ queryFuncParamList=commaSeparatedParamList() ] <RPAREN>
     {
         String funcName = func.toString();
         /*if (!funcName.startsWith("_")) {
@@ -509,7 +535,7 @@ List<Object> commaSeparatedParamList():
     List<Object> p = new ArrayList<Object>();
 }
 {
-    q=functionParam() [ "," p=commaSeparatedParamList() ]
+    q=functionParam() [ <COMMA> p=commaSeparatedParamList() ]
     {
         p.add(0, q);
         return p;
@@ -545,7 +571,7 @@ TextPattern position():
 {
     m=positionWord() [ f=flags()]        { return m; }
 |   <DEFAULT_VALUE>                     { return TextPatternDefaultValue.get(); }
-|   "[" [ m=positionLong() ] "]"
+|   <LBRACKET> [ m=positionLong() ] <RBRACKET>
     {
         if (m == null)
             return new TextPatternAnyToken(1, 1);
@@ -598,8 +624,8 @@ TextPattern positionLongPart():
 {
     LOOKAHEAD(3)
     m=attValuePair()              { return m; }
-|   "(" m=positionLong() ")"      { return m; }
-|   "!" m=positionLongPart()      { return new TextPatternNot(m); }
+|   <LPAREN> m=positionLong() <RPAREN>       { return m; }
+|   <NEGATE> m=positionLongPart()      { return new TextPatternNot(m); }
 }
 
 /* attribute/value pair, with equals or not equals sign, or possibly just a value (default attribute) */
@@ -611,8 +637,8 @@ TextPattern attValuePair():
 }
 {
     LOOKAHEAD(2)
-    annot=annotName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
-|   annot=annotName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
+    annot=annotName() <EQUALS> v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
+|   annot=annotName() <NOT_EQUALS> v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
 /* UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. ["word"], meaning the same as just "word" without brackets)
 |   v=valuePart() [f=flags()]                      { return v; }
 */
@@ -623,7 +649,7 @@ String annotName():
     Token t = null, subAnnot = null;
 }
 {
-    t=<NAME> [ "/" subAnnot=<NAME> ]
+    t=<NAME> [ <FORWARD_SLASH> subAnnot=<NAME> ]
     {
         String annotName = t.toString();
         if (subAnnot == null)

@@ -202,6 +202,12 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         indexParsedFile(config.getDocumentPath(), false);
     }
 
+    @Override
+    public void indexSpecificDocument(String documentXPath) {
+        readDocument();
+        super.indexSpecificDocument(documentXPath);
+    }
+
     // process annotated field
 
     protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,

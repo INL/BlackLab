@@ -422,7 +422,15 @@
             </plugin>
 
         </plugins>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.extensions</groupId>
+                <artifactId>maven-build-cache-extension</artifactId>
+                <version>1.1.0</version>
+            </extension>
+        </extensions>
     </build>
+
 
     <profiles>
         <profile>
