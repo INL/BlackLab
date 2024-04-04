@@ -563,7 +563,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public String indexBlackLabScmRevision() {
         String rev = versionInfo.blackLabScmRevision;
-        return rev == null ? "UNKNOWN" : rev;
+        return StringUtils.isEmpty(rev) ? "UNKNOWN" : rev;
     }
 
     // Methods that mutate data

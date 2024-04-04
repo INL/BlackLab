@@ -1264,8 +1264,12 @@ public class ResponseStreamer {
                 ds.entry("apiVersion", apiVersion.versionString());
             ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
                     .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
-            if (modernizeApi)
-                ds.entry(KEY_BLACKLAB_SCM_REVISION, BlackLab.getBuildScmRevision());
+            if (modernizeApi) {
+                String buildScmRevision = BlackLab.getBuildScmRevision();
+                if (StringUtils.isEmpty(buildScmRevision))
+                    buildScmRevision = "UNKNOWN";
+                ds.entry(KEY_BLACKLAB_SCM_REVISION, buildScmRevision);
+            }
 
             if (modernizeApi) {
                 ds.startEntry("corpora").startMap();
