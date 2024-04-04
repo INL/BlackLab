@@ -9,7 +9,7 @@ COPY . .
 # Build the WAR.
 # NOTE: make sure BuildKit is enabled (see https://docs.docker.com/develop/develop-images/build_enhancements/)
 #       to be able to cache Maven libs so they aren't re-downloaded every time you build the image
-RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
+RUN --mount=type=cache,target=/root/.m2 mvn -q --no-transfer-progress package
 
 
 # Tomcat container with the WAR file

@@ -6,6 +6,10 @@
     <version>4.0.0-SNAPSHOT</version>
     <name>Build Tools</name>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
     <distributionManagement>
         <snapshotRepository>
