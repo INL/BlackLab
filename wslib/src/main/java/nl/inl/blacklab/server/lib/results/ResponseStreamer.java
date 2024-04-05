@@ -1310,7 +1310,7 @@ public class ResponseStreamer {
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("timeModified", indexMetadata.timeModified());
-            indexTokenCount(indexMetadata);
+            indexTokenCount(indexMetadata, false);
             indexDocumentCount(indexMetadata);
             indexProgress(progress);
         }
@@ -1322,8 +1322,8 @@ public class ResponseStreamer {
             ds.entry(KEY_DOCUMENT_COUNT, indexMetadata.documentCount());
     }
 
-    private void indexTokenCount(IndexMetadata indexMetadata) {
-        if (modernizeApi) {
+    private void indexTokenCount(IndexMetadata indexMetadata, boolean isLegacyIndicesKey) {
+        if (modernizeApi && !isLegacyIndicesKey) {
             ds.startEntry(KEY_TOKEN_COUNTS).startList();
             for (Map.Entry<String, Long> entry: indexMetadata.tokenCountPerField().entrySet()) {
                 ds.startItem(KEY_TOKEN_COUNT).startMap();
@@ -1369,7 +1369,7 @@ public class ResponseStreamer {
                 if (formatIdentifier != null && !formatIdentifier.isEmpty())
                     ds.entry("documentFormat", formatIdentifier);
                 ds.entry("timeModified", indexMetadata.timeModified());
-                indexTokenCount(indexMetadata);
+                indexTokenCount(indexMetadata, true);
                 indexProgress(progress);
             }
             ds.endMap();
@@ -1398,7 +1398,7 @@ public class ResponseStreamer {
             String formatIdentifier = metadata.documentFormat();
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
-            indexTokenCount(metadata);
+            indexTokenCount(metadata, false);
             indexDocumentCount(metadata);
             indexProgress(result.getProgress());
 
@@ -1519,7 +1519,7 @@ public class ResponseStreamer {
             }
             ds.entry(KEY_STATS_STATUS, progress.getIndexStatus());
             ds.entry("timeModified", metadata.timeModified());
-            indexTokenCount(metadata);
+            indexTokenCount(metadata, false);
             indexDocumentCount(metadata);
             String formatIdentifier = metadata.documentFormat();
             if (!StringUtils.isEmpty(formatIdentifier))
