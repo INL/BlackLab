@@ -10,8 +10,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -246,8 +244,8 @@ public class WebserviceRequestHandler {
         rs.formatInfoResponse(result);
     }
 
-    public static void opListInputFormats(WebserviceParams params, ResponseStreamer rs) {
-        ResultListInputFormats result = WebserviceOperations.listInputFormats(params);
+    public static void opListInputFormats(WebserviceParams params, ResponseStreamer rs, boolean debugMode) {
+        ResultListInputFormats result = WebserviceOperations.listInputFormats(params, debugMode);
         rs.listFormatsResponse(result);
     }
 

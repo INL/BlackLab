@@ -238,7 +238,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
                 // Manage user corpora
                 case LIST_INPUT_FORMATS:
-                    WebserviceRequestHandler.opListInputFormats(params, dstream);
+                    WebserviceRequestHandler.opListInputFormats(params, dstream, debugMode);
                     break;
                 case INPUT_FORMAT_INFO:
                     WebserviceRequestHandler.opInputFormatInfo(params, dstream);

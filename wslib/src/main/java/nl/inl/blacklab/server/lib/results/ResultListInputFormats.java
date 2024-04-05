@@ -17,8 +17,11 @@ public class ResultListInputFormats {
 
     private final List<InputFormat> inputFormats;
 
-    ResultListInputFormats(WebserviceParams params) {
+    private boolean debugMode;
+
+    ResultListInputFormats(WebserviceParams params, boolean debugMode) {
         userInfo = WebserviceOperations.userInfo(params);
+        this.debugMode = debugMode;
 
         // List all available input formats
         User user = params.getUser();
@@ -47,5 +50,9 @@ public class ResultListInputFormats {
 
     public List<InputFormat> getFormats() {
         return inputFormats;
+    }
+
+    public boolean isDebugMode() {
+        return debugMode;
     }
 }

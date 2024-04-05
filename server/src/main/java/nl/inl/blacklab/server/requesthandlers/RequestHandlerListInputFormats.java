@@ -49,7 +49,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                 WebserviceRequestHandler.opInputFormatInfo(params, rs);
             } else {
                 // Show list of supported input formats (for current user)
-                WebserviceRequestHandler.opListInputFormats(params, rs);
+                WebserviceRequestHandler.opListInputFormats(params, rs, debugMode);
             }
         }
         return HTTP_OK;

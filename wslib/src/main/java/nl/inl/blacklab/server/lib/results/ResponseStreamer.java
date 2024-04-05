@@ -207,13 +207,15 @@ public class ResponseStreamer {
      *
      * @param userInfo user info to show
      */
-    public void userInfo(ResultUserInfo userInfo) {
+    public void userInfo(ResultUserInfo userInfo, boolean debugMode) {
         ds.startEntry("user").startMap();
         {
             ds.entry("loggedIn", userInfo.isLoggedIn());
             if (userInfo.isLoggedIn())
                 ds.entry("id", userInfo.getUserId());
             ds.entry("canCreateIndex", userInfo.canCreateIndex());
+            if (modernizeApi)
+                ds.entry("debugMode", debugMode);
         }
         ds.endMap().endEntry();
     }
@@ -1286,7 +1288,7 @@ public class ResponseStreamer {
                 ds.endMap().endEntry();
             }
 
-            userInfo(result.getUserInfo());
+            userInfo(result.getUserInfo(), result.isDebugMode());
 
             if (!modernizeApi && result.isDebugMode()) {
                 ds.startEntry("cacheStatus");
@@ -1617,7 +1619,7 @@ public class ResponseStreamer {
 
         ds.startMap();
         {
-            userInfo(result.getUserInfo());
+            userInfo(result.getUserInfo(), result.isDebugMode());
 
             // List supported input formats
             // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)

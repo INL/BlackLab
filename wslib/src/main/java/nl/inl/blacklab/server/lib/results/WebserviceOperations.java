@@ -811,8 +811,8 @@ public class WebserviceOperations {
         return new ResultDocsGrouped(params);
     }
 
-    public static ResultListInputFormats listInputFormats(WebserviceParams params) {
-        return new ResultListInputFormats(params);
+    public static ResultListInputFormats listInputFormats(WebserviceParams params, boolean debugMode) {
+        return new ResultListInputFormats(params, debugMode);
     }
 
     public static ResultInputFormat inputFormat(String formatName) {
