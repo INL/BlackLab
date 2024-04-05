@@ -11,10 +11,21 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
+
+    /** String to use to indicate there was no value.
+     *
+     * For example: you're grouping by the word left of the match, but the
+     * match occurred at the start of the document.
+     */
+    public static final String NO_VALUE_STR = "(no value)";
+
+    /** Term ids for this value */
     int[] valueTokenId;
 
+    /** Sort orders for our term ids */
     final int[] valueSortOrder;
 
+    /** Sensitivity to use for comparisons */
     private MatchSensitivity sensitivity;
 
     /**
@@ -103,7 +114,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         if (reverseOnDisplay) {
             for (int i = valueTokenId.length - 1; i >= 0; i--) {
                 int v = valueTokenId[i];
-                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
+                String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
@@ -112,7 +123,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
             }
         } else {
             for (int v : valueTokenId) {
-                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
+                String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
