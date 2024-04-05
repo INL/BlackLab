@@ -14,6 +14,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  */
 public class VersionFile {
 
+    public static final String FILE_NAME = "version.dat";
+
     /**
      * Read version file from directory
      *
@@ -113,7 +115,7 @@ public class VersionFile {
     }
 
     public VersionFile(File dir) {
-        file = new File(dir, "version.dat");
+        file = new File(dir, FILE_NAME);
     }
 
     public boolean exists() {
