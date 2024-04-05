@@ -3,6 +3,7 @@ package nl.inl.blacklab.search;
 import java.util.HashSet;
 import java.util.Set;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -105,8 +106,11 @@ public class QueryExecutionContext {
                 defaultRelationClass, captures);
     }
 
-    public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity) {
+    public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity)
+            throws InvalidQuery {
         Annotation annotation = annotationName == null ? null : field().annotation(annotationName);
+        if (annotationName != null && annotation == null)
+            throw new InvalidQuery("Annotation doesn't exist: " + annotationName + " on field " + fieldName);
         return withAnnotationAndSensitivity(annotation, matchSensitivity);
     }
 
