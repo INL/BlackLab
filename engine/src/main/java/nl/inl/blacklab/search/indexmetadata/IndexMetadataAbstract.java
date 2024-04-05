@@ -290,7 +290,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      */
     @Override
     public String timeModified() {
-        return timeCreated;
+        return timeModified;
     }
 
     /**

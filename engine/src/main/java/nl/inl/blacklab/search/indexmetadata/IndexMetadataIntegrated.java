@@ -533,7 +533,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String timeModified() {
-        return versionInfo.timeCreated;
+        return versionInfo.timeModified;
     }
 
     /**
