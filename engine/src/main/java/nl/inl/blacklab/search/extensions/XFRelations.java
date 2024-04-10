@@ -33,8 +33,11 @@ public class XFRelations implements ExtensionFunctionClass {
         derived from the relation type filter expression. */
     public static final String DEFAULT_CAPTURE_NAME = "rel";
 
-    /** Default for relations captured using rcapture()  (or e.g. context=s) */
-    public static final String DEFAULT_RCAP_NAME = "captured_" + DEFAULT_CAPTURE_NAME + "s";
+    /** Default for relations captured using rcapture() */
+    public static final String DEFAULT_RCAP_NAME = "captured_rels";
+
+    /** Default for relations captured using e.g. context=s */
+    public static final String DEFAULT_CONTEXT_REL_NAME = "context_rels";
 
     /**
      * Find relations matching type and target.

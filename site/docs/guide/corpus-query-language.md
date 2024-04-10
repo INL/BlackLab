@@ -469,7 +469,7 @@ If you want to capture all relations in the sentence containing your match, use:
 
     'elephant' within rcapture(<s/>)
 
-What actually happens here is that all relations in the matched clause are returned as _rels_ in the match info.
+What actually happens here is that all relations in the matched clause are returned in the match info.
 
 You can pass a second parameter with the match info name for the list of captured relations (defaults to _captured_rels_):
 

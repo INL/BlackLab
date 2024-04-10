@@ -279,7 +279,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
             before = Integer.parseInt(parts[0]);
             after = Integer.parseInt(parts[1]);
         } else if (str.matches("\\w+")) {
-            inlineTagName = str; // TODO: determine actual match info index for inline tag
+            inlineTagName = str;
         } else {
             throw new IllegalArgumentException("Invalid context value: " + str);
         }

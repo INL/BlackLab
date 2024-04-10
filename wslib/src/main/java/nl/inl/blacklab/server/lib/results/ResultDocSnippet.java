@@ -15,15 +15,11 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
-import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
-import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
@@ -84,13 +80,9 @@ public class ResultDocSnippet {
 
         if (context.isInlineTag()) {
             // Make sure we capture the tag so we can use its boundaries for the snippet
-            String captureInlineTagAs = context.inlineTagName();
-            TextPattern pattern = new TextPatternPositionFilter(new TextPatternFixedSpan(start, end),
-                    new TextPatternTags(captureInlineTagAs, null, TextPatternTags.Adjust.FULL_TAG, captureInlineTagAs),
-                    SpanQueryPositionFilter.Operation.WITHIN);
-            // Also capture any relations that are in the tag
-            pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, captureInlineTagAs,
-                    XFRelations.DEFAULT_RCAP_NAME));
+            TextPatternFixedSpan producer = new TextPatternFixedSpan(start, end);
+            String tagName = context.inlineTagName();
+            TextPattern pattern = TextPattern.createRelationCapturingWithinQuery(producer, tagName, XFRelations.DEFAULT_CONTEXT_REL_NAME);
             QueryExecutionContext queryContext = QueryExecutionContext.get(index,
                     params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {

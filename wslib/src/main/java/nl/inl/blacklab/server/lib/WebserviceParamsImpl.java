@@ -19,16 +19,15 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
 import nl.inl.blacklab.searches.SearchDocs;
@@ -152,20 +151,18 @@ public class WebserviceParamsImpl implements WebserviceParams {
             patternWithin = pattern;
             String tagName = getContext().inlineTagName();
             if (tagName != null) {
-                patternWithin = ensureWithinTag(patternWithin, tagName);
+                patternWithin = ensureWithinTag(patternWithin, tagName, XFRelations.DEFAULT_CONTEXT_REL_NAME);
             }
         }
         return patternWithin == null ? Optional.empty() : Optional.of(patternWithin);
     }
 
-    private static TextPattern ensureWithinTag(TextPattern pattern, String tagName) {
+    private static TextPattern ensureWithinTag(TextPattern pattern, String tagName, String captureRelsAs) {
         boolean withinTag = pattern instanceof TextPatternPositionFilter &&
                 ((TextPatternPositionFilter) pattern).isWithinTag(tagName);
         if (!withinTag) {
-            // add "within <TAGNAME/>" to the pattern, so we can produce the requested context later
-            return new TextPatternPositionFilter(pattern,
-                    new TextPatternTags(tagName, null, TextPatternTags.Adjust.FULL_TAG, null),
-                    SpanQueryPositionFilter.Operation.WITHIN);
+            // add "within rcapture(<TAGNAME/>)" to the pattern, so we can produce the requested context later
+            return TextPattern.createRelationCapturingWithinQuery(pattern, tagName, captureRelsAs);
         }
         return pattern;
     }
