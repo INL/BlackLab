@@ -10,11 +10,13 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -87,6 +89,7 @@ public class ResultDocSnippet {
                     params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {
                 BLSpanQuery query = pattern.translate(queryContext);
+                query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
                 hits = index.search(field).find(query).execute();
             } catch (InvalidQuery e) {
                 throw new BlackLabRuntimeException(e);
