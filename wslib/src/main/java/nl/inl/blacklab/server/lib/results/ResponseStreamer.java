@@ -1263,7 +1263,7 @@ public class ResponseStreamer {
         ds.startMap();
         {
             if (modernizeApi)
-                ds.entry("apiVersion", apiVersion.versionString());
+                ds.entry("apiVersion", apiVersion.toString());
             ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
                     .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
             if (modernizeApi) {

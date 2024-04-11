@@ -141,7 +141,8 @@ public enum ApiVersion {
         return Math.abs(this.minor - (minor < 0 ? 1000 : minor));
     }
 
-    public String versionString() {
+    @Override
+    public String toString() {
         return major + "." + minor + (StringUtils.isEmpty(suffix) ? "" : "-" + suffix);
     }
 

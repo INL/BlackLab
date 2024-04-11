@@ -48,7 +48,7 @@ public class BLSConfigParameters {
         WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefault());
         WebserviceParameter.setDefaultValue(WebserviceParameter.SENSITIVE, getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
         WebserviceParameter.setDefaultValue(WebserviceParameter.CONTEXT, "" + getContextSize().getDefault());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.API_VERSION, "" + getApi().versionString());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.API_VERSION, "" + getApi().toString());
     }
 
     @JsonGetter("defaultSearchSensitivity")
