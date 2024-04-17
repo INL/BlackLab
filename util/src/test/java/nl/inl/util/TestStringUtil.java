@@ -48,6 +48,14 @@ public class TestStringUtil {
     }
 
     @Test
+    public void testEscapeQuote2() {
+        String escaped = "\\\\\\\"";  // user entered \\\"
+        String unescaped = "\\\\\"";  // only quote is unescaped
+        Assert.assertEquals(unescaped, StringUtil.unescapeQuote(escaped, "\""));
+        Assert.assertEquals(escaped, StringUtil.escapeQuote(unescaped, "\""));
+    }
+
+    @Test
     public void testEscapeQuote() {
         // Escape the correct quote
         Assert.assertEquals("test'\\\"test", StringUtil.escapeQuote("test'\"test", "\""));
@@ -61,12 +69,20 @@ public class TestStringUtil {
         Assert.assertEquals("test\\\\\"test", StringUtil.escapeQuote("test\\\"test", "\""));
         Assert.assertEquals("test\\\\'test", StringUtil.escapeQuote("test\\'test", "'"));
 
-        Assert.assertEquals("bla\\\\\"\\'\\\\\\s\\n\\\"'bla\\", StringUtil.escapeQuote("bla\\\"\\'\\\\\\s\\n\"'bla\\", "\""));
+        // Let's combine a bunch of stuff
+        String escaped   = "bla\\\\\\\"\\'\\\\\\s\\n\\\"\\'bla\\";
+        String unescapedDouble = "bla\\\\\"\\'\\\\\\s\\n\"\\'bla\\";
+        Assert.assertEquals(unescapedDouble, StringUtil.unescapeQuote(escaped, "\""));
+        Assert.assertEquals(escaped, StringUtil.escapeQuote(unescapedDouble, "\""));
+        String unescapedSingle = "bla\\\\\\\"'\\\\\\s\\n\\\"'bla\\";
+        Assert.assertEquals(unescapedSingle, StringUtil.unescapeQuote(escaped, "'"));
+        Assert.assertEquals(escaped, StringUtil.escapeQuote(unescapedSingle, "'"));
 
         // Test roundtrip as well
-        String input = "bla\\\"\\'\\\\\\s\\n\"'bla\\";
-        Assert.assertEquals(input, StringUtil.unescapeQuote(StringUtil.escapeQuote(input, "\""), "\""));
-        Assert.assertEquals(input, StringUtil.unescapeQuote(StringUtil.escapeQuote(input, "'"), "'"));
+        Assert.assertEquals(unescapedDouble, StringUtil.unescapeQuote(StringUtil.escapeQuote(unescapedDouble, "\""), "\""));
+        Assert.assertEquals(escaped, StringUtil.escapeQuote(StringUtil.unescapeQuote(escaped, "\""), "\""));
+        Assert.assertEquals(unescapedSingle, StringUtil.unescapeQuote(StringUtil.escapeQuote(unescapedSingle, "'"), "'"));
+        Assert.assertEquals(escaped, StringUtil.escapeQuote(StringUtil.unescapeQuote(escaped, "'"), "'"));
     }
 
     @Test
