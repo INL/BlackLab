@@ -72,10 +72,8 @@ public class TextPatternSerializerCql {
         if (!isRegexPattern) {
             // We're looking for an exact value, which may include regex characters.
             value = StringUtil.escapeLuceneRegexCharacters(value);
-        } else {
-            b.append("\"").append(value).append("\"");
         }
-        serializeQuotedString(b, value, isRegexPattern);
+        serializeToSingleQuotedString(b, value);
         if (annotation != null)
             b.append(optCloseBracket);
     }
@@ -301,7 +299,7 @@ public class TextPatternSerializerCql {
         // MatchFilter string
         cqlSerializers.put(MatchFilterString.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             MatchFilterString tp = (MatchFilterString) pattern;
-            serializeQuotedString(b, tp.getValue(), false);
+            serializeToSingleQuotedString(b, tp.getValue());
         });
 
         // MatchFilter token annotation
@@ -365,7 +363,7 @@ public class TextPatternSerializerCql {
             if (arg instanceof TextPattern) {
                 serialize((TextPattern) arg, b, false, insideTokenBrackets);
             } else if (arg instanceof String) {
-                serializeQuotedString(b, (String) arg, false);
+                serializeToSingleQuotedString(b, (String) arg);
             } else if (arg instanceof Integer) {
                 b.append((int) arg);
             } else {
@@ -407,16 +405,8 @@ public class TextPatternSerializerCql {
         }
     }
 
-    private static StringBuilder serializeQuotedString(StringBuilder b, String regex, boolean isRegex) {
-        if (isRegex) {
-            // In Lucene regexes (which TextPatterns use), backslash is already escaped,
-            // so no need to do this again
-            return b.append("'").append(regex.replaceAll("'", "\\\\'")).append("'");
-        } else {
-            // Not a regex, but a regular literal term.
-            // Nothing is escaped yet; escape quote and backslash
-            return b.append("'").append(regex.replaceAll("[\\\\']", "\\\\$0")).append("'");
-        }
+    private static StringBuilder serializeToSingleQuotedString(StringBuilder b, String value) {
+        return b.append("'").append(StringUtil.escapeQuote(value, "'")).append("'");
     }
 
     private static String serializeAttributes(Map<String, String> attr) {

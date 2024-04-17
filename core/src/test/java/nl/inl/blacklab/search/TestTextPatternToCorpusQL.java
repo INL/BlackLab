@@ -73,7 +73,7 @@ public class TestTextPatternToCorpusQL {
     @Test
     public void testEscape() throws InvalidQuery {
         assertCanonicalized("'c\\\\at'", "'c\\\\at'");
-        assertCanonicalized("'c\'at'", "'c\'at'");
+        assertCanonicalized("'c\\'at'", "'c\\'at'");
         assertCanonicalized("'c\\at'", "'c\\at'");
     }
 

@@ -46,4 +46,50 @@ public class TestStringUtil {
         Assert.assertEquals("trim", StringUtil.trimWhitespace("" + StringUtil.CHAR_EM_SPACE + StringUtil.CHAR_NON_BREAKING_SPACE + "trim"));
         Assert.assertEquals("tr  im", StringUtil.trimWhitespace(" tr  im "));
     }
+
+    @Test
+    public void testEscapeQuote() {
+        // Escape the correct quote
+        Assert.assertEquals("test'\\\"test", StringUtil.escapeQuote("test'\"test", "\""));
+        Assert.assertEquals("test\\'\"test", StringUtil.escapeQuote("test'\"test", "'"));
+
+        // Don't do anything to non-quote and non-backslash, whether they're already escaped or not
+        Assert.assertEquals("test\\s\\n\\test", StringUtil.escapeQuote("test\\s\\n\\test", "\""));
+        Assert.assertEquals("test\\s\\n\\test", StringUtil.escapeQuote("test\\s\\n\\test", "'"));
+
+        // Double-escape if you have to
+        Assert.assertEquals("test\\\\\"test", StringUtil.escapeQuote("test\\\"test", "\""));
+        Assert.assertEquals("test\\\\'test", StringUtil.escapeQuote("test\\'test", "'"));
+
+        Assert.assertEquals("bla\\\\\"\\'\\\\\\s\\n\\\"'bla\\", StringUtil.escapeQuote("bla\\\"\\'\\\\\\s\\n\"'bla\\", "\""));
+
+        // Test roundtrip as well
+        String input = "bla\\\"\\'\\\\\\s\\n\"'bla\\";
+        Assert.assertEquals(input, StringUtil.unescapeQuote(StringUtil.escapeQuote(input, "\""), "\""));
+        Assert.assertEquals(input, StringUtil.unescapeQuote(StringUtil.escapeQuote(input, "'"), "'"));
+    }
+
+    @Test
+    public void testUnescapeQuote() {
+        // Don't trip over quotes that are not escaped
+        Assert.assertEquals("test'\"test", StringUtil.unescapeQuote("test'\"test", "\""));
+        Assert.assertEquals("test'\"test", StringUtil.unescapeQuote("test'\"test", "'"));
+
+        // Don't unescape non-quote and non-backslash
+        Assert.assertEquals("test\\s\\n\\test", StringUtil.unescapeQuote("test\\s\\n\\test", "\""));
+        Assert.assertEquals("test\\s\\n\\test", StringUtil.unescapeQuote("test\\s\\n\\test", "'"));
+
+        // Do unescape
+        Assert.assertEquals("test\"test", StringUtil.unescapeQuote("test\\\"test", "\""));
+        Assert.assertEquals("test'test", StringUtil.unescapeQuote("test\\'test", "'"));
+
+        // Don't unescape other quote type
+        Assert.assertEquals("test\\\"test", StringUtil.unescapeQuote("test\\\"test", "'"));
+        Assert.assertEquals("test\\'test", StringUtil.unescapeQuote("test\\'test", "\""));
+
+        // Don't get confused by multiple backslashes
+        Assert.assertEquals("test\\\\test", StringUtil.unescapeQuote("test\\\\test", "\""));
+        Assert.assertEquals("test\\\\\"test", StringUtil.unescapeQuote("test\\\\\\\"test", "\""));
+        Assert.assertEquals("test\\\\\"test", StringUtil.unescapeQuote("test\\\\\"test", "\""));
+    }
 }

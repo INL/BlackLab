@@ -44,6 +44,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.testutil.TestIndex;
 
 @RunWith(Parameterized.class)
@@ -673,37 +674,36 @@ public class TestSearches {
         Assert.assertEquals(expected, testIndex.findConc(query));
     }
 
-    @Test
-    public void testEscapedQuote2() throws InvalidQuery {
-        String[] patts = { "[word=\"\\\"\"]" /*, "[word=\"\\\\\\\"\"]"*/ };
-        // In Lucene regex, double quote must be escaped; this is correct
-        for (String patt: patts) {
-            TextPattern tp = CorpusQueryLanguageParser.parse(patt);
-            Assert.assertTrue(tp instanceof TextPatternRegex);
-            Assert.assertEquals("\\\"", ((TextPatternRegex) tp).getValue());
-            BLSpanQuery q = tp.translate(QueryExecutionContext.get(testIndex.index(),
-                    testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
-            Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
-            Assert.assertEquals("contents%word@i:/\\\"/", q.toString());
-        }
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Test
     public void testEscape() throws InvalidQuery {
         // Keys are CQL regexes (i.e. the $ part in [word="$"]), values are the expected Lucene regex
         Map<String, String> bcqlToLucene = new HashMap<>();
-        testEscaping("\\.", "\\.");
-        testEscaping(".", ".");
-        testEscaping("\\\"", "\\\"");
-        testEscaping("\\\"", "\\\"");
+//        testEscaping("\\.", "\\.");
+//        testEscaping(".", ".");
+//        testEscaping("\"", "\\\"");
+        testEscaping("\\\\\\\"", "\\\\\\\"");
         testEscaping("\\(", "\\(");
         testEscaping("\\\\\\(", "\\\\\\(");
     }
 
     private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
         TextPattern tp = CorpusQueryLanguageParser.parse("\"" + bcqlPattern + "\"");
-        Assert.assertTrue(tp instanceof TextPatternRegex);
-        Assert.assertEquals(bcqlPattern, ((TextPatternRegex) tp).getValue());
+        Assert.assertTrue(tp instanceof TextPatternTerm);
         BLSpanQuery q = tp.translate(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);

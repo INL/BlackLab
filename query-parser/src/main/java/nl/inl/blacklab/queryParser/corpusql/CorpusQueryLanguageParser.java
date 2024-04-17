@@ -14,6 +14,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 import nl.inl.blacklab.search.textpattern.RelationTarget;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
+import nl.inl.util.StringUtil;
 
 public class CorpusQueryLanguageParser {
 
@@ -65,16 +66,14 @@ public class CorpusQueryLanguageParser {
     }
 
     String getStringBetweenQuotes(String input) throws SingleQuotesException {
-        if (!allowSingleQuotes && input.charAt(0) == '\'')
+        String quoteUsed = input.substring(0, 1);
+        input = chopEnds(input); // eliminate quotes
+        if (!allowSingleQuotes && quoteUsed.equals("\'"))
             throw new SingleQuotesException();
 
-        // Eliminate the quotes
-        String result = chopEnds(input);
-
-        // Unescape backslashes
-        //result = result.replaceAll("\\\\(.)", "$1");
-
-        return result;
+        // Unescape ONLY the quotes found around this string
+        // Leave other escaped characters as-is for Lucene's regex engine
+        return StringUtil.unescapeQuote(input, quoteUsed);
     }
 
     TextPatternTerm simplePattern(String str) {
@@ -84,10 +83,6 @@ public class CorpusQueryLanguageParser {
             if (str.charAt(str.length() - 1) != '$')
                 str += "$";
         }
-
-        // Lucene's regex engine requires double quotes to be escaped, unlike most others.
-        // Escape double quotes not already preceded by backslash
-        str = str.replaceAll("(?<!\\\\)\"", "\\\\\"");
 
         // Treat everything like regex now; will be simplified later if possible
         return new TextPatternRegex(str);
