@@ -67,8 +67,14 @@ public class CorpusQueryLanguageParser {
     String getStringBetweenQuotes(String input) throws SingleQuotesException {
         if (!allowSingleQuotes && input.charAt(0) == '\'')
             throw new SingleQuotesException();
-        // Eliminate the quotes and unescape backslashes
-        return chopEnds(input).replaceAll("\\\\(.)", "$1");
+
+        // Eliminate the quotes
+        String result = chopEnds(input);
+
+        // Unescape backslashes
+        //result = result.replaceAll("\\\\(.)", "$1");
+
+        return result;
     }
 
     TextPatternTerm simplePattern(String str) {

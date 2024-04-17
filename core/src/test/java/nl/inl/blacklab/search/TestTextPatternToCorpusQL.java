@@ -71,6 +71,13 @@ public class TestTextPatternToCorpusQL {
     }
 
     @Test
+    public void testEscape() throws InvalidQuery {
+        assertCanonicalized("'c\\\\at'", "'c\\\\at'");
+        assertCanonicalized("'c\'at'", "'c\'at'");
+        assertCanonicalized("'c\\at'", "'c\\at'");
+    }
+
+    @Test
     public void testExtraParens() throws InvalidQuery {
         assertCanonicalized("('the' & ('c\\\\at' | 'do\\'g')) 'turtle'",
                 "(('the' & ('c\\\\at' | 'do\\'g')) ('turtle'))");

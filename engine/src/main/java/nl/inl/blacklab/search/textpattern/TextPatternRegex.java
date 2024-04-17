@@ -65,11 +65,6 @@ public class TextPatternRegex extends TextPatternTerm {
      * @return the TextPattern
      */
     private TextPattern rewriteForQuery() {
-        // Is it "any token"?
-        if (value.equals(".*")) {
-            return new TextPatternAnyToken(1, 1);
-        }
-
         // Do we want to force an (in)sensitive search?
         boolean forceSensitive = false;
         boolean forceInsensitive = false;
@@ -83,6 +78,11 @@ public class TextPatternRegex extends TextPatternTerm {
         } else if (newValue.startsWith("(?i)")) {
             forceInsensitive = true;
             newValue = newValue.substring(4);
+        }
+
+        // Is it "any token"?
+        if (value.equals(".*")) {
+            return new TextPatternAnyToken(1, 1);
         }
 
         // If this contains no funny characters, only (Unicode) letters and digits,
