@@ -3,14 +3,18 @@ package nl.inl.blacklab.search;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +43,7 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
-import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.testutil.TestIndex;
 
 @RunWith(Parameterized.class)
@@ -669,19 +673,53 @@ public class TestSearches {
         Assert.assertEquals(expected, testIndex.findConc(query));
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     @Test
-    public void testEscapedQuote2() throws InvalidQuery {
-        String[] patts = { "[word=\"\\\"\"]", "[word=\"\\\\\\\"\"]" };
-        // In Lucene regex, double quote must be escaped; this is correct
-        for (String patt: patts) {
-            TextPattern tp = CorpusQueryLanguageParser.parse(patt);
-            Assert.assertTrue(tp instanceof TextPatternRegex);
-            Assert.assertEquals("\\\"", ((TextPatternRegex) tp).getValue());
-            BLSpanQuery q = tp.translate(QueryExecutionContext.get(testIndex.index(),
-                    testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
-            Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
-            Assert.assertEquals("contents%word@i:/\\\"/", q.toString());
-        }
+    public void testEscape() throws InvalidQuery {
+        // Keys are CQL regexes (i.e. the $ part in [word="$"]), values are the expected Lucene regex
+        Map<String, String> bcqlToLucene = new HashMap<>();
+        testEscaping("\\.", "\\.");
+        testEscaping(".", ".");
+        testEscaping("\"", "\\\"");
+        testEscaping("\\\\\\\"", "\\\\\\\"");
+        testEscaping("\\(", "\\(");
+        testEscaping("\\\\\\(", "\\\\\\(");
+    }
+
+    private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
+        TextPattern tp = CorpusQueryLanguageParser.parse("\"" + bcqlPattern + "\"");
+        Assert.assertTrue(tp instanceof TextPatternTerm);
+        BLSpanQuery q = tp.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
+        q.visit(new QueryVisitor() {
+            @Override
+            public boolean acceptField(String field) {
+                return true;
+            }
+
+            @Override
+            public void visitLeaf(Query query) {
+                Assert.assertTrue(query instanceof RegexpQuery);
+                Term term = ((RegexpQuery) query).getRegexp();
+                Assert.assertEquals("contents%word@i", term.field());
+                Assert.assertEquals(expectedLuceneRegex, term.text());
+            }
+        });
     }
 
 }

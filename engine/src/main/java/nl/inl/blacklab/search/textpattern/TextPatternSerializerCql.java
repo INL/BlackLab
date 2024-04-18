@@ -73,7 +73,7 @@ public class TextPatternSerializerCql {
             // We're looking for an exact value, which may include regex characters.
             value = StringUtil.escapeLuceneRegexCharacters(value);
         }
-        serializeQuotedString(b, value);
+        serializeToSingleQuotedString(b, value);
         if (annotation != null)
             b.append(optCloseBracket);
     }
@@ -299,7 +299,7 @@ public class TextPatternSerializerCql {
         // MatchFilter string
         cqlSerializers.put(MatchFilterString.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             MatchFilterString tp = (MatchFilterString) pattern;
-            serializeQuotedString(b, tp.getValue());
+            serializeToSingleQuotedString(b, tp.getValue());
         });
 
         // MatchFilter token annotation
@@ -363,7 +363,7 @@ public class TextPatternSerializerCql {
             if (arg instanceof TextPattern) {
                 serialize((TextPattern) arg, b, false, insideTokenBrackets);
             } else if (arg instanceof String) {
-                serializeQuotedString(b, (String) arg);
+                serializeToSingleQuotedString(b, (String) arg);
             } else if (arg instanceof Integer) {
                 b.append((int) arg);
             } else {
@@ -405,8 +405,8 @@ public class TextPatternSerializerCql {
         }
     }
 
-    private static StringBuilder serializeQuotedString(StringBuilder b, String regex) {
-        return b.append("'").append(regex.replaceAll("[\\\\']", "\\\\$0")).append("'");
+    private static StringBuilder serializeToSingleQuotedString(StringBuilder b, String value) {
+        return b.append("'").append(StringUtil.escapeQuote(value, "'")).append("'");
     }
 
     private static String serializeAttributes(Map<String, String> attr) {
