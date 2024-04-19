@@ -70,7 +70,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     }
 
     @Override
-    public final int docID() {
+    public int docID() {
         return in.docID();
     }
 
@@ -94,7 +94,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     public abstract String toString();
 
     @Override
-    public final TwoPhaseIterator asTwoPhaseIterator() {
+    public TwoPhaseIterator asTwoPhaseIterator() {
         TwoPhaseIterator inner = in instanceof Spans ? ((Spans) in).asTwoPhaseIterator() : null;
         if (inner != null) {
             // wrapped instance has an approximation

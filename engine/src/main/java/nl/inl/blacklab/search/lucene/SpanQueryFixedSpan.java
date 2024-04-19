@@ -211,6 +211,11 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                     public int docID() {
                         return currentDoc;
                     }
+
+                    @Override
+                    public String toString() {
+                        return "FIXEDSPAN(" + start + ", " + end + ")";
+                    }
                 }; // no hits
             }
         };

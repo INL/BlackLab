@@ -14,6 +14,7 @@ import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
 
@@ -107,7 +108,8 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
             BLSpans result = weight.getSpans(context, requiredPostings);
             if (result == null)
                 return null;
-            return new SpansFiltered(result, filterWeight.scorer(context));
+            Scorer scorer = filterWeight.scorer(context);
+            return scorer == null ? null : new SpansFiltered(result, scorer);
         }
 
     }
