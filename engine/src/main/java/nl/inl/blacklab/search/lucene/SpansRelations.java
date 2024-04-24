@@ -214,8 +214,6 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         fetchedRelationInfo = false; // only decode payload if we need to
 
-        //@@@ JN DISABLED 2024-01-31; not needed? getRelationInfo(); // TEST
-
         if (spansMayIncludeRoots && spanMode == RelationInfo.SpanMode.SOURCE && getRelationInfo().isRoot()) {
             // Need source, but this has no source
             return FilterSpans.AcceptStatus.NO;

@@ -62,18 +62,22 @@ abstract class BLConjunctionSpans extends BLSpans {
     public int  nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
         atFirstInCurrentDoc = false;
-        return (conjunction.nextDoc() == NO_MORE_DOCS)
-                ? NO_MORE_DOCS
-                : toMatchDoc();
+        int doc = conjunction.nextDoc();
+        if (doc == NO_MORE_DOCS)
+            return NO_MORE_DOCS;
+        assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
+        return toMatchDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
         atFirstInCurrentDoc = false;
-        return (conjunction.advance(target) == NO_MORE_DOCS)
-                ? NO_MORE_DOCS
-                : toMatchDoc();
+        int doc = conjunction.advance(target);
+        if (doc == NO_MORE_DOCS)
+            return NO_MORE_DOCS;
+        assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
+        return toMatchDoc();
     }
 
     private int toMatchDoc() throws IOException {
@@ -82,12 +86,12 @@ abstract class BLConjunctionSpans extends BLSpans {
             if (twoPhaseCurrentDocMatches()) {
                 return docID();
             }
-            if (conjunction.nextDoc() == NO_MORE_DOCS) {
+            int doc = conjunction.nextDoc();
+            if (doc == NO_MORE_DOCS)
                 return NO_MORE_DOCS;
-            }
+            assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
         }
     }
-
 
     protected abstract boolean twoPhaseCurrentDocMatches() throws IOException;
 

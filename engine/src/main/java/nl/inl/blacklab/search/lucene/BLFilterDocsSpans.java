@@ -71,6 +71,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
 
     @Override
     public int docID() {
+        assert in != null;
         return in.docID();
     }
 
@@ -115,7 +116,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
                 }
             };
         } else {
-            // wrapped instance has no approximation, but 
+            // wrapped instance has no approximation, but
             // we can still defer matching until absolutely needed.
             return new TwoPhaseIterator(in) {
                 @Override

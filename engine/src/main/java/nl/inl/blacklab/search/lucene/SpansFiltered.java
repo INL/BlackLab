@@ -8,7 +8,6 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.FilterSpans;
-import org.apache.lucene.search.spans.Spans;
 
 /**
  * Apply a document Filter to a Spans.
@@ -21,29 +20,20 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
     /** Keep hits from these documents. */
     private final DocIdSetIterator acceptedDocs;
 
-    /** Two-phase approximation */
-    DocIdSetIterator conjunction;
-
     public SpansFiltered(BLSpans spans, Scorer filterDocs) throws IOException {
         this(spans, filterDocs == null ? null : filterDocs.iterator());
     }
 
     public SpansFiltered(BLSpans spans, DocIdSetIterator acceptedDocs) throws IOException {
         super(spans);
-        assert spans != null && acceptedDocs != null; // don't create this class if there are no hits!
+        assert in != null && acceptedDocs != null; // don't create this class if there are no hits!
         this.acceptedDocs = acceptedDocs;
+    }
 
-        if (acceptedDocs == null || acceptedDocs.docID() == NO_MORE_DOCS)
-            conjunction = DocIdSetIterator.empty();
-        else {
-            TwoPhaseIterator inner = in == null ? null : in.asTwoPhaseIterator();
-            if (inner == null) {
-                conjunction = acceptedDocs;
-            } else {
-                DocIdSetIterator innerApprox = inner.approximation();
-                conjunction = ConjunctionDISI.intersectIterators(List.of(acceptedDocs, innerApprox));
-            }
-        }
+    public void assertDocIdsAllMatch() {
+        if (in.docID() == NO_MORE_DOCS)
+            return;
+        assert acceptedDocs.docID() == in.docID();
     }
 
     @Override
@@ -52,12 +42,34 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
         atFirstInCurrentDoc = false;
         startPos = -1;
         while (true) {
-            int doc = conjunction.nextDoc();
-            assert doc >= 0;
-            if (doc == NO_MORE_DOCS) {
+            in.nextDoc();
+            return nextMatchingDoc();
+        }
+    }
+
+    private int nextMatchingDoc() throws IOException {
+        // Keep going until we find a doc or we run out
+        while (true) {
+            // Make sure in and acceptedDocs are in the same doc
+            int inDocId = in.docID();
+            while (inDocId != NO_MORE_DOCS && acceptedDocs.docID() != NO_MORE_DOCS && inDocId != acceptedDocs.docID()) {
+                // Do we need to advance acceptedDocs to catch up with in?
+                if (acceptedDocs.docID() < inDocId) {
+                    if (acceptedDocs.advance(inDocId) == NO_MORE_DOCS)
+                        return NO_MORE_DOCS;
+                }
+                // Do we need to advance in to catch up with acceptedDocs?
+                if (inDocId < acceptedDocs.docID())
+                    inDocId = in.advance(acceptedDocs.docID());
+            }
+            //assert inDocId == approximation.docID();
+            assert inDocId >= 0;
+            if (inDocId == NO_MORE_DOCS) {
+                // Done
                 return NO_MORE_DOCS;
             } else if (twoPhaseCurrentDocMatches()) {
-                return doc;
+                // Found a match; return it
+                return inDocId;
             }
         }
     }
@@ -67,18 +79,16 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
         assert target >= 0 && target > in.docID();
         atFirstInCurrentDoc = false;
         startPos = -1;
-        int doc = conjunction.advance(target);
-        assert doc >= 0;
-        while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
-            doc = conjunction.nextDoc();
-            assert doc >= 0;
-        }
-        return doc;
+        in.advance(target);
+        return nextMatchingDoc();
     }
 
     @Override
     public int docID() {
-        return conjunction.docID();
+        if (in.docID() == NO_MORE_DOCS || acceptedDocs.docID() == NO_MORE_DOCS)
+            return NO_MORE_DOCS;
+        assertDocIdsAllMatch();
+        return in.docID();
     }
 
     @Override
@@ -97,58 +107,43 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
 
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
-        if (in.docID() < conjunction.docID()) {
-            // This can happen if the clause doesn't have a two-phase iterator.
-            // In that case, our "conjunction" is actually just the acceptedDocs,
-            // and the clause may not have been advanced yet.
-            int docId = in.advance(conjunction.docID());
-            if (docId == NO_MORE_DOCS) {
-                return false;
-            }
-        }
-        return super.twoPhaseCurrentDocMatches();
+        return in.docID() == acceptedDocs.docID() && super.twoPhaseCurrentDocMatches();
     }
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
-        TwoPhaseIterator inner = in == null ? null : in.asTwoPhaseIterator();
-        if (inner != null) {
-            // wrapped instance has an approximation
-            return new TwoPhaseIterator(conjunction) {
-                @Override
-                public boolean matches() throws IOException {
-                    return inner.matches() && twoPhaseCurrentDocMatches();
-                }
-
-                @Override
-                public float matchCost() {
-                    return inner.matchCost(); // underestimate
-                }
-
-                @Override
-                public String toString() {
-                    return "BLFilterSpans@asTwoPhaseIterator(inner=" + inner + ", in=" + in + ")";
-                }
-            };
+        float matchCost;
+        DocIdSetIterator approximation;
+        if (acceptedDocs == null || acceptedDocs.docID() == NO_MORE_DOCS) {
+            approximation = DocIdSetIterator.empty();
+            matchCost = 0;
         } else {
-            // wrapped instance has no approximation, but
-            // we can still defer matching until absolutely needed.
-            return new TwoPhaseIterator(conjunction) {
-                @Override
-                public boolean matches() throws IOException {
-                    return twoPhaseCurrentDocMatches();
-                }
-
-                @Override
-                public float matchCost() {
-                    return in instanceof Spans ? ((Spans) in).positionsCost() : in.cost(); // overestimate
-                }
-
-                @Override
-                public String toString() {
-                    return "BLFilterSpans@asTwoPhaseIterator(in=" + in + ")";
-                }
-            };
+            TwoPhaseIterator inner = in.asTwoPhaseIterator();
+            if (inner == null) {
+                approximation = ConjunctionDISI.intersectIterators(List.of(acceptedDocs, in));
+                matchCost = in.positionsCost(); // underestimate
+            } else {
+                DocIdSetIterator innerApprox = inner.approximation();
+                approximation = ConjunctionDISI.intersectIterators(List.of(acceptedDocs, innerApprox));
+                matchCost = inner.matchCost(); // overestimate
+            }
         }
+
+        return new TwoPhaseIterator(approximation) {
+            @Override
+            public boolean matches() throws IOException {
+                return twoPhaseCurrentDocMatches();
+            }
+
+            @Override
+            public float matchCost() {
+                return matchCost;
+            }
+
+            @Override
+            public String toString() {
+                return "BLFilterSpans@asTwoPhaseIterator(approx=" + approximation + ")";
+            }
+        };
     }
 }

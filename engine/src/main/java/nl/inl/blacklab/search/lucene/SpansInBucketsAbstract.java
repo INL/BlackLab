@@ -118,11 +118,15 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
         assert positionedAtHitIfPositionedInDoc();
         if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
             if (source.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+                // @@@ JN 2024-04-24
+                //     This causes problems with two-phase iteration, or at least with
+                ///    some asserts that make sure clauses aren't positioned at a hit yet
+                //     when twoPhaseCurrentDocMatches() is called.
                 source.nextStartPosition(); // start gathering at the first hit
             }
         }
         assert positionedAtHitIfPositionedInDoc();
-        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);;
+        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
         return source.docID();
     }
 

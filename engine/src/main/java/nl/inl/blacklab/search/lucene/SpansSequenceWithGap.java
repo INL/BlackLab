@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.lucene.search.ConjunctionDISI;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -195,6 +196,7 @@ class SpansSequenceWithGap extends BLSpans {
         while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
             doc = conjunction.nextDoc();
         }
+        assert Stream.of(first, second).allMatch(a -> a.docID() == conjunction.docID());
         return doc;
     }
 
@@ -206,6 +208,7 @@ class SpansSequenceWithGap extends BLSpans {
         while (doc != NO_MORE_DOCS && !twoPhaseCurrentDocMatches()) {
             doc = conjunction.nextDoc();
         }
+        assert Stream.of(first, second).allMatch(a -> a.docID() == conjunction.docID());
         return doc;
     }
 
