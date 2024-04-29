@@ -111,6 +111,12 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
                 for (int i = 0; i < matchInfo.length; i++) {
                     MatchInfo info = matchInfo[i];
                     if (info != null && info.getType() == MatchInfo.Type.RELATION) {
+
+                        // skip relations to other fields (parallel corpora)
+                        RelationInfo rel = (RelationInfo)info;
+                        if (rel.getTargetField() != null)
+                            continue;
+
                         // This is a relations match. Take this into account for the full span.
                         // (capture groups are not taken into account, but should already fall into the span anyway)
                         if (info.getSpanStart() < startAdjusted)

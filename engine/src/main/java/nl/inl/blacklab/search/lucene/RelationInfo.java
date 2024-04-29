@@ -332,7 +332,13 @@ public class RelationInfo extends MatchInfo {
         case TARGET:
             return getTargetStart();
         case FULL_SPAN:
-            return getSpanStart();
+            if (!isCrossFieldRelation()) {
+                // Regular relation; return full span
+                return getSpanStart();
+            } else {
+                // Relation points to another field; return source span
+                return getSourceStart();
+            }
         case ALL_SPANS:
             throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
@@ -347,12 +353,22 @@ public class RelationInfo extends MatchInfo {
         case TARGET:
             return getTargetEnd();
         case FULL_SPAN:
-            return getSpanEnd();
+            if (!isCrossFieldRelation()) {
+                // Regular relation; return full span
+                return getSpanEnd();
+            } else {
+                // Relation points to another field; return source span
+                return getSourceEnd();
+            }
         case ALL_SPANS:
             throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
             throw new IllegalArgumentException("Unknown mode: " + mode);
         }
+    }
+
+    private boolean isCrossFieldRelation() {
+        return targetField != null && !targetField.equals(getField());
     }
 
     /**

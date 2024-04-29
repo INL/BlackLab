@@ -91,8 +91,18 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
     @Override
     public abstract int hashCode();
 
+    /** Will return the start of the match info span.
+     * <p>
+     * Note that for relations, this is <code>min(sourceStart, targetStart)</code>,
+     * and for lists of match info, it's the minimum of all their span starts.
+     */
     public abstract int getSpanStart();
 
+    /** Will return the end of the match info span.
+     * <p>
+     * Note that for relations, this is <code>max(sourceEnd, targetEnd)</code>,
+     * and for lists of match info, it's the maximum of all their span ends.
+     */
     public abstract int getSpanEnd();
 
     public boolean isSpanEmpty() {
