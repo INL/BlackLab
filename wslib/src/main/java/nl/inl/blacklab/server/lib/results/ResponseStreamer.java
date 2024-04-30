@@ -685,8 +685,8 @@ public class ResponseStreamer {
                         Kwic kwic = e.getValue();
                         ds.startDynEntry(field).startMap();
                         {
-                            ds.entry(KEY_SPAN_START, kwic.fragmentStartInDoc());
-                            ds.entry(KEY_SPAN_END, kwic.fragmentEndInDoc());
+                            ds.entry(KEY_SPAN_START, kwic.hitStart() + kwic.fragmentStartInDoc());
+                            ds.entry(KEY_SPAN_END, kwic.hitEnd() + kwic.fragmentStartInDoc());
                             optMatchInfos(matchInfos, mi -> mi.getField().equals(field));
                             ds.startEntry(KEY_BEFORE);
                             ds.contextList(kwic.annotations(), annotationsToList, kwic.before());

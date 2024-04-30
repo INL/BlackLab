@@ -97,8 +97,9 @@ public class Contexts {
                     annotIndex += contextLength; // jmup to next annotation in context array
                 }
             }
+            int fragmentStartInDoc = h.start() - hitContext[Contexts.HIT_START_INDEX];
             kwicConsumer.accept(h, new Kwic(annotations, tokens, hitContext[Contexts.HIT_START_INDEX],
-                    hitContext[Contexts.RIGHT_START_INDEX], h.start()));
+                    hitContext[Contexts.RIGHT_START_INDEX], fragmentStartInDoc));
             hitIndex++;
         }
     }

@@ -64,10 +64,12 @@ public class Kwics {
                         int[] minMax = e.getValue();
                         int matchStart = minMax[2] < 0 ? minMax[0] : minMax[2];
                         int matchEnd = minMax[3] < 0 ? minMax[1] : minMax[3];
-                        int snippetStart = Math.max(0, minMax[0] - contextSize.before());
-                        int snippetEnd = minMax[1] + contextSize.after();
-                        if (snippetEnd - snippetStart > contextSize.getMaxSnippetLength())
-                            snippetEnd = snippetStart + contextSize.getMaxSnippetLength();
+                        int snippetStart = Math.max(0, Math.min(minMax[0], matchStart - contextSize.before()));
+                        int snippetEnd = Math.max(minMax[1], matchEnd + contextSize.after());
+                        if (snippetEnd - snippetStart > contextSize.getMaxSnippetLength()) {
+                            snippetEnd = matchStart + contextSize.getMaxSnippetLength() / 2;
+                            snippetStart = matchStart - contextSize.getMaxSnippetLength() / 2;
+                        }
 
                         String field = e.getKey();
                         List<AnnotationForwardIndex> afis = afisPerField.get(field);
