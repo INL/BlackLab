@@ -188,9 +188,9 @@ public class WriteCsv {
         // Only kwic supported, original document output not supported in csv currently.
         Annotation punct = mainTokenProperty.field().annotations().punct();
         printer.print(docPid);
-        printer.print(interleave(kwic.left(punct), kwic.left(mainTokenProperty)));
+        printer.print(interleave(kwic.before(punct), kwic.before(mainTokenProperty)));
         printer.print(interleave(kwic.match(punct), kwic.match(mainTokenProperty)));
-        printer.print(interleave(kwic.right(punct), kwic.right(mainTokenProperty)));
+        printer.print(interleave(kwic.after(punct), kwic.after(mainTokenProperty)));
 
         // Add all other properties in this word
         for (Annotation otherProp : otherTokenProperties)

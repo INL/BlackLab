@@ -50,10 +50,10 @@ public class TestKwic {
         Kwic kwic = new Kwic(ANNOTS, TOKENS, 2, 3, 0);
     
         Assert.assertEquals(EXP_LEFT + EXP_MATCH + EXP_RIGHT, kwic.fragment().xml());
-        Assert.assertEquals(LEFT, kwic.left());
+        Assert.assertEquals(LEFT, kwic.before());
         Assert.assertEquals(MATCH, kwic.match());
-        Assert.assertEquals(RIGHT, kwic.right());
-        Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.left(ANNOTS.get(3)));
+        Assert.assertEquals(RIGHT, kwic.after());
+        Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.before(ANNOTS.get(3)));
     }
 
 }

@@ -666,9 +666,9 @@ public class ResponseStreamer {
             // Add KWIC info
             Kwic c = concordanceContext.getKwic(hit);
             if (includeContext) {
-                ds.startEntry(KEY_BEFORE).contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                ds.startEntry(KEY_BEFORE).contextList(c.annotations(), annotationsToList, c.before()).endEntry()
                         .startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry()
-                        .startEntry(KEY_AFTER).contextList(c.annotations(), annotationsToList, c.right()).endEntry();
+                        .startEntry(KEY_AFTER).contextList(c.annotations(), annotationsToList, c.after()).endEntry();
             } else {
                 if (isSnippet) {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
@@ -688,8 +688,14 @@ public class ResponseStreamer {
                             ds.entry(KEY_SPAN_START, kwic.fragmentStartInDoc());
                             ds.entry(KEY_SPAN_END, kwic.fragmentEndInDoc());
                             optMatchInfos(matchInfos, mi -> mi.getField().equals(field));
+                            ds.startEntry(KEY_BEFORE);
+                            ds.contextList(kwic.annotations(), annotationsToList, kwic.before());
+                            ds.endEntry();
                             ds.startEntry(KEY_MATCHING_PART_OF_HIT);
-                            ds.contextList(kwic.annotations(), annotationsToList, kwic.tokens());
+                            ds.contextList(kwic.annotations(), annotationsToList, kwic.match());
+                            ds.endEntry();
+                            ds.startEntry(KEY_AFTER);
+                            ds.contextList(kwic.annotations(), annotationsToList, kwic.after());
                             ds.endEntry();
                         }
                         ds.endMap().endDynEntry();
@@ -1230,11 +1236,11 @@ public class ResponseStreamer {
                         ds.startItem(KEY_DOC_SNIPPET).startMap();
                         {
                             // Add KWIC info
-                            ds.startEntry(KEY_BEFORE).contextList(k.annotations(), annotationsToList, k.left())
+                            ds.startEntry(KEY_BEFORE).contextList(k.annotations(), annotationsToList, k.before())
                                     .endEntry();
                             ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(k.annotations(), annotationsToList, k.match())
                                     .endEntry();
-                            ds.startEntry(KEY_AFTER).contextList(k.annotations(), annotationsToList, k.right())
+                            ds.startEntry(KEY_AFTER).contextList(k.annotations(), annotationsToList, k.after())
                                     .endEntry();
                         }
                         ds.endMap().endItem();

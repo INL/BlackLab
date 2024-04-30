@@ -348,9 +348,9 @@ public class TestIndex {
         Kwics kwics = hits.kwics(ContextSize.get(1, Integer.MAX_VALUE));
         for (Hit hit : hits) {
             Kwic kwic = kwics.get(hit);
-            String left = StringUtils.join(kwic.left(word), " ");
+            String left = StringUtils.join(kwic.before(word), " ");
             String match = StringUtils.join(kwic.match(word), " ");
-            String right = StringUtils.join(kwic.right(word), " ");
+            String right = StringUtils.join(kwic.after(word), " ");
             String conc = left + " [" + match + "] " + right;
             results.add(conc.trim());
         }

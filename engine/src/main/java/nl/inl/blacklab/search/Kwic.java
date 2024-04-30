@@ -48,8 +48,14 @@ public class Kwic {
         assert hitEnd * fragment.annotations.size() <= tokens.size();
     }
 
-    public List<String> left() {
+    public List<String> before() {
         return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.annotations.size()));
+    }
+
+    /** @deprecated use {@link #before()} */
+    @Deprecated
+    public List<String> left() {
+        return before();
     }
 
     /**
@@ -58,8 +64,14 @@ public class Kwic {
      * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> left(Annotation annotation) {
+    public List<String> before(Annotation annotation) {
         return singlePropertyContext(annotation, 0, hitStart);
+    }
+
+    /** @deprecated use {@link #before(Annotation)} */
+    @Deprecated
+    public List<String> left(Annotation annotation) {
+        return before(annotation);
     }
 
     public List<String> match() {
@@ -78,9 +90,15 @@ public class Kwic {
         return singlePropertyContext(annotation, hitStart, hitEnd);
     }
 
-    public List<String> right() {
+    public List<String> after() {
         return Collections
                 .unmodifiableList(fragment.tokens.subList(hitEnd * fragment.annotations.size(), fragment.tokens.size()));
+    }
+
+    /** @deprecated use {@link #after()} */
+    @Deprecated
+    public List<String> right() {
+        return after();
     }
 
     /**
@@ -89,8 +107,14 @@ public class Kwic {
      * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> right(Annotation annotation) {
+    public List<String> after(Annotation annotation) {
         return singlePropertyContext(annotation, hitEnd, fragment.tokens.size() / fragment.annotations.size());
+    }
+
+    /** @deprecated use {@link #after(Annotation)} */
+    @Deprecated
+    public List<String> right(Annotation annotation) {
+        return after(annotation);
     }
 
     /**
@@ -171,9 +195,9 @@ public class Kwic {
         String[] conc = new String[3];
         List<String> match = match();
         String addPunctAfter = !match.isEmpty() ? match.get(0) : "";
-        conc[0] = xmlString(left(), addPunctAfter, true, produceXml);
+        conc[0] = xmlString(before(), addPunctAfter, true, produceXml);
         conc[1] = xmlString(match, null, true, produceXml);
-        conc[2] = xmlString(right(), null, false, produceXml);
+        conc[2] = xmlString(after(), null, false, produceXml);
         return new Concordance(conc);
     }
 

@@ -314,11 +314,23 @@ public class RelationInfo extends MatchInfo {
     }
 
     public int getSpanStart() {
-        return Math.min(sourceStart, targetStart);
+        if (!isCrossFieldRelation()) {
+            // Regular relation; return full span
+            return Math.min(sourceStart, targetStart);
+        } else {
+            // Relation points to another field; return source span
+            return getSourceStart();
+        }
     }
 
     public int getSpanEnd() {
-        return Math.max(sourceEnd, targetEnd);
+        if (!isCrossFieldRelation()) {
+            // Regular relation; return full span
+            return Math.max(sourceEnd, targetEnd);
+        } else {
+            // Relation points to another field; return source span
+            return getSourceEnd();
+        }
     }
 
     public String getTargetField() {
@@ -332,13 +344,7 @@ public class RelationInfo extends MatchInfo {
         case TARGET:
             return getTargetStart();
         case FULL_SPAN:
-            if (!isCrossFieldRelation()) {
-                // Regular relation; return full span
-                return getSpanStart();
-            } else {
-                // Relation points to another field; return source span
-                return getSourceStart();
-            }
+            return getSpanStart();
         case ALL_SPANS:
             throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
@@ -353,13 +359,7 @@ public class RelationInfo extends MatchInfo {
         case TARGET:
             return getTargetEnd();
         case FULL_SPAN:
-            if (!isCrossFieldRelation()) {
-                // Regular relation; return full span
-                return getSpanEnd();
-            } else {
-                // Relation points to another field; return source span
-                return getSourceEnd();
-            }
+            return getSpanEnd();
         case ALL_SPANS:
             throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
         default:
