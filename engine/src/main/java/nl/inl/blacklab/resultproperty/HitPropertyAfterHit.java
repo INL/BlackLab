@@ -23,7 +23,7 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
 
     static HitPropertyAfterHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         DeserializeInfos i = deserializeProp(field, infos);
-        return new HitPropertyAfterHit(index, i.annotation, i.sensitivity, i.intParam);
+        return new HitPropertyAfterHit(index, i.annotation, i.sensitivity, i.extraIntParam(0));
     }
 
     static HitPropertyAfterHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {

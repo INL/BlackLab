@@ -24,7 +24,7 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
 
     static HitPropertyBeforeHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
         DeserializeInfos i = deserializeProp(field, infos);
-        return new HitPropertyBeforeHit(index, i.annotation, i.sensitivity, getOrDefaultContextSize(i.intParam, contextSize.before()));
+        return new HitPropertyBeforeHit(index, i.annotation, i.sensitivity, getOrDefaultContextSize(i.extraIntParam(0), contextSize.before()));
     }
 
     static HitPropertyBeforeHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {

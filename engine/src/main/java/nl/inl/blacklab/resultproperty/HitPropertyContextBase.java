@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -59,18 +60,33 @@ public abstract class HitPropertyContextBase extends HitProperty {
         MatchSensitivity sensitivity;
 
         /** One extra parameter: e.g. capture group name or number of tokens (before/after hit) */
-        String stringParam;
-        int intParam;
+        List<String> extraParams;
 
-        public DeserializeInfos(Annotation annotation, MatchSensitivity sensitivity, String stringParam) {
+        public DeserializeInfos(Annotation annotation, MatchSensitivity sensitivity, List<String> extraParams) {
             this.annotation = annotation;
             this.sensitivity = sensitivity;
-            this.stringParam = stringParam;
+            this.extraParams = extraParams;
+        }
+
+        public String extraParam(int index) {
+            return extraParam(index, "");
+        }
+
+        public String extraParam(int index, String defaultValue) {
+            return index >= extraParams.size() ? defaultValue : extraParams.get(index);
+        }
+
+        public int extraIntParam(int index) {
+            return extraIntParam(index, -1);
+        }
+
+        public int extraIntParam(int index, int defaultValue) {
             try {
-                this.intParam = Integer.parseInt(stringParam);
+                return Integer.parseInt(extraParam(index));
             } catch (NumberFormatException e) {
-                this.intParam = -1;
+                // ok, just return default
             }
+            return defaultValue;
         }
     }
 
@@ -78,8 +94,8 @@ public abstract class HitPropertyContextBase extends HitProperty {
         Annotation annotation = field.annotation(infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0));
         MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1))
                 : MatchSensitivity.SENSITIVE;
-        String param = infos.size() > 2 ? infos.get(2) : "";
-        return new DeserializeInfos(annotation, sensitivity, param);
+        List<String> params = infos.size() > 2 ? infos.subList(2, infos.size()) : Collections.emptyList();
+        return new DeserializeInfos(annotation, sensitivity, params);
     }
 
     protected static int getOrDefaultContextSize(int i, int d) {

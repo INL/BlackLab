@@ -35,7 +35,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         DeserializeInfos i = deserializeProp(field, infos);
-        return new HitPropertyContextPart(index, i.annotation, i.sensitivity, i.stringParam);
+        return new HitPropertyContextPart(index, i.annotation, i.sensitivity, i.extraParam(0));
     }
 
     static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, List<String> infos) {

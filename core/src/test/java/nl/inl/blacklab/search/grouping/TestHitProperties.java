@@ -23,6 +23,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
@@ -73,7 +74,7 @@ public class TestHitProperties {
     @Test
     public void testHitPropCaptureGroup() {
         Hits hits = testIndex.find(" A:'the' ");
-        HitProperty p = new HitPropertyCaptureGroup(index, null, MatchSensitivity.SENSITIVE, "A");
+        HitProperty p = new HitPropertyCaptureGroup(index, null, MatchSensitivity.SENSITIVE, "A", RelationInfo.SpanMode.FULL_SPAN);
         HitGroups g = hits.group(p, Results.NO_LIMIT);
         HitGroup group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("the") }, false));
         Assert.assertEquals(3, group.size());

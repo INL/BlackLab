@@ -105,6 +105,33 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
      */
     public abstract int getSpanEnd();
 
+    /**
+     * Get the start of either the full span or just the source or target (if applicable).
+     *
+     * Relations have a source and target, other match infos do not and will always
+     * use the full span.
+     *
+     * @param mode span mode to use
+     * @return span start
+     */
+    public int spanStart(RelationInfo.SpanMode mode) {
+        return getSpanStart();
+    }
+
+
+    /**
+     * Get the end of either the full span or just the source or target (if applicable).
+     *
+     * Relations have a source and target, other match infos do not and will always
+     * use the full span.
+     *
+     * @param mode span mode to use
+     * @return span end
+     */
+    public int spanEnd(RelationInfo.SpanMode mode) {
+        return getSpanEnd();
+    }
+
     public boolean isSpanEmpty() {
         return getSpanStart() == getSpanEnd();
     }
