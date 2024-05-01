@@ -251,7 +251,7 @@ public class QueryExtensions {
                 Object defVal = funcInfo.getDefaultParameterValue(i);
                 if (defVal == QueryExtensions.VALUE_QUERY_ANY_NGRAM) {
                     // Special case: any n-gram (usually meaning "don't care")
-                    defVal = SpanQueryAnyToken.anyNGram(context.queryInfo(), context);
+                    defVal = SpanQueryAnyToken.anyNGram(context.queryInfo(), context.luceneField());
                 }
                 if (i >= newArgs.size()) {
                     // Missing argument; use default value

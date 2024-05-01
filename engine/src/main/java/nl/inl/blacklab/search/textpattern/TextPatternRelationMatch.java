@@ -111,7 +111,7 @@ public class TextPatternRelationMatch extends TextPattern {
 
         if (clauses.isEmpty()) {
             // All clauses were []*; return any n-gram query (good luck with that...)
-            return SpanQueryAnyToken.anyNGram(context.queryInfo(), context);
+            return SpanQueryAnyToken.anyNGram(context.queryInfo(), context.luceneField());
         }
         if (clauses.size() == 1) {
             // Nothing to match, just return the clause
