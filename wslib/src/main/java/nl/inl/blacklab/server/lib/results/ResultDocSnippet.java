@@ -90,7 +90,7 @@ public class ResultDocSnippet {
             try {
                 BLSpanQuery query = pattern.translate(queryContext);
                 query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
-                hits = index.search(field).find(query).execute();
+                hits = index.search(field, params.useCache()).find(query).execute();
             } catch (InvalidQuery e) {
                 throw new BlackLabRuntimeException(e);
             }
