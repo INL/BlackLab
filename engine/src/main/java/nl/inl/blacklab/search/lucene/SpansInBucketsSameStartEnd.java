@@ -65,8 +65,9 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     @Override
     public int nextDoc() throws IOException {
         int docId = source.nextDoc();
-        if (docId != NO_MORE_DOCS)
-            source.nextStartPosition();
+        if (docId != NO_MORE_DOCS) {
+            prepareForFirstBucketInDocument(source);
+        }
         currentStartPosition = -1; // no bucket yet
         return docId;
     }
@@ -74,6 +75,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     @Override
     public int nextBucket() throws IOException {
         assert source.docID() >= 0;
+        ensureAtFirstHit(source);
         if (source.startPosition() == Spans.NO_MORE_POSITIONS)
             return NO_MORE_BUCKETS;
         return gatherHitsWithSameStartEnd();
@@ -136,8 +138,9 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
         int docId = source.advance(target);
-        if (docId != NO_MORE_DOCS)
-            source.nextStartPosition();
+        if (docId != NO_MORE_DOCS) {
+            prepareForFirstBucketInDocument(source);
+        }
         currentStartPosition = -1; // no bucket yet
         return docId;
     }

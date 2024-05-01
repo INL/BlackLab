@@ -218,6 +218,10 @@ class SpansSequenceWithGap extends BLSpans {
         // Does this doc have any matches?
         assert first.startPosition() == -1;
         firstStart = first.nextStartPosition();
+        if (firstStart == NO_MORE_POSITIONS) {
+            secondEnd = NO_MORE_POSITIONS;
+            return false;
+        }
         assert firstStart >= 0;
         second.nextBucket();
         indexFirstPossibleSecondClauseMatch = -1;

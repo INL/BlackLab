@@ -61,6 +61,9 @@ class SpansPositionFilter extends BLSpans {
     /** Are the filter hits guaranteed to have the same length? */
     private final boolean filterFixedLength;
 
+    /** Do we need to call filter.nextBucket() before matching? */
+    private int nextBucketCalledOnDocId = -1;
+
     /** Approximation for two-phase iterator */
     private final DocIdSetIterator conjunction;
 
@@ -163,10 +166,7 @@ class SpansPositionFilter extends BLSpans {
                             positiveFilterRanOut = true;
                             return NO_MORE_DOCS;
                         }
-                    } /*
-                    // Don't get a bucket yet; twoPhaseCurrentDocMatches() below will take care of this
-                    else
-                        filter.nextBucket();*/
+                    }
                 } else {
                     if (invert) {
                         // For negative filters, lagging producer spans is ok. This just means
@@ -214,8 +214,6 @@ class SpansPositionFilter extends BLSpans {
                 ;
             }
         }
-        if (filter.docID() == producer.docID())
-            filter.nextBucket(); // ensure we have a filter bucket
 
         // Now that both clauses are positioned, find an actual match
         if (synchronizePos() != NO_MORE_POSITIONS) {
@@ -296,7 +294,8 @@ class SpansPositionFilter extends BLSpans {
      * span.
      *
      * Both producer and filter must be positioned, i.e. producer must be at a valid
-     * span and filter must be in a valid bucket.
+     * span and filter must be in a document (although nextBucket may not have been called;
+     * see {@link #nextBucketCalledOnDocId}).
      *
      * @return start position if found, NO_MORE_POSITIONS if no such container
      *         exists (i.e. we're done)
@@ -316,6 +315,14 @@ class SpansPositionFilter extends BLSpans {
                 // No filter matches, therefore no matches
                 return NO_MORE_POSITIONS;
             }
+
+            // We must be at a valid (non-empty) bucket.
+            if (nextBucketCalledOnDocId < filter.docID()) {
+                int docId = filter.nextBucket();
+                assert docId != SpansInBuckets.NO_MORE_BUCKETS;
+                nextBucketCalledOnDocId = docId;
+            }
+            assert filter.bucketSize() > 0;
 
             // We're at the first unchecked producer spans. Does it match our filter?
             boolean invertedMatch = invert; // if looking for non-matches, keep track if there have been any matches.

@@ -33,6 +33,15 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
     public static final int LIST_INITIAL_CAPACITY = 1000;
 
     public static final int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
+    /** If true, we need to call nextStartPosition() once before gathering hits in current bucket.
+     *  (this happens at the start of the document; in any other case, we're already at the first
+     *   hit in the next bucket, because we determine if we're done with a bucket by iterating over
+     *   hits until we find one that doesn't belong in the current bucket)
+     *  (we used to just advance to the first hit in the document whenever we started a new one,
+     *   but this gets messy in combination with two-phase iterators, which advance through documents
+     *   without looking at hits)
+     */
+    protected boolean beforeFirstBucketHit = false;
 
     /**
      * Document id of current bucket
@@ -132,7 +141,44 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
 
     public abstract long cost();
 
-    protected static TwoPhaseIterator getTwoPhaseIterator(BLSpans source) {
+    /**
+     * Assert that, if our clause is positioned at a doc, nextStartPosition() has also been called.
+     *
+     * Sanity check to be called from assertions at the start and end of methods that change the internal state.
+     *
+     * We require this because nextBucket() expects the clause to be positioned at a hit. This is because
+     * for certain bucketing operations we can only decide we're done with a bucket if we're at the first hit
+     * that doesn't belong in the bucket.
+     *
+     * If {@link #beforeFirstBucketHit} is set and we're not at a hit, that's fine too: in that case, we've just
+     * started a document and haven't nexted yet (we defer that because of two-phase iterators).
+     *
+     * @return true if positioned at a hit (or at a doc and nextStartPosition() has been called), false if not
+     */
+    protected boolean positionedAtHitIfPositionedInDoc(BLSpans source) {
+        return source.docID() < 0 || source.docID() == NO_MORE_DOCS ||  // not in doc?
+                (beforeFirstBucketHit && source.startPosition() < 0) ||     // just started a doc?
+                source.startPosition() >= 0;                                // positioned at hit in doc
+    }
+
+    protected void prepareForFirstBucketInDocument(BLSpans source) {
+        // Mark that we've just started a new document, and we need to call source.nextStartPosition()
+        // first before gathering hits in the current bucket.
+        // (from the second bucket in a document onwards, we always know we're already at the first hit
+        //  in the bucket)
+        beforeFirstBucketHit = true;
+        assert positionedAtHitIfPositionedInDoc(source);
+    }
+
+    protected void ensureAtFirstHit(BLSpans source) throws IOException {
+        if (beforeFirstBucketHit) {
+            // We've just started a new document, and haven't called nextStartPosition() yet. Do so now.
+            source.nextStartPosition();
+            beforeFirstBucketHit = false;
+        }
+    }
+
+    protected TwoPhaseIterator getTwoPhaseIterator(BLSpans source) {
         TwoPhaseIterator inner = source.asTwoPhaseIterator();
         if (inner != null) {
             return new TwoPhaseIterator(inner.approximation()) {
@@ -141,8 +187,7 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
                     if (!inner.matches())
                         return false;
                     assert source.docID() >= 0 && source.docID() != NO_MORE_DOCS;
-                    int startPos = source.nextStartPosition(); // start gathering at the first hit
-                    assert startPos >= 0 && startPos != Spans.NO_MORE_POSITIONS;
+                    prepareForFirstBucketInDocument(source);
                     return true;
                 }
 
@@ -161,8 +206,7 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
                 @Override
                 public boolean matches() throws IOException {
                     assert source.docID() >= 0 && source.docID() != NO_MORE_DOCS;
-                    int startPos = source.nextStartPosition(); // start gathering at the first hit
-                    assert startPos >= 0 && startPos != Spans.NO_MORE_POSITIONS;
+                    prepareForFirstBucketInDocument(source);
                     return true;
                 }
 

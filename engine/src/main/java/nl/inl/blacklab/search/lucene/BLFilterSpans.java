@@ -175,7 +175,9 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         assert in.startPosition() == -1;
 
         startPos = in.nextStartPosition();
-        assert startPos != NO_MORE_POSITIONS && startPos >= 0;
+        if (startPos == NO_MORE_POSITIONS)
+            return false;
+        assert startPos >= 0;
         for (;;) {
             switch(accept(in)) {
             case YES:
