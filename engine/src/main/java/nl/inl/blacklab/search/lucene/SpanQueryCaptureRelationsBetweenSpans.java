@@ -201,8 +201,9 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpans relationsSpans = relations.getSpans(context, requiredPostings);
             if (relationsSpans == null)
                 return null;
-            BLSpans targetSpans = target == null ? null : target.getSpans(context, requiredPostings);
-            return new SpansCaptureRelationsBetweenSpans.Target(relationsSpans, targetSpans, captureAs,
+            boolean hasTargetRestrictions = target != null;
+            BLSpans targetSpans = hasTargetRestrictions ? target.getSpans(context, requiredPostings) : null;
+            return new SpansCaptureRelationsBetweenSpans.Target(relationsSpans, targetSpans, hasTargetRestrictions, captureAs,
                     captureTargetAs, targetField);
         }
 

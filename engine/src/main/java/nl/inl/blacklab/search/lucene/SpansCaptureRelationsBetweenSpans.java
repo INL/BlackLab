@@ -32,12 +32,18 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         /** Group index of captureAs */
         private int captureAsIndex = -1;
 
-        /** Span the relation targets must be inside of (or null if we don't care) */
+        /** Span the relation targets must be inside of (or null if there are no hits or we don't care; in the latter
+         * case, {@link #hasTargetRestrictions} will be false) */
         private final SpansInBucketsPerDocument target;
+
+        /** If false, there are no target restrictions, so we don't need to check */
+        private final boolean hasTargetRestrictions;
 
         /** If target == null, we may still want to capture the relation targets.
          *  E.g. <code>(...some source query...) ==> A:[]*</code>
-         *  In that case, this gives the capture name for that. */
+         *  In that case, this gives the capture name for that.
+         *  (if target is not null, any desired capture operation is included in that,
+         *   so we don't need it here) */
         private final String captureTargetAs;
 
         /** Group index of captureTargetAs */
@@ -46,10 +52,11 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         /** If target == null and captureTargetAs is set, this gives the target field for capture. */
         private final String targetField;
 
-        public Target(BLSpans relations, BLSpans target, String captureAs, String captureTargetAs, String targetField) {
+        public Target(BLSpans relations, BLSpans target, boolean hasTargetRestrictions, String captureAs, String captureTargetAs, String targetField) {
             this.relations = relations;
             this.captureAs = captureAs;
             this.target = target == null ? null : new SpansInBucketsPerDocument(target);
+            this.hasTargetRestrictions = hasTargetRestrictions;
             this.captureTargetAs = captureTargetAs;
             this.targetField = targetField;
             if (target != null && !StringUtils.isEmpty(captureTargetAs))
@@ -74,14 +81,17 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             if (o == null || getClass() != o.getClass())
                 return false;
             Target target1 = (Target) o;
-            return Objects.equals(relations, target1.relations) && Objects.equals(captureAs,
-                    target1.captureAs) && Objects.equals(captureTargetAs,
-                    target1.captureTargetAs) && Objects.equals(target, target1.target);
+            return captureAsIndex == target1.captureAsIndex && hasTargetRestrictions == target1.hasTargetRestrictions
+                    && captureTargetAsIndex == target1.captureTargetAsIndex && Objects.equals(relations,
+                    target1.relations) && Objects.equals(captureAs, target1.captureAs) && Objects.equals(
+                    target, target1.target) && Objects.equals(captureTargetAs, target1.captureTargetAs)
+                    && Objects.equals(targetField, target1.targetField);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(relations, captureAs, captureTargetAs, target);
+            return Objects.hash(relations, captureAs, captureAsIndex, target, hasTargetRestrictions, captureTargetAs,
+                    captureTargetAsIndex, targetField);
         }
 
         @Override
@@ -91,6 +101,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                     ", captureAs='" + captureAs + '\'' +
                     ", captureTargetAs='" + captureTargetAs + '\'' +
                     ", target=" + target +
+                    ", hasTargetRestrictions=" + hasTargetRestrictions +
                     '}';
         }
     }
@@ -163,8 +174,12 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 // If no relations match, there is no match.
                 return FilterSpans.AcceptStatus.NO;
             }
+            if (target.hasTargetRestrictions && target.target == null) {
+                // There were target restrictions, but no hits (in this index segment); no match
+                return FilterSpans.AcceptStatus.NO;
+            }
 
-            if (target.target == null) {
+            if (!target.hasTargetRestrictions) {
                 // No target span specified (or e.g. A:[]* ); just accept the relations we captured.
                 matchInfo[target.captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
 
