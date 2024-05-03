@@ -158,7 +158,7 @@ public class Kwics {
             } else {
                 v[0] = Math.min(v[0], start);
                 v[1] = Math.max(v[1], end);
-                v[2] = v[2] < 0 ? matchStart : Math.min(v[2], matchStart);
+                v[2] = v[2] < 0 ? matchStart : (matchStart < 0 ? v[2] : Math.min(v[2], matchStart));
                 v[3] = v[3] < 0 ? matchEnd : Math.max(v[3], matchEnd);
                 return v;
             }
