@@ -367,7 +367,7 @@ public class RelationInfo extends MatchInfo {
         }
     }
 
-    private boolean isCrossFieldRelation() {
+    public boolean isCrossFieldRelation() {
         return targetField != null && !targetField.equals(getField());
     }
 

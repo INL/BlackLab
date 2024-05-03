@@ -114,7 +114,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
                         // skip relations to other fields (parallel corpora)
                         RelationInfo rel = (RelationInfo)info;
-                        if (rel.getTargetField() != null)
+                        if (rel.isCrossFieldRelation())
                             continue;
 
                         // This is a relations match. Take this into account for the full span.
