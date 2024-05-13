@@ -246,7 +246,7 @@ TextPattern relationQuery():
     String relType = null;
 }
 {   LOOKAHEAD(3)
-    parent=complexQuery()
+    parent=containingWithinQuery()
     [
         LOOKAHEAD(3)
         childRel=childRelation()                        { childRels.add(childRel); }
@@ -376,14 +376,15 @@ Integer[] repetitionAmount():
     }
 }
 
-TextPattern complexQuery():
+/** A query (optionally) using the containing/within operator. */
+TextPattern containingWithinQuery():
 {
     TextPattern a = null, b = null;
     Token op = null;
     Operation oper = Operation.CONTAINING;
 }
 {
-    a=simpleQuery() [ op=queryOperator() b=complexQuery() ]
+    a=booleanQuery() [ op=containingWithinOperator() b=containingWithinQuery() ]
     {
         if (op == null)
             return a;
@@ -396,7 +397,7 @@ TextPattern complexQuery():
     }
 }
 
-Token queryOperator():
+Token containingWithinOperator():
 {
     Token t = null;
 }
@@ -407,14 +408,14 @@ Token queryOperator():
     }
 }
 
-/* a simple query (not including containing, within, etc.) */
-TextPattern simpleQuery():
+/* one or more sequence(s) combined using boolean (& and |) operators  */
+TextPattern booleanQuery():
 {
     TextPattern query = null, rest = null;
     Token b = null;
 }
 {
-    query=sequence() [ b=booleanOperator() rest=simpleQuery() ]
+    query=sequence() [ b=booleanOperator() rest=booleanQuery() ]
     {
         if (b == null)
             return query;
