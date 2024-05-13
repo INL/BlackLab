@@ -473,17 +473,16 @@ TextPattern sequencePartNoCapture():
     Integer[] rep = null;
 }
 {
-    ( m=tag() | m=position() | "(" m=constrainedQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
-    {
-        if (rep != null)
-        {
-            if (m instanceof TextPatternAnyToken)
-            {
-                TextPatternAnyToken any = (TextPatternAnyToken)m;
-                m = any.repeat(rep[0], rep[1]);
-            } else
-                m = TextPatternRepetition.get(m, rep[0], rep[1]);
+    ( m=tag() | m=position() | "(" m=constrainedQuery() ")" | m=queryFunctionCall() )
+    ( LOOKAHEAD(6) rep=repetitionAmount() {
+        if (m instanceof TextPatternAnyToken) {
+            TextPatternAnyToken any = (TextPatternAnyToken)m;
+            m = any.repeat(rep[0], rep[1]);
+        } else {
+            m = TextPatternRepetition.get(m, rep[0], rep[1]);
         }
+    } )*
+    {
         return m;
     }
 |   "!" m=sequencePartNoCapture()
