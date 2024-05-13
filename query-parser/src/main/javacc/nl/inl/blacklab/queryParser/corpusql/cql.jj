@@ -123,6 +123,9 @@ TextPattern query():
     }
 }
 
+/** A query prefixed with the settings operator
+ *  (currently undocumented feature to set e.g. default relation class)
+ */
 TextPattern settingsQuery():
 {
     TextPattern a = null;
@@ -148,13 +151,14 @@ TextPattern settingsQuery():
     }
 }
 
+/** A query with a "global" constraint */
 TextPattern constrainedQuery():
 {
     TextPattern a = null;
     MatchFilter b = null;
 }
 {
-    a=relationQuery() [ "::" b=constraint() ]
+    a=containingWithinQuery() [ "::" b=constraint() ]
     {
         if (b == null)
             return a;
@@ -237,7 +241,39 @@ MatchFilter constraintValue():
     }
 }
 
+/** A query using the containing/within operator. */
+TextPattern containingWithinQuery():
+{
+    TextPattern a = null, b = null;
+    Token op = null;
+    Operation oper = Operation.CONTAINING;
+}
+{
+    a=relationQuery() [ op=containingWithinOperator() b=containingWithinQuery() ]
+    {
+        if (op == null)
+            return a;
+        if (op.toString().equals("within")) {
+            // a within b
+            oper = Operation.WITHIN;
+        }
 
+        return new TextPatternPositionFilter(a, b, oper);
+    }
+}
+
+Token containingWithinOperator():
+{
+    Token t = null;
+}
+{
+    (t=<WITHIN> | t=<CONTAINING>)
+    {
+        return t;
+    }
+}
+
+/** A relation query (e.g. dependency relations / parallel corpus) */
 TextPattern relationQuery():
 {
     TextPattern parent = null;
@@ -246,7 +282,7 @@ TextPattern relationQuery():
     String relType = null;
 }
 {   LOOKAHEAD(3)
-    parent=containingWithinQuery()
+    parent=booleanQuery()
     [
         LOOKAHEAD(3)
         childRel=childRelation()                        { childRels.add(childRel); }
@@ -373,38 +409,6 @@ Integer[] repetitionAmount():
         else
             minMax[1] = wrapper.num(t2);
         return minMax;
-    }
-}
-
-/** A query (optionally) using the containing/within operator. */
-TextPattern containingWithinQuery():
-{
-    TextPattern a = null, b = null;
-    Token op = null;
-    Operation oper = Operation.CONTAINING;
-}
-{
-    a=booleanQuery() [ op=containingWithinOperator() b=containingWithinQuery() ]
-    {
-        if (op == null)
-            return a;
-        if (op.toString().equals("within")) {
-            // a within b
-            oper = Operation.WITHIN;
-        }
-
-        return new TextPatternPositionFilter(a, b, oper);
-    }
-}
-
-Token containingWithinOperator():
-{
-    Token t = null;
-}
-{
-    (t=<WITHIN> | t=<CONTAINING>)
-    {
-        return t;
     }
 }
 

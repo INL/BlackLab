@@ -602,8 +602,8 @@ At the sequence level (i.e. outside token brackets):
 | `< />` `< >` `</ >`                          | span (start/end)                              | left-to-right |
 | `[] []`                                      | sequence<br>(implied operator)                | left-to-right |
 | `\|` `&`                                     | union/intersection                            | left-to-right |
-| `within` `containing`                        | position filter                               | right-to-left |
 | `--> [ ; --> ]`<br>`^-->`<br>`==> [ ; ==> ]` | child relations<br>root relation<br>alignment | right-to-left |
+| `within` `containing`                        | position filter                               | right-to-left |
 | `::`                                         | capture constraint                            | left-to-right |
 
 NOTES:
