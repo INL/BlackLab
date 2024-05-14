@@ -202,8 +202,9 @@ public class TextPatternSerializerCql {
                 throw new IllegalArgumentException("Root relation must have span mode target (has no source)");
             String optOperatorPrefix = isRoot ? "^" : (operatorInfo.isNegate() ? "!" : "");
             String opChar = operatorInfo.isAlignment() ? "=" : "-";
+            String optTargetVersion = operatorInfo.getTargetVersion() == null ? "" : operatorInfo.getTargetVersion();
             b.append(isRoot ? "" : " ").append(optCapture).append(optOperatorPrefix).append(opChar).append(optRegex)
-                    .append(opChar).append("> ");
+                    .append(opChar).append(">").append(optTargetVersion).append(" ");
             serialize(tp.getTarget(), b, true, insideTokenBrackets);
         });
 
