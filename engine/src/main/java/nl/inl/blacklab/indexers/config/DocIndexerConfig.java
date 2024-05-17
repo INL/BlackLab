@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,25 +52,38 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     public static DocIndexerConfig fromConfig(ConfigInputFormat config) {
         DocIndexerConfig docIndexer;
-        switch (config.getFileType()) {
-        case XML:
-            docIndexer = DocIndexerXPath.create(config.getFileTypeOptions());
-            break;
-        case TABULAR:
-            docIndexer = new DocIndexerTabular();
-            break;
-        case TEXT:
-            docIndexer = new DocIndexerPlainText();
-            break;
-        case CHAT:
-            docIndexer = new DocIndexerChat();
-            break;
-        case CONLL_U:
-            docIndexer = new DocIndexerCoNLLU();
-            break;
-        default:
-            throw new InvalidInputFormatConfig(
-                    "Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
+        Map<String, String> options = config.getFileTypeOptions();
+        String docIndexerClass = options.get("docIndexerClass");
+        if (docIndexerClass != null) {
+            // A custom DocIndexer class was specified in the fileTypeOptions;
+            // instantiate that using reflection.
+            try {
+                Class<? extends DocIndexerConfig> clz = (Class<? extends DocIndexerConfig>)Class.forName(docIndexerClass);
+                docIndexer = getWithCustomDocIndexerClass(clz, options);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException("Custom docIndexerClass not found: " + docIndexerClass, e);
+            }
+        } else {
+            switch (config.getFileType()) {
+            case XML:
+                docIndexer = DocIndexerXPath.create(config.getFileTypeOptions());
+                break;
+            case TABULAR:
+                docIndexer = new DocIndexerTabular();
+                break;
+            case TEXT:
+                docIndexer = new DocIndexerPlainText();
+                break;
+            case CHAT:
+                docIndexer = new DocIndexerChat();
+                break;
+            case CONLL_U:
+                docIndexer = new DocIndexerCoNLLU();
+                break;
+            default:
+                throw new InvalidInputFormatConfig(
+                        "Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
+            }
         }
 
         docIndexer.setConfigInputFormat(config);
@@ -82,6 +96,21 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             }
         } else {
             return docIndexer;
+        }
+    }
+
+    public static DocIndexerConfig getWithCustomDocIndexerClass(Class<? extends DocIndexerConfig> clz, Map<String, String> fileTypeOptions) {
+        try {
+            try {
+                // Try the constructor that takes fileTypeOptions
+                Constructor<? extends DocIndexerConfig> constructor = clz.getConstructor(Map.class);
+                return constructor.newInstance(fileTypeOptions);
+            } catch (NoSuchMethodException e) {
+                // Try the no-arg constructor instead
+                return clz.getConstructor().newInstance();
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
         }
     }
 
