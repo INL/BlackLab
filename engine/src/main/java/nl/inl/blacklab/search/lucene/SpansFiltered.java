@@ -107,6 +107,8 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
 
     @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
+        assert in.startPosition() == -1;
+        assert in.endPosition() == -1;
         return in.docID() == acceptedDocs.docID() && super.twoPhaseCurrentDocMatches();
     }
 
@@ -114,36 +116,67 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
     public TwoPhaseIterator asTwoPhaseIterator() {
         float matchCost;
         DocIdSetIterator approximation;
+        TwoPhaseIterator inner = in.asTwoPhaseIterator();
         if (acceptedDocs == null || acceptedDocs.docID() == NO_MORE_DOCS) {
             approximation = DocIdSetIterator.empty();
             matchCost = 0;
+            return new TwoPhaseIterator(approximation) {
+                @Override
+                public boolean matches() throws IOException {
+                    return false;
+                }
+
+                @Override
+                public float matchCost() {
+                    return matchCost;
+                }
+
+                @Override
+                public String toString() {
+                    return "BLFilterSpans@asTwoPhaseIterator(approx=" + approximation + ")";
+                }
+            };
         } else {
-            TwoPhaseIterator inner = in.asTwoPhaseIterator();
             if (inner == null) {
                 approximation = ConjunctionDISI.intersectIterators(List.of(acceptedDocs, in));
                 matchCost = in.positionsCost(); // underestimate
+                return new TwoPhaseIterator(approximation) {
+                    @Override
+                    public boolean matches() throws IOException {
+                        return twoPhaseCurrentDocMatches();
+                    }
+
+                    @Override
+                    public float matchCost() {
+                        return matchCost;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "BLFilterSpans@asTwoPhaseIterator(approx=" + approximation + ")";
+                    }
+                };
             } else {
                 DocIdSetIterator innerApprox = inner.approximation();
                 approximation = ConjunctionDISI.intersectIterators(List.of(acceptedDocs, innerApprox));
                 matchCost = inner.matchCost(); // overestimate
+                return new TwoPhaseIterator(approximation) {
+                    @Override
+                    public boolean matches() throws IOException {
+                        return inner.matches() && twoPhaseCurrentDocMatches();
+                    }
+
+                    @Override
+                    public float matchCost() {
+                        return matchCost;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "BLFilterSpans@asTwoPhaseIterator(approx=" + approximation + ")";
+                    }
+                };
             }
         }
-
-        return new TwoPhaseIterator(approximation) {
-            @Override
-            public boolean matches() throws IOException {
-                return twoPhaseCurrentDocMatches();
-            }
-
-            @Override
-            public float matchCost() {
-                return matchCost;
-            }
-
-            @Override
-            public String toString() {
-                return "BLFilterSpans@asTwoPhaseIterator(approx=" + approximation + ")";
-            }
-        };
     }
 }
