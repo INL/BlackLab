@@ -11,10 +11,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.server.auth.AuthManager;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.auth.AuthManager;
 
 /**
  * Manages the lifetime of a number of objects needed for the web service.
@@ -45,6 +45,7 @@ public class SearchManager {
      * @throws ConfigurationException
      */
     public SearchManager(BLSConfig config, boolean forceApplyGlobalConfig) throws ConfigurationException {
+        assert config != null;
         this.config = config;
 
         // load blacklab's internal config before doing anything
@@ -97,6 +98,7 @@ public class SearchManager {
     }
 
     public BLSConfig config() {
+        assert config != null;
         return config;
     }
 

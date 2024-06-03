@@ -19,4 +19,10 @@ public class TestBcqlParser {
         Assert.assertTrue(tp instanceof TextPatternTerm);
         Assert.assertEquals("\"", ((TextPatternTerm) tp).getValue());
     }
+
+    @Test
+    public void testParseAlignmentQuery() throws IOException, InvalidQuery {
+        String pattern = "[word='the'] =verse-alignment=>nl [word='het']";
+        TextPattern tp = CorpusQueryLanguageParser.parse(pattern);
+    }
 }
