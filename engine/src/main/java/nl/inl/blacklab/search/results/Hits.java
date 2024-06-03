@@ -298,6 +298,11 @@ public interface Hits extends Results<Hit, HitProperty> {
      */
     Hits window(Hit hit);
 
+    /**
+     * Type of each of our match infos.
+     *
+     * @return list of match info definitions
+     */
     List<MatchInfo.Def> matchInfoDefs();
 
     default int matchInfoIndex(String name) {

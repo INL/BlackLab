@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -563,7 +564,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
     @Override
     public List<MatchInfo.Def> matchInfoDefs() {
-        return matchInfoDefs;
+        return matchInfoDefs == null ? Collections.emptyList() : matchInfoDefs;
     }
 
     @Override
