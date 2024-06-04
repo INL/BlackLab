@@ -568,12 +568,49 @@ public class InputFormatReader extends YamlJsonReader {
                     readStringList(e, exclAttr);
                     t.setExcludeAttributes(exclAttr);
                     break;
+                case "extraAttributes":
+                    t.setExtraAttributes(readExtraAttributes(e));
+                    break;
                 default:
                     throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
                 }
             }
             af.addInlineTag(t);
         }
+    }
+
+    /**
+     * Extra attributes to index by XPath for inline tag
+     *
+     * @return
+     */
+    private List<ConfigInlineTag.ConfigExtraAttribute> readExtraAttributes(Entry<String, JsonNode> e) {
+        List<ConfigInlineTag.ConfigExtraAttribute> extraAttr = new ArrayList<>();
+        Iterator<JsonNode> itExtraAttr = array(e).elements();
+        while (itExtraAttr.hasNext()) {
+            JsonNode ea = itExtraAttr.next();
+            ConfigInlineTag.ConfigExtraAttribute a = new ConfigInlineTag.ConfigExtraAttribute();
+            Iterator<Entry<String, JsonNode>> itExtraAttrEntry = obj(ea, "extra attribute").fields();
+            while (itExtraAttrEntry.hasNext()) {
+                Entry<String, JsonNode> eea = itExtraAttrEntry.next();
+                switch (eea.getKey()) {
+                case "name":
+                    a.setName(str(eea));
+                    break;
+                case "value":
+                    a.setValuePath(fixedStringToXpath(str(eea)));
+                    break;
+                case "valuePath":
+                    a.setValuePath(str(eea));
+                    break;
+                default:
+                    throw new InvalidInputFormatConfig(
+                            "Unknown key " + eea.getKey() + " in extra attribute " + a.getName());
+                }
+            }
+            extraAttr.add(a);
+        }
+        return extraAttr;
     }
 
     private void readMetadata(Entry<String, JsonNode> mdEntry, ConfigInputFormat cfg) {

@@ -319,6 +319,9 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
     private void collectInlineTags(ConfigAnnotatedField annotatedField, List<InlineObject> inlineObjects) {
         int i = 0;
         for (ConfigInlineTag inlineTag : annotatedField.getInlineTags()) {
+            if (inlineTag.hasDetailedAttributeConfig())
+                warn("Detailed inline tag attribute configuration not supported in VTD indexer. Ignoring for tag: " +
+                        inlineTag.getPath() + " (for support, add 'processor: saxon' to .blf.yaml file)");
             // Collect the occurrences of this inline tag
             String tokenIdXPath = inlineTag.getTokenIdPath();
             // We want to capture token ids for this inline tag. Create the AutoPilot.

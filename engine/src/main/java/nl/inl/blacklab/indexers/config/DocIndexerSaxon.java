@@ -364,6 +364,12 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                     }
                 }
             }
+            // Index any extra attributes using the provided XPath expressions.
+            for (ConfigInlineTag.ConfigExtraAttribute extraAttribute: currentInline.config.getExtraAttributes()) {
+                String value = xpathValue(extraAttribute.getValuePath(), nodeInfo);
+                if (value != null)
+                    atts.put(extraAttribute.getName(), value);
+            }
             inlineTag(nodeInfo.getDisplayName(), true, atts);
 
             // Add tag to the list of tags to close at the correct position.
