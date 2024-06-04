@@ -94,7 +94,13 @@ public class ResultDocSnippet {
             } catch (InvalidQuery e) {
                 throw new BlackLabRuntimeException(e);
             }
-        } else {
+        }
+        if (hits != null && !hits.hitsStats().processedAtLeast(1)) {
+            // We couldn't find the tag for the context; use a context of 0 words instead
+            hits = null;
+            context = ContextSize.get(0, maxSnippetSize);
+        }
+        if (hits == null) {
             // Limit context if necessary
             // (done automatically as well, but this should ensure equal before/after parts)
             int snippetSize = end - start + context.before() + context.after();
