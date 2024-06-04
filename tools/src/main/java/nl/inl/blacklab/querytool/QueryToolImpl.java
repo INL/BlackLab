@@ -1020,7 +1020,7 @@ public class QueryToolImpl {
         Hits hitsToShow = getCurrentSortedHitSet();
         if (hitsToShow == null)
             return; // nothing to show
-        output.hits(hitsToShow.window(firstResult, resultsPerPage), this);
+        output.hits(hitsToShow, hitsToShow.window(firstResult, resultsPerPage), this);
     }
 
     /**

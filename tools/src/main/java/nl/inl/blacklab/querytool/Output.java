@@ -484,16 +484,16 @@ class Output {
                 .collect(Collectors.joining(", "));
     }
 
-    public void hits(Hits window, QueryToolImpl queryTool) {
+    public void hits(Hits total, Hits window, QueryToolImpl queryTool) {
         BlackLabIndex index = window.queryInfo().index();
 
         if (!isShowConc()) {
-            if (queryTool.isDetermineTotalNumberOfHits() || window.resultsStats().done()) {
+            if (queryTool.isDetermineTotalNumberOfHits() || total.resultsStats().done()) {
                 // Wait until all collected and show total number of hits, no concordances
-                line(window.resultsStats().processedTotal() + " hits");
+                line(total.resultsStats().processedTotal() + " hits");
             } else {
                 // No total; just show how many so far
-                long i = window.resultsStats().processedSoFar();
+                long i = total.resultsStats().processedSoFar();
                 line((i >= queryTool.getResultsPerPage() ? "At least " : "") + i + " hits (total not determined)");
             }
             return;
@@ -569,12 +569,12 @@ class Output {
 
         // Summarize
         String msg;
-        ResultsStats hitsStats = window.hitsStats();
+        ResultsStats hitsStats = total.hitsStats();
         if (!queryTool.isDetermineTotalNumberOfHits()) {
             msg = hitsStats.countedSoFar() + " hits counted so far (total not determined)";
         } else {
             long numberRetrieved = hitsStats.processedTotal();
-            ResultsStats docsStats = window.docsStats();
+            ResultsStats docsStats = total.docsStats();
             String hitsInDocs = numberRetrieved + " hits in " + docsStats.processedTotal() + " documents";
             if (window.maxStats().hitsProcessedExceededMaximum()) {
                 if (window.maxStats().hitsCountedExceededMaximum()) {
@@ -599,7 +599,7 @@ class Output {
         String mainAnnotName = annotatedField.mainAnnotation().name();
         DocFragment fragMatch = kwic.fragMatch();
         DocFragment fragBefore = kwic.fragBefore();
-        String punctAfter = fragMatch.getValue(0, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+        String punctAfter = fragMatch.length() == 0 ? "" : fragMatch.getValue(0, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         String before = getContextPart(fragBefore, matchInfo, annotatedField, hit.start() - fragBefore.length(), mainAnnotName, true,
                 punctAfter);
         String match = getContextPart(fragMatch, matchInfo, annotatedField, hit.start(), mainAnnotName, false, null);
