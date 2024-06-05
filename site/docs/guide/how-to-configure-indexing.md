@@ -206,7 +206,7 @@ This means we can later run searches like:
 
 (more about matching spans [here](corpus-query-language.md#matching-xml-elements))
 
-There's a few additional parameters you can set for inline tags:
+There's a few additional parameters you can set for inline tags (provided your `.blf.yaml` file uses `processor: saxon` instead of the (current) default VTD):
 
 ```yaml
 # What tags occurring between the word tags do we wish to index? (relative to containerPath) 
