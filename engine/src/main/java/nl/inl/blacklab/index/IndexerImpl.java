@@ -108,7 +108,7 @@ class IndexerImpl implements DocWriter, Indexer {
             }
         }
 
-        private void impl(DocIndexer indexer, String documentName) throws MalformedInputFile, PluginException, IOException {
+        private void impl(DocIndexer indexer, String documentName) {
             if (!indexer.continueIndexing())
                 return;
 
@@ -116,7 +116,11 @@ class IndexerImpl implements DocWriter, Indexer {
             int docsDoneBefore = indexer.numberOfDocsDone();
             long tokensDoneBefore = indexer.numberOfTokensDone();
 
-            indexer.index();
+            try {
+                indexer.index();
+            } catch (Throwable e) {
+                throw new RuntimeException("Error while indexing input file: " + documentName, e);
+            }
             listener().fileDone(documentName);
             
             int docsDoneAfter = indexer.numberOfDocsDone();

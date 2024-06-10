@@ -807,9 +807,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     public void freezeBeforeIndexing() {
         // Contrary to the "classic" index format, with this one the metadata
         // cannot change while indexing. So freeze it now to enforce that.
-        // FIXME: we actually CAN update metadata while indexing and probably should
+        // UPDATE: we actually CAN update metadata while indexing and probably should
         //  (e.g. because you can add documents with different configs to one corpus)
-        freeze();
+        //freeze();
     }
 
     @Override
