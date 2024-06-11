@@ -59,7 +59,6 @@ Return words matching a given prefix.
 
 ## Notes
 
-This works for metadata fields, not for annotations on annotated fields. Might be added in the future if there's demand.
-
 For a metadata field, if the field is tokenized, it will find individual words. If the field is untokenized, the whole field value will be returned.
 
+Currently, there's no way to specify case/accent sensitivity. Insensitive matching will be used for an annotation if it was indexed insensitively, otherwise it will fall back to sensitive matching.
