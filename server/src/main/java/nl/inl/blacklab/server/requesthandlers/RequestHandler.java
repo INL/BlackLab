@@ -126,7 +126,7 @@ public abstract class RequestHandler {
 
         // What corpus (if any) is the user accessing?
         String indexName = userRequest.getCorpusName();
-        if (indexName.startsWith(user.getUserId() + ":")) {
+        if (indexName.startsWith(user.getId() + ":")) {
             // User trying to access their own private corpus. See if they're logged in.
             if (!user.isLoggedIn())
                 return errorObj.unauthorized("Log in to access your private index.");

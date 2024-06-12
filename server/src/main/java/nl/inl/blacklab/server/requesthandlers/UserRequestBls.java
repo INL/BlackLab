@@ -71,7 +71,7 @@ public class UserRequestBls implements UserRequest {
         corpusName = parts.length >= 1 ? parts[0] : "";
         if (corpusName.startsWith(":")) {
             // Private index. Prefix with user id.
-            corpusName = user.getUserId() + corpusName;
+            corpusName = user.getId() + corpusName;
         }
         urlResource = parts.length >= 2 ? parts[1] : "";
         urlPathInfo = parts.length >= 3 ? parts[2] : "";
@@ -94,7 +94,7 @@ public class UserRequestBls implements UserRequest {
                 // Is client on debug IP and is there a userid parameter?
                 if (servlet.getSearchManager().config().getAuthentication().isOverrideIp(request.getRemoteAddr())
                         && request.getParameter("userid") != null) {
-                    user = User.loggedIn(request.getParameter("userid"), request.getSession().getId());
+                    user = User.fromIdAndSessionId(request.getParameter("userid"), request.getSession().getId());
                 } else {
                     // Let auth system determine the current user.
                     try {
@@ -110,7 +110,7 @@ public class UserRequestBls implements UserRequest {
             if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
                 String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
                 if (xBlackLabAccessToken != null && xBlackLabAccessToken.equals(debugHttpHeaderToken)) {
-                    user = User.loggedIn(request.getHeader("X-BlackLabUserId"), request.getSession().getId());
+                    user = User.fromIdAndSessionId(request.getHeader("X-BlackLabUserId"), request.getSession().getId());
                 }
             }
         }
@@ -163,7 +163,7 @@ public class UserRequestBls implements UserRequest {
 
     @Override
     public void persistUser(User user, int durationSec) {
-        Cookie cookie = new Cookie("autosearch-debug-user", user.getUserId());
+        Cookie cookie = new Cookie("autosearch-debug-user", user.getId());
         cookie.setPath("/");
         cookie.setMaxAge(durationSec);
         response.addCookie(cookie);

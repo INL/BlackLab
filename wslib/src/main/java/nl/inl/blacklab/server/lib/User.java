@@ -28,13 +28,24 @@ public class User {
     private final boolean superuser;
 
     /**
-     * Create a new logged-in user.
+     * Create a new user object with user id (i.e. not anonymous).
      *
      * @param userId unique id identifying this user
+     * @return the new user
+     */
+    public static User fromId(String userId) {
+        return fromIdAndSessionId(userId, null);
+    }
+
+
+    /**
+     * Create a new user object.
+     *
+     * @param userId unique id identifying this user, or null if not logged in
      * @param sessionId the session id
      * @return the new user
      */
-    public static User loggedIn(String userId, String sessionId) {
+    public static User fromIdAndSessionId(String userId, String sessionId) {
         return new User(userId, sessionId, false);
     }
 
@@ -78,19 +89,16 @@ public class User {
         return userId != null;
     }
 
-    public String getUserId() {
+    public String getId() {
         return userId;
     }
 
     public String getUserDirName() {
-        return getUserDirNameFromId(userId);
-    }
-
-    public static String getUserDirNameFromId(String id) {
         // NOTE: we want a safe directory name, so instead of trying to
         // get rid of non-safe characters, we just strip everything that
         // isn't a regular letter and append an MD5 of the original id
         // for uniqueness.
+        String id = getId();
         String stripped = id.replaceAll("[^a-zA-Z]", "_");
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
@@ -122,6 +130,6 @@ public class User {
     }
 
     public boolean canManageFormatsFor(String userIdFromFormatIdentifier) {
-        return userIdFromFormatIdentifier.equals(getUserId()) || isSuperuser();
+        return userIdFromFormatIdentifier.equals(getId()) || isSuperuser();
     }
 }

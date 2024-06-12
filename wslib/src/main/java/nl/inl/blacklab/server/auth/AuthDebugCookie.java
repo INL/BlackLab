@@ -48,7 +48,7 @@ public class AuthDebugCookie implements AuthMethod {
         if (userId.isEmpty()) {
             return User.anonymous(sessionId);
         }
-        return User.loggedIn(userId, sessionId);
+        return User.fromIdAndSessionId(userId, sessionId);
     }
 
     @Override

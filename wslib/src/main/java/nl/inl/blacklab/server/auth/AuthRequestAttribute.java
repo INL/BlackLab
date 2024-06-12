@@ -62,7 +62,7 @@ public class AuthRequestAttribute implements AuthMethod {
         if (userId == null || userId.length() == 0) {
             return User.anonymous(sessionId);
         }
-        return User.loggedIn(userId, sessionId);
+        return User.fromIdAndSessionId(userId, sessionId);
     }
 
     protected String getUserId(UserRequest request) {

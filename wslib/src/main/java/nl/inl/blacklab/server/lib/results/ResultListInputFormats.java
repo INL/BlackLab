@@ -28,7 +28,7 @@ public class ResultListInputFormats {
         IndexManager indexMan = params.getIndexManager();
         if (user.isLoggedIn() && indexMan.getUserFormatManager() != null) {
             // Make sure users's formats are loaded
-            indexMan.getUserFormatManager().loadUserFormats(user.getUserId(), null);
+            indexMan.getUserFormatManager().loadUserFormats(user.getId(), null);
         }
         inputFormats = new ArrayList<>();
         for (InputFormat inputFormat: DocumentFormats.getFormats()) {

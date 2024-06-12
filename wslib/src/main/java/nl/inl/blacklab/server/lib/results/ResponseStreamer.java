@@ -1306,9 +1306,9 @@ public class ResponseStreamer {
     }
 
     /** New API corpus info */
-    public void corpusInfoEntry(ResultIndexStatus progress, boolean includeCustom) {
-        Index index = progress.getIndex();
-        IndexMetadata indexMetadata = progress.getMetadata();
+    public void corpusInfoEntry(ResultIndexStatus corpusStatus, boolean includeCustom) {
+        Index index = corpusStatus.getIndex();
+        IndexMetadata indexMetadata = corpusStatus.getMetadata();
         ds.startElEntry(index.getId()).startMap();
         {
             if (includeCustom)
@@ -1320,7 +1320,14 @@ public class ResponseStreamer {
             ds.entry("timeModified", indexMetadata.timeModified());
             indexTokenCount(indexMetadata, false);
             indexDocumentCount(indexMetadata);
-            indexProgress(progress);
+            indexProgress(corpusStatus);
+            if (!corpusStatus.getIndex().isUserIndex()) {
+                //ds.entry("owner", "system");
+            } else if (corpusStatus.isOwnedBySomeoneElse()) {
+                ds.entry("owner", "user " + corpusStatus.getIndex().getUserId());
+            } else {
+                //ds.entry("owner", "you");
+            }
         }
         ds.endMap().endElEntry();
     }

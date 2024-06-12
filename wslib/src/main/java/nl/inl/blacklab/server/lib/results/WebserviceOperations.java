@@ -560,7 +560,7 @@ public class WebserviceOperations {
         //      miss unloaded corpora shared with you. To fix this, we should probably
         //      find all corpora and which users they're shared with on startup,
         //      but not open them until they're actually used.
-        indexMan.getAvailablePublicIndices(); // trigger loading of all user corpora (kinda hacky)
+        indexMan.getAvailablePublicCorpora(); // trigger loading of all user corpora (kinda hacky)
         for (Index index: indexMan.getAllLoadedCorpora()) {
             if (index.sharedWith(user)) {
                 results.add(index.getId());
@@ -689,7 +689,7 @@ public class WebserviceOperations {
             throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found");
         }
 
-        for (Index i : indexMan.getAvailablePrivateIndices(params.getUser().getUserId())) {
+        for (Index i : indexMan.getAvailablePrivateCorporaOwnedBy(params.getUser())) {
             if (formatIdentifier.equals(i.getIndexMetadata().documentFormat()))
                 throw new BadRequest("CANNOT_DELETE_INDEX ",
                         "Could not delete format. The format is still being used by a corpus.");
@@ -712,10 +712,10 @@ public class WebserviceOperations {
 
     public static ResultIndexStatus resultIndexStatus(WebserviceParams params) {
         Index index = params.getIndexManager().getIndex(params.getCorpusName());
-        return resultIndexStatus(index);
+        return resultIndexStatus(index, params.getUser());
     }
 
-    public static ResultIndexStatus resultIndexStatus(Index index) {
+    public static ResultIndexStatus resultIndexStatus(Index index, User user) {
         synchronized (index) {
             IndexListener indexerListener = index.getIndexerListener();
             long files = 0;
@@ -726,7 +726,8 @@ public class WebserviceOperations {
                 docs = indexerListener.getDocsDone();
                 tokens = indexerListener.getTokensProcessed();
             }
-            return new ResultIndexStatus(index, files, docs, tokens);
+            boolean ownedBySomeoneElse = index.isUserIndex() && !index.getUserId().equals(user.getId());
+            return new ResultIndexStatus(index, files, docs, tokens, ownedBySomeoneElse);
         }
     }
 
@@ -766,7 +767,7 @@ public class WebserviceOperations {
 
     public static ResultUserInfo userInfo(WebserviceParams params) {
         User user = params.getUser();
-        return new ResultUserInfo(user.isLoggedIn(), user.getUserId(), params.getIndexManager().canCreateIndex(user));
+        return new ResultUserInfo(user.isLoggedIn(), user.getId(), params.getIndexManager().canCreateIndex(user));
     }
 
     public static ResultDocsResponse viewGroupDocsResponse(WebserviceParams params) throws InvalidQuery {

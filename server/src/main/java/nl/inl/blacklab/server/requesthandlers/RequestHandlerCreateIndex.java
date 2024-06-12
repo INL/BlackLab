@@ -26,7 +26,7 @@ public class RequestHandlerCreateIndex extends RequestHandler {
             String formatIdentifier = request.getParameter("format");
 
             debug(logger, "REQ create index: " + newIndexName + ", " + displayName + ", " + formatIdentifier);
-            if (!user.isLoggedIn() || !newIndexName.startsWith(user.getUserId() + ":")) {
+            if (!user.isLoggedIn() || !newIndexName.startsWith(user.getId() + ":")) {
                 logger.debug("(forbidden, cannot create index in another user's area)");
                 return Response.forbidden(rs, "You can only create indices in your own private area.");
             }
