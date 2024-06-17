@@ -82,6 +82,8 @@ class CommandReader {
     }
 
     String outputCommandIfNotSilenced(String cmd) {
+        if (cmd == null)
+            cmd = "";
         silenced = false;
         if (cmd.startsWith("-")) {
             // Silent, don't output stats

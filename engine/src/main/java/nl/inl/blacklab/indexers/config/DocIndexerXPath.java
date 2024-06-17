@@ -292,8 +292,8 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     private static void warnUnresolvedTokenId(String tokenId, String baseMessage) {
         // Warn about unresolved reference, but only once per token id prefix.
         // (so e.g. missing document isn't reported a million times)
-        String tokenIdPrefix = tokenId.substring(0, TOKEN_ID_PREFIX_LENGTH);
-        String tokenIdRest = tokenId.substring(TOKEN_ID_PREFIX_LENGTH);
+        String tokenIdPrefix = tokenId.length() > TOKEN_ID_PREFIX_LENGTH ? tokenId.substring(0, TOKEN_ID_PREFIX_LENGTH) : tokenId;
+        String tokenIdRest = tokenId.length() > TOKEN_ID_PREFIX_LENGTH ? tokenId.substring(TOKEN_ID_PREFIX_LENGTH) : "";
         String prefix = baseMessage + ": '" + tokenIdPrefix;
         String message = prefix + tokenIdRest + "'";
         warnOnce(message, prefix);
