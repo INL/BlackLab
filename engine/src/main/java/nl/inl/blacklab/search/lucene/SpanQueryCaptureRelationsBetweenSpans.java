@@ -16,6 +16,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanWeight;
 
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -40,11 +41,19 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 
         public static Target get(QueryInfo queryInfo, String relationFieldName, BLSpanQuery target, String targetField,
                 String captureRelsAs, String relationType) {
-            return new Target(getRelationsQuery(queryInfo, relationFieldName, relationType), target, targetField,
+
+            // Determine what relations to capture based on the class of the matching regex, if any
+            String relClass = RelationUtil.classFromFullType(relationType);
+            String anyType = relClass.isEmpty() ? RelationUtil.ANY_TYPE_REGEX :
+                    RelationUtil.fullType(relClass, RelationUtil.ANY_TYPE_REGEX);
+
+            return new Target(getRelationsQuery(queryInfo, relationFieldName, relationType),
+                    getRelationsQuery(queryInfo, relationFieldName, anyType), target, targetField,
                     captureRelsAs);
         }
 
-        private static SpanQueryRelations getRelationsQuery(QueryInfo queryInfo, String relationFieldName, String relationType) {
+        private static SpanQueryRelations getRelationsQuery(QueryInfo queryInfo, String relationFieldName,
+                String relationType) {
             // Note that we use span mode source, because that's what we'll primarily be filtering on.
             // Once we find a relation matching the current source span, we'll check if target matches as well.
             SpanQueryRelations relations = new SpanQueryRelations(queryInfo, relationFieldName, relationType,
@@ -53,7 +62,12 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             return relations;
         }
 
-        private final BLSpanQuery relations;
+        /** Relations to use for matching targets */
+        private final BLSpanQuery matchRelations;
+
+        /** Relations to capture with the hits (if we're e.g. finding alignments by sentence, we also want
+         *  any word alignments in the results) */
+        private final BLSpanQuery captureRelations;
 
         /** Match info name for the list of captured relations */
         private final String captureAs;
@@ -63,8 +77,9 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 
         private final String targetField;
 
-        private Target(BLSpanQuery relations, BLSpanQuery target, String targetField, String captureAs) {
-            this.relations = relations;
+        private Target(BLSpanQuery matchRelations, BLSpanQuery captureRelations, BLSpanQuery target, String targetField, String captureAs) {
+            this.matchRelations = matchRelations;
+            this.captureRelations = captureRelations;
             this.target = target;
             this.targetField = targetField;
             this.captureAs = captureAs;
@@ -93,7 +108,8 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         }
 
         private TargetWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
-            BLSpanWeight relationsWeight = relations.createWeight(searcher, scoreMode, boost);
+            BLSpanWeight matchRelationsWeight = matchRelations.createWeight(searcher, scoreMode, boost);
+            BLSpanWeight captureRelationsWeight = captureRelations.createWeight(searcher, scoreMode, boost);
             BLSpanWeight targetWeight = null;
             String captureTargetAs;
 
@@ -120,14 +136,16 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
                 targetWeight = target == null || BLSpanQuery.isAnyNGram(target) ? null :
                         target.createWeight(searcher, scoreMode, boost);
             }
-            return new TargetWeight(relationsWeight, targetWeight, captureAs, captureTargetAs, targetField);
+            return new TargetWeight(matchRelationsWeight, captureRelationsWeight, targetWeight, captureAs,
+                    captureTargetAs, targetField);
         }
 
         private Target rewrite(IndexReader reader) throws IOException {
-            BLSpanQuery newRelations = relations.rewrite(reader);
+            BLSpanQuery newMatchRelations = matchRelations.rewrite(reader);
+            BLSpanQuery newCaptureRelations = captureRelations.rewrite(reader);
             BLSpanQuery newTarget = target == null ? null : target.rewrite(reader);
-            if (newRelations != relations || newTarget != target) {
-                return new Target(newRelations, newTarget, targetField, captureAs);
+            if (newMatchRelations != matchRelations || newCaptureRelations != captureRelations || newTarget != target) {
+                return new Target(newMatchRelations, newCaptureRelations, newTarget, targetField, captureAs);
             }
             return this;
         }
@@ -139,19 +157,22 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             if (o == null || getClass() != o.getClass())
                 return false;
             Target target1 = (Target) o;
-            return Objects.equals(relations, target1.relations) && Objects.equals(captureAs,
-                    target1.captureAs) && Objects.equals(target, target1.target);
+            return Objects.equals(matchRelations, target1.matchRelations) &&
+                    Objects.equals(captureRelations, target1.captureRelations) &&
+                    Objects.equals(captureAs, target1.captureAs) &&
+                    Objects.equals(target, target1.target);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(relations, captureAs, target);
+            return Objects.hash(matchRelations, captureRelations, captureAs, target);
         }
 
         @Override
         public String toString() {
             return "Target{" +
-                    "relations=" + relations +
+                    "matchRelations=" + matchRelations +
+                    ", captureRelations=" + captureRelations +
                     ", captureAs='" + captureAs + '\'' +
                     ", target=" + target +
                     '}';
@@ -161,7 +182,9 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
     /** Combination of relation and target weights */
     static class TargetWeight {
 
-        private final BLSpanWeight relations;
+        private final BLSpanWeight matchRelations;
+
+        private final BLSpanWeight captureRelations;
 
         /** Match info name for the list of captured relations */
         private final String captureAs;
@@ -175,9 +198,10 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Span the relation targets must be inside of (or null if we don't care) */
         private final BLSpanWeight target;
 
-        public TargetWeight(BLSpanWeight relations, BLSpanWeight target, String captureAs, String captureTargetAs,
+        public TargetWeight(BLSpanWeight matchRelations, BLSpanWeight captureRelations, BLSpanWeight target, String captureAs, String captureTargetAs,
                 String targetField) {
-            this.relations = relations;
+            this.matchRelations = matchRelations;
+            this.captureRelations = captureRelations;
             this.captureAs = captureAs;
             this.captureTargetAs = captureTargetAs;
             this.targetField = targetField;
@@ -217,27 +241,30 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 
         private SpansCaptureRelationsBetweenSpans.Target getSpans(LeafReaderContext context,
                 SpanWeight.Postings requiredPostings) throws IOException {
-            BLSpans relationsSpans = relations.getSpans(context, requiredPostings);
-            if (relationsSpans == null)
+            BLSpans matchRelationsSpans = matchRelations.getSpans(context, requiredPostings);
+            if (matchRelationsSpans == null)
                 return null;
+            BLSpans captureRelationsSpans = captureRelations.getSpans(context, requiredPostings);
             boolean hasTargetRestrictions = target != null;
             BLSpans targetSpans = hasTargetRestrictions ? target.getSpans(context, requiredPostings) : null;
-            return new SpansCaptureRelationsBetweenSpans.Target(relationsSpans, targetSpans, hasTargetRestrictions, captureAs,
-                    captureTargetAs, targetField);
+            return new SpansCaptureRelationsBetweenSpans.Target(matchRelationsSpans, targetSpans, hasTargetRestrictions,
+                    captureRelationsSpans, captureAs, captureTargetAs, targetField);
         }
 
         private void extractTermStates(Map<Term, TermStates> contexts) {
-            relations.extractTermStates(contexts);
+            matchRelations.extractTermStates(contexts);
+            captureRelations.extractTermStates(contexts);
             if (target != null)
                 target.extractTermStates(contexts);
         }
 
         private boolean isCacheable(LeafReaderContext ctx) {
-            return relations.isCacheable(ctx) && (target == null || target.isCacheable(ctx));
+            return matchRelations.isCacheable(ctx) && (target == null || target.isCacheable(ctx));
         }
 
         private void extractTerms(Set<Term> terms) {
-            relations.extractTerms(terms);
+            matchRelations.extractTerms(terms);
+            captureRelations.extractTerms(terms);
             if (target != null)
                 target.extractTerms(terms);
         }
@@ -249,14 +276,16 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             if (o == null || getClass() != o.getClass())
                 return false;
             TargetWeight that = (TargetWeight) o;
-            return Objects.equals(relations, that.relations) && Objects.equals(captureAs, that.captureAs)
-                    && Objects.equals(captureTargetAs, that.captureTargetAs)
-                    && Objects.equals(target, that.target);
+            return Objects.equals(matchRelations, that.matchRelations) &&
+                    Objects.equals(captureRelations, that.captureRelations) &&
+                    Objects.equals(captureAs, that.captureAs) &&
+                    Objects.equals(captureTargetAs, that.captureTargetAs) &&
+                    Objects.equals(target, that.target);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(relations, captureAs, captureTargetAs, target);
+            return Objects.hash(matchRelations, captureRelations, captureAs, captureTargetAs, target);
         }
     }
 
@@ -275,42 +304,6 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         super(source);
         this.targets = targets;
         this.guarantees = source.guarantees();
-    }
-
-    /**
-     * Capture all matching relations occurring within a captured span.
-     *
-     * The query might be something like <code>'dog' within &lt;s/&gt;</code>.
-     * In that case, captureRelsInside would be "s" (name of the capture containing the
-     * sentence spans, automatically assigned).
-     *
-     * @param queryInfo query info
-     * @param relationFieldName field where relations where indexed
-     * @param source span the relation sources must be inside of
-     * @param target span the relation targets must be inside of (or null if we don't care)
-     * @param captureRelsAs name to capture the list of relations as
-     * @param relationType type of relation to capture (regex)
-     */
-    public SpanQueryCaptureRelationsBetweenSpans(QueryInfo queryInfo, String relationFieldName,
-            BLSpanQuery source, BLSpanQuery target, String targetField, String captureRelsAs, String relationType) {
-        this(source, List.of(Target.get(queryInfo, relationFieldName, target, targetField, captureRelsAs,
-                relationType)));
-    }
-
-    /**
-     * Capture all matching relations occurring within a captured span.
-     * The query might be something like <code>'dog' within &lt;s/&gt;</code>.
-     * In that case, captureRelsInside would be "s" (name of the capture containing the
-     * sentence spans, automatically assigned).
-     *
-     * @param source        span the relation sources must be inside of
-     * @param relations     relations to capture
-     * @param target        span the relation targets must be inside of (or null if we don't care)
-     * @param captureRelsAs name to capture the list of relations as
-     */
-    public SpanQueryCaptureRelationsBetweenSpans(BLSpanQuery source, BLSpanQuery relations, BLSpanQuery target,
-            String targetField, String captureRelsAs) {
-        this(source, List.of(new Target(relations, target, targetField, captureRelsAs)));
     }
 
     @Override
