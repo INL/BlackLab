@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.spans.FilterSpans;
 
 /**
@@ -27,10 +26,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         private final BLSpans relations;
 
         /** Match info name for the list of captured relations */
-        private final String captureAs;
+        private final String captureRelationsAs;
 
         /** Group index of captureAs */
-        private int captureAsIndex = -1;
+        private int captureRelationsIndex = -1;
 
         /** Span the relation targets must be inside of (or null if there are no hits or we don't care; in the latter
          * case, {@link #hasTargetRestrictions} will be false) */
@@ -52,24 +51,22 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         /** If target == null and captureTargetAs is set, this gives the target field for capture. */
         private final String targetField;
 
-        public Target(BLSpans relations, BLSpans target, boolean hasTargetRestrictions, String captureAs, String captureTargetAs, String targetField) {
+        public Target(BLSpans relations, BLSpans target, boolean hasTargetRestrictions, String captureRelationsAs, String captureTargetAs, String targetField) {
             this.relations = relations;
-            this.captureAs = captureAs;
+            this.captureRelationsAs = captureRelationsAs;
             this.target = target == null ? null : new SpansInBucketsPerDocument(target);
             this.hasTargetRestrictions = hasTargetRestrictions;
             this.captureTargetAs = captureTargetAs;
             this.targetField = targetField;
-            if (target != null && !StringUtils.isEmpty(captureTargetAs))
-                throw new IllegalArgumentException("Can't specify captureTargetAs if target is not null");
+            assert captureTargetAs != null && !captureTargetAs.isEmpty();
         }
 
         void setContext(HitQueryContext context) {
             relations.setHitQueryContext(context);
-            captureAsIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.LIST_OF_RELATIONS);
+            captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS);
 
             HitQueryContext targetContext = context.withField(targetField);
-            if (!StringUtils.isEmpty(captureTargetAs))
-                captureTargetAsIndex = targetContext.registerMatchInfo(captureTargetAs, MatchInfo.Type.SPAN);
+            captureTargetAsIndex = targetContext.registerMatchInfo(captureTargetAs, MatchInfo.Type.SPAN);
             if (target != null)
                 target.setHitQueryContext(targetContext);
         }
@@ -81,16 +78,16 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             if (o == null || getClass() != o.getClass())
                 return false;
             Target target1 = (Target) o;
-            return captureAsIndex == target1.captureAsIndex && hasTargetRestrictions == target1.hasTargetRestrictions
+            return captureRelationsIndex == target1.captureRelationsIndex && hasTargetRestrictions == target1.hasTargetRestrictions
                     && captureTargetAsIndex == target1.captureTargetAsIndex && Objects.equals(relations,
-                    target1.relations) && Objects.equals(captureAs, target1.captureAs) && Objects.equals(
+                    target1.relations) && Objects.equals(captureRelationsAs, target1.captureRelationsAs) && Objects.equals(
                     target, target1.target) && Objects.equals(captureTargetAs, target1.captureTargetAs)
                     && Objects.equals(targetField, target1.targetField);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(relations, captureAs, captureAsIndex, target, hasTargetRestrictions, captureTargetAs,
+            return Objects.hash(relations, captureRelationsAs, captureRelationsIndex, target, hasTargetRestrictions, captureTargetAs,
                     captureTargetAsIndex, targetField);
         }
 
@@ -98,7 +95,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         public String toString() {
             return "Target{" +
                     "relations=" + relations +
-                    ", captureAs='" + captureAs + '\'' +
+                    ", captureAs='" + captureRelationsAs + '\'' +
                     ", captureTargetAs='" + captureTargetAs + '\'' +
                     ", target=" + target +
                     ", hasTargetRestrictions=" + hasTargetRestrictions +
@@ -217,14 +214,11 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
             if (!target.hasTargetRestrictions) {
                 // No target span specified (or e.g. A:[]* ); just accept the relations we captured.
-                matchInfo[target.captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
+                matchInfo[target.captureRelationsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
 
-                // If target query was e.g. A:[]*, capture [targetPosMin, targetPosmax) into A.
-                if (target.captureTargetAsIndex >= 0) {
-
-                    matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetPosMin, targetPosMax,
-                            target.targetField);
-                }
+                // Capture target span
+                matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetPosMin, targetPosMax,
+                        target.targetField);
 
                 updateSourceStartEndWithCapturedRelations(); // update start/end to cover all captured relations
                 continue;
@@ -271,7 +265,9 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 capturedRelations.removeIf(r -> r.getTargetEnd() <= target.target.startPosition(finalTargetIndex)
                         || r.getTargetStart() >= target.target.endPosition(finalTargetIndex));
                 capturedRelations.sort(RelationInfo::compareTo);
-                matchInfo[target.captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
+                matchInfo[target.captureRelationsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
+                matchInfo[target.captureTargetAsIndex] = SpanInfo.create(target.target.startPosition(finalTargetIndex),
+                        target.target.endPosition(finalTargetIndex), target.targetField);
                 target.target.getMatchInfo(finalTargetIndex, matchInfo); // also perform captures on the target
 
                 updateSourceStartEndWithCapturedRelations(); // update start/end to cover all captured relations

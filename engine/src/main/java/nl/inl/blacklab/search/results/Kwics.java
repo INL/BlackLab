@@ -109,7 +109,7 @@ public class Kwics {
         if (!field.equals(defaultField)) { // foreign KWICs only
             // By default, just use the match info span
             // (which, in case of a cross-field relation, is the source span)
-            minMaxPerField = updateMinMaxPerField(minMaxPerField, field, mi.getSpanStart(), mi.getSpanEnd(), -1, -1);
+            minMaxPerField = updateMinMaxPerField(minMaxPerField, field, mi.getSpanStart(), mi.getSpanEnd(), mi.getSpanStart(), mi.getSpanEnd());
             afisPerField.computeIfAbsent(field, k -> getAnnotationForwardIndexes(
                     index.forwardIndex(index.annotatedField(field))));
         }
