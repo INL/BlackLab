@@ -446,8 +446,8 @@ public class IndexManager {
 
             // Sort own indexes before other's
             if (ownPrefix != null) {
-                boolean isOwn1 = o1.getUserId().startsWith(ownPrefix);
-                boolean isOwn2 = o2.getUserId().startsWith(ownPrefix);
+                boolean isOwn1 = o1.getUserId() == null ? false : o1.getUserId().startsWith(ownPrefix);
+                boolean isOwn2 = o2.getUserId() == null ? false : o2.getUserId().startsWith(ownPrefix);
                 if (isOwn1 != isOwn2)
                     return isOwn1 ? -1 : 1;
             }
