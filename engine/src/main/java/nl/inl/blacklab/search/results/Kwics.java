@@ -127,11 +127,17 @@ public class Kwics {
                                 index.forwardIndex(index.annotatedField(tfield))));
             }
         } else if (mi instanceof RelationListInfo) {
+            /*
+            SKIP; use the single (auto)capture for the right side of the operator as the min/max of the foreign
+            hit. Don't expand it using the list of overlapping relations, because this might expand it to a full
+            sentence or verse, even if you only matched by one or two words.
+
             // For a list of relations, update min/max for each relation
             RelationListInfo l = (RelationListInfo) mi;
             for (RelationInfo rmi: l.getRelations()) {
                 minMaxPerField = updateMinMaxForMatchInfo(index, rmi, defaultField, minMaxPerField, afisPerField);
             }
+            */
         }
         return minMaxPerField;
     }
