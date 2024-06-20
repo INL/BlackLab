@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.apache.lucene.search.spans.FilterSpans;
 
@@ -20,6 +21,13 @@ import org.apache.lucene.search.spans.FilterSpans;
  *   Spans view on top of that class? See @@@ comment below for a possible solution.
  */
 class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
+
+    /** If we can't find relation(s) to the target field (within a target span),
+     *  does that imply that the candidate (source) hit should be rejected?
+     *  If not, we report all source hits, regardless of whether they have
+     *  targets.
+     */
+    private static final boolean REJECT_IF_NO_TARGET_MATCH = false;
 
     public static class Target {
 
@@ -169,6 +177,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         int max = Integer.MIN_VALUE;
     }
 
+
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         // Prepare matchInfo so we can add captured relations to it
@@ -187,6 +196,11 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         adjustedStart = sourceStart;
         adjustedEnd = sourceEnd;
 
+        // If there's no match in the target field, should we reject this hit or accept it
+        // (and just return the source hit)?
+        FilterSpans.AcceptStatus returnValueIfNoTarget = REJECT_IF_NO_TARGET_MATCH ? FilterSpans.AcceptStatus.NO :
+                FilterSpans.AcceptStatus.YES;
+
         for (Target target: targets) {
 
             // Capture all relations with source overlapping this span.
@@ -195,11 +209,11 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
             if (matchingRelations.isEmpty()) {
                 // If no relations match, there is no match.
-                return FilterSpans.AcceptStatus.NO;
+                return returnValueIfNoTarget;
             }
             if (target.hasTargetRestrictions && target.target == null) {
                 // There were target restrictions, but no hits (in this index segment); no match
-                return FilterSpans.AcceptStatus.NO;
+                return returnValueIfNoTarget;
             }
 
             if (!target.hasTargetRestrictions) {
@@ -255,7 +269,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 }
                 if (targetRelationsCovered == 0) {
                     // A valid hit must have at least one matching relation in each target.
-                    return FilterSpans.AcceptStatus.NO;
+                    return returnValueIfNoTarget;
                 }
 
                 // Find relations to capture.
@@ -276,7 +290,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 updateSourceStartEndWithCapturedRelations(); // update start/end to cover all captured relations
             } else {
                 // Target document has no matches. Reject this hit.
-                return FilterSpans.AcceptStatus.NO;
+                return returnValueIfNoTarget;
             }
         }
 
