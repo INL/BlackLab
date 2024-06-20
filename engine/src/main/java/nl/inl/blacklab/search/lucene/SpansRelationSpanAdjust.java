@@ -100,14 +100,14 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
             startAdjusted = endAdjusted = -1;
         } else {
             if (spanMode == RelationInfo.SpanMode.ALL_SPANS) {
-                // We need all match info because we want the full span including all matched relations
+                // We need all match info because we want to expand the current span to include all matched relations
                 if (matchInfo == null)
                     matchInfo = new MatchInfo[context.numberOfMatchInfos()];
                 else
                     Arrays.fill(matchInfo, null);
                 in.getMatchInfo(matchInfo);
-                startAdjusted = Integer.MAX_VALUE;
-                endAdjusted = Integer.MIN_VALUE;
+                startAdjusted = in.startPosition();
+                endAdjusted = in.endPosition();
                 for (int i = 0; i < matchInfo.length; i++) {
                     MatchInfo info = matchInfo[i];
                     if (info != null && info.getType() == MatchInfo.Type.RELATION) {
@@ -124,11 +124,6 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
                         if (info.getSpanEnd() > endAdjusted)
                             endAdjusted = info.getSpanEnd();
                     }
-                }
-                if (startAdjusted == Integer.MAX_VALUE) {
-                    // No relations matched; use the original span
-                    startAdjusted = in.startPosition();
-                    endAdjusted = in.endPosition();
                 }
             } else {
                 RelationInfo relationInfo = in.getRelationInfo();
@@ -175,6 +170,8 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
             // Call the naive implementation.
             if (BLSpans.naiveAdvanceStartPosition(this, target) == NO_MORE_POSITIONS) {
                 startPos = startAdjusted = endAdjusted = NO_MORE_POSITIONS;
+            } else {
+                setAdjustedStartEnd();
             }
         } else {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()

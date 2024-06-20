@@ -121,7 +121,7 @@ public class RelationInfo extends MatchInfo {
         // Return a span covering both source and target
         FULL_SPAN("full"),
 
-        // Return a span covering source and target of all matched relations
+        // Expand the current span so it covers sources and targets of all matched relations
         // (only valid for rspan(), not rel())
         ALL_SPANS("all");
 
