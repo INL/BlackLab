@@ -66,6 +66,10 @@ public class CorpusQueryLanguageParser {
     }
 
     String getStringBetweenQuotes(String input) throws SingleQuotesException {
+        boolean isRaw = input.charAt(0) == 'r';
+        if (isRaw)
+            input = input.substring(1);
+
         String quoteUsed = input.substring(0, 1);
         input = chopEnds(input); // eliminate quotes
         if (!allowSingleQuotes && quoteUsed.equals("\'"))
@@ -73,7 +77,12 @@ public class CorpusQueryLanguageParser {
 
         // Unescape ONLY the quotes found around this string
         // Leave other escaped characters as-is for Lucene's regex engine
-        return StringUtil.unescapeQuote(input, quoteUsed);
+        String quotedUnescaped = StringUtil.unescapeQuote(input, quoteUsed);
+        if (isRaw) {
+            // We want to find this string as-is; create a regex that will match this
+            return StringUtil.escapeLuceneRegexCharacters(quotedUnescaped);
+        }
+        return quotedUnescaped;
     }
 
     TextPatternTerm simplePattern(String str) {

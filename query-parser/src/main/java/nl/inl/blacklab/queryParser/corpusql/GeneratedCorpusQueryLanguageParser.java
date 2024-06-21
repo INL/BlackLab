@@ -82,10 +82,10 @@ public class GeneratedCorpusQueryLanguageParser implements GeneratedCorpusQueryL
       }
     case DEFAULT_VALUE:
     case ROOT_DEP_OP:
-    case NAME:
-    case NUMBER:
     case QUOTED_STRING:
     case SINGLE_QUOTED_STRING:
+    case NAME:
+    case NUMBER:
     case 25:
     case 26:
     case 28:
@@ -652,9 +652,9 @@ query = new TextPatternSequence(query, following);
     Integer[] rep = null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case DEFAULT_VALUE:
-    case NAME:
     case QUOTED_STRING:
     case SINGLE_QUOTED_STRING:
+    case NAME:
     case 25:
     case 26:
     case 42:{
@@ -724,10 +724,10 @@ if (m instanceof TextPatternAnyToken) {
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case DEFAULT_VALUE:
     case ROOT_DEP_OP:
-    case NAME:
-    case NUMBER:
     case QUOTED_STRING:
     case SINGLE_QUOTED_STRING:
+    case NAME:
+    case NUMBER:
     case 25:
     case 26:
     case 28:
@@ -1103,9 +1103,9 @@ TextPattern value():
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_scan_token(17)) {
+    if (jj_scan_token(13)) {
     jj_scanpos = xsp;
-    if (jj_scan_token(18)) return true;
+    if (jj_scan_token(14)) return true;
     }
     return false;
   }
@@ -1191,9 +1191,9 @@ TextPattern value():
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_scan_token(13)) {
+    if (jj_scan_token(15)) {
     jj_scanpos = xsp;
-    if (jj_scan_token(15)) return true;
+    if (jj_scan_token(17)) return true;
     }
     return false;
   }
@@ -1600,7 +1600,7 @@ TextPattern value():
     if (jj_scan_token(38)) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_scan_token(15)) jj_scanpos = xsp;
+    if (jj_scan_token(17)) jj_scanpos = xsp;
     if (jj_scan_token(37)) return true;
     return false;
   }
@@ -1706,7 +1706,7 @@ TextPattern value():
       jj_la1_init_1();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x1607a600,0x80000,0x0,0x3f00000,0x3f00000,0x20000000,0x14060000,0x180,0x180,0xa000,0x1800,0xa000,0x0,0x2000,0x0,0x60000,0x8000,0x0,0x0,0x0,0x0,0xa000,0x6062200,0x16062200,0x1606a600,0x0,0xa000,0x4000,0x14002000,0x60200,0x0,0x14000000,0x4000,0x4000,0x2000,0x0,};
+      jj_la1_0 = new int[] {0x1606e600,0x80000,0x0,0x3f00000,0x3f00000,0x20000000,0x14006000,0x180,0x180,0x28000,0x1800,0x28000,0x0,0x8000,0x0,0x6000,0x20000,0x0,0x0,0x0,0x0,0x28000,0x600e200,0x1600e200,0x1602e600,0x0,0x28000,0x10000,0x14008000,0x6200,0x0,0x14000000,0x10000,0x10000,0x8000,0x0,};
    }
    private static void jj_la1_init_1() {
       jj_la1_1 = new int[] {0x400,0x0,0x380,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1,0x0,0x1,0x0,0x0,0xe,0x10,0x380,0x380,0x0,0x400,0x400,0x400,0x40,0x0,0x0,0x0,0x400,0x380,0x0,0x0,0x0,0x0,0x1,};

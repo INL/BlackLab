@@ -36,8 +36,8 @@ public final class StringUtil {
     private static final Pattern PATT_REGEX_CHARACTERS_JAVA = Pattern.compile("([|\\\\?!*+()<>\\[\\]\\-=^${}.])");
 
     /** Any characters that should be escaped when constructing a Lucene regular expression matching a value.
-        (compared to Java, doesn't escape &lt;&gt;-=!^$) but does escape &quot;) */
-    private static final Pattern PATT_REGEX_CHARACTERS_LUCENE = Pattern.compile("([|\\\\?*+()\\[\\]\\{}.\"])");
+        (compared to Java, doesn't escape &lt;&gt;-=!^$) but does escape &quot; and <) */
+    private static final Pattern PATT_REGEX_CHARACTERS_LUCENE = Pattern.compile("([|\\\\?*+()\\[\\]\\{}\\<.\"])");
 
     /**
      * Escape regex special characters
