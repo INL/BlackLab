@@ -66,8 +66,8 @@ public class CorpusQueryLanguageParser {
     }
 
     String getStringBetweenQuotes(String input) throws SingleQuotesException {
-        boolean isRaw = input.charAt(0) == 'r';
-        if (isRaw)
+        boolean isLiteral = input.charAt(0) == 'l';
+        if (isLiteral)
             input = input.substring(1);
 
         String quoteUsed = input.substring(0, 1);
@@ -78,7 +78,7 @@ public class CorpusQueryLanguageParser {
         // Unescape ONLY the quotes found around this string
         // Leave other escaped characters as-is for Lucene's regex engine
         String quotedUnescaped = StringUtil.unescapeQuote(input, quoteUsed);
-        if (isRaw) {
+        if (isLiteral) {
             // We want to find this string as-is; create a regex that will match this
             return StringUtil.escapeLuceneRegexCharacters(quotedUnescaped);
         }

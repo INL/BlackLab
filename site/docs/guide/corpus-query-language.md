@@ -60,14 +60,14 @@ And to find lemmas starting with _under_, use:
 
 Explaining regular expression syntax is beyond the scope of this document, but for a complete overview, see [regular-expressions.info](http://www.regular-expressions.info/).
 
-::: details Escaping and raw strings
+::: details Escaping and literal strings
 To find characters with special meaning in a regular expression, such as the period, you need to escape them with a backslash:
 
     [lemma='etc\.']
 
-Alternatively, you can use a "raw string" by prefixing the string with an `r`:
+Alternatively, you can use a "literal string" by prefixing the string with an `l`:
 
-    [lemma=r'etc.']
+    [lemma=l'etc.']
 :::
 
 #### Matching any token
@@ -663,7 +663,7 @@ BlackLab's CQL syntax and behaviour differs in a few ways from CWBs, although th
 For now, here's what you should know:
 
 * Case-insensitive search is the default in BlackLab, while CWB and Sketch Engine use case-sensitive search as the default. If you want to match a term case-sensitively, use `'(?-i)..'` or `'(?c)..'`.
-* If you want to match a string literally, not as a regular expression, use backslash escaping (`'e\.g\.'`) or a raw string (`r'e.g.'`)
+* If you want to match a string literally, not as a regular expression, use backslash escaping (`'e\.g\.'`) or a literal string (`l'e.g.'`)
 * BlackLab supports result set manipulation such as: sorting (including on specific context words), grouping/frequency distribution, subsets, sampling, setting context size, etc. However, these are supported through the REST and Java APIs, not through a command interface like in CWB. See [BlackLab Server overview](/server/overview.md)).
 * Querying XML elements and attributes looks natural in BlackLab: `<s/>` means "sentences", `<s>` means "starts of sentences", `<s type='A'>` means "sentence tags with a type attribute with value A". This natural syntax differs from CWBs in some places, however, particularly when matching XML attributes.
 * In capture constraints (expressions occurring after `::`), only literal matching (no regex matching) is currently supported.
