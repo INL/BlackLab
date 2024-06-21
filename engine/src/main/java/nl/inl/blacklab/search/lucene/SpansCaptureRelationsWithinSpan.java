@@ -92,7 +92,7 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
                 if (relations.startPosition() < start)
                     relations.advanceStartPosition(start);
                 while (relations.startPosition() < end) {
-                    if (relations.endPosition() < end)
+                    if (relations.endPosition() <= end)
                         capturedRelations.add(relations.getRelationInfo().copy());
                     relations.nextStartPosition();
                 }
