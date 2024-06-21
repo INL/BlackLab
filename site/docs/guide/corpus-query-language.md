@@ -532,7 +532,15 @@ Assuming your data has both sentence and word alignments, and you want to find a
 
     <s/> containing 'cat' ==>nl _
 
-This should find aligning English and Dutch sentences, including any word alignments between words in those sentences.
+This should find aligning English and Dutch sentences, including any word alignments between words in those sentences. You can also filter by alignment type, as we'll show later.
+
+::: details If no alignments are found
+
+The `==>` operator will try to find alignments, but won't skip a hit if it couldn't find any aligments for that hit. Instead, the hit will simply be reported without any alignment information.
+
+For example, if you're searching for translations of `cat` to Dutch, you will see both English `cat` hits where the translation to Dutch was found, and `cat` hits where it wasn't.
+
+:::
 
 ### Switching the main search field
 
@@ -541,7 +549,6 @@ If you want to search the Dutch version instead, and find alignments with the En
     'kat' ==>en _
 
 But of course, the main search field shouldn't be `contents__en` in this case; we want to switch it to `contents__nl`. You can specify a main search field other than the default with the BLS parameter `field`. In this case, if you specify `field=nl`. BlackLab will automatically recognize that you're specifying a version of the main annotated field and use the correct 'real' field, probably `contents__nl` in this case.
-
 
 ### Filtering the target span
 
