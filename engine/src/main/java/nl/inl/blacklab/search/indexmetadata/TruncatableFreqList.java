@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -90,5 +91,9 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
     @Override
     public TruncatableFreqList withLimit(long max) {
         return truncated(max);
+    }
+
+    public void addAll(Collection<String> values) {
+        values.forEach(this::add);
     }
 }

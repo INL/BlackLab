@@ -92,9 +92,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
                 if (docId == DocIdSetIterator.NO_MORE_DOCS)
                     break;
                 if (liveDocs == null || liveDocs.get(docId)) { // not deleted?
-                    String key = DocValuesUtil.getCurrentValueAsString(dv);
-                    if (key != null) // if null, there's no value for this field in this document
-                        values.add(key);
+                    values.addAll(DocValuesUtil.getCurrentValues(dv));
                 }
             }
         }
