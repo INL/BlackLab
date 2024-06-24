@@ -72,7 +72,9 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Match info name for the list of captured relations */
         private final String captureAs;
 
-        /** Span the relation targets must be inside of (or null if we don't care) */
+        /** Span the relation targets must overlap with (or null if we don't care)
+         *  (Clause to the right of the ==> operator)
+         */
         private final BLSpanQuery target;
 
         private final String targetField;

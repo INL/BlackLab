@@ -3,6 +3,7 @@ package nl.inl.blacklab.resultproperty;
 import java.util.List;
 import java.util.Objects;
 
+import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -47,7 +48,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         // index might be different for different hits object.
         groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoIndex(groupName);
         if (groupIndex < 0)
-            throw new IllegalArgumentException("Unknown group name '" + groupName + "'");
+            throw new MatchInfoNotFound(groupName);
     }
 
     /**
@@ -86,8 +87,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     public void fetchContext() {
         fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
             MatchInfo group = hit.matchInfo()[groupIndex];
-            starts[indexInArrays] = group.spanStart(spanMode);
-            ends[indexInArrays] = group.spanEnd(spanMode);
+            starts[indexInArrays] = group == null ? 0 : group.spanStart(spanMode);
+            ends[indexInArrays] = group == null ? 0 : group.spanEnd(spanMode);
         });
     }
 
