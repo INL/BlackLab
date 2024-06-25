@@ -26,7 +26,7 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
         DeserializeInfos i = deserializeProp(field, infos);
         int numberOfTokens = i.extraIntParam(0, contextSize.before());
         String overrideField = i.extraParam(1);
-        Annotation annotation = determineAnnotation(index, field, i.annotation, overrideField);
+        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, overrideField);
         return new HitPropertyBeforeHit(index, annotation, i.sensitivity, numberOfTokens);
     }
 

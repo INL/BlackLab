@@ -148,16 +148,34 @@ public abstract class HitPropertyContextBase extends HitProperty {
         return i <= 0 ? d : i;
     }
 
-    protected static Annotation determineAnnotation(BlackLabIndex index, AnnotatedField field, Annotation annotation,
-            String overrideField) {
-        if (!AnnotatedFieldNameUtil.isParallelField(overrideField)) {
+    /**
+     * Choose either the specified annotation, or if an override field/version is given, the equivalent in that field.
+     * @param index index to use
+     * @param annotation annotation to use (or annotation name, if overrideField is given)
+     * @param overrideFieldOrVersion field (or alternate parallel version of the annotation's field) to use
+     *                               instead of the annotation's field, or null to return annotation unchanged
+     * @return the annotation to use
+     */
+    protected static Annotation annotationOverrideFieldOrVersion(BlackLabIndex index, Annotation annotation,
+            String overrideFieldOrVersion) {
+        String overrideField;
+        if (overrideFieldOrVersion != null && !AnnotatedFieldNameUtil.isParallelField(overrideFieldOrVersion)) {
             // Specified a parallel version, not a complete field name.
-            overrideField = AnnotatedFieldNameUtil.changeParallelFieldVersion(field.name(), overrideField);
-        }
-        return determineAnnotation(index, annotation, overrideField);
+            overrideField = AnnotatedFieldNameUtil.changeParallelFieldVersion(annotation.field().name(),
+                    overrideFieldOrVersion);
+        } else
+            overrideField = overrideFieldOrVersion;
+        return annotationOverrideField(index, annotation, overrideField);
     }
 
-    protected static Annotation determineAnnotation(BlackLabIndex index, Annotation annotation, String overrideField) {
+    /**
+     * Choose either the specified annotation, or the equivalent in the overrideField if given.
+     * @param index index to use
+     * @param annotation annotation to use (or annotation name, if overrideField is given)
+     * @param overrideField field to use instead of the annotation's field, or null to return annotation unchanged
+     * @return the annotation to use
+     */
+    protected static Annotation annotationOverrideField(BlackLabIndex index, Annotation annotation, String overrideField) {
         if (overrideField != null && !overrideField.equals(annotation.field().name())) {
             // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
             annotation = index.annotatedField(overrideField).annotation(annotation.name());
@@ -191,7 +209,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
         super(prop, hits, invert);
         this.index = hits == null ? prop.index : hits.index();
-        this.annotation = determineAnnotation(prop.index, prop.annotation, overrideField);
+        this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
         this.terms = index.annotationForwardIndex(this.annotation).terms();
 //        if (hits != null && !hits.field().equals(this.annotation.field())) {
 //            throw new IllegalArgumentException(

@@ -35,13 +35,13 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         DeserializeInfos i = deserializeProp(field, infos);
-        Annotation annotation = determineAnnotation(index, field, i.annotation, i.extraParam(1));
+        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, i.extraParam(1));
         return new HitPropertyContextPart(index, annotation, i.sensitivity, i.extraParam(0));
     }
 
     static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         DeserializeInfos i = deserializeProp(field, infos);
-        Annotation annotation = determineAnnotation(index, field, i.annotation, i.extraParam(1));
+        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, i.extraParam(1));
         return contextWords(index, annotation, i.sensitivity, i.extraParam(0, "H1-"));
     }
 
