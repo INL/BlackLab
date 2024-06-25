@@ -15,8 +15,11 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -34,6 +37,49 @@ public abstract class HitPropertyContextBase extends HitProperty {
      *  when we construct a displayable value)
      */
     protected boolean compareInReverse;
+
+    /**
+     * Find a "foreign hit" in a parallel corpus.
+     *
+     * A foreign hit is a hit in another field than the one that was searched.
+     * E.g. for a query like <pre>"the" ==>nl "de"</pre>, the right side would
+     * be the foreign field (likely named <pre>contents__nl</pre>).
+     *
+     * The start and end are determined by scanning the match info for captures
+     * and relations in to the field we're asking about. (for relations, either
+     * the source or the target, or both, might be in this field)
+     *
+     * @param hit our hit
+     * @param fieldName foreign field we're interested in
+     * @return array of length 2, containing start and end positions for the hit in this field
+     */
+    protected static int[] getForeignHitStartEnd(Hit hit, String fieldName) {
+        int[] startEnd = { Integer.MAX_VALUE, Integer.MIN_VALUE };
+        for (MatchInfo mi: hit.matchInfo()) {
+            if (mi == null)
+                continue;
+            if (mi.getField().equals(fieldName)) {
+                // Span (or source of relation) is in the correct field. Adjust the hit boundaries.
+                startEnd[0] = Math.min(startEnd[0], mi.getSpanStart());
+                startEnd[1] = Math.max(startEnd[1], mi.getSpanEnd());
+            }
+            if (mi instanceof RelationInfo) {
+                RelationInfo rmi = (RelationInfo) mi;
+                String tfield = rmi.getTargetField() == null ? mi.getField() : rmi.getTargetField();
+                if (tfield.equals(fieldName)) {
+                    // Relation target is in the correct field. Adjust the hit boundaries.
+                    startEnd[0] = Math.min(startEnd[0], rmi.getTargetStart());
+                    startEnd[1] = Math.max(startEnd[1], rmi.getTargetEnd());
+                }
+            }
+        }
+        // Set fallback values if no match info for this target field was found
+        if (startEnd[0] == Integer.MAX_VALUE)
+            startEnd[0] = 0;
+        if (startEnd[1] == Integer.MIN_VALUE)
+            startEnd[1] = 0;
+        return startEnd;
+    }
 
     /** Used by fetchContext() to get required context part boundaries for a hit */
     @FunctionalInterface
@@ -102,6 +148,23 @@ public abstract class HitPropertyContextBase extends HitProperty {
         return i <= 0 ? d : i;
     }
 
+    protected static Annotation determineAnnotation(BlackLabIndex index, AnnotatedField field, Annotation annotation,
+            String overrideField) {
+        if (!AnnotatedFieldNameUtil.isParallelField(overrideField)) {
+            // Specified a parallel version, not a complete field name.
+            overrideField = AnnotatedFieldNameUtil.changeParallelFieldVersion(field.name(), overrideField);
+        }
+        return determineAnnotation(index, annotation, overrideField);
+    }
+
+    protected static Annotation determineAnnotation(BlackLabIndex index, Annotation annotation, String overrideField) {
+        if (overrideField != null && !overrideField.equals(annotation.field().name())) {
+            // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
+            annotation = index.annotatedField(overrideField).annotation(annotation.name());
+        }
+        return annotation;
+    }
+
     /** Some context properties, e.g. context before, can get an extra parameter (number of tokens).
      *
      * This method should deserialize that parameter if applicable.
@@ -124,10 +187,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     protected final BlackLabIndex index;
 
-    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert) {
-        this(prop, hits, invert, null);
-    }
-
+    /** Copy constructor, used to create a copy with e.g. a different Hits object. */
     public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
         super(prop, hits, invert);
         this.index = hits == null ? prop.index : hits.index();
@@ -150,14 +210,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    private static Annotation determineAnnotation(BlackLabIndex index, Annotation annotation, String overrideField) {
-        if (overrideField != null && !overrideField.equals(annotation.field().name())) {
-            // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
-            annotation = index.annotatedField(overrideField).annotation(annotation.name());
-        }
-        return annotation;
-    }
-
     public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
             MatchSensitivity sensitivity, boolean compareInReverse) {
         super();
@@ -168,12 +220,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.terms = index.annotationForwardIndex(this.annotation).terms();
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.compareInReverse = compareInReverse;
-        initForwardIndex();
-    }
-
-    private void setAnnotation(Annotation annotation) {
-        this.annotation = annotation;
-        this.terms = index.annotationForwardIndex(this.annotation).terms();
         initForwardIndex();
     }
 

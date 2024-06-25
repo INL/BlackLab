@@ -105,6 +105,17 @@ A few more examples:
 - `context:word:s:B1-`: words before the match, starting from first word before the match, i.e. the same as `before:word:s`. How many words of context are used depends on the `context` parameter (default: 5)
 :::
 
+::: details Parallel corpora and grouping/sorting on context
+
+In parallel corpora, you can add an extra parameter at the end of a context
+criterium like `hit` or `before` to specify what version you're referring to.
+
+For example, if your parallel corpus has versions `en` and `nl`, you can 
+specify `hit:word:s:en` to sort/group on the English version of the matched
+text, or `before:word:s:1:nl` to sort/group on the Dutch version of the word.
+
+:::
+
 #### Miscellaneous parameters
 
 Some less commonly used parameters for advanced use cases.

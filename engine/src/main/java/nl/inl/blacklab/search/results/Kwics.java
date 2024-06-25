@@ -43,12 +43,11 @@ public class Kwics {
 
     private Map<Hit, Map<String, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
         Map<Hit, Map<String, Kwic>> foreignKwics = null;
-        Map<String, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();;
+        Map<String, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
         String defaultField = hits.field().name();
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
-            Map<String, int[]> minMaxPerField = null; // what context span we need for each field, and what constitutes the "foreign match"
-                   // so the int[] will have 4 elements: [snippetStart, snippetEnd, matchStart, matchEnd]
+            Map<String, int[]> minMaxPerField = null; // start and end of the "foreign match"
             MatchInfo[] matchInfo = hit.matchInfo();
             if (matchInfo != null) {
                 for (MatchInfo mi: matchInfo) {
@@ -62,8 +61,8 @@ public class Kwics {
                     Map<String, Kwic> kwics = new HashMap<>();
                     for (Map.Entry<String, int[]> e: minMaxPerField.entrySet()) {
                         int[] minMax = e.getValue();
-                        int matchStart = minMax[2] < 0 ? minMax[0] : minMax[2];
-                        int matchEnd = minMax[3] < 0 ? minMax[1] : minMax[3];
+                        int matchStart = minMax[0];
+                        int matchEnd = minMax[1];
                         int snippetStart = Math.max(0, Math.min(minMax[0], matchStart - contextSize.before()));
                         int snippetEnd = Math.max(minMax[1], matchEnd + contextSize.after());
                         if (snippetEnd - snippetStart > contextSize.getMaxSnippetLength()) {
@@ -96,12 +95,12 @@ public class Kwics {
      *
      * Also retrieve AnnotationForwardIndex for each foreign field.
      *
-     * @param index
-     * @param mi
-     * @param defaultField
-     * @param minMaxPerField
-     * @param afisPerField
-     * @return
+     * @param index the index
+     * @param mi match info to update min/max for
+     * @param defaultField default (source / "non-foreign") field for this query
+     * @param minMaxPerField map of min/max positions per field, or null if no foreign fields have been seen yet
+     * @param afisPerField the AnnotationForwardIndex for each foreign field we've seen will be added to this
+     * @return updated map of min/max positions per field
      */
     private static Map<String, int[]> updateMinMaxForMatchInfo(BlackLabIndex index, MatchInfo mi, String defaultField,
             Map<String, int[]> minMaxPerField, Map<String, List<AnnotationForwardIndex>> afisPerField) {
@@ -109,36 +108,36 @@ public class Kwics {
         if (!field.equals(defaultField)) { // foreign KWICs only
             // By default, just use the match info span
             // (which, in case of a cross-field relation, is the source span)
-            minMaxPerField = updateMinMaxPerField(minMaxPerField, field, mi.getSpanStart(), mi.getSpanEnd(), mi.getSpanStart(), mi.getSpanEnd());
+            minMaxPerField = updateMinMaxPerField(minMaxPerField, field, mi.getSpanStart(), mi.getSpanEnd());
             afisPerField.computeIfAbsent(field, k -> getAnnotationForwardIndexes(
                     index.forwardIndex(index.annotatedField(field))));
         }
         if (mi instanceof RelationInfo) {
-            // Relation targets (not just sources) should also influence field context
+            // Relation targets (not just sources) should influence field context
             RelationInfo rmi = (RelationInfo) mi;
             String tfield = rmi.getTargetField() == null ? field : rmi.getTargetField();
             if (!tfield.equals(defaultField)) { // foreign KWICs only
                 int targetStart = rmi.getTargetStart();
                 int targetEnd = rmi.getTargetEnd();
                 // Use foreign targets for match position as well
-                minMaxPerField = updateMinMaxPerField(minMaxPerField, tfield, targetStart, targetEnd, targetStart, targetEnd);
+                minMaxPerField = updateMinMaxPerField(minMaxPerField, tfield, targetStart, targetEnd);
                 afisPerField.computeIfAbsent(tfield, k ->
                         getAnnotationForwardIndexes(
                                 index.forwardIndex(index.annotatedField(tfield))));
             }
-        } else if (mi instanceof RelationListInfo) {
-            /*
-            SKIP; use the single (auto)capture for the right side of the operator as the min/max of the foreign
-            hit. Don't expand it using the list of overlapping relations, because this might expand it to a full
-            sentence or verse, even if you only matched by one or two words.
+        }
+        /* else if (mi instanceof RelationListInfo) {
+
+            // SKIP; use the single (auto)capture for the right side of the operator as the min/max of the foreign
+            // hit. Don't expand it using the list of overlapping relations, because this might expand it to a full
+            // sentence or verse, even if you only matched by one or two words.
 
             // For a list of relations, update min/max for each relation
             RelationListInfo l = (RelationListInfo) mi;
             for (RelationInfo rmi: l.getRelations()) {
                 minMaxPerField = updateMinMaxForMatchInfo(index, rmi, defaultField, minMaxPerField, afisPerField);
             }
-            */
-        }
+        } */
         return minMaxPerField;
     }
 
@@ -149,23 +148,20 @@ public class Kwics {
      * @param field field to update min/max for
      * @param start start position of the match
      * @param end end position of the match
-     * @param matchStart start position of the match in the foreign field, or -1 if not applicable
-     * @param matchEnd end position of the match in the foreign field, or -1 if not applicable
      * @return updated minMaxPerField
      */
     private static Map<String, int[]> updateMinMaxPerField(Map<String, int[]> minMaxPerField, String field,
-            int start, int end, int matchStart, int matchEnd) {
+            int start, int end) {
         // Keep track of the min/max positions of the match in each foreign field
         if (minMaxPerField == null)
             minMaxPerField = new HashMap<>();
         minMaxPerField.compute(field, (k, v) -> {
             if (v == null) {
-                return new int[] { start, end, matchStart, matchEnd };
+                return new int[] { start, end };
             } else {
+                assert start >= 0 && end >= 0 && v[0] >= 0 && v[1] >= 0 : "All values should be valid";
                 v[0] = Math.min(v[0], start);
                 v[1] = Math.max(v[1], end);
-                v[2] = v[2] < 0 ? matchStart : (matchStart < 0 ? v[2] : Math.min(v[2], matchStart));
-                v[3] = v[3] < 0 ? matchEnd : Math.max(v[3], matchEnd);
                 return v;
             }
         });

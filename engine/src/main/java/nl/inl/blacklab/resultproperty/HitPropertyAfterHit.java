@@ -8,6 +8,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -21,19 +22,22 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     /** How many tokens of context-after to compare */
     protected int numberOfTokens;
 
-    static HitPropertyAfterHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+    static HitPropertyAfterHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
         DeserializeInfos i = deserializeProp(field, infos);
-        return new HitPropertyAfterHit(index, i.annotation, i.sensitivity, i.extraIntParam(0));
+        int numberOfTokens = i.extraIntParam(0, contextSize.before());
+        String overrideField = i.extraParam(1);
+        Annotation annotation = determineAnnotation(index, field, i.annotation, overrideField);
+        return new HitPropertyAfterHit(index, annotation, i.sensitivity, numberOfTokens);
     }
 
     static HitPropertyAfterHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {
-        HitPropertyAfterHit hitProp = deserializeProp(index, field, infos);
+        HitPropertyAfterHit hitProp = deserializeProp(index, field, infos, ContextSize.ZERO);
         hitProp.numberOfTokens = 1;
         return hitProp;
     }
 
     HitPropertyAfterHit(HitPropertyAfterHit prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+        super(prop, hits, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
 
@@ -78,10 +82,22 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
 
     @Override
     public void fetchContext() {
-        fetchContext((int[] starts, int[] ends, int j, Hit h) -> {
-            starts[j] = h.end();
-            ends[j] = h.end() + numberOfTokens;
-        });
+        if (annotation.field() == hits.field()) {
+            // Regular hit; use start and end offsets from the hit itself
+            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+                starts[hitIndex] = hit.end();
+                ends[hitIndex] = hit.end() + numberOfTokens;
+            });
+        } else {
+            // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
+            // Determine start and end using matchInfo instead.
+            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+                int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                int pos = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                starts[hitIndex] = pos;
+                ends[hitIndex] = pos + numberOfTokens;
+            });
+        }
     }
 
     @Override

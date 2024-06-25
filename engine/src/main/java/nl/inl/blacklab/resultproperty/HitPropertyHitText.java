@@ -18,11 +18,12 @@ public class HitPropertyHitText extends HitPropertyContextBase {
 
     static HitPropertyHitText deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         DeserializeInfos i = deserializeProp(field, infos);
-        return new HitPropertyHitText(index, i.annotation, i.sensitivity);
+        Annotation annotation = determineAnnotation(index, field, i.annotation, i.extraParam(0));
+        return new HitPropertyHitText(index, annotation, i.sensitivity);
     }
 
     HitPropertyHitText(HitPropertyHitText prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+        super(prop, hits, invert, null);
     }
 
     public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
@@ -48,10 +49,21 @@ public class HitPropertyHitText extends HitPropertyContextBase {
 
     @Override
     public void fetchContext() {
-        fetchContext((int[] starts, int[] ends, int j, Hit h) -> {
-            starts[j] = h.start();
-            ends[j] = h.end();
-        });
+        if (annotation.field() == hits.field()) {
+            // Regular hit; use start and end offsets from the hit itself
+            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+                starts[hitIndex] = hit.start();
+                ends[hitIndex] = hit.end();
+            });
+        } else {
+            // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
+            // Determine start and end using matchInfo instead.
+            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+                int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                starts[hitIndex] = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                ends[hitIndex] = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+            });
+        }
     }
 
     @Override

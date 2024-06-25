@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -461,7 +463,7 @@ public final class AnnotatedFieldNameUtil {
      * @return the parallel field name with the indicated version
      */
     public static String changeParallelFieldVersion(String parallelFieldName, String newVersion) {
-        if (newVersion == null || newVersion.isEmpty())
+        if (StringUtils.isEmpty(newVersion))
             return parallelFieldName;
         return baseFromParallelFieldName(parallelFieldName) + PARALLEL_VERSION_SEPARATOR + newVersion;
     }

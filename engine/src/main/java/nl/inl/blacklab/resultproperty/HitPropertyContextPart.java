@@ -35,15 +35,14 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         DeserializeInfos i = deserializeProp(field, infos);
-        return new HitPropertyContextPart(index, i.annotation, i.sensitivity, i.extraParam(0));
+        Annotation annotation = determineAnnotation(index, field, i.annotation, i.extraParam(1));
+        return new HitPropertyContextPart(index, annotation, i.sensitivity, i.extraParam(0));
     }
 
     static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, List<String> infos) {
-        String propName = infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0);
-        MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1)) :
-                MatchSensitivity.SENSITIVE;
-        Annotation annotation = field.annotation(propName);
-        return contextWords(index, annotation, sensitivity, infos.size() > 2 ? infos.get(2) : "H1-");
+        DeserializeInfos i = deserializeProp(field, infos);
+        Annotation annotation = determineAnnotation(index, field, i.annotation, i.extraParam(1));
+        return contextWords(index, annotation, i.sensitivity, i.extraParam(0, "H1-"));
     }
 
     public static HitProperty contextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String wordSpec) {
@@ -185,12 +184,8 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     private ContextPart part;
 
     HitPropertyContextPart(HitPropertyContextPart prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+        super(prop, hits, invert, null);
         this.part = prop.part;
-    }
-
-    public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        this(index, annotation, sensitivity, (ContextPart)null);
     }
 
     public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String partSpec) {
@@ -223,8 +218,21 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     @Override
     public void fetchContext() {
-        int smaller = part.first < part.last ? part.first : part.last;
-        int larger = part.first < part.last ? part.last : part.first;
+        int smaller = Math.min(part.first, part.last);
+        int larger = Math.max(part.first, part.last);
+        StartEndSetter func;
+        if (annotation.field() == hits.field()) {
+            // Regular hit; use start and end offsets from the hit itself
+            func = fetchContextRegular(smaller, larger);
+        } else {
+            // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
+            // Determine start and end using matchInfo instead.
+            func = fetchContextParallel(smaller, larger);
+        }
+        fetchContext(func);
+    }
+
+    private StartEndSetter fetchContextRegular(int smaller, int larger) {
         StartEndSetter func;
         if (part.fromHitEnd) {
             if (part.direction == 1) {
@@ -268,7 +276,68 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 };
             }
         }
-        fetchContext(func);
+        return func;
+    }
+
+    private StartEndSetter fetchContextParallel(int smaller, int larger) {
+        StartEndSetter func;
+        if (part.fromHitEnd) {
+            if (part.direction == 1) {
+                // From hit end forwards.
+                func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                    int pos = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                    starts[j] = pos + smaller;
+                    ends[j] = pos + larger + 1;
+                };
+            } else {
+                // From hit end backwards.
+                if (part.confineToHit) {
+                    func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                        starts[j] = Math.max(start, end - larger);
+                        ends[j] = Math.max(start, end - smaller + 1);
+                    };
+                } else {
+                    func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                        starts[j] = Math.max(0, end - larger);
+                        ends[j] = Math.max(0, end - smaller + 1);
+                    };
+                }
+            }
+        } else {
+            if (part.direction == 1) {
+                // From hit start forwards.
+                if (part.confineToHit) {
+                    func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                        starts[j] = Math.min(end, start + smaller);
+                        ends[j] = Math.min(end, start + larger + 1);
+                    };
+                } else {
+                    func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                        starts[j] = start + smaller;
+                        ends[j] = start + larger + 1;
+                    };
+                }
+            } else {
+                func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                    int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                    starts[j] = Math.max(0, start - larger);
+                    ends[j] = Math.max(0, start - smaller + 1);
+                };
+            }
+        }
+        return func;
     }
 
     @Override

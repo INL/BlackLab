@@ -24,7 +24,10 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
 
     static HitPropertyBeforeHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
         DeserializeInfos i = deserializeProp(field, infos);
-        return new HitPropertyBeforeHit(index, i.annotation, i.sensitivity, getOrDefaultContextSize(i.extraIntParam(0), contextSize.before()));
+        int numberOfTokens = i.extraIntParam(0, contextSize.before());
+        String overrideField = i.extraParam(1);
+        Annotation annotation = determineAnnotation(index, field, i.annotation, overrideField);
+        return new HitPropertyBeforeHit(index, annotation, i.sensitivity, numberOfTokens);
     }
 
     static HitPropertyBeforeHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {
@@ -34,7 +37,7 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     }
 
     HitPropertyBeforeHit(HitPropertyBeforeHit prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+        super(prop, hits, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
 
@@ -78,10 +81,22 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
 
     @Override
     public void fetchContext() {
-        fetchContext((int[] starts, int[] ends, int j, Hit h) -> {
-            starts[j] = Math.max(0, h.start() - numberOfTokens);
-            ends[j] = h.start();
-        });
+        if (annotation.field() == hits.field()) {
+            // Regular hit; use start and end offsets from the hit itself
+            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+                starts[hitIndex] = Math.max(0, hit.start() - numberOfTokens);
+                ends[hitIndex] = hit.start();
+            });
+        } else {
+            // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
+            // Determine start and end using matchInfo instead.
+            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+                int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                int pos = startEnd[0] == Integer.MIN_VALUE ? hit.start() : startEnd[0];
+                starts[hitIndex] = Math.max(0, pos - numberOfTokens);
+                ends[hitIndex] = pos;
+            });
+        }
     }
 
     @Override
