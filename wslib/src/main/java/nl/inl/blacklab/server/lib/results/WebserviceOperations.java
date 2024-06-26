@@ -459,7 +459,9 @@ public class WebserviceOperations {
             try {
                 throw e.getCause();
             } catch (MatchInfoNotFound e1) {
-                return new BadRequest("UNKNOWN_MATCH_INFO", "Reference to unknown match info (i.e. capture group) '" + e1.getMatchInfoName() + "'");
+                return new BadRequest("UNKNOWN_MATCH_INFO",
+                        "Reference to unknown match info (i.e. capture group) '" + e1.getMatchInfoName() + "'",
+                        Map.of("name", e1.getMatchInfoName()));
             } catch (BlackLabRuntimeException e1) {
                 return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
             } catch (BlackLabException e1) {

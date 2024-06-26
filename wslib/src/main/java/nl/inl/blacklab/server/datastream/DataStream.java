@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.datastream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -42,12 +43,13 @@ public interface DataStream {
      * @param msg  the error message
      * @param e    if specified, include stack trace
      */
-    default void error(String code, String msg, Throwable e) {
+    default void error(String code, String msg, Map<String, String> info, Throwable e) {
         startMap()
                 .startEntry("error")
                 .startMap()
                 .entry("code", code)
-                .entry("message", msg);
+                .entry("message", msg)
+                .entry("info", info == null ? Collections.emptyMap() : info);
         if (e != null) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
@@ -65,20 +67,20 @@ public interface DataStream {
      * @param code (string) error code
      * @param msg  the error message
      */
-    default void error(String code, String msg) {
-        error(code, msg, null);
+    default void error(String code, String msg, Map<String, String> info) {
+        error(code, msg, info, null);
     }
 
     default void internalError(Exception e, boolean debugMode, String code) {
-        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(e, debugMode, code), debugMode ? e : null);
+        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(e, debugMode, code), null, debugMode ? e : null);
     }
 
     default void internalError(String message, boolean debugMode, String code) {
-        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(message, debugMode, code));
+        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(message, debugMode, code), null);
     }
 
     default void internalError(String code) {
-        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(code));
+        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(code), null);
     }
 
     DataStream endCompact();

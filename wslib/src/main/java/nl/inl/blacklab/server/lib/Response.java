@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.lib;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
@@ -44,13 +46,13 @@ public class Response {
      * @param httpCode the HTTP status code to set
      * @return the data object representing the error message
      */
-    public static int error(ResponseStreamer rs, String code, String msg, int httpCode) {
-        rs.getDataStream().error(code, msg);
+    public static int error(ResponseStreamer rs, String code, String msg, Map<String, String> info, int httpCode) {
+        rs.getDataStream().error(code, msg, info);
         return httpCode;
     }
 
-    public static int error(ResponseStreamer rs, String code, String msg, int httpCode, Throwable e) {
-        rs.getDataStream().error(code, msg, e);
+    public static int error(ResponseStreamer rs, String code, String msg, Map<String, String> info, int httpCode, Throwable e) {
+        rs.getDataStream().error(code, msg, info, e);
         return httpCode;
     }
 
@@ -60,7 +62,7 @@ public class Response {
         if (e.getCause() instanceof BlsException) {
             BlsException cause = (BlsException) e.getCause();
             logger.warn("BLACKLAB EXCEPTION " + cause.getBlsErrorCode(), e);
-            return Response.error(rs, cause.getBlsErrorCode(), cause.getMessage(), cause.getHttpStatusCode());
+            return Response.error(rs, cause.getBlsErrorCode(), cause.getMessage(), cause.getInfo(), cause.getHttpStatusCode());
         }
         logger.error("INTERNAL ERROR " + code + ":", e);
         rs.getDataStream().internalError(e, debugMode, code);
@@ -89,41 +91,43 @@ public class Response {
     }
 
     public static int searchTimedOut(ResponseStreamer rs) {
-        return error(rs, "SEARCH_TIMED_OUT", "Search took too long, cancelled.",
+        return error(rs, "SEARCH_TIMED_OUT", "Search took too long, cancelled.", null,
                 HttpServletResponse.SC_SERVICE_UNAVAILABLE);
     }
 
     public static int unauthorized(ResponseStreamer rs, String reason) {
-        return error(rs, "NOT_AUTHORIZED", "Unauthorized operation. " + reason, HttpServletResponse.SC_UNAUTHORIZED);
+        return error(rs, "NOT_AUTHORIZED", "Unauthorized operation. " + reason, null, HttpServletResponse.SC_UNAUTHORIZED);
     }
 
     public static int methodNotAllowed(ResponseStreamer rs, String method, String reason) {
         reason = reason == null ? "" : " " + reason;
         return error(rs, "ILLEGAL_REQUEST", "Illegal " + method + " request." + reason,
-                HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                null, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     public static int forbidden(ResponseStreamer rs) {
-        return error(rs, "FORBIDDEN_REQUEST", "Forbidden operation.", HttpServletResponse.SC_FORBIDDEN);
+        return error(rs, "FORBIDDEN_REQUEST", "Forbidden operation.", null,
+                HttpServletResponse.SC_FORBIDDEN);
     }
 
     public static int forbidden(ResponseStreamer rs, String reason) {
-        return error(rs, "FORBIDDEN_REQUEST", "Forbidden request. " + reason, HttpServletResponse.SC_FORBIDDEN);
+        return error(rs, "FORBIDDEN_REQUEST", "Forbidden request. " + reason, null,
+                HttpServletResponse.SC_FORBIDDEN);
     }
 
     public static int badRequest(ResponseStreamer rs, String code, String message) {
-        return error(rs, code, message, HttpServletResponse.SC_BAD_REQUEST);
+        return error(rs, code, message, null,HttpServletResponse.SC_BAD_REQUEST);
     }
 
     public static int unavailable(ResponseStreamer rs, String indexName, String status) {
         return error(rs, "INDEX_UNAVAILABLE",
                 "The index '" + indexName + "' is not available right now. Status: " + status,
-                HttpServletResponse.SC_CONFLICT);
+                null,HttpServletResponse.SC_CONFLICT);
     }
 
     public static int indexNotFound(ResponseStreamer rs, String indexName) {
         return error(rs, "CANNOT_OPEN_INDEX", "Could not open index '" + indexName + "'. Please check the name.",
-                HttpServletResponse.SC_NOT_FOUND);
+                null,HttpServletResponse.SC_NOT_FOUND);
     }
 
     public static int illegalIndexName(ResponseStreamer rs, String shortName) {

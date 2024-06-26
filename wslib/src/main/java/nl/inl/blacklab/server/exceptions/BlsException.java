@@ -1,5 +1,8 @@
 package nl.inl.blacklab.server.exceptions;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * Thrown when the requested index was not available or could not be opened
  */
@@ -16,14 +19,28 @@ public class BlsException extends RuntimeException {
      */
     protected final String errorCode;
 
-    public BlsException(int httpStatusCode, String errorCode, String msg, Throwable cause) {
+    /** Structured information about the error, e.g. "name" for UNKNOWN_MATCH_INFO;
+     * Can be used by the client to show custom error messages that include relevant information.
+     */
+    private final Map<String, String> info;
+
+    public BlsException(int httpStatusCode, String errorCode, String msg, Map<String, String> info, Throwable cause) {
         super(msg, cause);
         this.httpStatusCode = httpStatusCode;
         this.errorCode = errorCode;
+        this.info = info == null ? Collections.emptyMap() : info;
+    }
+
+    public BlsException(int httpCode, String errorCode, Map<String, String> info, String msg) {
+        this(httpCode, errorCode, msg, info, null);
+    }
+
+    public BlsException(int httpStatusCode, String errorCode, String msg, Throwable cause) {
+        this(httpStatusCode, errorCode, msg, null, cause);
     }
 
     public BlsException(int httpCode, String errorCode, String msg) {
-        this(httpCode, errorCode, msg, null);
+        this(httpCode, errorCode, msg, null, null);
     }
 
     public int getHttpStatusCode() {
@@ -32,6 +49,10 @@ public class BlsException extends RuntimeException {
 
     public String getBlsErrorCode() {
         return errorCode;
+    }
+
+    public Map<String, String> getInfo() {
+        return Collections.unmodifiableMap(info);
     }
 
 }

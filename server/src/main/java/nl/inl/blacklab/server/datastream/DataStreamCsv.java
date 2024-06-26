@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -21,7 +22,7 @@ public class DataStreamCsv extends DataStreamAbstract {
     }
 
     @Override
-    public void error(String code, String msg, Throwable e) {
+    public void error(String code, String msg, Map<String, String> info, Throwable e) {
         plain(code + "\n");
         plain(msg + "\n");
         if (e != null) {

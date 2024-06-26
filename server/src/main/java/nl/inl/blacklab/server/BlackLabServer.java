@@ -260,14 +260,14 @@ public class BlackLabServer extends HttpServlet {
         } catch (ErrorOpeningIndex e) {
             httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "ERROR_OPENING_INDEX");
         } catch (InvalidQuery e) {
-            httpCode = Response.error(errorWriter, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
+            httpCode = Response.error(errorWriter, "INVALID_QUERY", e.getMessage(), null, HttpServletResponse.SC_BAD_REQUEST);
         } catch (InternalServerError e) {
             String msg = WebserviceUtil.internalErrorMessage(e, userRequest.isDebugMode(), e.getInternalErrorCode());
-            httpCode = Response.error(errorWriter, e.getBlsErrorCode(), msg, e.getHttpStatusCode(), e);
+            httpCode = Response.error(errorWriter, e.getBlsErrorCode(), msg, e.getInfo(), e.getHttpStatusCode(), e);
         } catch (BlsException e) {
-            httpCode = Response.error(errorWriter, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+            httpCode = Response.error(errorWriter, e.getBlsErrorCode(), e.getMessage(), e.getInfo(), e.getHttpStatusCode());
         } catch (InterruptedSearch e) {
-            httpCode = Response.error(errorWriter, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
+            httpCode = Response.error(errorWriter, "INTERRUPTED", e.getMessage(), null, HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
         } catch (RuntimeException e) {
             httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
         } finally {
@@ -314,7 +314,7 @@ public class BlackLabServer extends HttpServlet {
         try {
             DataStream es = DataStreamAbstract.create(outputType, prettyPrint, api);
             es.outputProlog();
-            es.error("INTERNAL_ERROR", e.getMessage(), e);
+            es.error("INTERNAL_ERROR", e.getMessage(), null, e);
             Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
             realOut.write(es.getOutput());
             realOut.flush();
