@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import org.apache.lucene.search.spans.FilterSpans;
 
@@ -62,8 +61,12 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         /** If target == null and captureTargetAs is set, this gives the target field for capture. */
         private final String targetField;
 
+        /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
+        private final boolean optionalMatch;
+
         public Target(BLSpans matchRelations, BLSpans target, boolean hasTargetRestrictions,
-                BLSpans captureRelations, String captureRelationsAs, String captureTargetAs, String targetField) {
+                BLSpans captureRelations, String captureRelationsAs, String captureTargetAs, String targetField,
+                boolean optionalMatch) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;
             this.captureRelationsAs = captureRelationsAs;
@@ -71,6 +74,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             this.hasTargetRestrictions = hasTargetRestrictions;
             this.captureTargetAs = captureTargetAs;
             this.targetField = targetField;
+            this.optionalMatch = optionalMatch;
             assert captureTargetAs != null && !captureTargetAs.isEmpty();
         }
 
@@ -92,34 +96,39 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             if (o == null || getClass() != o.getClass())
                 return false;
             Target target1 = (Target) o;
-            return captureRelationsIndex == target1.captureRelationsIndex &&
-                    hasTargetRestrictions == target1.hasTargetRestrictions &&
-                    captureTargetAsIndex == target1.captureTargetAsIndex &&
-                    Objects.equals(matchRelations, target1.matchRelations) &&
-                    Objects.equals(captureRelations, target1.captureRelations) &&
-                    Objects.equals(captureRelationsAs, target1.captureRelationsAs) &&
-                    Objects.equals(target, target1.target) &&
-                    Objects.equals(captureTargetAs, target1.captureTargetAs) &&
-                    Objects.equals(targetField, target1.targetField);
+            return captureRelationsIndex == target1.captureRelationsIndex
+                    && hasTargetRestrictions == target1.hasTargetRestrictions
+                    && captureTargetAsIndex == target1.captureTargetAsIndex && optionalMatch == target1.optionalMatch
+                    && Objects.equals(matchRelations, target1.matchRelations) && Objects.equals(
+                    captureRelations, target1.captureRelations) && Objects.equals(captureRelationsAs,
+                    target1.captureRelationsAs) && Objects.equals(target, target1.target) && Objects.equals(
+                    captureTargetAs, target1.captureTargetAs) && Objects.equals(targetField, target1.targetField);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(matchRelations, captureRelations, captureRelationsAs,
-                    captureRelationsIndex, target, hasTargetRestrictions, captureTargetAs,
-                    captureTargetAsIndex, targetField);
+            return Objects.hash(matchRelations, captureRelations, captureRelationsAs, captureRelationsIndex, target,
+                    hasTargetRestrictions, captureTargetAs, captureTargetAsIndex, targetField, optionalMatch);
         }
 
         @Override
         public String toString() {
             return "Target{" +
                     "matchRelations=" + matchRelations +
-                    ", captureRelations=" + matchRelations +
-                    ", captureAs='" + captureRelationsAs + '\'' +
-                    ", captureTargetAs='" + captureTargetAs + '\'' +
+                    ", captureRelations=" + captureRelations +
+                    ", captureRelationsAs='" + captureRelationsAs + '\'' +
+                    ", captureRelationsIndex=" + captureRelationsIndex +
                     ", target=" + target +
                     ", hasTargetRestrictions=" + hasTargetRestrictions +
+                    ", captureTargetAs='" + captureTargetAs + '\'' +
+                    ", captureTargetAsIndex=" + captureTargetAsIndex +
+                    ", targetField='" + targetField + '\'' +
+                    ", optionalMatch=" + optionalMatch +
                     '}';
+        }
+
+        public boolean isOptionalMatch() {
+            return optionalMatch;
         }
     }
 
@@ -196,11 +205,6 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         adjustedStart = sourceStart;
         adjustedEnd = sourceEnd;
 
-        // If there's no match in the target field, should we reject this hit or accept it
-        // (and just return the source hit)?
-        FilterSpans.AcceptStatus returnValueIfNoTarget = REJECT_IF_NO_TARGET_MATCH ? FilterSpans.AcceptStatus.NO :
-                FilterSpans.AcceptStatus.YES;
-
         for (Target target: targets) {
 
             // Capture all relations with source overlapping this span.
@@ -209,11 +213,17 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
             if (matchingRelations.isEmpty()) {
                 // If no relations match, there is no match.
-                return returnValueIfNoTarget;
+                if (!target.isOptionalMatch())
+                    return FilterSpans.AcceptStatus.NO;
+                else
+                    continue; // check next target
             }
             if (target.hasTargetRestrictions && target.target == null) {
                 // There were target restrictions, but no hits (in this index segment); no match
-                return returnValueIfNoTarget;
+                if (!target.isOptionalMatch())
+                    return FilterSpans.AcceptStatus.NO;
+                else
+                    continue; // check next target
             }
 
             if (!target.hasTargetRestrictions) {
@@ -269,7 +279,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 }
                 if (targetRelationsCovered == 0) {
                     // A valid hit must have at least one matching relation in each target.
-                    return returnValueIfNoTarget;
+                    if (!target.isOptionalMatch())
+                        return FilterSpans.AcceptStatus.NO;
+                    else
+                        continue; // check next target
                 }
 
                 // Find relations to capture.
@@ -290,7 +303,8 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 updateSourceStartEndWithCapturedRelations(); // update start/end to cover all captured relations
             } else {
                 // Target document has no matches. Reject this hit.
-                return returnValueIfNoTarget;
+                if (!target.isOptionalMatch())
+                    return FilterSpans.AcceptStatus.NO;
             }
         }
 

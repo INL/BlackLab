@@ -204,7 +204,8 @@ public class TextPatternSerializerCql {
             String opChar = operatorInfo.isAlignment() ? "=" : "-";
             String optTargetVersion = operatorInfo.getTargetVersion() == null ? "" : operatorInfo.getTargetVersion();
             b.append(isRoot ? "" : " ").append(optCapture).append(optOperatorPrefix).append(opChar).append(optRegex)
-                    .append(opChar).append(">").append(optTargetVersion).append(" ");
+                    .append(opChar).append(">").append(optTargetVersion).append(operatorInfo.isOptionalMatch() ? "?" : "")
+                    .append(" ");
             serialize(tp.getTarget(), b, true, insideTokenBrackets);
         });
 

@@ -101,6 +101,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_NAME = "name"; // annotation, function
     private static final String KEY_NEGATE = "negate";
     private static final String KEY_OPERATION = "operation"; // posfilter, ngrams
+    private static final String KEY_OPTIONAL = "optional"; // relation target
     private static final String KEY_PARENT = "parent";
     private static final String KEY_PRODUCER = "producer";
     private static final String KEY_REL_SPAN_MODE = "spanMode";
@@ -240,7 +241,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_DIRECTION, nullIf(operatorInfo.getDirection().getCode(), "both"),
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()),
                     KEY_TARGET_VERSION, nullIfEmpty(operatorInfo.getTargetVersion()),
-                    KEY_ALIGNMENT, nullIf(operatorInfo.isAlignment(), false));
+                    KEY_ALIGNMENT, nullIf(operatorInfo.isAlignment(), false),
+                    KEY_OPTIONAL, nullIf(operatorInfo.isOptionalMatch(), false));
         });
 
         // Repetition
@@ -473,7 +475,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     SpanQueryRelations.Direction.fromCode((String)args.getOrDefault(KEY_DIRECTION, "both")),
                     (String) args.get(KEY_TARGET_VERSION),
                     (boolean) args.getOrDefault(KEY_NEGATE, false),
-                    (boolean) args.getOrDefault(KEY_ALIGNMENT, false)); // @@@ TODO
+                    (boolean) args.getOrDefault(KEY_ALIGNMENT, false),
+                    (boolean) args.getOrDefault(KEY_OPTIONAL, false));
             return new RelationTarget(
                     relOpInfo,
                     (TextPattern) args.get(KEY_CLAUSE),

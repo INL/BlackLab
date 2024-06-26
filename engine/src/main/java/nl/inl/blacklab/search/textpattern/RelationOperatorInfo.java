@@ -45,6 +45,12 @@ public class RelationOperatorInfo {
      * @return relation type and target version (intepret both as regexes)
      */
     public static RelationOperatorInfo fromOperator(String op) {
+        // If relation operator ends with ?, hits on the left are included even if
+        // there's no match on the right. Right now only available for alignment operators (parallel corpora).
+        boolean optionalMatch = op.endsWith("?");
+        if (optionalMatch)
+            op = op.substring(0, op.length() - 1);
+
         // Root operator?
         // (this determines the relation directions we allow; direction is usually both (i.e. forward and backward),
         //  but root relations have a special "direction" because they have no source, so using that we ensure we'll
@@ -83,7 +89,7 @@ public class RelationOperatorInfo {
             typeRegex = RelationUtil.ANY_TYPE_REGEX; // any relation type
 
         return new RelationOperatorInfo(typeRegex, direction, targetVersion, negate,
-                isAlignmentOperator);
+                isAlignmentOperator, optionalMatch);
     }
 
     /** Relation type regex. */
@@ -102,17 +108,24 @@ public class RelationOperatorInfo {
      *  used for parallel corpora) */
     private final boolean isAlignmentOperator;
 
+    /** Are hits on the left included even if there's no match on the right?
+     *  Right now, this is only available for alignment operators (parallel corpora). */
+    private final boolean optionalMatch;
+
     public RelationOperatorInfo(String typeRegex, SpanQueryRelations.Direction direction,
             String targetVersion, boolean negate,
-            boolean isAlignmentOperator) {
+            boolean isAlignmentOperator, boolean optionalMatch) {
         this.typeRegex = typeRegex;
         this.direction = direction;
         this.targetVersion = targetVersion == null || targetVersion.isEmpty() ? null : targetVersion;
         this.negate = negate;
         this.isAlignmentOperator = isAlignmentOperator;
+        this.optionalMatch = optionalMatch;
 
         if (isAlignmentOperator && negate)
             throw new RuntimeException("Alignment operator cannot be negated");
+        if (optionalMatch && !isAlignmentOperator)
+            throw new RuntimeException("Optional match operator can only be used with alignment operators");
     }
 
     public String getTypeRegex() {
@@ -135,6 +148,10 @@ public class RelationOperatorInfo {
         return isAlignmentOperator;
     }
 
+    public boolean isOptionalMatch() {
+        return optionalMatch;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -142,14 +159,14 @@ public class RelationOperatorInfo {
         if (o == null || getClass() != o.getClass())
             return false;
         RelationOperatorInfo that = (RelationOperatorInfo) o;
-        return negate == that.negate && isAlignmentOperator == that.isAlignmentOperator && Objects.equals(
-                typeRegex, that.typeRegex) && direction == that.direction && Objects.equals(targetVersion,
-                that.targetVersion);
+        return negate == that.negate && isAlignmentOperator == that.isAlignmentOperator
+                && optionalMatch == that.optionalMatch && Objects.equals(typeRegex, that.typeRegex)
+                && direction == that.direction && Objects.equals(targetVersion, that.targetVersion);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(typeRegex, direction, targetVersion, negate, isAlignmentOperator);
+        return Objects.hash(typeRegex, direction, targetVersion, negate, isAlignmentOperator, optionalMatch);
     }
 
     /**

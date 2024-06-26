@@ -40,7 +40,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
     public static class Target {
 
         public static Target get(QueryInfo queryInfo, String relationFieldName, BLSpanQuery target, String targetField,
-                String captureRelsAs, String relationType) {
+                String captureRelsAs, String relationType, boolean optionalMatch) {
 
             // Determine what relations to capture based on the class of the matching regex, if any
             String relClass = RelationUtil.classFromFullType(relationType);
@@ -49,7 +49,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 
             return new Target(getRelationsQuery(queryInfo, relationFieldName, relationType),
                     getRelationsQuery(queryInfo, relationFieldName, anyType), target, targetField,
-                    captureRelsAs);
+                    captureRelsAs, optionalMatch);
         }
 
         private static SpanQueryRelations getRelationsQuery(QueryInfo queryInfo, String relationFieldName,
@@ -79,12 +79,17 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 
         private final String targetField;
 
-        private Target(BLSpanQuery matchRelations, BLSpanQuery captureRelations, BLSpanQuery target, String targetField, String captureAs) {
+        /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
+        private final boolean optionalMatch;
+
+        private Target(BLSpanQuery matchRelations, BLSpanQuery captureRelations, BLSpanQuery target, String targetField,
+                String captureAs, boolean optionalMatch) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;
             this.target = target;
             this.targetField = targetField;
             this.captureAs = captureAs;
+            this.optionalMatch = optionalMatch;
         }
 
         public static List<Target> rewriteTargets(List<Target> targets, IndexReader reader) throws IOException {
@@ -139,7 +144,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
                         target.createWeight(searcher, scoreMode, boost);
             }
             return new TargetWeight(matchRelationsWeight, captureRelationsWeight, targetWeight, captureAs,
-                    captureTargetAs, targetField);
+                    captureTargetAs, targetField, optionalMatch);
         }
 
         private Target rewrite(IndexReader reader) throws IOException {
@@ -147,7 +152,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpanQuery newCaptureRelations = captureRelations.rewrite(reader);
             BLSpanQuery newTarget = target == null ? null : target.rewrite(reader);
             if (newMatchRelations != matchRelations || newCaptureRelations != captureRelations || newTarget != target) {
-                return new Target(newMatchRelations, newCaptureRelations, newTarget, targetField, captureAs);
+                return new Target(newMatchRelations, newCaptureRelations, newTarget, targetField, captureAs, optionalMatch);
             }
             return this;
         }
@@ -159,15 +164,15 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             if (o == null || getClass() != o.getClass())
                 return false;
             Target target1 = (Target) o;
-            return Objects.equals(matchRelations, target1.matchRelations) &&
-                    Objects.equals(captureRelations, target1.captureRelations) &&
-                    Objects.equals(captureAs, target1.captureAs) &&
-                    Objects.equals(target, target1.target);
+            return optionalMatch == target1.optionalMatch && Objects.equals(matchRelations, target1.matchRelations)
+                    && Objects.equals(captureRelations, target1.captureRelations) && Objects.equals(
+                    captureAs, target1.captureAs) && Objects.equals(target, target1.target)
+                    && Objects.equals(targetField, target1.targetField);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(matchRelations, captureRelations, captureAs, target);
+            return Objects.hash(matchRelations, captureRelations, captureAs, target, targetField, optionalMatch);
         }
 
         @Override
@@ -200,14 +205,18 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Span the relation targets must be inside of (or null if we don't care) */
         private final BLSpanWeight target;
 
-        public TargetWeight(BLSpanWeight matchRelations, BLSpanWeight captureRelations, BLSpanWeight target, String captureAs, String captureTargetAs,
-                String targetField) {
+        /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
+        private final boolean optionalMatch;
+
+        public TargetWeight(BLSpanWeight matchRelations, BLSpanWeight captureRelations, BLSpanWeight target,
+                String captureAs, String captureTargetAs, String targetField, boolean optionalMatch) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;
             this.captureAs = captureAs;
             this.captureTargetAs = captureTargetAs;
             this.targetField = targetField;
             this.target = target;
+            this.optionalMatch = optionalMatch;
         }
 
         public static void extractTermsFromTargets(List<TargetWeight> targets, Set<Term> terms) {
@@ -250,7 +259,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             boolean hasTargetRestrictions = target != null;
             BLSpans targetSpans = hasTargetRestrictions ? target.getSpans(context, requiredPostings) : null;
             return new SpansCaptureRelationsBetweenSpans.Target(matchRelationsSpans, targetSpans, hasTargetRestrictions,
-                    captureRelationsSpans, captureAs, captureTargetAs, targetField);
+                    captureRelationsSpans, captureAs, captureTargetAs, targetField, optionalMatch);
         }
 
         private void extractTermStates(Map<Term, TermStates> contexts) {
@@ -278,16 +287,16 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             if (o == null || getClass() != o.getClass())
                 return false;
             TargetWeight that = (TargetWeight) o;
-            return Objects.equals(matchRelations, that.matchRelations) &&
-                    Objects.equals(captureRelations, that.captureRelations) &&
-                    Objects.equals(captureAs, that.captureAs) &&
-                    Objects.equals(captureTargetAs, that.captureTargetAs) &&
-                    Objects.equals(target, that.target);
+            return optionalMatch == that.optionalMatch && Objects.equals(matchRelations, that.matchRelations)
+                    && Objects.equals(captureRelations, that.captureRelations) && Objects.equals(captureAs,
+                    that.captureAs) && Objects.equals(captureTargetAs, that.captureTargetAs)
+                    && Objects.equals(targetField, that.targetField) && Objects.equals(target, that.target);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(matchRelations, captureRelations, captureAs, captureTargetAs, target);
+            return Objects.hash(matchRelations, captureRelations, captureAs, captureTargetAs, targetField, target,
+                    optionalMatch);
         }
     }
 

@@ -534,11 +534,11 @@ Assuming your data has both sentence and word alignments, and you want to find a
 
 This should find aligning English and Dutch sentences, including any word alignments between words in those sentences. You can also filter by alignment type, as we'll show later.
 
-::: details If no alignments are found
+::: details Required versus optional alignment
 
-The `==>` operator will try to find alignments, but won't skip a hit if it couldn't find any aligments for that hit. Instead, the hit will simply be reported without any alignment information.
+The `==>` operator will _require_ that an alignment exists. If you wish to see all hits on the left side of the `==>nl` regardless of whether any aligments to the right side can be found, use `==>nl?`.
 
-For example, if you're searching for translations of `cat` to Dutch, you will see both English `cat` hits where the translation to Dutch was found, and `cat` hits where it wasn't.
+For example, if you're searching for translations of `cat` to Dutch, with `==>nl` you will _only_ see instances where `cat` is aligned to a Dutch word; on the other hand, with `==>nl?` you will see both English `cat` hits where the translation to Dutch was found, and `cat` hits where it wasn't.
 
 :::
 
