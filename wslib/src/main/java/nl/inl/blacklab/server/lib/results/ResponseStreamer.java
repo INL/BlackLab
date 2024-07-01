@@ -658,7 +658,11 @@ public class ResponseStreamer {
                         .startEntry(KEY_AFTER).xmlFragment(c.right()).endEntry();
             } else {
                 if (isSnippet) {
-                    ds.xmlFragment(c.match());
+                    if (isNewApi) {
+                        ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
+                    } else {
+                        ds.xmlFragment(c.match());
+                    }
                 } else {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
                 }

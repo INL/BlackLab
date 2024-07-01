@@ -57,12 +57,14 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
   - In addition to `captureGroups`, `matchInfos` will be reported that includes the same information as well as any inline tags and relations matched. You should use this instead of `captureGroups` for future compatibility.
   - `before`/`after` are the new, preferred alternatives to `left`/`right`,e.g. when sorting/grouping on context. Not all languages are LTR, so this makes more sense. Existing endpoints still use `left`/`right` in the response for compatibility, but new endpoints have been updated as well. These properties can now get a number of tokens as an extra parameter, e.g. `before:lemma:i:2`.
   - For grouping on context, `wordleft`/`wordright` have been deprecated. Use `before`/`after` with 1 token instead.
+  - Grouped results also include a `properties` key that gives the values for the individual properties used for grouping. This is an alternative to `identityDisplay`, which clients would sometimes have to parse to display it in their preferred way.
   - `context` is the new name for the `wordsaroundhit` parameter and supports more options (separate before/after, whole sentence, etc.)
 - Pages that list values for fields, tags, etc. now support the `limitvalues` parameter. This parameter defaults to `200`, but can be set higher if you need really long value lists.
 - New endpoints were added for all operations on corpora, at `/corpora/CORPUSNAME/...` (for now alongside existing endpoints `/CORPUSNAME`). These endpoints are available in BlackLab v4 but only "speak" API v5 (see below). You should move to these endpoints for future compatibility.
 - A new endpoint `/parse-pattern` was added that allows you to parse a CorpusQL or JSON query structure pattern without actually executing the search.
 - A new endpoint `.../CORPUSNAME/relations` that will return all the spans ("inline tags") and relations indexed in the corpus.
 - Doc info on results pages and document info page: the new `tokenCounts` array gives token counts for all annotated fields. The first annotated field is the main one, which has the same value as `lengthInTokens`.
+- When using `usecontent=orig`, you can now specify `escapexmlfragment` to control whether XML fragments are escaped as CDATA or not. This defaults to `false` for API v4 and older, but will be `true` for API v5+.
 
 ### Deprecated
 
@@ -108,6 +110,8 @@ These are breaking changes compared to v4.0. Make sure you update your client ac
     - `summary` has been restructured to group related values together. Keys have been renamed for clarity.
     - response keys `left`/`right` have been replaced with `before`/`after` in the `/hits` response.
     - `docInfos` now have a `metadata` subobject instead of mixing metadata with `mayView` and `lengthInTokens`.
+    - When using `usecontent=orig`, the value of `escapexmlfragment` now defaults to `true`, so XML fragments from the document will be escaped as CDATA. Set it to `false` to include them as part of the XML structure instead (the old default).
+
 
 ## API support roadmap
 

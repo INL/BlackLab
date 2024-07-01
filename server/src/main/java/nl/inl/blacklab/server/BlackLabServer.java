@@ -60,6 +60,12 @@ public class BlackLabServer extends HttpServlet {
 
     private static final String CONFIG_FILE_NAME = "blacklab-server";
 
+    /** Pretty-print the response? */
+    public static final String PARAM_PRETTYPRINT = "prettyprint";
+
+    /** Include XML fragments from document escaped as CDATA or not (i.e. as part of the XML structure)? */
+    public static final String PARAM_ESCAPE_XML_FRAGMENT = "escapexmlfragment";
+
     /** Manages all our searches */
     private SearchManager searchManager;
 
@@ -205,7 +211,7 @@ public class BlackLabServer extends HttpServlet {
         try {
             ensureSearchManagerAvailable();
         } catch (BlackLabRuntimeException | BlsException e) {
-            boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", true);
+            boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, true);
             String strApiVersion = ServletUtil.getParameter(request, WebserviceParameter.API_VERSION.value(),
                     ApiVersion.CURRENT.toString());
             ApiVersion apiVersion = ApiVersion.fromValue(strApiVersion);
@@ -244,10 +250,16 @@ public class BlackLabServer extends HttpServlet {
         String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : ResponseStreamer.BLACKLAB_RESPONSE_ROOT_ELEMENT;
 
         // === Handle the request
-        boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", userRequest.isDebugMode());
+        boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, userRequest.isDebugMode());
         ApiVersion api = requestHandler.apiCompatibility();
         DataStream ds = DataStreamAbstract.create(outputType, prettyPrint, api);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
+        if (request.getParameterMap().containsKey(PARAM_ESCAPE_XML_FRAGMENT)) {
+            // We want to override whether XML fragments are output as CDATA or not
+            // (defaults to true for v5, false before)
+            boolean escapeXmlFragment = ServletUtil.getParameter(request, PARAM_ESCAPE_XML_FRAGMENT, true);
+            ds.setEscapeXmlFragment(escapeXmlFragment);
+        }
         ds.startDocument(rootEl);
         ResponseStreamer dstream = ResponseStreamer.get(ds, api);
         DataStream es = DataStreamAbstract.create(outputType, prettyPrint, api);

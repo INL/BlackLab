@@ -66,9 +66,6 @@ DONE IN /corpora ENDPOINTS (e.g. v5):
 
 DONE API v5:
 - remove `/blacklab-server/CORPUSNAME` endpoints.
-
-
-TODO /corpora ENDPOINTS:
 - XML: When using `usecontent=orig`, don't make the content part of the XML anymore.<br>
   (escape it using CDATA (again, same as in JSON). Also consider just returning both
   the FI concordances as well as the original content (if requested), so the response

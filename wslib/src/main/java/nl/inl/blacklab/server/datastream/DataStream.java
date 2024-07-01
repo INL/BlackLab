@@ -349,6 +349,12 @@ public interface DataStream {
      */
     default void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) { /* do nothing */ }
 
+    /** Should XML fragments be CDATA in the XML response?
+     *
+     * @param b true if XML fragments should be encoded as CDATA (the default)
+     */
+    default void setEscapeXmlFragment(boolean b) { /* do nothing */ }
+
     DataStream xmlFragment(String fragment);
 
     default <T> void list(String itemName, T[] items) {

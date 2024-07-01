@@ -148,6 +148,12 @@ public abstract class DataStreamAbstract implements DataStream {
         return print(value);
     }
 
+    /* NOTE: the attrEntry methods that follow mirror the entry methods above.
+     *       Both sets of methods are intended only for entries in maps.
+     *       The attrEntry versions are specifically meant for the case where you're not sure
+     *       your keys are valid XML element names. They will use a different XML serialization using
+     *       an attribute for the key. */
+
     /**
      * Output an XML fragment, either as a string
      * value or as part of the XML structure.
