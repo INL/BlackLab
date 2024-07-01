@@ -74,7 +74,12 @@ public final class BlackLab {
     /** Global settings are read from file and applied to the different parts of BL once. */
     private static boolean globalSettingsApplied = false;
 
-    public static final String FEATURE_INTEGRATE_EXTERNAL_FILES = "integrateExternalFiles";
+    /** Controls what BlackLab's default index type is. If not present, will default to the new
+     *  integrated index. Set to 'external' to use the legacy index with external forward index
+     *  that was the default in BlackLab 3.x. Used for testing.
+     */
+    public static final String FEATURE_DEFAULT_INDEX_TYPE = "defaultIndexType";
+
     private static RuleBasedCollator fieldValueSortCollator = null;
 
     /**
@@ -370,15 +375,22 @@ public final class BlackLab {
         return blackLabConfig;
     }
 
+    /**
+     * Get the value of a feature flag.
+     *
+     * Feature flags can be set in the environment (BLACKLAB_FEATURE_<flagName>) or in the
+     * blacklab[-server].yaml configuration file under the 'featureFlags' key.
+     *
+     * Used for testing both index types.
+     *
+     * @param name name of the feature flag
+     * @return value of the feature flag, or an empty string if not set
+     */
     public static String featureFlag(String name) {
         String value = System.getenv("BLACKLAB_FEATURE_" + name);
         if (value == null)
             value = config().getFeatureFlags().get(name);
-        return value;
-    }
-
-    public static boolean isFeatureEnabled(String name) {
-        return Boolean.parseBoolean(featureFlag(name));
+        return value == null ? "" : value;
     }
 
     /**

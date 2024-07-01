@@ -271,7 +271,10 @@ public final class BlackLabEngine implements AutoCloseable {
         }
     }
 
-    public BlackLabIndexWriter openForWriting(String indexName, IndexReader reader, ConfigInputFormat format) throws ErrorOpeningIndex {
+    public BlackLabIndexWriter openForWriting(String indexName, IndexReader reader, ConfigInputFormat format,
+            IndexType indexType) throws ErrorOpeningIndex {
+        if (indexType != IndexType.INTEGRATED)
+            throw new RuntimeException("This version of the method only works with integrated indexes");
         return new BlackLabIndexIntegrated(indexName, this, reader, null, true, false, format);
     }
 
@@ -280,9 +283,10 @@ public final class BlackLabEngine implements AutoCloseable {
      * @return the default index type
      */
     public IndexType getDefaultIndexType() {
-        return BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES) ?
-                IndexType.INTEGRATED :
-                IndexType.EXTERNAL_FILES;
+        String defaultIndexType = BlackLab.featureFlag(BlackLab.FEATURE_DEFAULT_INDEX_TYPE);
+        return defaultIndexType.equalsIgnoreCase("external") ?
+                IndexType.EXTERNAL_FILES :
+                IndexType.INTEGRATED;
     }
 
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {

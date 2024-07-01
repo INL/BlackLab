@@ -86,7 +86,7 @@ public class IndexTool {
                 switch (name) {
                 case "index-type":
                     if (i + 1 == args.length || !List.of("integrated", "external").contains(args[i + 1].toLowerCase())) {
-                        System.err.println("--index-type needs a parameter: integrated or external.");
+                        System.err.println("--index-type needs a parameter: integrated (the default) or external (legacy index type).");
                         usage();
                         return;
                     }
@@ -94,7 +94,7 @@ public class IndexTool {
                     i++;
                     break;
                 case "integrate-external-files":
-                    // NOTE: deprecated, use  --index-type integrated  instead
+                    // NOTE: deprecated; this is the default (or use  --index-type external  to use the legacy variant)
                     if (i + 1 == args.length || !List.of("true", "false").contains(args[i + 1].toLowerCase())) {
                         System.err.println("--integrate-external-files needs a parameter: true or false.");
                         usage();
@@ -435,7 +435,7 @@ public class IndexTool {
                         + "  --format-dir <d>               Look in directory <d> for formats (i.e. .blf.yaml files)\n"
                         + "  --nothreads                    Disable multithreaded indexing (enabled by default)\n"
                         + "  --threads <n>                  Number of threads to use\n"
-                        + "  --index-type <t>               Set the index type, external (old) or integrated (new)\n"
+                        + "  --index-type <t>               Set the index type, integrated (new, default) or external (legacy)\n"
                         + "  --create-empty                 Create an empty index (ignore inputdir param)\n"
                         + "\n"
                         + "Available input format configurations:");

@@ -91,7 +91,9 @@ public class TestStandoffSpans {
 
     @After
     public void teardown() {
-        testIndex.close();
-        testDir.close();
+        if (testIndex != null)
+            testIndex.close();
+        if (testDir != null)
+            testDir.close();
     }
 }

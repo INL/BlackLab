@@ -596,7 +596,7 @@ Indexing and searching relations will be supported from BlackLab 4.0 (and curren
 
 It is also possible to index relations (such as dependency relations) using [standoff annotations](#standoff-annotations). Aside from using the built-in `conll-u` DocIndexer, or implementing your own DocIndexer, this is currently the only way to index relations in BlackLab. Standoff annotations make the most sense as relations don't just apply to a span of words, but connect two different words (or word groups).
 
-Please note that you must use the new integrated index format to index relations. You can do this by passing `--index-type integrated` to `IndexTool`. Alternatively, you may set the environment variable `BLACKLAB_FEATURE_integrateExternalFiles` to `true` before indexing (this changes the default index type to integrated). Future versions of BlackLab will default to the integrated index type.
+Please note that the relations features only work with the newer integrated index type. This type is the default now, so you don't need to pass any extra options to BlackLab.
 
 ```xml
 <doc>
@@ -653,7 +653,7 @@ The above would allow you to search for `_ -nsubj-> "I"` to find "I support", wi
 ### Indexing parallel corpora
 
 ::: tip Supported from v4.0
-Indexing and searching parallel corpoora will be supported from BlackLab 4.0 (and current development snapshots).
+Indexing and searching parallel corpora will be supported from BlackLab 4.0 (and current development snapshots).
 :::
 
 TODO: how to index parallel corpus
