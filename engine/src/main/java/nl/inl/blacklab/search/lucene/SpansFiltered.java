@@ -41,10 +41,8 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
         assert docID() != NO_MORE_DOCS;
         atFirstInCurrentDoc = false;
         startPos = -1;
-        while (true) {
-            in.nextDoc();
-            return nextMatchingDoc();
-        }
+        in.nextDoc();
+        return nextMatchingDoc();
     }
 
     private int nextMatchingDoc() throws IOException {

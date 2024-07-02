@@ -31,7 +31,7 @@ public class AuthRequestAttribute implements AuthMethod {
         if (type == null) type = parameters.get("type");
         if (type == null) type = "attribute";
         if (parName == null) {
-            logger.error("authSystem.attributeName parameter missing in blacklab-server.json");
+            logger.error("AuthRequestAttribute: attributeName parameter missing in blacklab-server.json");
             return;
         }
 
@@ -51,7 +51,7 @@ public class AuthRequestAttribute implements AuthMethod {
         if (attributeName == null) {
             // (not configured correctly)
             logger.warn(
-                    "Cannot determine current user; missing authSystem.attributeName parameter in blacklab-server.json");
+                    "AuthRequestAttribute: cannot determine current user; missing attributeName parameter in blacklab-server.json");
             return User.anonymous(sessionId);
         }
 
