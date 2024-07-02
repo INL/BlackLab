@@ -137,7 +137,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     protected static DeserializeInfos deserializeProp(AnnotatedField field, List<String> infos) {
-        Annotation annotation = field.annotation(infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0));
+        String annotationName = infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0);
+        Annotation annotation = field.annotation(annotationName);
+        if (annotation == null)
+                throw new BlackLabRuntimeException("Unknown annotation for hit property: " + annotationName);
         MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1))
                 : MatchSensitivity.SENSITIVE;
         List<String> params = infos.size() > 2 ? infos.subList(2, infos.size()) : Collections.emptyList();
