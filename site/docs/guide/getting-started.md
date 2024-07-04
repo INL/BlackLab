@@ -38,7 +38,7 @@ sudo mkdir -p /data/blacklab-corpora
 sudo chown $USER:$GROUP /data/blacklab-corpora
 
 # Make sure it's world-readable so Tomcat can read it
-chmod a+rx /data/blacklab-corpora
+chmod -R a+rx /data/blacklab-corpora
 ```
 
 Now create a directory `/etc/blacklab` with a file named `blacklab-server.yaml`:
