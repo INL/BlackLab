@@ -365,7 +365,9 @@ public class ResponseStreamer {
             }
             String searchField = summaryFields.getSearchField();
             ds.entry(KEY_FIELD_NAME, searchField);
-            List<MatchInfo.Def> matchInfoDefs = summaryFields.getMatchInfoDefs();
+            List<MatchInfo.Def> matchInfoDefs = summaryFields.getMatchInfoDefs().stream()
+                    .filter(d -> !d.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT))
+                    .collect(Collectors.toList());
             if (!matchInfoDefs.isEmpty()) {
                 // Report the match infos in the query, their types, and the field they apply to (if different from
                 // main field, i.e. for parallel corpora)
@@ -726,12 +728,9 @@ public class ResponseStreamer {
             if (!filtered.isEmpty()) {
                 ds.startEntry(KEY_MATCH_INFOS).startMap();
                 for (Map.Entry<String, MatchInfo> e: filtered) {
-                    MatchInfo matchInfo = e.getValue();
-                    if (matchInfo != null && include.test(matchInfo)) {
-                        ds.startElEntry(e.getKey());
-                        matchInfo(ds, matchInfo);
-                        ds.endElEntry();
-                    }
+                    ds.startElEntry(e.getKey());
+                    matchInfo(ds, e.getValue());
+                    ds.endElEntry();
                 }
                 ds.endMap().endEntry();
             }
