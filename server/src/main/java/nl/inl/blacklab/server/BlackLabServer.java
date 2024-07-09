@@ -315,6 +315,8 @@ public class BlackLabServer extends HttpServlet {
 
     private void initializationErrorResponse(HttpServletResponse responseObject, Exception e, DataFormat outputType,
             ApiVersion api, boolean prettyPrint) {
+        if (outputType == null)
+            outputType = DataFormat.XML;
         // Write HTTP headers (status code, encoding, content type and cache)
         responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
