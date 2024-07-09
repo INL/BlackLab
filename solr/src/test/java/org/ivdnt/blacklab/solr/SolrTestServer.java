@@ -16,9 +16,16 @@ import org.apache.solr.client.solrj.request.RequestWriter;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CoreContainer;
+import org.apache.solr.core.NodeConfig;
+import org.apache.solr.logging.LogWatcherConfig;
+import org.apache.solr.logging.log4j2.Log4j2Watcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SolrTestServer {
     private static final String SOLR_DIR_NAME = "blacklab-test-solr";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SolrTestServer.class);
 
     private static EmbeddedSolrServer server;
 
@@ -79,7 +86,9 @@ public class SolrTestServer {
             if (existingIndexPath != null)
                 copy(existingIndexPath.getParent(), solrPath, existingIndexPath.toFile().getName(), defaultCoreName);
 
-            CoreContainer container = new CoreContainer(solrPath.toAbsolutePath(), new Properties());
+            NodeConfig config = new NodeConfig.NodeConfigBuilder("test", solrPath)
+                    .setLogWatcherConfig(new LogWatcherConfig(false,"noclass","",0)).build();
+            CoreContainer container = new CoreContainer(config);
             container.load();
 
             server = new EmbeddedSolrServer(container, defaultCoreName);

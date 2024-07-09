@@ -23,11 +23,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.util.PriorityQueue;
 
 /**
- * Similar to {@link org.apache.lucene.search.spans.NearSpansOrdered}, but for the unordered case.
+ * Similar to {@link org.apache.lucene.queries.spans.NearSpansOrdered}, but for the unordered case.
  *
  * Expert:
  * Only public for subclassing.  Most implementations should not need this class

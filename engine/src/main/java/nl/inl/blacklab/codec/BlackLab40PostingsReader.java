@@ -111,16 +111,6 @@ public class BlackLab40PostingsReader extends FieldsProducer {
     }
 
     @Override
-    public long ramBytesUsed() {
-        return 3 * delegateFieldsProducer.ramBytesUsed();
-    }
-
-    @Override
-    public Collection<Accountable> getChildResources() {
-        return List.of(Accountables.namedAccountable("delegate", delegateFieldsProducer));
-    }
-
-    @Override
     public void checkIntegrity() throws IOException {
         delegateFieldsProducer.checkIntegrity();
 

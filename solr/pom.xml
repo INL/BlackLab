@@ -17,7 +17,7 @@
     </description>
 
     <properties>
-        <solr.version>${blacklab.luceneVersion}</solr.version>
+        <solr.version>9.6.1</solr.version>
     </properties>
     
     <build>
@@ -166,6 +166,13 @@
             <artifactId>solr-solrj</artifactId>
             <version>${solr.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>2.0.13</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- For applying XSLT

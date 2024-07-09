@@ -166,9 +166,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     }
 
     @Override
-    public void visitDocument(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
+    public void document(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
         // Visit each regular stored field.
-        delegate.visitDocument(docId, storedFieldVisitor);
+        delegate.document(docId, storedFieldVisitor);
 
         // Visit each content store field.
         for (FieldInfo fieldInfo: fieldInfos) {
@@ -199,7 +199,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      */
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
-        byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
+        String contents = contentStore().getValue(docId, fieldInfo.name);
         if (contents != null)
             storedFieldVisitor.stringField(fieldInfo, contents);
     }
@@ -231,24 +231,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
         // Let the delegate close its files.
         delegate.close();
-    }
-
-    @Override
-    public long ramBytesUsed() {
-        return delegate.ramBytesUsed() /* +
-                RamUsageEstimator.sizeOfObject(fieldsFile) +
-                RamUsageEstimator.sizeOfObject(docIndexFile) +
-                RamUsageEstimator.sizeOfObject(valueIndexFile) +
-                RamUsageEstimator.sizeOfObject(blockIndexFile) +
-                RamUsageEstimator.sizeOfObject(blocksFile) +
-                Integer.BYTES * 2 + // blockSizeChars, numberOfFieldsWritten
-                RamUsageEstimator.sizeOfMap(fields)
-                */ ;
-    }
-
-    @Override
-    public Collection<Accountable> getChildResources() {
-        return List.of(Accountables.namedAccountable("delegate", delegate));
     }
 
     @Override

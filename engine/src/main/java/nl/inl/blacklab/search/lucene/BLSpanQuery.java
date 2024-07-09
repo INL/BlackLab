@@ -6,12 +6,13 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.spans.SpanOrQuery;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.queries.spans.SpanOrQuery;
+import org.apache.lucene.queries.spans.SpanQuery;
+import org.apache.lucene.queries.spans.SpanTermQuery;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -109,7 +110,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     }
 
     @SafeVarargs
-    static <T extends SpanQuery> String clausesToString(String field, T... clauses) {
+    protected static <T extends SpanQuery> String clausesToString(String field, T... clauses) {
         return clausesToString(field, Arrays.asList(clauses));
     }
 
@@ -119,6 +120,10 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
 
     /** Information such as our index, our search logger, etc. */
     protected QueryInfo queryInfo;
+
+    public QueryInfo getQueryInfo() {
+        return queryInfo;
+    }
 
     public static boolean isAnyNGram(BLSpanQuery matchTarget) {
         boolean isAnyNGram = false;
@@ -186,7 +191,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      * 
      * @return a version that doesn't match the empty sequence
      */
-    BLSpanQuery noEmpty() {
+    public BLSpanQuery noEmpty() {
         if (!matchesEmptySequence())
             return this;
         throw new UnsupportedOperationException("noEmpty() must be implemented!");

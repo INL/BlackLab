@@ -12,6 +12,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
@@ -54,10 +55,6 @@ public class DocSetFilter extends Query {
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         return new Weight(this) {
-            @Override
-            public void extractTerms(Set<Term> terms) {
-                // NOP
-            }
 
             @Override
             public Explanation explain(LeafReaderContext context, int doc) {
@@ -158,6 +155,11 @@ public class DocSetFilter extends Query {
 			}
 
         };
+    }
+
+    @Override
+    public void visit(QueryVisitor queryVisitor) {
+
     }
 
     @Override
