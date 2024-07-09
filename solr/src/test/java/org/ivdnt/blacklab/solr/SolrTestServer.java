@@ -78,23 +78,21 @@ public class SolrTestServer {
         return dir.delete();
     }
 
-    static void createEmbeddedServer(String defaultCoreName, Path resourcePath, Path existingIndexPath) {
-        try {
-            solrPath = Files.createTempDirectory(SOLR_DIR_NAME);
-            copy(resourcePath, solrPath, "solr.xml");
+    static void createEmbeddedServer(String defaultCoreName, Path resourcePath, Path existingIndexPath)
+            throws IOException {
+        solrPath = Files.createTempDirectory(SOLR_DIR_NAME);
+        copy(resourcePath, solrPath, "solr.xml");
 
-            if (existingIndexPath != null)
-                copy(existingIndexPath.getParent(), solrPath, existingIndexPath.toFile().getName(), defaultCoreName);
+        if (existingIndexPath != null)
+            copy(existingIndexPath.getParent(), solrPath, existingIndexPath.toFile().getName(), defaultCoreName);
 
-            NodeConfig config = new NodeConfig.NodeConfigBuilder("test", solrPath)
-                    .setLogWatcherConfig(new LogWatcherConfig(false,"noclass","",0)).build();
-            CoreContainer container = new CoreContainer(config);
-            container.load();
+        NodeConfig config = new NodeConfig.NodeConfigBuilder("testNode", solrPath)
+                .setLogWatcherConfig(new LogWatcherConfig(true,null,null,0))
+                .build();
+        CoreContainer container = new CoreContainer(config);
+        container.load();
 
-            server = new EmbeddedSolrServer(container, defaultCoreName);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        server = new EmbeddedSolrServer(container, defaultCoreName);
     }
 
     /**
@@ -133,11 +131,11 @@ public class SolrTestServer {
     }
 
     static void setLogLevel(String level) throws SolrServerException, IOException {
-        ModifiableSolrParams params = new ModifiableSolrParams();
-        params.set("set", "root:" + level);
-        GenericSolrRequest reqSetLogLevel = new GenericSolrRequest(SolrRequest.METHOD.POST,
-                "/admin/info/logging", params);
-        NamedList<Object> response = server.request(reqSetLogLevel);
+//        ModifiableSolrParams params = new ModifiableSolrParams();
+//        params.set("set", "root:" + level);
+//        GenericSolrRequest reqSetLogLevel = new GenericSolrRequest(SolrRequest.METHOD.POST,
+//                "/admin/info/logging", params);
+//        NamedList<Object> response = server.request(reqSetLogLevel);
         //System.err.println("Log level response\n" + response.toString());
     }
 

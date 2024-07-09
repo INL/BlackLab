@@ -160,6 +160,14 @@
 
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.apache.solr/solr-scripting -->
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-scripting</artifactId>
+            <version>${solr.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Compile against SolrJ (but don't include in JAR with deps) -->
         <dependency>
             <groupId>org.apache.solr</groupId>
@@ -170,8 +178,8 @@
 
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-jdk14</artifactId>
-            <version>2.0.13</version>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.6.4</version>
             <scope>test</scope>
         </dependency>
 
