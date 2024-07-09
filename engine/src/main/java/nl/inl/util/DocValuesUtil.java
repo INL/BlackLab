@@ -1,6 +1,9 @@
 package nl.inl.util;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
@@ -52,27 +55,32 @@ public class DocValuesUtil {
      * @param dv DocValues instance positioned at a valid document
      * @return value for this document
      */
-    public static String getCurrentValueAsString(DocIdSetIterator dv) {
+    public static List<String> getCurrentValues(DocIdSetIterator dv) {
         try {
-            String key;
+            List<String> key = null;
             if (dv instanceof NumericDocValues)
-                key = Long.toString(((NumericDocValues) dv).longValue());
+                key = List.of(Long.toString(((NumericDocValues) dv).longValue()));
             else if (dv instanceof SortedSetDocValues) {
                 if (((SortedSetDocValues) dv).getValueCount() > 0) {
                     // NOTE: we only count the first value stored (for backward compatibility)
                     // TODO: pros/cons of changing this?
                     SortedSetDocValues ssdv = (SortedSetDocValues) dv;
-                    long ord = ssdv.nextOrd();
-                    key = ssdv.lookupOrd(ord).utf8ToString();
-                } else
-                    key = null;
+                    while (true) {
+                        long ord = ssdv.nextOrd();
+                        if (ord == SortedSetDocValues.NO_MORE_ORDS)
+                            break;
+                        if (key == null)
+                            key = new ArrayList<>();
+                        key.add(ssdv.lookupOrd(ord).utf8ToString());
+                    }
+                }
             } else if (dv instanceof SortedDocValues) {
                 // TODO implement optimization re: LUCENE-9796 in https://lucene.apache.org/core/9_0_0/MIGRATE.html
-                key = ((SortedDocValues) dv).lookupOrd(((SortedDocValues) dv).ordValue()).utf8ToString();
+                key = List.of(((SortedDocValues) dv).lookupOrd(((SortedDocValues) dv).ordValue()).utf8ToString());
             } else {
                 throw new IllegalStateException("Unexpected DocValues type");
             }
-            return key;
+            return key == null ? Collections.emptyList() : key;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

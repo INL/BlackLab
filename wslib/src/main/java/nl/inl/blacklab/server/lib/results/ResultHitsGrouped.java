@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,7 +120,8 @@ public class ResultHitsGrouped {
 
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
         summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus,
-                timings, null, getGroups(), getWindow());
+                timings, null, getGroups(), getWindow(), groups.field().name(),
+                Collections.emptyList());
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize(), -1);
 

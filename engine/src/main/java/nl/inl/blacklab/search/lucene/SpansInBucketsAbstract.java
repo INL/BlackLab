@@ -65,10 +65,13 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
      * for certain bucketing operations we can only decide we're done with a bucket if we're at the first hit
      * that doesn't belong in the bucket.
      *
+     * If {@link #beforeFirstBucketHit} is set and we're not at a hit, that's fine too: in that case, we've just
+     * started a document and haven't nexted yet (we defer that because of two-phase iterators).
+     *
      * @return true if positioned at a hit (or at a doc and nextStartPosition() has been called), false if not
      */
-    private boolean positionedAtHitIfPositionedInDoc() {
-        return source.docID() < 0 || source.docID() == NO_MORE_DOCS || source.startPosition() >= 0;
+    protected boolean positionedAtHitIfPositionedInDoc() {
+        return super.positionedAtHitIfPositionedInDoc(source);
     }
 
     protected void addHitFromSource() {
@@ -118,11 +121,11 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
         assert positionedAtHitIfPositionedInDoc();
         if (source.docID() != DocIdSetIterator.NO_MORE_DOCS) {
             if (source.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-                source.nextStartPosition(); // start gathering at the first hit
+                prepareForFirstBucketInDocument(source);
             }
         }
         assert positionedAtHitIfPositionedInDoc();
-        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);;
+        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (beforeFirstBucketHit && source.startPosition() < 0);
         return source.docID();
     }
 
@@ -139,12 +142,11 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
             } else {
                 doc = source.advance(target);
                 if (doc != DocIdSetIterator.NO_MORE_DOCS) {
-                    int startPos = source.nextStartPosition(); // start gathering at the first hit
-                    assert startPos >= 0 && source.startPosition() >= 0;
+                    prepareForFirstBucketInDocument(source);
                 }
             }
         }
-        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);;
+        assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (beforeFirstBucketHit && source.startPosition() < 0);
         assert doc >= 0 && doc >= target;
         assert positionedAtHitIfPositionedInDoc();
         return doc;
@@ -158,6 +160,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
             // Not nexted yet, no bucket
             return -1;
         }
+        ensureAtFirstHit(source);
         if (source.docID() == DocIdSetIterator.NO_MORE_DOCS || source.startPosition() == Spans.NO_MORE_POSITIONS)
             return NO_MORE_BUCKETS;
         assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);

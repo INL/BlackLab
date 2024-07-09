@@ -3,6 +3,7 @@ package nl.inl.blacklab.mocks;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
@@ -129,8 +130,18 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
+    public String indexBlackLabScmRevision() {
+        return null;
+    }
+
+    @Override
     public long tokenCount() {
         return 0;
+    }
+
+    @Override
+    public Map<String, Long> tokenCountPerField() {
+        return Map.of(mainAnnotatedField().name(), tokenCount());
     }
 
     @Override

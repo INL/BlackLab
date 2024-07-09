@@ -11,8 +11,8 @@ import org.apache.lucene.queries.spans.FilterSpans;
 class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     /** how to adjust spans */
-    private final RelationInfo.SpanMode mode;
-    
+    private final RelationInfo.SpanMode spanMode;
+
     /** Adjusted start position of current hit */
     private int startAdjusted = -1;
 
@@ -23,20 +23,24 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     private MatchInfo[] matchInfo;
 
+    /** What field is our clause in? */
+    private final String clauseField;
+
     /**
      * Constructs a SpansRelationSpanAdjust.
      *
      * @param in spans to adjust
-     * @param mode how to adjust spans
+     * @param spanMode how to adjust spans
      */
-    public SpansRelationSpanAdjust(BLSpans in, RelationInfo.SpanMode mode) {
-        super(in, SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), mode));
-        this.mode = mode;
+    public SpansRelationSpanAdjust(BLSpans in, RelationInfo.SpanMode spanMode, String clauseField) {
+        super(in, SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), spanMode));
+        this.spanMode = spanMode;
+        this.clauseField = clauseField;
     }
 
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
-        if (mode == RelationInfo.SpanMode.SOURCE && in.getRelationInfo().isRoot()) {
+        if (spanMode == RelationInfo.SpanMode.SOURCE && in.getRelationInfo().isRoot()) {
             // Need source, but this has no source
             return FilterSpans.AcceptStatus.NO;
         }
@@ -85,8 +89,8 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
         this.context = context;
+        super.passHitQueryContextToClauses(context.withField(clauseField));
     }
 
     private void setAdjustedStartEnd() {
@@ -95,18 +99,24 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
         } else if (atFirstInCurrentDoc || startPos < 0) {
             startAdjusted = endAdjusted = -1;
         } else {
-            if (mode == RelationInfo.SpanMode.ALL_SPANS) {
-                // We need all match info because we want the full span including all matched relations
+            if (spanMode == RelationInfo.SpanMode.ALL_SPANS) {
+                // We need all match info because we want to expand the current span to include all matched relations
                 if (matchInfo == null)
                     matchInfo = new MatchInfo[context.numberOfMatchInfos()];
                 else
                     Arrays.fill(matchInfo, null);
                 in.getMatchInfo(matchInfo);
-                startAdjusted = Integer.MAX_VALUE;
-                endAdjusted = Integer.MIN_VALUE;
+                startAdjusted = in.startPosition();
+                endAdjusted = in.endPosition();
                 for (int i = 0; i < matchInfo.length; i++) {
                     MatchInfo info = matchInfo[i];
                     if (info != null && info.getType() == MatchInfo.Type.RELATION) {
+
+                        // skip relations to other fields (parallel corpora)
+                        RelationInfo rel = (RelationInfo)info;
+                        if (rel.isCrossFieldRelation())
+                            continue;
+
                         // This is a relations match. Take this into account for the full span.
                         // (capture groups are not taken into account, but should already fall into the span anyway)
                         if (info.getSpanStart() < startAdjusted)
@@ -115,11 +125,6 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
                             endAdjusted = info.getSpanEnd();
                     }
                 }
-                if (startAdjusted == Integer.MAX_VALUE) {
-                    // No relations matched; use the original span
-                    startAdjusted = in.startPosition();
-                    endAdjusted = in.endPosition();
-                }
             } else {
                 RelationInfo relationInfo = in.getRelationInfo();
                 if (relationInfo == null) {
@@ -127,8 +132,8 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
                     startAdjusted = in.startPosition();
                     endAdjusted = in.endPosition();
                 } else {
-                    startAdjusted = relationInfo.spanStart(mode);
-                    endAdjusted = relationInfo.spanEnd(mode);
+                    startAdjusted = relationInfo.spanStart(spanMode);
+                    endAdjusted = relationInfo.spanEnd(spanMode);
                 }
             }
         }
@@ -160,11 +165,13 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
             if (startPos >= target)
                 return startPos;
         }
-        if (mode != RelationInfo.SpanMode.FULL_SPAN) {
+        if (spanMode != RelationInfo.SpanMode.FULL_SPAN) {
             // We can't skip because the spans we produce are not guaranteed to be sorted by start position.
             // Call the naive implementation.
             if (BLSpans.naiveAdvanceStartPosition(this, target) == NO_MORE_POSITIONS) {
                 startPos = startAdjusted = endAdjusted = NO_MORE_POSITIONS;
+            } else {
+                setAdjustedStartEnd();
             }
         } else {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
@@ -179,7 +186,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     public String toString() {
-        return "RSPAN(" + in + ", " + mode + ")";
+        return "RSPAN(" + in + ", " + spanMode + ")";
     }
 
 }

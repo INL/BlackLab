@@ -65,12 +65,12 @@ public class TestPayloadUtils {
         int[] ends  = { 0, 11, 30 };
         for (int i = 0; i < starts.length; i++) {
             // External index type: only writes end position
-            BytesRef b = PayloadUtils.tagEndPositionPayload(starts[i], ends[i], BlackLabIndex.IndexType.EXTERNAL_FILES);
+            BytesRef b = PayloadUtils.inlineTagPayload(starts[i], ends[i], BlackLabIndex.IndexType.EXTERNAL_FILES);
             Assert.assertEquals(ends[i], ByteBuffer.wrap(b.bytes).getInt());
 
             // Integrated index type: writes start and end position
-            b = PayloadUtils.tagEndPositionPayload(starts[i], ends[i], BlackLabIndex.IndexType.INTEGRATED);
-            RelationInfo r = new RelationInfo();
+            b = PayloadUtils.inlineTagPayload(starts[i], ends[i], BlackLabIndex.IndexType.INTEGRATED);
+            RelationInfo r = RelationInfo.create();
             r.deserialize(starts[i], new ByteArrayDataInput(b.bytes));
             Assert.assertEquals(starts[i], r.getSpanStart());
             Assert.assertEquals(starts[i], r.getSourceStart());

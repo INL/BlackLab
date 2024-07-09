@@ -2,16 +2,17 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
-import org.apache.lucene.queries.spans.SpanOrQuery;
-import org.apache.lucene.queries.spans.SpanQuery;
-import org.apache.lucene.queries.spans.SpanTermQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.queries.spans.SpanOrQuery;
+import org.apache.lucene.queries.spans.SpanQuery;
+import org.apache.lucene.queries.spans.SpanTermQuery;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -120,6 +121,22 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     /** Information such as our index, our search logger, etc. */
     protected QueryInfo queryInfo;
 
+    public QueryInfo getQueryInfo() {
+        return queryInfo;
+    }
+
+    public static boolean isAnyNGram(BLSpanQuery matchTarget) {
+        boolean isAnyNGram = false;
+        if (matchTarget instanceof SpanQueryAnyToken) {
+            SpanQueryAnyToken any = (SpanQueryAnyToken) matchTarget;
+            if (any.getMin() == 0 && any.getMax() == MAX_UNLIMITED) {
+                // No restrictions on target.
+                isAnyNGram = true;
+            }
+        }
+        return isAnyNGram;
+    }
+
     @Override
     public abstract String toString(String field);
 
@@ -178,6 +195,42 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         if (!matchesEmptySequence())
             return this;
         throw new UnsupportedOperationException("noEmpty() must be implemented!");
+    }
+
+    /**
+     * Check that clauses all search in compatible fields.
+     *
+     * NOTE: for parallel corpora, checks if clauses search in the same base field
+     * WITHOUT the document version, so one query may search both contents__nl and
+     * contents__en. The return value will be one of the versioned field names. It
+     * doesn't matter which because this value is only ever used to run this check
+     * again on a higher level in the query tree.
+     *
+     * @param clauses clauses to check
+     * @return base field name
+     * @throws if clauses search in incompatible fields
+     */
+    public static String checkAllCompatibleFields(Collection<BLSpanQuery> clauses) {
+        String baseFieldNameWithVersion = null;
+        String baseFieldName = null;
+        for (BLSpanQuery clause: clauses) {
+            if (clause == null)
+                continue; // some operations have optional clauses
+            // Get base field name (i.e. without annotation and sensitivity suffixes,
+            // so "contents" instead of "contents%lemma@i")
+            String baseWithVersion = AnnotatedFieldNameUtil.getBaseName(clause.getField());
+            // In parallel corpora, a query may contain clauses that search in different
+            // versions of the same field (e.g. "contents__en" and "contents__nl").
+            String base = AnnotatedFieldNameUtil.baseFromParallelFieldName(baseWithVersion);
+            if (baseFieldName == null) {
+                baseFieldName = base;
+                baseFieldNameWithVersion = baseWithVersion;
+            }
+            else if (!baseFieldName.equals(base))
+                throw new BlackLabRuntimeException("Mix of incompatible fields in query ("
+                        + baseFieldName + " and " + base + ")");
+        }
+        return baseFieldNameWithVersion;
     }
 
     /**
@@ -270,6 +323,11 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         return AnnotatedFieldNameUtil.getBaseName(getRealField());
     }
 
+    /**
+     * Return the full Lucene field name including annotation and sensitivity suffixes.
+     *
+     * @return the real field name
+     */
     public abstract String getRealField();
 
     /**

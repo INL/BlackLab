@@ -12,13 +12,15 @@ public class ResultIndexMetadata {
 
     private ResultIndexStatus progress;
     private List<ResultAnnotatedField> afs;
+    private String mainAnnotatedField;
     private List<ResultMetadataField> mfs;
     private Map<String, List<String>> metadataFieldGroups;
 
     public ResultIndexMetadata(ResultIndexStatus progress, List<ResultAnnotatedField> afs,
-            List<ResultMetadataField> mfs, Map<String, List<String>> metadataFieldGroups) {
+            String mainAnnotatedField, List<ResultMetadataField> mfs, Map<String, List<String>> metadataFieldGroups) {
         this.progress = progress;
         this.afs = afs;
+        this.mainAnnotatedField = mainAnnotatedField;
         this.mfs = mfs;
         this.metadataFieldGroups = metadataFieldGroups;
     }
@@ -41,5 +43,9 @@ public class ResultIndexMetadata {
 
     public Map<String, List<String>> getMetadataFieldGroups() {
         return metadataFieldGroups;
+    }
+
+    public String getMainAnnotatedField() {
+        return mainAnnotatedField;
     }
 }

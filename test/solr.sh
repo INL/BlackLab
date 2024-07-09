@@ -17,11 +17,11 @@ SERVICE_NAME="${1:-test}"
 cd $( dirname -- "$0"; )/
 
 # Check how to call Compose
-COMPOSE=docker-compose
-if ! command -v $COMPOSE &> /dev/null
-then
+#COMPOSE=docker-compose
+#if ! command -v $COMPOSE &> /dev/null
+#then
     COMPOSE="docker compose"
-fi
+#fi
 
 # Enable BuildKit
 export DOCKER_BUILDKIT=1

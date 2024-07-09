@@ -24,7 +24,7 @@ public class TextPatternFixedSpan extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryFixedSpan(QueryInfo.create(context.index()), context.luceneField(), start, end);
+        return new SpanQueryFixedSpan(QueryInfo.create(context.index(), context.field()), context.luceneField(), start, end);
     }
 
     @Override

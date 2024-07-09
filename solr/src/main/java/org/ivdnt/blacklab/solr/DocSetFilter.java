@@ -53,6 +53,7 @@ public class DocSetFilter extends Query {
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         return new Weight(this) {
+
             @Override
             public Explanation explain(LeafReaderContext context, int doc) {
                 return null;
@@ -155,7 +156,7 @@ public class DocSetFilter extends Query {
     }
 
     @Override
-    public void visit(QueryVisitor visitor) {
+    public void visit(QueryVisitor queryVisitor) {
         visitor.visitLeaf(this);
     }
 

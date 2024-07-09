@@ -3,8 +3,6 @@ package nl.inl.blacklab.server.lib.results;
 import java.io.File;
 import java.io.InputStream;
 import java.text.Collator;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,14 +19,18 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
@@ -49,7 +51,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
-import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -78,9 +80,9 @@ import nl.inl.util.LuceneUtil;
 
 public class WebserviceOperations {
 
-    private static final int MAX_FIELD_VALUES_TO_RETURN = 500;
+    static final Logger logger = LogManager.getLogger(WebserviceOperations.class);
 
-    private static RuleBasedCollator fieldValueSortCollator = null;
+    private static final int MAX_FIELD_VALUES_TO_RETURN = 500;
 
     private WebserviceOperations() {}
 
@@ -322,9 +324,8 @@ public class WebserviceOperations {
      * @return collocations
      */
     public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        ContextSize contextSize = ContextSize.get(params.getWordsAroundHit(), Integer.MAX_VALUE);
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        return hits.collocations(hits.field().mainAnnotation(), contextSize, sensitivity);
+        return hits.collocations(hits.field().mainAnnotation(), params.getContext(), sensitivity);
     }
 
     /**
@@ -354,51 +355,51 @@ public class WebserviceOperations {
      */
     public static Map<String, Long> getFieldValuesInOrder(MetadataField fd, MetadataFieldValues values) {
         Map<String, String> displayValues = fd.custom().get("displayValues", Collections.emptyMap());
+        List<String> displayOrder = fd.custom().get("displayOrder", Collections.emptyList());
 
         // Show values in display order (if defined)
         // If not all values are mentioned in display order, show the rest at the end,
         // sorted by their displayValue (or regular value if no displayValue specified)
         Map<String, Long> fieldValues = new LinkedHashMap<>();
         Map<String, Long> valueDistribution = values.valueList().getValues();
-        Set<String> valuesLeft = new HashSet<>(valueDistribution.keySet());
-        for (String value : fd.custom().get("displayOrder", Collections.<String>emptyList())) {
-            fieldValues.put(value, valueDistribution.get(value));
-            valuesLeft.remove(value);
-        }
-        List<String> sortedLeft = new ArrayList<>(valuesLeft);
-        final Collator defaultCollator = getFieldValueSortCollator();
-        sortedLeft.sort((o1, o2) -> {
-            String d1 = displayValues.getOrDefault(o1, o1);
-            String d2 = displayValues.getOrDefault(o2, o2);
-            //return d1.compareTo(d2);
-            return defaultCollator.compare(d1, d2);
-        });
-        for (String value : sortedLeft) {
-            fieldValues.put(value, valueDistribution.get(value));
-        }
-        return fieldValues;
-    }
-
-    /**
-     * Returns a collator that sort field values "properly", ignoring parentheses.
-     *
-     * @return the collator
-     */
-    static Collator getFieldValueSortCollator() {
-        if (fieldValueSortCollator == null) {
-            fieldValueSortCollator = (RuleBasedCollator) BlackLab.defaultCollator();
-            try {
-                // Make sure it ignores parentheses when comparing
-                String rules = fieldValueSortCollator.getRules();
-                // Set parentheses equal to NULL, which is ignored.
-                rules += "&\u0000='('=')'";
-                fieldValueSortCollator = new RuleBasedCollator(rules);
-            } catch (ParseException e) {
-                // Oh well, we'll use the collator as-is
-                //throw new RuntimeException();//DEBUG
+        final Collator collator = BlackLab.getFieldValueSortCollator();
+        if (!displayOrder.isEmpty()) {
+            Set<String> valuesLeft = new HashSet<>(valueDistribution.keySet());
+            for (String value: displayOrder) {
+                fieldValues.put(value, valueDistribution.get(value));
+                valuesLeft.remove(value);
+            }
+            List<String> sortedLeft = new ArrayList<>(valuesLeft);
+            sortedLeft.sort((o1, o2) -> {
+                String d1 = displayValues.getOrDefault(o1, o1);
+                String d2 = displayValues.getOrDefault(o2, o2);
+                return collator.compare(d1, d2);
+            });
+            for (String value: sortedLeft) {
+                fieldValues.put(value, valueDistribution.get(value));
+            }
+        } else {
+            // No displayOrder
+            if (!displayValues.isEmpty()) {
+                List<String> sortedLeft = new ArrayList<>(valueDistribution.keySet());
+                sortedLeft.sort((o1, o2) -> {
+                    String d1 = displayValues.getOrDefault(o1, o1);
+                    String d2 = displayValues.getOrDefault(o2, o2);
+                    return collator.compare(d1, d2);
+                });
+                for (String value: sortedLeft) {
+                    fieldValues.put(value, valueDistribution.get(value));
+                }
+            } else {
+                // No displayValues either
+                List<String> sortedLeft = new ArrayList<>(valueDistribution.keySet());
+                sortedLeft.sort(collator::compare);
+                for (String value: sortedLeft) {
+                    fieldValues.put(value, valueDistribution.get(value));
+                }
             }
         }
-        return fieldValueSortCollator;
+        return fieldValues;
     }
 
     /**
@@ -457,6 +458,12 @@ public class WebserviceOperations {
         } else {
             try {
                 throw e.getCause();
+            } catch (MatchInfoNotFound e1) {
+                return new BadRequest("UNKNOWN_MATCH_INFO",
+                        "Reference to unknown match info (i.e. capture group) '" + e1.getMatchInfoName() + "'",
+                        Map.of("name", e1.getMatchInfoName()));
+            } catch (BlackLabRuntimeException e1) {
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
             } catch (BlackLabException e1) {
                 return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
             } catch (BlsException e1) {
@@ -512,7 +519,7 @@ public class WebserviceOperations {
         //TODO: use background job?
 
         BlackLabIndex blIndex = params.blIndex();
-        AnnotatedField cfd = blIndex.mainAnnotatedField();
+        AnnotatedField cfd = params.getAnnotatedField();
         String annotName = params.getAnnotationName();
         if (annotName.isEmpty())
             annotName = cfd.mainAnnotation().name();
@@ -561,7 +568,7 @@ public class WebserviceOperations {
         //      miss unloaded corpora shared with you. To fix this, we should probably
         //      find all corpora and which users they're shared with on startup,
         //      but not open them until they're actually used.
-        indexMan.getAvailablePublicIndices(); // trigger loading of all user corpora (kinda hacky)
+        indexMan.getAvailablePublicCorpora(); // trigger loading of all user corpora (kinda hacky)
         for (Index index: indexMan.getAllLoadedCorpora()) {
             if (index.sharedWith(user)) {
                 results.add(index.getId());
@@ -634,7 +641,7 @@ public class WebserviceOperations {
             throw new NotAuthorized("You can only add new data to your own private indices.");
 
         long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
-        if (indexMetadata.tokenCount() > maxTokenCount) {
+        if (indexMetadata.tokenCountPerField().values().stream().anyMatch(count -> count > maxTokenCount)) {
             throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + maxTokenCount
                     + " tokens allowed in a user index. Cannot add any more data to it.");
         }
@@ -690,7 +697,7 @@ public class WebserviceOperations {
             throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found");
         }
 
-        for (Index i : indexMan.getAvailablePrivateIndices(params.getUser().getUserId())) {
+        for (Index i : indexMan.getAvailablePrivateCorporaOwnedBy(params.getUser())) {
             if (formatIdentifier.equals(i.getIndexMetadata().documentFormat()))
                 throw new BadRequest("CANNOT_DELETE_INDEX ",
                         "Could not delete format. The format is still being used by a corpus.");
@@ -708,15 +715,15 @@ public class WebserviceOperations {
                     listValuesFor.contains(annotation.name()), params.getLimitValues());
             annotInfos.put(annotation.name(), ai);
         }
-        return new ResultAnnotatedField(includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);
+        return new ResultAnnotatedField(params.blIndex(), includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);
     }
 
     public static ResultIndexStatus resultIndexStatus(WebserviceParams params) {
         Index index = params.getIndexManager().getIndex(params.getCorpusName());
-        return resultIndexStatus(index);
+        return resultIndexStatus(index, params.getUser());
     }
 
-    public static ResultIndexStatus resultIndexStatus(Index index) {
+    public static ResultIndexStatus resultIndexStatus(Index index, User user) {
         synchronized (index) {
             IndexListener indexerListener = index.getIndexerListener();
             long files = 0;
@@ -727,7 +734,8 @@ public class WebserviceOperations {
                 docs = indexerListener.getDocsDone();
                 tokens = indexerListener.getTokensProcessed();
             }
-            return new ResultIndexStatus(index, files, docs, tokens);
+            boolean ownedBySomeoneElse = index.isUserIndex() && !index.getUserId().equals(user.getId());
+            return new ResultIndexStatus(index, files, docs, tokens, ownedBySomeoneElse);
         }
     }
 
@@ -741,6 +749,7 @@ public class WebserviceOperations {
     }
 
     public static ResultMetadataField metadataField(WebserviceParams params, MetadataField fieldDesc, String indexName) {
+        logger.info("        " + fieldDesc.name());
         MetadataFieldValues values = fieldDesc.values(params.getLimitValues());
         Map<String, Long> fieldValues = getFieldValuesInOrder(fieldDesc, values);
         return new ResultMetadataField(indexName, fieldDesc, true, fieldValues,
@@ -758,13 +767,15 @@ public class WebserviceOperations {
     }
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
-            SearchTimings timings, List<String> matchInfoNames, ResultGroups<?> groups, WindowStats window) {
-        return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoNames,groups, window);
+            SearchTimings timings, List<MatchInfo.Def> matchInfoDefs, ResultGroups<?> groups, WindowStats window,
+            String searchField, Collection<String> otherFields) {
+        return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoDefs,groups, window,
+                searchField, otherFields);
     }
 
     public static ResultUserInfo userInfo(WebserviceParams params) {
         User user = params.getUser();
-        return new ResultUserInfo(user.isLoggedIn(), user.getUserId(), params.getIndexManager().canCreateIndex(user));
+        return new ResultUserInfo(user.isLoggedIn(), user.getId(), params.getIndexManager().canCreateIndex(user));
     }
 
     public static ResultDocsResponse viewGroupDocsResponse(WebserviceParams params) throws InvalidQuery {
@@ -776,22 +787,29 @@ public class WebserviceOperations {
     }
 
     public static ResultIndexMetadata indexMetadata(WebserviceParams params) {
+        logger.info("START indexMetadata");
         ResultIndexStatus progress = resultIndexStatus(params);
         IndexMetadata metadata = progress.getMetadata();
 
+        logger.info("    get annotated fields");
         List<ResultAnnotatedField> afs = new ArrayList<>();
         for (AnnotatedField field: metadata.annotatedFields()) {
             afs.add(annotatedField(params, field, false));
         }
+        Collections.sort(afs, ResultAnnotatedField::compare);
+        String mainAnnotatedField = metadata.mainAnnotatedField().name();
+        logger.info("    get metadata fields");
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
             mfs.add(metadataField(params, f, null));
         }
 
+        logger.info("    get metadata field groups");
         Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(
                 params.blIndex());
 
-        return new ResultIndexMetadata(progress, afs, mfs, metadataFieldGroups);
+        logger.info("    construct response object");
+        return new ResultIndexMetadata(progress, afs, mainAnnotatedField, mfs, metadataFieldGroups);
     }
 
     public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {
@@ -802,8 +820,8 @@ public class WebserviceOperations {
         return new ResultDocsGrouped(params);
     }
 
-    public static ResultListInputFormats listInputFormats(WebserviceParams params) {
-        return new ResultListInputFormats(params);
+    public static ResultListInputFormats listInputFormats(WebserviceParams params, boolean debugMode) {
+        return new ResultListInputFormats(params, debugMode);
     }
 
     public static ResultInputFormat inputFormat(String formatName) {

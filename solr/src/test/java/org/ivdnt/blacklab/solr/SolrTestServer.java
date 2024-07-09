@@ -16,9 +16,16 @@ import org.apache.solr.client.solrj.request.RequestWriter;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CoreContainer;
+import org.apache.solr.core.NodeConfig;
+import org.apache.solr.logging.LogWatcherConfig;
+import org.apache.solr.logging.log4j2.Log4j2Watcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SolrTestServer {
     private static final String SOLR_DIR_NAME = "blacklab-test-solr";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SolrTestServer.class);
 
     private static EmbeddedSolrServer server;
 
@@ -71,21 +78,21 @@ public class SolrTestServer {
         return dir.delete();
     }
 
-    static void createEmbeddedServer(String defaultCoreName, Path resourcePath, Path existingIndexPath) {
-        try {
-            solrPath = Files.createTempDirectory(SOLR_DIR_NAME);
-            copy(resourcePath, solrPath, "solr.xml");
+    static void createEmbeddedServer(String defaultCoreName, Path resourcePath, Path existingIndexPath)
+            throws IOException {
+        solrPath = Files.createTempDirectory(SOLR_DIR_NAME);
+        copy(resourcePath, solrPath, "solr.xml");
 
-            if (existingIndexPath != null)
-                copy(existingIndexPath.getParent(), solrPath, existingIndexPath.toFile().getName(), defaultCoreName);
+        if (existingIndexPath != null)
+            copy(existingIndexPath.getParent(), solrPath, existingIndexPath.toFile().getName(), defaultCoreName);
 
-            CoreContainer container = new CoreContainer(solrPath.toAbsolutePath(), new Properties());
-            container.load();
+        NodeConfig config = new NodeConfig.NodeConfigBuilder("testNode", solrPath)
+                .setLogWatcherConfig(new LogWatcherConfig(true,null,null,0))
+                .build();
+        CoreContainer container = new CoreContainer(config);
+        container.load();
 
-            server = new EmbeddedSolrServer(container, defaultCoreName);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        server = new EmbeddedSolrServer(container, defaultCoreName);
     }
 
     /**
@@ -124,11 +131,11 @@ public class SolrTestServer {
     }
 
     static void setLogLevel(String level) throws SolrServerException, IOException {
-        ModifiableSolrParams params = new ModifiableSolrParams();
-        params.set("set", "root:" + level);
-        GenericSolrRequest reqSetLogLevel = new GenericSolrRequest(SolrRequest.METHOD.POST,
-                "/admin/info/logging", params);
-        NamedList<Object> response = server.request(reqSetLogLevel);
+//        ModifiableSolrParams params = new ModifiableSolrParams();
+//        params.set("set", "root:" + level);
+//        GenericSolrRequest reqSetLogLevel = new GenericSolrRequest(SolrRequest.METHOD.POST,
+//                "/admin/info/logging", params);
+//        NamedList<Object> response = server.request(reqSetLogLevel);
         //System.err.println("Log level response\n" + response.toString());
     }
 

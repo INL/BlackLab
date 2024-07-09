@@ -48,6 +48,7 @@ public class SaxonHelper {
             SAXException, XPathException {
         // make sure our content handler doesn't get overwritten by saxon
         SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+        parserFactory.setXIncludeAware(true);
         SAXParser parser = parserFactory.newSAXParser();
         XMLReader xmlReader = parser.getXMLReader();
         xmlReader.setContentHandler(handler);

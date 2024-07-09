@@ -69,11 +69,11 @@ public class Concordances {
      * document!
      * 
      * @param hits hits to make concordance for
-     * @param wordsAroundHit number of words left and right of hit to fetch
+     * @param contextSize number of words left and right of hit to fetch
      * @param conc where to add the concordances
      * @param hl highlighter
      */
-    private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, ContextSize wordsAroundHit,
+    private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
         if (hits.size() == 0)
@@ -94,12 +94,7 @@ public class Concordances {
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1; // last word (inclusive)
 
-            wordsAroundHit.getSnippetStartEnd(hit, hits.matchInfoNames(), true, startsOfWords, startEndArrayIndex, endsOfWords, startEndArrayIndex + 1);
-//            // Above call replaces this:
-//            int start = wordsAroundHit.snippetStart(hit, hits.matchInfoNames());
-//            int end = wordsAroundHit.snippetEnd(hit, hits.matchInfoNames()) - 1; // last word (inclusive)
-//            startsOfWords[startEndArrayIndex] = start;
-//            endsOfWords[startEndArrayIndex + 1] = end;
+            contextSize.getSnippetStartEnd(hit, hits.matchInfoDefs(), true, startsOfWords, startEndArrayIndex, endsOfWords, startEndArrayIndex + 1);
             startsOfWords[startEndArrayIndex + 1] = hitStart;
             endsOfWords[startEndArrayIndex] = hitEnd;
 
@@ -145,9 +140,19 @@ public class Concordances {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (HitsInternal l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = Hits.list(queryInfo, l, hits.matchInfoNames());
+            Hits hitsInThisDoc = Hits.list(queryInfo, l, hits.matchInfoDefs());
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }
         return conc;
+    }
+
+    public ConcordanceType getConcordanceType() {
+        return kwics == null ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
+    }
+
+    public Kwics getKwics() {
+        if (kwics == null)
+            throw new UnsupportedOperationException("Kwics not available when concordances are retrieved from content store");
+        return kwics;
     }
 }

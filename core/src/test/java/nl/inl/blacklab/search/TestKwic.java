@@ -37,7 +37,7 @@ public class TestKwic {
     
     @Test
     public void testKwicToConcordance() {
-        Kwic kwic = new Kwic(ANNOTS, TOKENS, 2, 3);
+        Kwic kwic = new Kwic(ANNOTS, TOKENS, 2, 3, 0);
         Concordance conc = kwic.toConcordance();
     
         Assert.assertEquals(EXP_LEFT, conc.left());
@@ -47,13 +47,13 @@ public class TestKwic {
 
     @Test
     public void testKwicNewConstructor() {
-        Kwic kwic = new Kwic(ANNOTS, TOKENS, 2, 3);
+        Kwic kwic = new Kwic(ANNOTS, TOKENS, 2, 3, 0);
     
-        Assert.assertEquals(EXP_LEFT + EXP_MATCH + EXP_RIGHT, kwic.fullXml());
-        Assert.assertEquals(LEFT, kwic.left());
+        Assert.assertEquals(EXP_LEFT + EXP_MATCH + EXP_RIGHT, kwic.fragment().xml());
+        Assert.assertEquals(LEFT, kwic.before());
         Assert.assertEquals(MATCH, kwic.match());
-        Assert.assertEquals(RIGHT, kwic.right());
-        Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.left(ANNOTS.get(3)));
+        Assert.assertEquals(RIGHT, kwic.after());
+        Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.before(ANNOTS.get(3)));
     }
 
 }

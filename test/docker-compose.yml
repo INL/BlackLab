@@ -20,7 +20,7 @@ services:
       #- JPDA_ADDRESS=*:5005
       #- JPDA_TRANSPORT=dt_socket
       # Pass overridden feature flag(s) directly to the container (for testing both values)
-      - BLACKLAB_FEATURE_integrateExternalFiles
+      - BLACKLAB_FEATURE_defaultIndexType
 
     volumes:
       # Test data to index

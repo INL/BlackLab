@@ -264,6 +264,9 @@ public class Corpus implements Cloneable {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public SpecialFieldInfo fieldInfo;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String mainAnnotatedField;
+
     @XmlElementWrapper(name="annotatedFields")
     @XmlElement(name = "annotatedField")
     @JsonProperty("annotatedFields")

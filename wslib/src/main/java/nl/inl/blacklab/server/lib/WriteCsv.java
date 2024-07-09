@@ -115,7 +115,7 @@ public class WriteCsv {
         Hits hits = resultHitsCsv.getHits();
         HitGroups groups = resultHitsCsv.getGroups();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
-        final Annotation mainTokenProperty = index.mainAnnotatedField().mainAnnotation();
+        final Annotation mainTokenProperty = hits.queryInfo().field().mainAnnotation();
         try {
             // Build the table headers
             // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.
@@ -188,9 +188,9 @@ public class WriteCsv {
         // Only kwic supported, original document output not supported in csv currently.
         Annotation punct = mainTokenProperty.field().annotations().punct();
         printer.print(docPid);
-        printer.print(interleave(kwic.left(punct), kwic.left(mainTokenProperty)));
+        printer.print(interleave(kwic.before(punct), kwic.before(mainTokenProperty)));
         printer.print(interleave(kwic.match(punct), kwic.match(mainTokenProperty)));
-        printer.print(interleave(kwic.right(punct), kwic.right(mainTokenProperty)));
+        printer.print(interleave(kwic.after(punct), kwic.after(mainTokenProperty)));
 
         // Add all other properties in this word
         for (Annotation otherProp : otherTokenProperties)
@@ -389,7 +389,7 @@ public class WriteCsv {
             BlackLabIndex index = params.blIndex();
             IndexMetadata indexMetadata = index.metadata();
             MetadataField pidField = indexMetadata.metadataFields().pidField();
-            String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
+            String tokenLengthField = index.mainAnnotatedField().tokenLengthField(); // TODO: all annotated fields?
 
             // Build the header; 2 columns for pid and length, then 1 for each metadata field
             List<String> row = new ArrayList<>();

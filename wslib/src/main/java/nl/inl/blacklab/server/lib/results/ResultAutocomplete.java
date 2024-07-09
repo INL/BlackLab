@@ -8,6 +8,7 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -68,7 +69,10 @@ public class ResultAutocomplete {
                 luceneField = annotation.sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
             } else {
                 sensitiveMatching = true;
-                luceneField = annotation.offsetsSensitivity().luceneField();
+                AnnotationSensitivity s = annotation.offsetsSensitivity(); // TODO: why!? get rid of this?
+                if (s == null)
+                    s = annotation.sensitivity(MatchSensitivity.SENSITIVE);
+                luceneField = s.luceneField();
             }
         } else {
             luceneField = fieldName;

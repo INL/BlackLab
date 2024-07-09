@@ -36,7 +36,6 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
@@ -69,13 +68,12 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     private final Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
 
     /**
-     * A field named "contents", or, if that doesn't exist, the first annotated field
-     * added.
+     * The first annotated field added is designated as main annotated field.
      */
     private AnnotatedFieldWriter mainAnnotatedField;
 
     /** The indexing object for the annotated field we're currently processing. */
-    private AnnotatedFieldWriter currentAnnotatedField;
+    protected AnnotatedFieldWriter currentAnnotatedField;
 
     /** The _relation annotation (where inline tags and dependency relations are stored)
         for the annotated field we're currently processing. */
@@ -127,7 +125,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * default field and content store (usually "contents", with the id in field
      * "contents#cid").
      */
-    private String contentStoreName = null;
+    private String linkedDocumentContentStoreName = null;
 
     /**
      * Total words processed by this indexer. Used for reporting progress, do not
@@ -145,8 +143,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     /** Indexer that linked to us (linkedDocument), or null if not applicable. */
     protected DocIndexerBase linkingIndexer;
 
-    protected String getContentStoreName() {
-        return contentStoreName;
+    protected String getLinkedDocumentContentStoreName() {
+        return linkedDocumentContentStoreName;
     }
 
     protected void addAnnotatedField(AnnotatedFieldWriter field) {
@@ -159,13 +157,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     protected AnnotatedFieldWriter getMainAnnotatedField() {
         if (mainAnnotatedField == null) {
-            // The "main annotated field" is the field that stores the document content id.
-            // The main annotated field is a field named "contents" or, if that does not exist, the first
-            // annotated field
+            // The main annotated field is the first annotated field
             for (AnnotatedFieldWriter field : annotatedFields.values()) {
                 if (mainAnnotatedField == null)
-                    mainAnnotatedField = field;
-                else if (field.name().equals("contents"))
                     mainAnnotatedField = field;
             }
         }
@@ -273,7 +267,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 ldi.metadataFieldValues = metadataFieldValues;
                 if (storeWithName != null) {
                     // If specified, store in this content store and under this name instead of the default
-                    ldi.contentStoreName = storeWithName;
+                    ldi.linkedDocumentContentStoreName = storeWithName;
                 }
                 ldi.indexSpecificDocument(documentPath);
             } else {
@@ -375,8 +369,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                     if (prop.hasPayload())
                         prop.addPayload(null);
                     if (prop == propMain) {
-                        field.addStartChar(getCharacterPosition());
-                        field.addEndChar(getCharacterPosition());
+                        field.addFinalStartEndChars();
                     }
                 }
             }
@@ -426,6 +419,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         }
     }
 
+    protected void storeContent(ConfigAnnotatedField field, TextContent content) {
+        getDocWriter().storeInContentStore(currentDoc, content,
+                AnnotatedFieldNameUtil.contentIdField(field.getName()), field.getName());
+    }
+
     /**
      * Store the entire document at once.
      *
@@ -452,24 +450,27 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         // (Note that we do this after adding the "extra closing token", so the character
         // positions for the closing token still make (some) sense)
         String contentIdFieldName;
-        String contentStoreName = getContentStoreName();
-        if (contentStoreName == null) {
+        String contentStoreName = getLinkedDocumentContentStoreName();
+        if (contentStoreName != null) {
+            contentIdFieldName = contentStoreName + "Cid";
+        } else {
             AnnotatedFieldWriter main = getMainAnnotatedField();
-            if (main == null) {
+            if (main != null) {
+                // Regular case. Store content for the main annotated field.
+                contentStoreName = main.name();
+                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
+            } else {
+                throw new BlackLabRuntimeException("No main annotated field defined, can't store document");
+                /*
                 // We're indexing documents and storing the contents,
                 // but we don't have a main annotated field in the current indexing configuration.
                 // This happens when indexing linked metadata documents, which are stored but don't
                 // have annotated content to be indexed in a field.
-                // TODO: get rid of this special case!
+                // (OLD HACK, NOT USED ANYMORE..?)
                 contentStoreName = "metadata";
                 contentIdFieldName = "metadataCid";
-            } else {
-                // Regular case. Store content for the main annotated field.
-                contentStoreName = main.name();
-                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
+                */
             }
-        } else {
-            contentIdFieldName = contentStoreName + "Cid";
         }
         getDocWriter().storeInContentStore(currentDoc, document, contentIdFieldName, contentStoreName);
     }
@@ -497,7 +498,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!openTag.name.equals(tagName))
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(openTag.position, currentPos, getIndexType());
+            BytesRef payload = PayloadUtils.inlineTagPayload(openTag.position, currentPos, getIndexType());
             int index = openTag.index;
             if (index < 0) {
                 // Negative value means two terms were indexed (one with, one without attributes, for search performance)
@@ -552,7 +553,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     protected void annotationValueAppend(String name, String value, int increment) {
         int position = getAnnotation(name).lastValuePosition() + increment;
-        annotationValue(name, value, position, -1, false);
+        annotationValue(name, value, position, null);
     }
 
     /**
@@ -563,11 +564,55 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param position position to index value at
      */
     protected void annotationValue(String name, String value, int position) {
-        annotationValue(name, value, position, -1, false);
+        annotationValue(name, value, position, null);
     }
 
     /**
-     * Index an annotation.
+     * Index a token, span or relation.
+     *
+     * @param name annotation name
+     * @param value annotation value (or span name or span attribute value)
+     * @param position token position, span start, or relation source
+     * @param spanEndOrRelTarget (optional) span end or relation target (or null if this is just a token)
+     * @param annotType the type of annotation we're indexing: a token, a span (inline tag) or a relation
+     */
+    protected void annotationValue(String name, String value, Span position, Span spanEndOrRelTarget,
+            AnnotationType annotType) {
+        // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
+        // which has no source, so we index it at its target.
+        int indexAtPosition = position.start() < 0 ?
+                spanEndOrRelTarget.start() : position.start();
+
+        BytesRef payload = null;
+        switch (annotType) {
+        case TOKEN:
+            // no payload for token annotation
+            break;
+        case SPAN:
+            // Span: index as a relation from the start of source to the start of target (0-length)
+            //   (and in the classic external index, the payload just contains the end position)
+            payload = PayloadUtils.inlineTagPayload(indexAtPosition, spanEndOrRelTarget.start(), getIndexType());
+            break;
+        case RELATION:
+            // Relation: index with the full source and target spans
+            boolean onlyHasTarget = !Span.isValid(position); // standoff root annotation
+
+            // Root relations have no source, so we index them at their target position.
+            // In this case we set source start/end to target start, so it is indexed there and
+            // source length does not need to be stored (because 0 is the default value, see
+            // RelationInfo.serializeRelation).
+            int sourceStart = indexAtPosition;
+            int sourceEnd = onlyHasTarget ? indexAtPosition : position.end();
+
+            payload = PayloadUtils.relationPayload(onlyHasTarget, sourceStart, sourceEnd,
+                    spanEndOrRelTarget.start(), spanEndOrRelTarget.end());
+            break;
+        }
+        annotationValue(name, value, indexAtPosition, payload);
+    }
+
+    /**
+     * Index an annotation, span or relation.
      *
      * Also used to index inline tags (spans). In that case, spanEndOrRelTarget is >= 0.
      * For the external index, this method is called several times, once for the tag
@@ -577,21 +622,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param name annotation name
      * @param value annotation value (or span name or span attribute value)
      * @param position position to index value at
-     * @param spanEndOrRelTarget if >= 0, this is a span or relation annotation and this is the span end (first token position after) or
-     *                           relation target (token position of the target of the relation)
-     * @param isRelation if spanEndOrRelTarget >= 0, this indicates whether this is a relation (true) or a span (false)
+     * @param payload payload to add to the annotation value
      */
-    protected void annotationValue(String name, String value, int position, int spanEndOrRelTarget, boolean isRelation) {
-        // Normally name gives the annotation to index this is, but for span annotations,
-        // we already know the annotation and name is instead used for attribute values (see below).
-        boolean isInlineTagOrRelation = spanEndOrRelTarget >= 0;
+    protected void annotationValue(String name, String value, int position, BytesRef payload) {
         AnnotationWriter annotation = getAnnotation(name);
         if (annotation != null) {
-            BytesRef payload = isInlineTagOrRelation ? getPayload(spanEndOrRelTarget, isRelation, position) : null;
-            if (position < 0) {
-                // root relation, index at target instead of source (because it has no source)
-                position = spanEndOrRelTarget;
-            }
             annotation.addValueAtPosition(value, position, payload);
         } else {
             // Annotation not declared; report, but keep going
@@ -600,21 +635,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 logger.error(documentName + ": skipping undeclared annotation " + name);
             }
         }
-    }
-
-    private BytesRef getPayload(int targetPos, boolean isRelation, int currentAndSourceStartPos) {
-        BytesRef payload;
-        if (isRelation) {
-            boolean onlyHasTarget = currentAndSourceStartPos < 0; // standoff root annotation
-            if (onlyHasTarget)
-                currentAndSourceStartPos = targetPos;
-            RelationInfo info = new RelationInfo(onlyHasTarget,
-                    currentAndSourceStartPos, currentAndSourceStartPos + 1,
-                    targetPos, targetPos + 1);
-            payload = info.serialize();
-        } else
-            payload = PayloadUtils.tagEndPositionPayload(currentAndSourceStartPos, targetPos, getIndexType());
-        return payload;
     }
 
     @Override

@@ -10,9 +10,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public class HitPropertyDocumentStoredField extends HitProperty {
 
-    static HitPropertyDocumentStoredField deserializeProp(BlackLabIndex index, String info) {
-        return new HitPropertyDocumentStoredField(index, PropertySerializeUtil.unescapePart(info));
-    }
+    public static final String ID = DocPropertyStoredField.ID;
 
     final String fieldName;
 
@@ -61,7 +59,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + PropertySerializeUtil.combineParts("field", fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts(ID, fieldName);
     }
 
     @Override

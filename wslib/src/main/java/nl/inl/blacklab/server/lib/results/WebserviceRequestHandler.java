@@ -10,8 +10,6 @@ import java.util.Set;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -212,7 +210,7 @@ public class WebserviceRequestHandler {
      */
     public static void opDocSnippet(WebserviceParams params, ResponseStreamer rs) {
         ResultDocSnippet result = WebserviceOperations.docSnippet(params);
-        rs.hitOrFragmentInfo(result);
+        rs.snippet(result);
     }
 
     /**
@@ -246,8 +244,8 @@ public class WebserviceRequestHandler {
         rs.formatInfoResponse(result);
     }
 
-    public static void opListInputFormats(WebserviceParams params, ResponseStreamer rs) {
-        ResultListInputFormats result = WebserviceOperations.listInputFormats(params);
+    public static void opListInputFormats(WebserviceParams params, ResponseStreamer rs, boolean debugMode) {
+        ResultListInputFormats result = WebserviceOperations.listInputFormats(params, debugMode);
         rs.listFormatsResponse(result);
     }
 
@@ -333,16 +331,13 @@ public class WebserviceRequestHandler {
     }
 
     public static void opRelations(WebserviceParamsImpl params, ResponseStreamer rs) {
-        String fieldName = params.getFieldName();
         BlackLabIndex index = params.blIndex();
-        AnnotatedField field = StringUtils.isEmpty(fieldName) ?
-                index.mainAnnotatedField() :
-                index.annotatedField(fieldName);
+        AnnotatedField field = params.getAnnotatedField();
         RelationsStats stats = index.getRelationsStats(field, params.getLimitValues());
         Map<String, RelationsStats.ClassStats> classesMap = stats.getClasses();
         Collection<String> relClasses = params.getRelClasses().isEmpty() ? classesMap.keySet() :
                 new HashSet<>(Arrays.asList(params.getRelClasses().split(",")));
-        final String spansClass = RelationUtil.RELATION_CLASS_INLINE_TAG;
+        String spansClass = RelationUtil.CLASS_INLINE_TAG;
         if (params.getRelOnlySpans()) {
             relClasses = Set.of(spansClass);
         }

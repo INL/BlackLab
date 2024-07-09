@@ -17,20 +17,23 @@ public class ResultListInputFormats {
 
     private final List<InputFormat> inputFormats;
 
-    ResultListInputFormats(WebserviceParams params) {
+    private boolean debugMode;
+
+    ResultListInputFormats(WebserviceParams params, boolean debugMode) {
         userInfo = WebserviceOperations.userInfo(params);
+        this.debugMode = debugMode;
 
         // List all available input formats
         User user = params.getUser();
         IndexManager indexMan = params.getIndexManager();
         if (user.isLoggedIn() && indexMan.getUserFormatManager() != null) {
             // Make sure users's formats are loaded
-            indexMan.getUserFormatManager().loadUserFormats(user.getUserId(), null);
+            indexMan.getUserFormatManager().loadUserFormats(user.getId(), null);
         }
         inputFormats = new ArrayList<>();
         for (InputFormat inputFormat: DocumentFormats.getFormats()) {
             try {
-                String userId = FinderInputFormatUserFormats.getFormatNameFromIdentifier(inputFormat.getIdentifier());
+                String userId = FinderInputFormatUserFormats.getUserIdFromFormatIdentifier(inputFormat.getIdentifier());
                 // Other user's formats are not explicitly enumerated (but should still be considered public)
                 if (!userId.equals(userInfo.getUserId()))
                     continue;
@@ -47,5 +50,9 @@ public class ResultListInputFormats {
 
     public List<InputFormat> getFormats() {
         return inputFormats;
+    }
+
+    public boolean isDebugMode() {
+        return debugMode;
     }
 }

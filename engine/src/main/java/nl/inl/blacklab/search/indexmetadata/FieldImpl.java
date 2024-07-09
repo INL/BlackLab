@@ -99,8 +99,12 @@ public abstract class FieldImpl implements Field, Freezable {
 
     public void setContentStore(boolean contentStore) {
         if (contentStore != this.contentStore) {
-            ensureNotFrozen();
-            this.contentStore = contentStore;
+            try {
+                ensureNotFrozen();
+                this.contentStore = contentStore;
+            } catch (UnsupportedOperationException e) {
+                throw new RuntimeException("Tried to set contentStore to " + contentStore + ", but field is frozen: " + fieldName, e);
+            }
         }
     }
 

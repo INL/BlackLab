@@ -18,7 +18,7 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
     static class Factory implements MetadataFieldValues.Factory {
         public MetadataFieldValues create(String fieldName, FieldType fieldType, long limitValues) {
             // ignore limitValues here, we load whatever was stored in the file.
-            return new MetadataFieldValuesInMetadataFile(fieldName);
+            return new MetadataFieldValuesInMetadataFile(fieldName, IndexMetadataExternal.maxMetadataValuesToStore());
         }
     }
 
@@ -30,8 +30,9 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
      * The values this field can have. Note that this may not be the complete list;
      * check valueListComplete.
      */
-    private TruncatableFreqList values = new TruncatableFreqList(
-            MetadataFieldImpl.maxMetadataValuesToStore());
+    private TruncatableFreqList values;
+
+    private final int maxValues;
 
     /**
      * Did we encounter a value that was too long to store and warn the user about it?
@@ -43,8 +44,10 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
      */
     private final String fieldName;
 
-    public MetadataFieldValuesInMetadataFile(String fieldName) {
+    private MetadataFieldValuesInMetadataFile(String fieldName, int maxValues) {
         this.fieldName = fieldName;
+        this.maxValues = maxValues;
+        values = new TruncatableFreqList(maxValues);
     }
 
     @Override
@@ -53,14 +56,12 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
     }
 
     @Override
-    public MetadataFieldValues truncate(long maxValues) {
-        // Ignore this for the legacy external index format
-        return this;
-    }
+    public boolean shouldAddValuesWhileIndexing() { return false; }
 
     @Override
-    public boolean shouldAddValuesWhileIndexing() {
-        return true;
+    public MetadataFieldValues truncated(long maxValues) {
+        // Ignore this for the legacy external index format
+        return this;
     }
 
     @Override
@@ -70,8 +71,7 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
 
     @Override
     public void setValues(JsonNode values) {
-        this.values = new TruncatableFreqList(
-                MetadataFieldImpl.maxMetadataValuesToStore());
+        this.values = new TruncatableFreqList(maxValues);
         Iterator<Map.Entry<String, JsonNode>> it = values.fields();
         while (it.hasNext()) {
             Map.Entry<String, JsonNode> entry = it.next();
@@ -114,7 +114,6 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
 
     @Override
     public void reset() {
-        this.values = new TruncatableFreqList(
-                MetadataFieldImpl.maxMetadataValuesToStore());
+        this.values = new TruncatableFreqList(maxValues);
     }
 }

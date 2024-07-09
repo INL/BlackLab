@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -194,7 +196,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
         tokenCount = 0;
         documentCount = 0;
-        tokenCountCalculated = false;
+        synchronized (this) {
+            tokenCountCalculated = false;
+        }
         // (already set) metadataDocument = new MetadataDocument();
 
         annotatedFields.fixAfterDeserialization(index, this);
@@ -219,6 +223,10 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         /** BlackLab version used to (initially) create index */
         public String blackLabVersion;
 
+        /** Scm revision (i.e. Git hash) used to (initially) create index */
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        public String blackLabScmRevision;
+
         /** Format the index uses */
         public String indexFormat;
 
@@ -231,6 +239,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         public void populateWithDefaults() {
             blackLabBuildTime = BlackLab.buildTime();
             blackLabVersion = BlackLab.version();
+            blackLabScmRevision = BlackLab.getBuildScmRevision();
             timeCreated =  TimeUtil.timestamp();
             timeModified =  TimeUtil.timestamp();
             indexFormat =  LATEST_INDEX_FORMAT;
@@ -253,15 +262,18 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @XmlTransient
     protected long tokenCount = 0;
 
+    @XmlTransient
+    protected Map<String, Long> tokenCountPerField = new LinkedHashMap<>();
+
+    /** Have we determined our tokenCount from the index? (done lazily) */
+    @XmlTransient
+    private boolean tokenCountCalculated;
+
     /** Our metadata fields */
     protected MetadataFieldsImpl metadataFields = null;
 
     /** Our annotated fields */
     protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
-
-    /** Have we determined our tokenCount from the index? (done lazily) */
-    @XmlTransient
-    private boolean tokenCountCalculated;
 
     /** How many documents with values for the main annotated field are in our index */
     @XmlTransient
@@ -521,7 +533,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String timeModified() {
-        return versionInfo.timeCreated;
+        return versionInfo.timeModified;
     }
 
     /**
@@ -542,6 +554,16 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public String indexBlackLabVersion() {
         return versionInfo.blackLabVersion;
+    }
+
+    /**
+     * What was the SCM version (i.e. Git hash) for the BlackLab.jar used for indexing?
+     * @return the SCM version
+     */
+    @Override
+    public String indexBlackLabScmRevision() {
+        String rev = versionInfo.blackLabScmRevision;
+        return StringUtils.isEmpty(rev) ? "UNKNOWN" : rev;
     }
 
     // Methods that mutate data
@@ -714,7 +736,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         // "Detect" main contents field and main annotations of annotated fields
         AnnotatedFieldImpl mainAnnotatedField = null;
         for (AnnotatedField d: annotatedFields()) {
-            if (mainAnnotatedField == null || d.name().equals("contents"))
+            if (mainAnnotatedField == null)
                 mainAnnotatedField = (AnnotatedFieldImpl) d;
         }
         if (mainAnnotatedField != null)
@@ -728,6 +750,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     @Override
+    public synchronized Map<String, Long> tokenCountPerField() {
+        ensureDocsAndTokensCounted();
+        return Collections.unmodifiableMap(tokenCountPerField);
+    }
+
+    @Override
     public synchronized int documentCount() {
         ensureDocsAndTokensCounted();
         return documentCount;
@@ -736,21 +764,28 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     private synchronized void ensureDocsAndTokensCounted() {
         if (!tokenCountCalculated) {
             tokenCountCalculated = true;
-            tokenCount = documentCount = 0;
+            tokenCount = 0;
+            tokenCountPerField.clear();
             if (!isNewIndex()) {
-                // Add up token counts for all the documents
-                AnnotatedField field = annotatedFields().main();
-                Annotation annot = field.mainAnnotation();
-                AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
-                index.forEachDocument((__, docId) -> {
-                    int docLength = afi.docLength(docId);
-                    if (docLength >= 1) {
-                        // Positive docLength means that this document has a value for this annotated field
-                        // (e.g. the index metadata document does not and returns 0)
-                        tokenCount += docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                        documentCount++;
-                    }
-                });
+                // Count tokens for each field (and documents while we're at it)
+                for (AnnotatedField field: annotatedFields()) {
+                    documentCount = 0;
+                    long[] fieldTokenCount = new long[] { 0 };
+                    // Add up token counts for all the documents
+                    Annotation annot = field.mainAnnotation();
+                    AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
+                    index.forEachDocument((__, docId) -> {
+                        int docLength = afi.docLength(docId);
+                        if (docLength >= 1) {
+                            // Positive docLength means that this document has a value for this annotated field
+                            // (e.g. the index metadata document does not and returns 0)
+                            fieldTokenCount[0] += docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                            documentCount++; // NOTE: we dont use afi.size() because that includes deleted docs.
+                        }
+                    });
+                    tokenCountPerField.put(field.name(), fieldTokenCount[0]);
+                }
+                tokenCount = tokenCountPerField.get(mainAnnotatedField().name());
             }
         }
     }
@@ -772,9 +807,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     public void freezeBeforeIndexing() {
         // Contrary to the "classic" index format, with this one the metadata
         // cannot change while indexing. So freeze it now to enforce that.
-        // FIXME: we actually CAN update metadata while indexing and probably should
+        // UPDATE: we actually CAN update metadata while indexing and probably should
         //  (e.g. because you can add documents with different configs to one corpus)
-        freeze();
+        //freeze();
     }
 
     @Override

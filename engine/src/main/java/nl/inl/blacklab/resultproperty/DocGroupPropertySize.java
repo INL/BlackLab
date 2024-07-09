@@ -3,7 +3,9 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.search.results.DocGroup;
 
 public class DocGroupPropertySize extends DocGroupProperty {
-    
+
+    public static final String ID = HitGroupPropertySize.ID;
+
     DocGroupPropertySize(DocGroupPropertySize prop, boolean invert) {
         super(prop, invert);
     }
@@ -30,7 +32,7 @@ public class DocGroupPropertySize extends DocGroupProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "size";
+        return serializeReverse() + ID;
     }
 
     @Override

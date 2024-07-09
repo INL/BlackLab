@@ -7,8 +7,10 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -47,9 +49,29 @@ public abstract class TextPattern implements TextPatternStruct {
     public static final String NT_REPEAT = "repeat";
     public static final String NT_SENSITIVITY = "sensitivity";
     public static final String NT_SEQUENCE = "sequence";
+    public static final String NT_SETTINGS = "settings";
     public static final String NT_TAGS = "tags";
     public static final String NT_TERM = "term";
     public static final String NT_WILDCARD = "wildcard";
+
+    /**
+     * Make sure the query is within the specified tag, and capture relations within the tag.
+     *
+     * E.g. you want hits inside sentences, and want to capture all (dependency) relations
+     * in that sentence.
+     *
+     * Essentially adds <code>within rcapture(<s/>)</code> to the query if <code>tagName == "s"</code>.
+     *
+     * @param pattern pattern to filter
+     * @param tagName tag the hits must be within
+     * @return the filtered pattern, where relations within the tag will be captured
+     */
+    public static TextPatternPositionFilter createRelationCapturingWithinQuery(TextPattern pattern, String tagName, String captureRelsAs) {
+        TextPattern tags = new TextPatternTags(tagName, null, TextPatternTags.Adjust.FULL_TAG, tagName);
+        // Also capture any relations that are in the tag
+        tags = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(tags, captureRelsAs));
+        return new TextPatternPositionFilter(pattern, tags, SpanQueryPositionFilter.Operation.WITHIN);
+    }
 
     /**
      * Translate this TextPattern into a BLSpanQuery.

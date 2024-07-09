@@ -78,7 +78,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     @Override
     public void setHitQueryContext(HitQueryContext context) {
-        groupIndex = context.registerMatchInfo(groupName);
+        groupIndex = context.registerMatchInfo(groupName, null);
     }
 
     @Override

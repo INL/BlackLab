@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
@@ -10,6 +11,8 @@ import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 
 /**
@@ -24,7 +27,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     private final int NOT_YET_NEXTED = -1;
 
     /** Source and target for this relation */
-    private final RelationInfo relationInfo = new RelationInfo();
+    private RelationInfo relationInfo = null;
 
     /** Have we fetched relation info (decoded payload) for current hit yet? */
     private boolean fetchedRelationInfo = false;
@@ -47,29 +50,35 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** Name to capture the relation info as */
     private final String captureAs;
 
-    /** Can our spans include root relations, or are we sure it doesn't?
+    /**
+     * Can our spans include root relations, or are we sure it doesn't?
      * If it might include root relations, we need to check for this in accept(),
      * forcing us to decode the payload.
      */
     private final boolean spansMayIncludeRoots = true;
 
+    private final String sourceField;
+
     /**
      * Construct SpansRelations.
-     *
      * NOTE: relation payloads contain the location of the other side of the relation. To work with these,
      * we also need to know if there's "is primary value" indicators in (some of) the payloads,
      * so we can skip these. See {@link PayloadUtils}.
      *
-     * @param relationType type of relation we're looking for
-     * @param relationsMatches relation matches for us to decode
+     * @param sourceField                   name of the annotated field that is the source field of the relations
+     * @param relationType                  type of relation we're looking for
+     * @param relationsMatches              relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
-     * @param direction direction of the relation
-     * @param spanMode what span to return for the relations found
-     * @param captureAs name to capture the relation info as, or empty not to capture
+     * @param direction                     direction of the relation
+     * @param spanMode                      what span to return for the relations found
+     * @param captureAs                     name to capture the relation info as, or empty not to capture
      */
-    public SpansRelations(String relationType, BLSpans relationsMatches,
-            boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode, String captureAs) {
-        super(relationsMatches, SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
+    public SpansRelations(String sourceField, String relationType, BLSpans relationsMatches,
+            boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
+            String captureAs) {
+        super(relationsMatches,
+                SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
+        this.sourceField = sourceField;
         this.relationType = relationType;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
@@ -79,9 +88,23 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
+        // Find the target field from the relation class (e.g. for class al__de, target field will be something like
+        // contents__de)
+        // Be careful not to interpret special relations class __tag as a parallel field!
+        String relClass = RelationUtil.classFromFullType(relationType);
+        boolean isInlineTag = relClass.equals(RelationUtil.CLASS_INLINE_TAG);
+        String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
+        String targetField = StringUtils.isEmpty(version) ? sourceField :
+                AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField(), version);
+
+        // When capturing relations, remember that we're producing hits in a different field.
+        // (used with parallel corpora)
+        relationInfo = RelationInfo.createWithFields(sourceField, targetField);
         // Register our group
-        if (!captureAs.isEmpty())
-            this.groupIndex = context.registerMatchInfo(captureAs);
+        if (!captureAs.isEmpty()) {
+            MatchInfo.Type type = isInlineTag ? MatchInfo.Type.INLINE_TAG : MatchInfo.Type.RELATION;
+            this.groupIndex = context.registerMatchInfo(captureAs, type, sourceField, targetField);
+        }
     }
 
     @Override
@@ -96,7 +119,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         return !captureAs.isEmpty() || in.hasMatchInfo();
     }
 
-    /** Return current relation info.
+    /**
+     * Return current relation info.
      *
      * @return current relation info object; don't store or modify this, use .copy() first!
      */
@@ -110,6 +134,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
                 in.collect(collector);
                 byte[] payload = collector.getPayloads().iterator().next();
                 ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
+                if (relationInfo == null) { // should only happen in tests
+                    relationInfo = RelationInfo.create();
+                }
                 relationInfo.deserialize(in.startPosition(), dataInput);
             } catch (IOException e) {
                 throw new BlackLabRuntimeException("Error getting payload");
@@ -167,7 +194,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             if (startPos >= target)
                 return startPos;
         }
-        if (direction == Direction.FORWARD && spanMode == RelationInfo.SpanMode.FULL_SPAN || spanMode == RelationInfo.SpanMode.SOURCE) {
+        if (direction == Direction.FORWARD && spanMode == RelationInfo.SpanMode.FULL_SPAN
+                || spanMode == RelationInfo.SpanMode.SOURCE) {
             // We know our spans will be in order, so we can use the more efficient advanceStartPosition()
             return super.advanceStartPosition(target);
         }
@@ -185,8 +213,6 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         fetchedRelationInfo = false; // only decode payload if we need to
-
-        getRelationInfo(); // TEST
 
         if (spansMayIncludeRoots && spanMode == RelationInfo.SpanMode.SOURCE && getRelationInfo().isRoot()) {
             // Need source, but this has no source
@@ -240,6 +266,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     @Override
     public String toString() {
-        return "REL(" + relationType + ", " + spanMode + (direction != Direction.BOTH_DIRECTIONS ? ", " + direction : "") + ")";
+        return "REL(" + relationType + ", " + spanMode + (direction != Direction.BOTH_DIRECTIONS ?
+                ", " + direction :
+                "") + ")";
     }
 }

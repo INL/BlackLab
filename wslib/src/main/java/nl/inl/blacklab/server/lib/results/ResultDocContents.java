@@ -12,6 +12,7 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -132,12 +133,21 @@ public class ResultDocContents {
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc;
         if (hits == null) {
-            hitsInDoc = Hits.empty(QueryInfo.create(index));
+            hitsInDoc = Hits.empty(QueryInfo.create(index, params.getAnnotatedField()));
         } else {
             hitsInDoc = hits.getHitsInDoc(docId);
         }
-        content = DocUtil.highlightContent(index, docId, hitsInDoc, startAtWord, endAtWord);
+        if (isFullDocument) {
+            // Whole document. Use the highlightDocument method, which takes document versions in
+            // a parallel corpus into account (cuts out part of the original input file).
+            AnnotatedField field = hits == null ? params.getAnnotatedField() : hits.field();
+            content = DocUtil.highlightDocument(index, field, docId, hitsInDoc);
+        } else {
+            // Part of the document by token positions.
+            content = DocUtil.highlightContent(index, docId, hitsInDoc, startAtWord, endAtWord);
+        }
 
+        // Make sure we have exactly one XML declaration
         Matcher m = XML_DECL.matcher(content);
         boolean hasXmlDeclaration = m.find();
         mustOutputXmlDeclaration = false;
@@ -150,6 +160,7 @@ public class ResultDocContents {
         }
 
         if (!isFullDocument) {
+            // Fix namespaces for partial documents.
 
             Matcher cm = NAMESPACE_PREFIX.matcher(content);
             Set<String> prefixes = new HashSet<>(2);
@@ -163,7 +174,7 @@ public class ResultDocContents {
             // here we may need to include namespace declarations
             // retrieve the first bit of the document, try to find namespaces
             String root = DocUtil.contentsByCharPos(index, docId, document,
-                    index.mainAnnotatedField(), 0, 1024);
+                    params.getAnnotatedField(), 0, 1024);
             m = NAMED_NAMESPACE.matcher(root);
             namespaces = new HashSet<>();
             while (m.find()) {

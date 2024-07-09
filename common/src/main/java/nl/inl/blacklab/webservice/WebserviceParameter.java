@@ -100,13 +100,16 @@ public enum WebserviceParameter {
     REL_SEPARATE_SPANS("separatespans", "separate-spans"), // report spans separately from other relations [yes]
 
     // for listing values (metadata, annotations, relations, attributes)
-    LIMIT_VALUES("limitvalues"),        // truncate lists/maps of values to this length [1000]
+    LIMIT_VALUES("limitvalues"),        // truncate lists/maps of values to this length [200]
+
+    // relations querying options
+    REL_ADJUST_HITS("adjusthits", "adjust-hits"),  // adjust hits to cover all tokens involved in relation [no]
 
     DEBUG("debug"), // include debug info (cache)
 
     OPERATION("op"),
     CORPUS_NAME("indexname"),
-    FIELD("field"),
+    FIELD("field"), // (annotated) field to use for operation
     INPUT_FORMAT("inputformat"),
     API_VERSION("api");
 
@@ -124,6 +127,9 @@ public enum WebserviceParameter {
      * Default values for request parameters
      */
     final static private Map<WebserviceParameter, String> defaultValues;
+
+    /** Default value for limitvalues parameter (how many metadata/annotation values to return) */
+    public static final int DEF_VAL_LIMIT_VALUES = 200;
 
     static {
         // Default values for the parameters. Note that if no default is set, the default will be the empty string.
@@ -151,7 +157,7 @@ public enum WebserviceParameter {
         defaultValues.put(PROPERTY, Constants.DEFAULT_MAIN_ANNOT_NAME); // deprecated, use "annotation" now
         defaultValues.put(REL_SEPARATE_SPANS, "yes");
         defaultValues.put(SENSITIVE, "no");
-        defaultValues.put(LIMIT_VALUES, "1000");
+        defaultValues.put(LIMIT_VALUES, "" + DEF_VAL_LIMIT_VALUES);
         defaultValues.put(USE_CACHE, "yes");
         defaultValues.put(WAIT_FOR_TOTAL_COUNT, "no");
         defaultValues.put(WORD_END, "-1");

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -32,7 +34,7 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
         return new TruncatableFreqList(0);
     }
 
-    public TruncatableFreqList truncate(long maxValues) {
+    public TruncatableFreqList truncated(long maxValues) {
         if (values.size() == maxValues || !truncated && values.size() < maxValues) {
             // Current object is fine, either truncated to the right value or no need to truncate.
             return this;
@@ -44,7 +46,7 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
     }
 
     public boolean canTruncateTo(long maxValues) {
-        return !truncated || maxValues < values.size();
+        return !truncated || maxValues <= values.size();
     }
 
     public void add(String value, long count) {
@@ -67,7 +69,7 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
     }
 
     public Map<String, Long> getValues() {
-        return values;
+        return Collections.unmodifiableMap(values);
     }
 
     public boolean isTruncated() {
@@ -88,6 +90,10 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
 
     @Override
     public TruncatableFreqList withLimit(long max) {
-        return truncate(max);
+        return truncated(max);
+    }
+
+    public void addAll(Collection<String> values) {
+        values.forEach(this::add);
     }
 }

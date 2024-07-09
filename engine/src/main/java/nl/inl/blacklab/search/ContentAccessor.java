@@ -9,27 +9,38 @@ import nl.inl.blacklab.search.indexmetadata.Field;
  * Defines a way to access the original indexed content.
  */
 public class ContentAccessor {
-    protected String fieldName;
+    protected Field field;
 
     private ContentStore contentStore;
 
-    private String contentIdField = null;
+    private String contentIdField;
 
     public ContentAccessor(Field field, ContentStore contentStore) {
+        this.field = field;
         contentIdField = field.contentIdField();
         this.contentStore = contentStore;
     }
 
-    public String getFieldName() {
-        return fieldName;
+    /**
+     * Get the entire document contents.
+     *
+     * This takes into account parallel corpora, where one of the annotated fields stores all the versions
+     * of the original document, and we keep track of the start/end offsets for each version.
+     *
+     * @param docId the Lucene document id
+     * @param doc the Lucene document
+     * @return the entire document contents
+     */
+    public String getDocumentContents(int docId, Document doc) {
+        return getSubstringsFromDocument(docId, doc, new int[] { -1 }, new int[] { -1 })[0];
+    }
+
+    public Field getField() {
+        return field;
     }
 
     public ContentStore getContentStore() {
         return contentStore;
-    }
-
-    public ContentAccessor(String fieldName) {
-        this.fieldName = fieldName;
     }
 
     private int getContentId(int docId, Document d) {

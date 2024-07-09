@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 /**
  * Captures all relations within a match info span.
  *
- * Note that the match info spans we're trying to capture relations in
+ * CAUTION: the match info spans we're trying to capture relations in
  * may not overlap! If they do overlap, some relations may be skipped over.
  */
 public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
@@ -27,10 +27,10 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
     /** Name of match info to capture relations from, e.g. "s" to capture relations inside the sentence captured as "s".
      * (if not set, capture all relations in current clause hit)
      */
-    final String captureRelsInside;
+    private final String captureRelsInside;
 
     /** Match info name for the list of captured relations */
-    final String captureRelsAs;
+    private final String captureRelsAs;
 
     /**
      * Capture all matching relations occurring within a captured span.
@@ -51,7 +51,7 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
     public SpanQueryCaptureRelationsWithinSpan(QueryInfo queryInfo, String relationFieldName, BLSpanQuery query,
             String captureRelsInside, String captureRelsAs, String relationType) {
         super(query, new SpanQueryRelations(queryInfo, relationFieldName, relationType, Collections.emptyMap(),
-                SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN, ""));
+                SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN, "", null));
         this.captureRelsInside = captureRelsInside;
         this.captureRelsAs = captureRelsAs;
         this.guarantees = query.guarantees();
@@ -138,7 +138,11 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            SpansRelations relations = relationsWeight.getSpans(context, requiredPostings);
+            BLSpans relations = relationsWeight.getSpans(context, requiredPostings);
+            if (relations == null) {
+                // This can happen if these relations don't occur in this segment of the index
+                return spans;
+            }
             return new SpansCaptureRelationsWithinSpan(spans, relations, captureRelsInside,
                     captureRelsAs);
         }

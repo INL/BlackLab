@@ -258,7 +258,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             int lastIndex = openTagIndexes.size() - 1;
             int openTagPosition = openTagPositions.remove(lastIndex);
             int closeTagPosition = propMain.lastValuePosition() + 1;
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(openTagPosition,
+            BytesRef payload = PayloadUtils.inlineTagPayload(openTagPosition,
                     closeTagPosition, getIndexType());
             Integer openTagIndex = openTagIndexes.remove(lastIndex);
             if (openTagIndex < 0) {
@@ -397,7 +397,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         boolean needsPrimaryValuePayloads = docWriter.needsPrimaryValuePayloads();
-        contentsField = new AnnotatedFieldWriter(getDocWriter(), Indexer.DEFAULT_CONTENTS_FIELD_NAME,
+        contentsField = new AnnotatedFieldWriter(getDocWriter(), DocIndexerLegacy.DEFAULT_CONTENTS_FIELD_NAME,
                 mainPropName, AnnotationSensitivities.defaultForAnnotation(mainPropName),
                 false, needsPrimaryValuePayloads);
         propMain = contentsField.mainAnnotation();

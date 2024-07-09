@@ -11,7 +11,6 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 
@@ -238,7 +237,7 @@ public class QueryExtensions {
      * @param args arguments
      * @return the query returned by the function
      */
-    public static BLSpanQuery apply(String name, QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
+    public static BLSpanQuery apply(String name, QueryExecutionContext context, List<Object> args) {
         FuncInfo funcInfo = functions.get(name);
         if (funcInfo == null)
             throw new UnsupportedOperationException("Unknown function: " + name);
@@ -252,7 +251,7 @@ public class QueryExtensions {
                 Object defVal = funcInfo.getDefaultParameterValue(i);
                 if (defVal == QueryExtensions.VALUE_QUERY_ANY_NGRAM) {
                     // Special case: any n-gram (usually meaning "don't care")
-                    defVal = SpanQueryAnyToken.anyNGram(queryInfo, context);
+                    defVal = SpanQueryAnyToken.anyNGram(context.queryInfo(), context.luceneField());
                 }
                 if (i >= newArgs.size()) {
                     // Missing argument; use default value
@@ -284,7 +283,7 @@ public class QueryExtensions {
 
         if (!funcInfo.isVarArg && newArgs.size() != funcInfo.argTypes.size())
             throw new BlackLabRuntimeException("Wrong number of arguments for query function " + name + ": expected " + funcInfo.argTypes.size() + ", got " + newArgs.size());
-        return funcInfo.func.apply(queryInfo, context, newArgs);
+        return funcInfo.func.apply(context.queryInfo(), context, newArgs);
     }
 
 }

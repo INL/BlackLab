@@ -3,7 +3,9 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.search.results.HitGroup;
 
 public class HitGroupPropertyIdentity extends HitGroupProperty {
-    
+
+    public static final String ID = "identity";
+
     HitGroupPropertyIdentity(HitGroupPropertyIdentity prop, boolean invert) {
         super(prop, invert);
     }
@@ -26,7 +28,7 @@ public class HitGroupPropertyIdentity extends HitGroupProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "identity";
+        return serializeReverse() + ID;
     }
 
     @Override

@@ -29,7 +29,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * can get the entire sentence around the span, and can fetch relations
  * within the sentence. There is currently no CQL syntax for this operation.
  */
-public class SpanQueryFixedSpan extends BLSpanQuery {
+public class SpanQueryFixedSpan extends BLSpanQuery { ;
 
     public SpanGuarantees createGuarantees() {
         return new SpanGuaranteesAdapter(SpanGuarantees.TERM) {
@@ -89,7 +89,18 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                 Bits liveDocs = reader.getLiveDocs();
                 int maxDoc = reader.maxDoc();
                 DocFieldLengthGetter lengthGetter = new DocFieldLengthGetter(reader, getField());
-                return new BLSpans() {
+                SpanGuarantees g = new SpanGuaranteesAdapter(SpanGuarantees.TERM) {
+                    @Override
+                    public int hitsLengthMin() {
+                        return length();
+                    }
+
+                    @Override
+                    public int hitsLengthMax() {
+                        return length();
+                    }
+                };
+                return new BLSpans(g) {
 
                     boolean atFirstInCurrentDoc = false;
 
@@ -206,6 +217,11 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                     @Override
                     public int docID() {
                         return currentDoc;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "FIXEDSPAN(" + start + ", " + end + ")";
                     }
                 }; // no hits
             }

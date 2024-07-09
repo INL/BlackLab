@@ -1,8 +1,8 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.index.DocWriter;
@@ -13,15 +13,19 @@ import nl.inl.blacklab.search.BlackLabIndex;
  */
 public final class AnnotatedFieldNameUtil {
 
-    public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
+    /** Used in classic external index format to store forward index id in Lucene doc */
+    public static final String BOOKKEEP_FORWARD_INDEX_ID = "fiid";
 
     /** Used in classic external index format to store content store id in Lucene doc */
-    private static final String CONTENT_ID_BOOKKEEP_NAME = "cid";
+    public static final String BOOKKEEP_CONTENT_ID = "cid";
 
     /** Used in integrated index format to store content in Lucene doc */
-    public static final String CONTENT_STORE_BOOKKEEP_NAME = "cs";
+    public static final String BOOKKEEP_CONTENT_STORE = "cs";
 
-    private static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
+    /** Records the length of the annotated field in number of tokens
+     *  (could also be read from the forward index - maybe drop this field in the future?)
+     */
+    public static final String BOOKKEEP_LENGTH_TOKENS = "length_tokens";
 
     /** Used as a default value if no name has been specified (legacy indexers only) */
     public static final String DEFAULT_MAIN_ANNOT_NAME = Constants.DEFAULT_MAIN_ANNOT_NAME;
@@ -43,6 +47,11 @@ public final class AnnotatedFieldNameUtil {
      * in a field "pos_number". This is the separator used for this prefix.
      */
     public static final String SUBANNOTATION_FIELD_PREFIX_SEPARATOR = "_";
+
+    /** For parallel corpora, this separator goes between the field name and the version name, e.g.
+     *  contents__nl, contents__de, etc.
+     */
+    public static final String PARALLEL_VERSION_SEPARATOR = "__";
 
     /**
      * Valid XML element names. Field and annotation names should generally conform to
@@ -77,15 +86,6 @@ public final class AnnotatedFieldNameUtil {
     /** Length of BOOKKEEPING_SEP */
     static final int BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
 
-    /**
-     * What are the names of the bookkeeping subfields (i.e. content id, forward
-     * index id, etc.)
-     */
-    private final static List<String> BOOKKEEPING_SUBFIELDS = Arrays.asList(
-            CONTENT_ID_BOOKKEEP_NAME,
-            FORWARD_INDEX_ID_BOOKKEEP_NAME,
-            LENGTH_TOKENS_BOOKKEEP_NAME);
-
     private AnnotatedFieldNameUtil() {
     }
 
@@ -111,39 +111,20 @@ public final class AnnotatedFieldNameUtil {
         return name.equals(LEGACY_TAGS_ANNOT_NAME) || name.equals(RELATIONS_ANNOT_NAME);
     }
 
-    public enum BookkeepFieldType {
-        CONTENT_ID,
-        FORWARD_INDEX_ID,
-        LENGTH_TOKENS
-    }
-
-    public static BookkeepFieldType whichBookkeepingSubfield(String bookkeepName) {
-        switch (BOOKKEEPING_SUBFIELDS.indexOf(bookkeepName)) {
-        case 0:
-            return BookkeepFieldType.CONTENT_ID;
-        case 1:
-            return BookkeepFieldType.FORWARD_INDEX_ID;
-        case 2:
-            return BookkeepFieldType.LENGTH_TOKENS;
-        default:
-            throw new IllegalArgumentException("Unknown bookkeeping field: " + bookkeepName);
-        }
-    }
-
     public static String contentStoreField(String fieldName) {
-        return bookkeepingField(fieldName, CONTENT_STORE_BOOKKEEP_NAME);
+        return bookkeepingField(fieldName, BOOKKEEP_CONTENT_STORE);
     }
 
     public static String contentIdField(String fieldName) {
-        return bookkeepingField(fieldName, CONTENT_ID_BOOKKEEP_NAME);
+        return bookkeepingField(fieldName, BOOKKEEP_CONTENT_ID);
     }
 
     public static String forwardIndexIdField(String annotFieldName) {
-        return bookkeepingField(annotFieldName, FORWARD_INDEX_ID_BOOKKEEP_NAME);
+        return bookkeepingField(annotFieldName, BOOKKEEP_FORWARD_INDEX_ID);
     }
 
     public static String lengthTokensField(String fieldName) {
-        return bookkeepingField(fieldName, LENGTH_TOKENS_BOOKKEEP_NAME);
+        return bookkeepingField(fieldName, BOOKKEEP_LENGTH_TOKENS);
     }
 
     /**
@@ -387,6 +368,121 @@ public final class AnnotatedFieldNameUtil {
             name = "_" + name;
         }
         return name;
+    }
+
+    /**
+     * Check if the field name is a parallel field name.
+     * <p>
+     * Parallel field names have a suffix with a version code, e.g. "contents__nl" or "contents__de".
+     *
+     * @param fieldName field name to check
+     * @return true if it's a parallel field name, false if not
+     */
+    public static boolean isParallelField(String fieldName) {
+        return fieldName.contains(PARALLEL_VERSION_SEPARATOR);
+    }
+
+    /**
+     * Split a parallel field name into the field base name and version.
+     * <p>
+     * If the field name doesn't have a version suffix, the second element in the
+     * returned array will be empty.
+     * <p>
+     * Examples:
+     * - "contents__de" will return ["contents", "de"]
+     * - "contents" will return ["contents", ""]
+     *
+     * @param fieldName field name to split
+     * @return array with two elements: field base name and version
+     */
+    private static String[] splitParallelFieldName(String fieldName) {
+        // Careful not to interpret special relation class name __tag as a parallel version!
+        if (fieldName.contains(PARALLEL_VERSION_SEPARATOR) && !fieldName.startsWith(PARALLEL_VERSION_SEPARATOR))
+            return fieldName.split(PARALLEL_VERSION_SEPARATOR, 2);
+        else
+            return new String[] { fieldName, "" };
+    }
+
+
+    /**
+     * Get the field base name from a parallel field name.
+     * <p>
+     * If the field name doesn't have a version suffix, the
+     * fieldName is returned unchanged.
+     * <p>
+     * Examples:
+     * - "contents__de" will return "contents"
+     * - "contents" will return "contents"
+     *
+     * @param fieldName field name to split
+     * @return field base name
+     */
+    public static String baseFromParallelFieldName(String fieldName) {
+        return splitParallelFieldName(fieldName)[0];
+    }
+
+
+    /**
+     * Get the field base name from a parallel field name.
+     * <p>
+     * If the field name doesn't have a version suffix, the
+     * empty string is returned.
+     * <p>
+     * Examples:
+     * - "contents__de" will return "de"
+     * - "contents" will return ""
+     *
+     * @param fieldName field name to split
+     * @return version
+     */
+    public static String versionFromParallelFieldName(String fieldName) {
+        return splitParallelFieldName(fieldName)[1];
+    }
+
+    /**
+     * Get the parallel field name for a field name and version.
+     *
+     * @param baseName field base name
+     * @param version version
+     * @return parallel field name
+     */
+    public static String getParallelFieldName(String baseName, String version) {
+        return baseName + PARALLEL_VERSION_SEPARATOR + version;
+    }
+
+    /**
+     * Get a different version of the given parallel field name.
+     * <p>
+     * Examples:
+     * - getParallelFieldVersion("contents__de", "nl") will return "contents__nl"
+     * - getParallelFieldVersion("contents", "de") will return "contents__de"
+     * - getParallelFieldVersion("contents", "") will return "contents"
+     *
+     * @param parallelFieldName a parallel field name with a version suffix
+     * @param newVersion version to substitute
+     * @return the parallel field name with the indicated version
+     */
+    public static String changeParallelFieldVersion(String parallelFieldName, String newVersion) {
+        if (StringUtils.isEmpty(newVersion))
+            return parallelFieldName;
+        return baseFromParallelFieldName(parallelFieldName) + PARALLEL_VERSION_SEPARATOR + newVersion;
+    }
+
+    /**
+     * Check if these two fields have the same parallel base field, i.e. are different versions of the same content.
+     *
+     * Examples:
+     * - "contents__nl" and "contents__de" have the same parallel base field ("contents")
+     * - "contents__nl" and "metadata__nl" do not have the same parallel base field
+     *
+     * @param field1 first field name
+     * @param field2 second field name
+     * @return true if they have the same parallel base field, false if not
+     */
+    public static boolean isSameParallelBaseField(String field1, String field2) {
+        String f1 = baseFromParallelFieldName(field1);
+        String f2 = baseFromParallelFieldName(field2);
+        return f1.equals(f2);
     }
 
 }

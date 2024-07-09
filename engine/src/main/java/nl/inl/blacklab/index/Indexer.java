@@ -76,8 +76,6 @@ public interface Indexer {
     }
 
     Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;
-    /** Annotated field name for default contents field */
-    String DEFAULT_CONTENTS_FIELD_NAME = "contents";
 
     /**
      * When we encounter a zip or tgz file, do we descend into it like it was a

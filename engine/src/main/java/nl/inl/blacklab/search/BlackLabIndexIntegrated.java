@@ -133,6 +133,18 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
             ConfigInputFormat config) throws ErrorOpeningIndex {
         super(name, blackLab, reader, indexDir, indexMode, createNewIndex, config, null);
 
+        // See if this is an old external index. If so, delete the version file,
+        // forward indexes and content stores.
+        if (indexDir != null && createNewIndex) {
+            if (indexDir.exists()) {
+                if (indexDir.isDirectory()) {
+                    BlackLabIndexExternal.deleteOldIndexFiles(indexDir);
+                } else {
+                    throw new ErrorOpeningIndex("Index directory " + indexDir + " is not a directory.");
+                }
+            }
+        }
+
         // Determine the list of all fields in the index, but skip fields that
         // represent a content store as they contain very large values (i.e. the
         // whole input document) we don't generally want returned when requesting
@@ -195,8 +207,8 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         case FULL_TAG:      spanMode = RelationInfo.SpanMode.FULL_SPAN; break;
         }
         return new SpanQueryRelations(queryInfo, luceneField,
-                RelationUtil.inlineTagFullType(tagName), attributes,
-                SpanQueryRelations.Direction.FORWARD, spanMode, captureAs);
+                RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName), attributes,
+                SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, null);
     }
 
     @Override

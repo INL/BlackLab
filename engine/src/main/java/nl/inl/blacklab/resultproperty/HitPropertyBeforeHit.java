@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -16,38 +18,54 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyBeforeHit extends HitPropertyContextBase {
 
+    public static final String ID = "before";
+
     /** How many tokens of context-before to compare */
     protected int numberOfTokens;
 
-    static HitPropertyBeforeHit deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        return deserializeProp(HitPropertyBeforeHit.class, index, field, info);
+    static HitPropertyBeforeHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        int numberOfTokens = i.extraIntParam(0, contextSize.before());
+        String overrideField = i.extraParam(1);
+        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, overrideField);
+        return new HitPropertyBeforeHit(index, annotation, i.sensitivity, numberOfTokens);
     }
 
-    static HitPropertyBeforeHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, String info) {
-        HitPropertyBeforeHit hitProperty = deserializeProp(HitPropertyBeforeHit.class, index, field, info);
-        hitProperty.numberOfTokens = 1;
-        return hitProperty;
+    static HitPropertyBeforeHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        HitPropertyBeforeHit hitProp = deserializeProp(index, field, infos, ContextSize.ZERO);
+        hitProp.numberOfTokens = 1;
+        return hitProp;
     }
 
     HitPropertyBeforeHit(HitPropertyBeforeHit prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+        super(prop, hits, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
-    @SuppressWarnings("unused")
     public HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        this(index, annotation, sensitivity, -1);
+        this(index, annotation, sensitivity, -1, ID);
     }
 
     public HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens) {
-        super("context before", "left", index, annotation, sensitivity, true);
+        this(index, annotation, sensitivity, numberOfTokens, ID);
+    }
+
+    HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String serializeName) {
+        this(index, annotation, sensitivity, -1, serializeName);
+    }
+
+    HitPropertyBeforeHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens, String serializeName) {
+        super("context before", serializeName, index, annotation, sensitivity, true);
         this.numberOfTokens = numberOfTokens >= 1 ? numberOfTokens : index.defaultContextSize().before();
     }
 
     @Override
     void deserializeParam(String param) {
-        numberOfTokens = Integer.parseInt(param);
+        try {
+            numberOfTokens = Integer.parseInt(param);
+        } catch (NumberFormatException e) {
+            numberOfTokens = index.defaultContextSize().before();
+        }
     }
 
     @Override
@@ -64,10 +82,22 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
 
     @Override
     public void fetchContext() {
-        fetchContext((int[] starts, int[] ends, int j, Hit h) -> {
-            starts[j] = Math.max(0, h.start() - numberOfTokens);
-            ends[j] = h.start();
-        });
+        if (annotation.field() == hits.field()) {
+            // Regular hit; use start and end offsets from the hit itself
+            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+                starts[hitIndex] = Math.max(0, hit.start() - numberOfTokens);
+                ends[hitIndex] = hit.start();
+            });
+        } else {
+            // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
+            // Determine start and end using matchInfo instead.
+            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+                int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                int pos = startEnd[0] == Integer.MIN_VALUE ? hit.start() : startEnd[0];
+                starts[hitIndex] = Math.max(0, pos - numberOfTokens);
+                ends[hitIndex] = pos;
+            });
+        }
     }
 
     @Override

@@ -491,11 +491,11 @@ public class InputFormatReader extends YamlJsonReader {
                 if (key.equals("spanEndPath")) {
                     // Used to be implicit for annotation/span, so maintain backward compatibility.
                     // Type must be explicitly set for relations though.
-                    s.setType(ConfigStandoffAnnotations.Type.SPAN);
+                    s.setType(AnnotationType.SPAN);
                 }
                 switch (key) {
                 case "type":
-                    s.setType(ConfigStandoffAnnotations.Type.fromStringValue(str(e)));
+                    s.setType(AnnotationType.fromStringValue(str(e)));
                     break;
                 case "path":
                     s.setPath(str(e));
@@ -521,6 +521,15 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "annotations":
                     readAnnotations(e, s);
+                    break;
+                case "relationClass":
+                    s.setRelationClass(str(e));
+                    break;
+                case "targetField":
+                    s.setTargetField(str(e));
+                    break;
+                case "targetVersionPath":
+                    s.setTargetVersionPath(str(e));
                     break;
                 default:
                     throw new InvalidInputFormatConfig(
@@ -549,10 +558,18 @@ public class InputFormatReader extends YamlJsonReader {
                 case "tokenIdPath":
                     t.setTokenIdPath(str(e));
                     break;
+                case "includeAttributes":
+                    List<String> inclAttr = new ArrayList<>();
+                    readStringList(e, inclAttr);
+                    t.setIncludeAttributes(inclAttr);
+                    break;
                 case "excludeAttributes":
                     List<String> exclAttr = new ArrayList<>();
                     readStringList(e, exclAttr);
                     t.setExcludeAttributes(exclAttr);
+                    break;
+                case "extraAttributes":
+                    t.setExtraAttributes(readExtraAttributes(e));
                     break;
                 default:
                     throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
@@ -560,6 +577,40 @@ public class InputFormatReader extends YamlJsonReader {
             }
             af.addInlineTag(t);
         }
+    }
+
+    /**
+     * Extra attributes to index by XPath for inline tag
+     *
+     * @return
+     */
+    private List<ConfigInlineTag.ConfigExtraAttribute> readExtraAttributes(Entry<String, JsonNode> e) {
+        List<ConfigInlineTag.ConfigExtraAttribute> extraAttr = new ArrayList<>();
+        Iterator<JsonNode> itExtraAttr = array(e).elements();
+        while (itExtraAttr.hasNext()) {
+            JsonNode ea = itExtraAttr.next();
+            ConfigInlineTag.ConfigExtraAttribute a = new ConfigInlineTag.ConfigExtraAttribute();
+            Iterator<Entry<String, JsonNode>> itExtraAttrEntry = obj(ea, "extra attribute").fields();
+            while (itExtraAttrEntry.hasNext()) {
+                Entry<String, JsonNode> eea = itExtraAttrEntry.next();
+                switch (eea.getKey()) {
+                case "name":
+                    a.setName(str(eea));
+                    break;
+                case "value":
+                    a.setValuePath(fixedStringToXpath(str(eea)));
+                    break;
+                case "valuePath":
+                    a.setValuePath(str(eea));
+                    break;
+                default:
+                    throw new InvalidInputFormatConfig(
+                            "Unknown key " + eea.getKey() + " in extra attribute " + a.getName());
+                }
+            }
+            extraAttr.add(a);
+        }
+        return extraAttr;
     }
 
     private void readMetadata(Entry<String, JsonNode> mdEntry, ConfigInputFormat cfg) {

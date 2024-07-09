@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.datastream;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +26,9 @@ public class DataStreamXml extends DataStreamAbstract {
     /** Should contextList omit empty annotations if possible? */
     protected boolean omitEmptyAnnotations = false;
 
+    /** Should XML fragments from documents be escaped as CDATA? [true in v5, false before] */
+    protected boolean escapeXmlFragment;
+
     private ApiVersion api;
 
     @Override
@@ -34,9 +36,19 @@ public class DataStreamXml extends DataStreamAbstract {
         this.omitEmptyAnnotations = omitEmptyAnnotations;
     }
 
-    public DataStreamXml(PrintWriter out, boolean prettyPrint, ApiVersion api) {
-        super(out, prettyPrint);
+    /** Should XML fragments from documents be escaped as CDATA in the XML response?
+     *
+     * @param escapeXmlFragment true if XML fragments should be escaped
+     */
+    @Override
+    public void setEscapeXmlFragment(boolean escapeXmlFragment) {
+        this.escapeXmlFragment = escapeXmlFragment;
+    }
+
+    public DataStreamXml(boolean prettyPrint, ApiVersion api) {
+        super(prettyPrint);
         this.api = api;
+        escapeXmlFragment = api.getMajor() >= 5;
     }
 
     public DataStream startOpenEl(String name) {
@@ -473,14 +485,21 @@ public class DataStreamXml extends DataStreamAbstract {
 
     /**
      * Output an XML fragment, either as a string
-     * value or as part of the XML structure.
+     * value (CDATA) or as part of the XML structure.
      *
      * @param fragment
      * @return data stream
      */
     public DataStream xmlFragment(String fragment) {
-        // Because we're outputting XML, we output the fragment plain (unquoted or -escaped)
-        return plain(fragment);
+        if (escapeXmlFragment) {
+            // In API v5+, we output the fragment as a CDATA section (unquoted or -escaped)
+            // (not part of the XML structure, but a string value that may contain XML)
+            return cdata(fragment);
+        } else {
+            // Because we're outputting XML, we output the fragment plain (unquoted or -escaped)
+            // (i.e. it becomes part of the XML structure, not a string value)
+            return plain(fragment);
+        }
     }
 
     @Override
@@ -488,4 +507,12 @@ public class DataStreamXml extends DataStreamAbstract {
         return "xml";
     }
 
+    private static final String CDATA_START = "<![CDATA[";
+    private static final String CDATA_END = "]]>";
+
+    private DataStream cdata(String value) {
+        // Escape value for CDATA section (i.e. break into multiple CDATAsections if necessary)
+        String escaped = value.replace("]]>", "]]" + CDATA_END + CDATA_START + ">");
+        return print(CDATA_START).print(escaped).print(CDATA_END);
+    }
 }

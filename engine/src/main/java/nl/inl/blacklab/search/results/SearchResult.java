@@ -1,8 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.HashMap;
-import java.util.Map;
-
 // Base interface for all possible search results
 public interface SearchResult {
     
@@ -20,13 +17,4 @@ public interface SearchResult {
      */
     long numberOfResultObjects();
 
-    /**
-     * Return debug info.
-     */
-    default Map<String, Object> getDebugInfo() {
-        Map<String, Object> result = new HashMap<>();
-        result.put("className", getClass().getName());
-        return result;
-    }
-    
 }

@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -46,6 +47,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -83,9 +85,9 @@ public class ResponseStreamer {
     public static final String BLACKLAB_RESPONSE_ROOT_ELEMENT = "blacklabResponse";
     static final Logger logger = LogManager.getLogger(ResponseStreamer.class);
 
-    public static final String KEY_BLACKLAB_BUILD_TIME = "blacklabBuildTime";
-
+    private static final String KEY_BLACKLAB_BUILD_TIME = "blacklabBuildTime";
     private static final String KEY_BLACKLAB_VERSION = "blacklabVersion";
+    private static final String KEY_BLACKLAB_SCM_REVISION = "blacklabScmRevision";
 
     public static final String KEY_SUMMARY = "summary";
     public static final String KEY_NUMBER_OF_HITS = "numberOfHits";
@@ -108,7 +110,10 @@ public class ResponseStreamer {
 
     // Docs
     public static final String KEY_DOC_INFO = "docInfo";
-    public static final String KEY_DOC_LENGTH_TOKENS = "lengthInTokens";
+    public static final String KEY_DOC_LENGTH_TOKENS = "lengthInTokens"; // v3/4: main field token count (docInfo)
+    public static final String KEY_TOKEN_COUNT = "tokenCount";           // v3/4: main field token count (index info)
+    public static final String KEY_TOKEN_COUNTS = "tokenCounts";         // v4/5: per-field token counts (both)
+    public static final String KEY_DOCUMENT_COUNT = "documentCount";     // v3/4/5: was added to aggregate index response in v4
     public static final String KEY_DOC_MAY_VIEW = "mayView";
     public static final String KEY_DOC_PID = "docPid";
     public static final String KEY_DOC_SNIPPET = "snippet";
@@ -117,10 +122,13 @@ public class ResponseStreamer {
     public static final String KEY_SPAN_START = "start";
     public static final String KEY_SPAN_END = "end";
     public static final String KEY_MATCHING_PART_OF_HIT = "match";
+    public static final String KEY_MATCH_INFOS = "matchInfos";
     private static final String KEY_MATCH_INFO_TYPE = "type";
 
     // Fields
     public static final String KEY_FIELD_NAME = "fieldName";
+    public static final String KEY_TARGET_FIELD = "targetField";
+    public static final String KEY_OTHER_FIELDS = "otherFields";
     public static final String KEY_FIELD_IS_ANNOTATED = "isAnnotatedField";
     public static final String KEY_VALUE_LIST_COMPLETE = "valueListComplete";
 
@@ -202,13 +210,15 @@ public class ResponseStreamer {
      *
      * @param userInfo user info to show
      */
-    public void userInfo(ResultUserInfo userInfo) {
+    public void userInfo(ResultUserInfo userInfo, boolean debugMode) {
         ds.startEntry("user").startMap();
         {
             ds.entry("loggedIn", userInfo.isLoggedIn());
             if (userInfo.isLoggedIn())
                 ds.entry("id", userInfo.getUserId());
             ds.entry("canCreateIndex", userInfo.canCreateIndex());
+            if (modernizeApi)
+                ds.entry("debugMode", debugMode);
         }
         ds.endMap().endEntry();
     }
@@ -252,7 +262,17 @@ public class ResponseStreamer {
                 documentMetadataEntries(docInfo);
                 ds.endMap().endEntry();
             }
-            if (docInfo.getLengthInTokens() != null)
+            if (modernizeApi) {
+                ds.startEntry(KEY_TOKEN_COUNTS).startList();
+                for (Map.Entry<String, Integer> entry: docInfo.getLengthInTokensPerField().entrySet()) {
+                    ds.startItem(KEY_TOKEN_COUNT).startMap();
+                    ds.entry(KEY_FIELD_NAME, entry.getKey());
+                    ds.entry(KEY_TOKEN_COUNT, entry.getValue());
+                    ds.endMap().endItem();
+                }
+                ds.endList().endEntry();
+            }
+            if (!isNewApi && docInfo.getLengthInTokens() != null)
                 ds.dynEntry(KEY_DOC_LENGTH_TOKENS, docInfo.getLengthInTokens());
             ds.dynEntry(KEY_DOC_MAY_VIEW, docInfo.isMayView());
             if (!isNewApi) {
@@ -331,18 +351,49 @@ public class ResponseStreamer {
         }
 
         TextPattern textPattern = summaryFields.getTextPattern();
-        if (modernizeApi && textPattern != null && ds.getType().equals("json")) {
+        if (modernizeApi && textPattern != null) {
+            // Show how pattern was parsed
             ds.startEntry("pattern").startMap();
-            ds.entry("json", textPattern);
+            if (ds.getType().equals("json")) {
+                // Only include the JSON representation in the JSON response
+                // (we don't have a proper XML representation (yet) and don't care as much about that response format)
+                ds.entry("json", textPattern);
+            }
             try {
                 ds.entry("bcql", TextPatternSerializerCql.serialize(textPattern));
             } catch (Exception e) {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
             }
-            List<String> matchInfoNames = summaryFields.getMatchInfoNames();
-            if (!matchInfoNames.isEmpty())
-                ds.entry("matchInfoNames", matchInfoNames);
+            String searchField = summaryFields.getSearchField();
+            ds.entry(KEY_FIELD_NAME, searchField);
+            if (!summaryFields.getOtherFields().isEmpty()) {
+                ds.startEntry(KEY_OTHER_FIELDS).startList();
+                for (String field: summaryFields.getOtherFields()) {
+                    ds.item(KEY_FIELD_NAME, field);
+                }
+                ds.endList().endEntry();
+            }
+            List<MatchInfo.Def> matchInfoDefs = summaryFields.getMatchInfoDefs().stream()
+                    .filter(d -> !d.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT))
+                    .collect(Collectors.toList());
+            if (!matchInfoDefs.isEmpty()) {
+                // Report the match infos in the query, their types, and the field they apply to (if different from
+                // main field, i.e. for parallel corpora)
+                ds.startEntry(KEY_MATCH_INFOS).startMap();
+                for (MatchInfo.Def def: matchInfoDefs) {
+                    ds.startDynEntry(def.getName()).startMap();
+                    {
+                        ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
+                        if (!def.getField().equals(searchField))
+                            ds.entry(KEY_FIELD_NAME, def.getField());
+                        if (def.getTargetField() != null && !def.getTargetField().equals(searchField))
+                            ds.entry(KEY_TARGET_FIELD, def.getTargetField());
+                    }
+                    ds.endMap().endDynEntry();
+                }
+                ds.endMap().endEntry();
+            }
             ds.endMap().endEntry();
         }
 
@@ -529,27 +580,27 @@ public class ResponseStreamer {
             ds.startItem("hit");
             {
                 String docPid = result.getDocIdToPid().get(hit.doc());
-                Map<String, MatchInfo> capturedGroups = null;
+                Map<String, MatchInfo> matchInfos = null;
                 if (hits.hasMatchInfo()) {
-                    capturedGroups = hits.getMatchInfoMap(hit, params.getOmitEmptyCaptures());
-                    if (capturedGroups == null && logger != null)
+                    matchInfos = hits.getMatchInfoMap(hit, params.getOmitEmptyCaptures());
+                    if (matchInfos == null && logger != null)
                         logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, capturedGroups, params.contextSettings().size(), result.getConcordanceContext(), result.getAnnotationsToWrite()
-                );
+                hit(docPid, hit, hits.field().name(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                        result.getAnnotationsToWrite());
             }
             ds.endItem();
         }
         ds.endList().endEntry();
     }
 
-    private void hit(String docPid, Hit hit, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
+    private void hit(String docPid, Hit hit, String searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList) {
         boolean isSnippet = false;
 
-        outputHitOrSnippet(docPid, hit, matchInfo, context, concordanceContext, annotationsToList,
+        outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }
 
@@ -558,7 +609,7 @@ public class ResponseStreamer {
      *
      * @param result hit to output
      */
-    public void hitOrFragmentInfo(ResultDocSnippet result) {
+    public void snippet(ResultDocSnippet result) {
         String docPid = result.getParams().getDocPid();
         Hits hits = result.getHits();
         if (!hits.hitsStats().processedAtLeast(1))
@@ -575,11 +626,12 @@ public class ResponseStreamer {
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        outputHitOrSnippet(docPid, hit, matchInfo, context, concordanceContext, annotationsToList,
+        String searchField = result.getHits().field().name();
+        outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, Hit hit, Map<String, MatchInfo> matchInfo,
+    private void outputHitOrSnippet(String docPid, Hit hit, String searchField, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;
@@ -594,7 +646,8 @@ public class ResponseStreamer {
         // If any groups were captured, include them in the response
         // (legacy, replaced by matchInfos)
         if (!isNewApi) {
-            Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfo, MatchInfo.Type.SPAN);
+            Set<Map.Entry<String, MatchInfo>> capturedGroups = filterMatchInfo(matchInfos,
+                    m -> m.getType() == MatchInfo.Type.SPAN || m.getType() == MatchInfo.Type.INLINE_TAG);
             if (!capturedGroups.isEmpty()) {
                 ds.startEntry("captureGroups").startList();
                 for (Map.Entry<String, MatchInfo> capturedGroup: capturedGroups) {
@@ -606,20 +659,8 @@ public class ResponseStreamer {
             }
         }
 
-        // If there's any match info, include it here
-        if (modernizeApi) {
-            if (matchInfo != null && !matchInfo.isEmpty()) {
-                ds.startEntry("matchInfos").startMap();
-                for (Map.Entry<String, MatchInfo> e: matchInfo.entrySet()) {
-                    if (e.getValue() != null) {
-                        ds.startElEntry(e.getKey());
-                        matchInfo(ds, e.getValue());
-                        ds.endElEntry();
-                    }
-                }
-                ds.endMap().endEntry();
-            }
-        }
+        // If there's any match info for this field, include it here
+        optMatchInfos(matchInfos, mi -> mi.getField().equals(searchField));
 
         if (concordanceContext.isConcordances()) {
             // Add concordance from original XML
@@ -630,7 +671,11 @@ public class ResponseStreamer {
                         .startEntry(KEY_AFTER).xmlFragment(c.right()).endEntry();
             } else {
                 if (isSnippet) {
-                    ds.xmlFragment(c.match());
+                    if (isNewApi) {
+                        ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
+                    } else {
+                        ds.xmlFragment(c.match());
+                    }
                 } else {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
                 }
@@ -639,9 +684,9 @@ public class ResponseStreamer {
             // Add KWIC info
             Kwic c = concordanceContext.getKwic(hit);
             if (includeContext) {
-                ds.startEntry(KEY_BEFORE).contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                ds.startEntry(KEY_BEFORE).contextList(c.annotations(), annotationsToList, c.before()).endEntry()
                         .startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry()
-                        .startEntry(KEY_AFTER).contextList(c.annotations(), annotationsToList, c.right()).endEntry();
+                        .startEntry(KEY_AFTER).contextList(c.annotations(), annotationsToList, c.after()).endEntry();
             } else {
                 if (isSnippet) {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
@@ -649,8 +694,58 @@ public class ResponseStreamer {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
                 }
             }
+            if (modernizeApi) {
+                Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
+                if (foreignKwics != null) {
+                    ds.startEntry(KEY_OTHER_FIELDS).startMap();
+                    for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
+                        String field = e.getKey();
+                        Kwic kwic = e.getValue();
+                        ds.startDynEntry(field).startMap();
+                        {
+                            ds.entry(KEY_SPAN_START, kwic.hitStart() + kwic.fragmentStartInDoc());
+                            ds.entry(KEY_SPAN_END, kwic.hitEnd() + kwic.fragmentStartInDoc());
+                            optMatchInfos(matchInfos, mi -> mi.getField().equals(field));
+                            ds.startEntry(KEY_BEFORE);
+                            ds.contextList(kwic.annotations(), annotationsToList, kwic.before());
+                            ds.endEntry();
+                            ds.startEntry(KEY_MATCHING_PART_OF_HIT);
+                            ds.contextList(kwic.annotations(), annotationsToList, kwic.match());
+                            ds.endEntry();
+                            ds.startEntry(KEY_AFTER);
+                            ds.contextList(kwic.annotations(), annotationsToList, kwic.after());
+                            ds.endEntry();
+                        }
+                        ds.endMap().endDynEntry();
+                    }
+                    ds.endMap().endEntry();
+                }
+            }
         }
         ds.endMap();
+    }
+
+    private void optMatchInfos(Map<String, MatchInfo> matchInfos, Predicate<MatchInfo> include) {
+        if (modernizeApi) {
+            Set<Map.Entry<String, MatchInfo>> filtered = matchInfos == null ? Collections.emptySet() :
+                    matchInfos.entrySet().stream()
+                            .filter(e ->
+                                    // don't include the autogenerated "foreign hit" match infos
+                                    !e.getKey().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT) &&
+                                    // make sure we should include this match info here
+                                    e.getValue() != null && include.test(e.getValue()))
+                            .collect(Collectors.toSet());
+
+            if (!filtered.isEmpty()) {
+                ds.startEntry(KEY_MATCH_INFOS).startMap();
+                for (Map.Entry<String, MatchInfo> e: filtered) {
+                    ds.startElEntry(e.getKey());
+                    matchInfo(ds, e.getValue());
+                    ds.endElEntry();
+                }
+                ds.endMap().endEntry();
+            }
+        }
     }
 
     private static void legacyCapturedGroup(DataStream ds, Map.Entry<String, MatchInfo> capturedGroup) {
@@ -685,7 +780,7 @@ public class ResponseStreamer {
     private static void matchInfoListOfRelations(DataStream ds, RelationListInfo listOfRelations) {
         ds.startMap();
         {
-            ds.entry(KEY_MATCH_INFO_TYPE, "list");
+            ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.LIST_OF_RELATIONS.jsonName());
             ds.entry(KEY_SPAN_START, listOfRelations.getSpanStart());
             ds.entry(KEY_SPAN_END, listOfRelations.getSpanEnd());
             ds.startEntry("infos").startList();
@@ -706,7 +801,7 @@ public class ResponseStreamer {
     private static void matchInfoCapturedGroup(DataStream ds, MatchInfo capturedGroup) {
         ds.startMap();
         {
-            ds.entry(KEY_MATCH_INFO_TYPE, "span");
+            ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.SPAN.jsonName());
             ds.entry(KEY_SPAN_START, capturedGroup.getSpanStart());
             ds.entry(KEY_SPAN_END, capturedGroup.getSpanEnd());
         }
@@ -717,8 +812,8 @@ public class ResponseStreamer {
         ds.startMap();
         {
             String fullRelationType = inlineTag.getFullRelationType();
-            String tagName = RelationUtil.classAndType(fullRelationType)[1];
-            ds.entry(KEY_MATCH_INFO_TYPE, "tag");
+            String tagName = RelationUtil.typeFromFullType(fullRelationType);
+            ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.INLINE_TAG.jsonName());
             ds.entry("tagName", tagName);
             optAttributes(ds, inlineTag);
             ds.entry(KEY_SPAN_START, inlineTag.getSourceStart());
@@ -727,6 +822,7 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
+    /** If attribute values are avaiable, include those in the response. */
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
         if (RelationInfo.INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
             if (!inlineTag.getAttributes().isEmpty()) {
@@ -742,8 +838,9 @@ public class ResponseStreamer {
     private static void matchInfoRelation(DataStream ds, RelationInfo relationInfo) {
         ds.startMap();
         {
-            ds.entry(KEY_MATCH_INFO_TYPE, "relation");
-            ds.entry("relType", relationInfo.getFullRelationType());
+            ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.RELATION.jsonName());
+            ds.entry("relClass", relationInfo.getRelationClass());
+            ds.entry("relType", relationInfo.getRelationType());
             optAttributes(ds, relationInfo);
             if (!relationInfo.isRoot()) {
                 ds.entry("sourceStart", relationInfo.getSourceStart());
@@ -753,14 +850,19 @@ public class ResponseStreamer {
             ds.entry("targetEnd", relationInfo.getTargetEnd());
             ds.entry(KEY_SPAN_START, relationInfo.getSpanStart());
             ds.entry(KEY_SPAN_END, relationInfo.getSpanEnd());
+
+            if (!relationInfo.getField().equals(relationInfo.getTargetField())) {
+                // Report targetField for cross-field relations
+                ds.entry(KEY_TARGET_FIELD, relationInfo.getTargetField());
+            }
         }
         ds.endMap();
     }
 
-    private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, MatchInfo.Type type) {
+    private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, Predicate<MatchInfo> predicate) {
         return matchInfo == null ? Collections.emptySet() :
                 matchInfo.entrySet().stream()
-                        .filter(e -> e.getValue() != null && e.getValue().getType() == type)
+                        .filter(e -> e.getValue() != null && predicate.test(e.getValue()))
                         .collect(Collectors.toSet());
     }
 
@@ -965,7 +1067,7 @@ public class ResponseStreamer {
             if (params.getExplain()) {
                 TextPattern tp = params.patternWithinContextTag().orElseThrow();
                 try {
-                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
+                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index, params.getAnnotatedField()));
                     QueryExplanation explanation = index.explain(q);
                     ds.startEntry("explanation").startMap()
                             .entry("originalQuery", explanation.originalQuery())
@@ -1158,11 +1260,11 @@ public class ResponseStreamer {
                         ds.startItem(KEY_DOC_SNIPPET).startMap();
                         {
                             // Add KWIC info
-                            ds.startEntry(KEY_BEFORE).contextList(k.annotations(), annotationsToList, k.left())
+                            ds.startEntry(KEY_BEFORE).contextList(k.annotations(), annotationsToList, k.before())
                                     .endEntry();
                             ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(k.annotations(), annotationsToList, k.match())
                                     .endEntry();
-                            ds.startEntry(KEY_AFTER).contextList(k.annotations(), annotationsToList, k.right())
+                            ds.startEntry(KEY_AFTER).contextList(k.annotations(), annotationsToList, k.after())
                                     .endEntry();
                         }
                         ds.endMap().endItem();
@@ -1189,40 +1291,48 @@ public class ResponseStreamer {
 
     public void serverInfo(ResultServerInfo result) {
         ds.startMap();
-        if (modernizeApi)
-            ds.entry("apiVersion", apiVersion.versionString());
-        ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
-                .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
-
-        if (modernizeApi) {
-            ds.startEntry("corpora").startMap();
-            for (ResultIndexStatus corpusInfo: result.getIndexStatuses()) {
-                corpusInfoEntry(corpusInfo, result.getParams().getIncludeCustomInfo());
+        {
+            if (modernizeApi)
+                ds.entry("apiVersion", apiVersion.toString());
+            ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
+                    .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
+            if (modernizeApi) {
+                String buildScmRevision = BlackLab.getBuildScmRevision();
+                if (StringUtils.isEmpty(buildScmRevision))
+                    buildScmRevision = "UNKNOWN";
+                ds.entry(KEY_BLACKLAB_SCM_REVISION, buildScmRevision);
             }
-            ds.endMap().endEntry();
-        }
-        if (!isNewApi) {
-            ds.startEntry("indices").startMap();
-            for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
-                legacyIndexInfo(indexStatus);
+
+            if (modernizeApi) {
+                ds.startEntry("corpora").startMap();
+                for (ResultIndexStatus corpusInfo: result.getIndexStatuses()) {
+                    corpusInfoEntry(corpusInfo, result.getParams().getIncludeCustomInfo());
+                }
+                ds.endMap().endEntry();
             }
-            ds.endMap().endEntry();
-        }
+            if (!isNewApi) {
+                ds.startEntry("indices").startMap();
+                for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
+                    legacyIndexInfo(indexStatus);
+                }
+                ds.endMap().endEntry();
+            }
 
-        userInfo(result.getUserInfo());
+            userInfo(result.getUserInfo(), result.isDebugMode());
 
-        if (!modernizeApi && result.isDebugMode()) {
-            ds.startEntry("cacheStatus");
-            ds.value(result.getParams().getSearchManager().getBlackLabCache().getStatus());
-            ds.endEntry();
+            if (!modernizeApi && result.isDebugMode()) {
+                ds.startEntry("cacheStatus");
+                ds.value(result.getParams().getSearchManager().getBlackLabCache().getStatus());
+                ds.endEntry();
+            }
         }
         ds.endMap();
     }
 
     /** New API corpus info */
-    public void corpusInfoEntry(ResultIndexStatus progress, boolean includeCustom) {
-        Index index = progress.getIndex();
-        IndexMetadata indexMetadata = progress.getMetadata();
+    public void corpusInfoEntry(ResultIndexStatus corpusStatus, boolean includeCustom) {
+        Index index = corpusStatus.getIndex();
+        IndexMetadata indexMetadata = corpusStatus.getMetadata();
         ds.startElEntry(index.getId()).startMap();
         {
             if (includeCustom)
@@ -1232,10 +1342,38 @@ public class ResponseStreamer {
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("timeModified", indexMetadata.timeModified());
-            ds.entry("tokenCount", indexMetadata.tokenCount());
-            indexProgress(progress);
+            indexTokenCount(indexMetadata, false);
+            indexDocumentCount(indexMetadata);
+            indexProgress(corpusStatus);
+            if (!corpusStatus.getIndex().isUserIndex()) {
+                //ds.entry("owner", "system");
+            } else if (corpusStatus.isOwnedBySomeoneElse()) {
+                ds.entry("owner", "user " + corpusStatus.getIndex().getUserId());
+            } else {
+                //ds.entry("owner", "you");
+            }
         }
         ds.endMap().endElEntry();
+    }
+
+    private void indexDocumentCount(IndexMetadata indexMetadata) {
+        if (modernizeApi)
+            ds.entry(KEY_DOCUMENT_COUNT, indexMetadata.documentCount());
+    }
+
+    private void indexTokenCount(IndexMetadata indexMetadata, boolean isLegacyIndicesKey) {
+        if (modernizeApi && !isLegacyIndicesKey) {
+            ds.startEntry(KEY_TOKEN_COUNTS).startList();
+            for (Map.Entry<String, Long> entry: indexMetadata.tokenCountPerField().entrySet()) {
+                ds.startItem(KEY_TOKEN_COUNT).startMap();
+                ds.entry(KEY_FIELD_NAME, entry.getKey());
+                ds.entry(KEY_TOKEN_COUNT, entry.getValue());
+                ds.endMap().endItem();
+            }
+            ds.endList().endEntry();
+        }
+        if (!isNewApi)
+            ds.entry(KEY_TOKEN_COUNT, indexMetadata.tokenCount());
     }
 
     private void customInfoEntry(CustomProps custom) {
@@ -1270,7 +1408,7 @@ public class ResponseStreamer {
                 if (formatIdentifier != null && !formatIdentifier.isEmpty())
                     ds.entry("documentFormat", formatIdentifier);
                 ds.entry("timeModified", indexMetadata.timeModified());
-                ds.entry("tokenCount", indexMetadata.tokenCount());
+                indexTokenCount(indexMetadata, true);
                 indexProgress(progress);
             }
             ds.endMap();
@@ -1299,15 +1437,17 @@ public class ResponseStreamer {
             String formatIdentifier = metadata.documentFormat();
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
-            ds.entry("tokenCount", metadata.tokenCount());
-            ds.entry("documentCount", metadata.documentCount());
+            indexTokenCount(metadata, false);
+            indexDocumentCount(metadata);
             indexProgress(result.getProgress());
 
             boolean inconsistentKeyNaming = !modernizeApi;
             ds.startEntry("versionInfo").startMap()
                     .entry(inconsistentKeyNaming ? "blackLabBuildTime" : KEY_BLACKLAB_BUILD_TIME, metadata.indexBlackLabBuildTime())
-                    .entry(inconsistentKeyNaming ? "blackLabVersion" : KEY_BLACKLAB_VERSION, metadata.indexBlackLabVersion())
-                    .entry("indexFormat", metadata.indexFormat())
+                    .entry(inconsistentKeyNaming ? "blackLabVersion" : KEY_BLACKLAB_VERSION, metadata.indexBlackLabVersion());
+            if (modernizeApi)
+                ds.entry(KEY_BLACKLAB_SCM_REVISION, metadata.indexBlackLabScmRevision());
+            ds.entry("indexFormat", metadata.indexFormat())
                     .entry("timeCreated", metadata.timeCreated())
                     .entry("timeModified", metadata.timeModified())
                     .endMap().endEntry();
@@ -1329,6 +1469,7 @@ public class ResponseStreamer {
                         .endMap().endEntry();
             }
 
+            ds.entry("mainAnnotatedField", result.getMainAnnotatedField());
             ds.startEntry("annotatedFields").startMap();
             for (ResultAnnotatedField annotatedField: result.getAnnotatedFields()) {
                 // internal fields.
@@ -1417,7 +1558,8 @@ public class ResponseStreamer {
             }
             ds.entry(KEY_STATS_STATUS, progress.getIndexStatus());
             ds.entry("timeModified", metadata.timeModified());
-            ds.entry("tokenCount", metadata.tokenCount());
+            indexTokenCount(metadata, false);
+            indexDocumentCount(metadata);
             String formatIdentifier = metadata.documentFormat();
             if (!StringUtils.isEmpty(formatIdentifier))
                 ds.entry("documentFormat", formatIdentifier);
@@ -1514,7 +1656,7 @@ public class ResponseStreamer {
 
         ds.startMap();
         {
-            userInfo(result.getUserInfo());
+            userInfo(result.getUserInfo(), result.isDebugMode());
 
             // List supported input formats
             // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)

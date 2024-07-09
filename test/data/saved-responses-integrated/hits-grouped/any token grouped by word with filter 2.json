@@ -372,6 +372,7 @@
     "numberOfHitsRetrieved": 334,
     "pattern": {
       "bcql": "[]",
+      "fieldName": "contents",
       "json": {
         "max": 1,
         "min": 1,

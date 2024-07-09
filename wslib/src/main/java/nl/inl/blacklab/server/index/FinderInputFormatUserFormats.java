@@ -162,7 +162,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      */
     public void createUserFormat(User user, String fileName, InputStream is) throws NotAuthorized, BadRequest, InternalServerError {
         try {
-            String formatIdentifier = fileName.contains(":") ? fileName : getFormatIdentifier(user.getUserId(), fileName);
+            String formatIdentifier = fileName.contains(":") ? fileName : getFormatIdentifier(user.getId(), fileName);
             
             String userIdFromFormatIdentifier = getUserIdFromFormatIdentifier(formatIdentifier);
             if (!user.canManageFormatsFor(userIdFromFormatIdentifier))
@@ -252,7 +252,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      */
     private static File getUserFormatDir(File formatDir, String userId) throws IOException {
         // step down 2 levels, global dir > user dir > userformat dir
-        File userDir = new File(new File(formatDir, User.getUserDirNameFromId(userId)), FORMATS_SUBDIR_NAME);
+        File userDir = new File(new File(formatDir, User.fromId(userId).getUserDirName()), FORMATS_SUBDIR_NAME);
 
         Files.createDirectories(userDir.toPath()); // does nothing if dir already exists, throws if dir is actually file or can't create
         if (!Files.isReadable(userDir.toPath()))
@@ -285,7 +285,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
         return userId + ":" + ConfigInputFormat.stripExtensions(fileName);
     }
 
-    private static String getUserIdFromFormatIdentifier(String formatIdentifier) throws IllegalUserFormatIdentifier {
+    public static String getUserIdFromFormatIdentifier(String formatIdentifier) throws IllegalUserFormatIdentifier {
         return getUserIdOrFormatName(formatIdentifier, false);
     }
 

@@ -21,7 +21,7 @@ if [ $# -lt 3 ]; then
   echo '  - BLACKLAB_VERSION   (optional) the BlackLab Docker image to use. Defaults to "latest",'
   echo '                       but it is recommended to use a specific tag, e.g. "4-alpha1".'
   echo '  - INDEXTOOL_OPTIONS  (optional) options to pass to IndexTool.'
-  echo '                       Defaults to "--threads 4 --index-type integrated".'
+  echo '                       Defaults to "--threads 4".'
   echo
   echo 'By default, a Java heap size of 6G is used. If you need more, set the environment'
   echo 'variable BL_JAVA_HEAP_MEM to the desired value (e.g. "10G").'
@@ -47,7 +47,7 @@ BL_CORPUS_INPUT_DIR=$(realpath $2)
 BL_CORPUS_FORMAT="$3"
 BL_CORPUS_FORMAT_FILE=$(realpath "$BL_CORPUS_FORMAT")
 BL_VERSION="${4:-latest}"
-BL_INDEXTOOL_OPTIONS="${5:---threads 4 --index-type integrated}"
+BL_INDEXTOOL_OPTIONS="${5:---threads 4}"
 
 # Base names to use inside the container
 BL_CORPUS_NAME=$(basename $BL_CORPUS_TARGET_DIR)

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-//import org.apache.lucene.search.ConjunctionDISI;
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
@@ -55,18 +54,22 @@ class SpansAnd extends BLSpans {
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
         atFirstInCurrentDoc = false;
-        return (conjunction.nextDoc() == NO_MORE_DOCS)
-                ? NO_MORE_DOCS
-                : toMatchDoc();
+        int doc = conjunction.nextDoc();
+        if (doc == NO_MORE_DOCS)
+            return NO_MORE_DOCS;
+        assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
+        return toMatchDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
         atFirstInCurrentDoc = false;
-        return (conjunction.advance(target) == NO_MORE_DOCS)
-                ? NO_MORE_DOCS
-                : toMatchDoc();
+        int doc = conjunction.advance(target);
+        if (doc == NO_MORE_DOCS)
+            return NO_MORE_DOCS;
+        assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
+        return toMatchDoc();
     }
 
     int toMatchDoc() throws IOException {
@@ -74,9 +77,10 @@ class SpansAnd extends BLSpans {
             if (twoPhaseCurrentDocMatches()) {
                 return docID();
             }
-            if (conjunction.nextDoc() == NO_MORE_DOCS) {
+            int doc = conjunction.nextDoc();
+            if (doc == NO_MORE_DOCS)
                 return NO_MORE_DOCS;
-            }
+            assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
         }
     }
 

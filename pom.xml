@@ -54,9 +54,9 @@
 
         <!-- Library versions -->
         <servlet.version>6.0.0</servlet.version>
-        <blacklab.luceneVersion>9.11.0</blacklab.luceneVersion>
+        <blacklab.luceneVersion>9.11.1</blacklab.luceneVersion>
         <solr.version>9.6.1</solr.version>
-        <log4j.version>2.20.0</log4j.version>
+        <log4j.version>2.23.1</log4j.version>
         <eclipse.collections.version>11.1.0</eclipse.collections.version>
 
         <!-- servlet, rest, json, xml, yaml -->
@@ -240,7 +240,8 @@
                             <classpathPrefix>lib/</classpathPrefix>
                         </manifest>
                         <manifestEntries>
-                            <Build-Time>${buildNumber}</Build-Time>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
+                            <Build-Scm-Revision>${buildNumber}</Build-Scm-Revision>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -257,7 +258,8 @@
                             <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                         </manifest>
                         <manifestEntries>
-                            <Build-Time>${buildNumber}</Build-Time>
+                            <Build-Time>${maven.build.timestamp}</Build-Time>
+                            <Build-Scm-Revision>${buildNumber}</Build-Scm-Revision>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -277,10 +279,9 @@
                 <artifactId>buildnumber-maven-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                    <format>{0,date,yyyy-MM-dd HH:mm:ss}</format>
-                    <items>
-                        <item>timestamp</item>
-                    </items>
+                    <doCheck>false</doCheck>
+                    <doUpdate>false</doUpdate>
+                    <shortRevisionLength>7</shortRevisionLength>
                 </configuration>
                 <executions>
                     <execution>
@@ -382,47 +383,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
                 <version>3.1.2</version>
-            </plugin>
-
-            <!-- Test code coverage -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.10</version>
-                <executions>
-                    <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>post-unit-test</id>
-                        <phase>test</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Sets the path to the file which contains 
-                                the execution data. -->
-
-                            <dataFile>target/jacoco.exec</dataFile>
-                            <!-- Sets the output directory for the code coverage 
-                                report. -->
-                            <outputDirectory>target/jacoco-ut</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <destFile>target/jacoco.exec</destFile>
-                </configuration>
             </plugin>
 
             <!-- Creates a release version -->

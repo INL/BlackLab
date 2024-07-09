@@ -74,13 +74,13 @@ JAVA_OPTS=-Xmx10G
 Pass this to Docker Compose to index your data:
 
 ```bash
-docker-compose --env-file test.env run --rm indexer
+docker compose --env-file test.env run --rm indexer
 ```
 
 Your data will be indexed just like with the above command. Now start the server:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Your index should now be accessible at `http://localhost:8080/blacklab-server/my-index`.
@@ -91,7 +91,7 @@ running in a container. Compose automatically uses this file if you don't
 tell it otherwise. To start a server without remote debugging (e.g. in production), use:
 
 ```bash
-docker-compose -f docker-compose.yml up -d 
+docker compose -f docker-compose.yml up -d 
 ```
 
 ### OPTION 2: Add indexes using a bind mount

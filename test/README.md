@@ -30,10 +30,10 @@ If you've made changes ensure the latest BlackLab code and tests are being used 
 
 ```bash
 # Ensure testserver is recreated (if it changed)
-docker-compose up -d --build testserver
+docker compose up -d --build testserver
 
 # Ensure the test image is up to date
-docker-compose build test
+docker compose build test
 ```
 
 The blacklab server under test uses configurations files defined in the `docker` directory. If you would like to override the 
@@ -48,21 +48,21 @@ NOTE: `CONFIG_ROOT` must be a path residing *inside the repository file structur
 
 ```bash
 # PATH_TO_CUSTOM_CONFIG must contain at least two files: blacklab-server.xml and server.xml
-CONFIG_ROOT=[PATH_TO_CUSTOM_CONFIG] docker-compose up -d --build testserver
+CONFIG_ROOT=[PATH_TO_CUSTOM_CONFIG] docker compose up -d --build testserver
 ```
 
 ### Build and run the tests
 Build the containers with the tests
 ```bash
 ## Build the tests container
-docker-compose build test
+docker compose build test
 ```
 By default, it will use the data found the `test/data/input` directory for testing
 
 Run the tests
 ```bash
 # Run the tests
-docker-compose run --rm test
+docker compose run --rm test
 ```
 
 The tests should now be run and the output shown. If all tests succeed, `$?` should have the value `0`.
@@ -83,8 +83,8 @@ the test docker container. See the [below section on custom data]
 
 ```bash
 echo BLACKLAB_DEFAULT_WINDOW_SIZE=20 >> test/data/environment
-docker-compose build test
-docker-compose run --rm test
+docker compose build test
+docker compose run --rm test
 ```
 
 ## Tools

@@ -1,27 +1,35 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.List;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ContextSize;
 
 /**
  * @deprecated use {@link HitPropertyAfterHit} instead
  */
 @Deprecated
 public class HitPropertyRightContext extends HitPropertyAfterHit {
-    HitPropertyRightContext(HitPropertyAfterHit prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+
+    public static final String ID = "right";
+
+    static HitPropertyAfterHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        return new HitPropertyRightContext(index, i.annotation, i.sensitivity, i.extraIntParam(0, contextSize.after()));
     }
 
     public HitPropertyRightContext(BlackLabIndex index,
             Annotation annotation,
             MatchSensitivity sensitivity) {
-        super(index, annotation, sensitivity);
+        super(index, annotation, sensitivity, ID);
     }
 
     public HitPropertyRightContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity,
             int numberOfTokens) {
-        super(index, annotation, sensitivity, numberOfTokens);
+        super(index, annotation, sensitivity, numberOfTokens, ID);
     }
 }

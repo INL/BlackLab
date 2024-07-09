@@ -95,13 +95,13 @@ JAVA_OPTS=-Xmx10G
 To index your data:
 
 ```bash
-docker-compose --env-file test.env run --rm indexer
+docker compose --env-file test.env run --rm indexer
 ```
 
 Now start the server:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
@@ -115,7 +115,7 @@ DOCKER_IMAGE=blacklab-frontend
 Then run:
 
 ```bash
-docker-compose up -d --no-build
+docker compose up -d --no-build
 ```
 
 ## Special thanks

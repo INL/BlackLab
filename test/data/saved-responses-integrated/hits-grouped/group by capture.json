@@ -132,6 +132,7 @@
     "numberOfHitsRetrieved": 13,
     "pattern": {
       "bcql": "'a|the' (X:[])",
+      "fieldName": "contents",
       "json": {
         "clauses": [
           {

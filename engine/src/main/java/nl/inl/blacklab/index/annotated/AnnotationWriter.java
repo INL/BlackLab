@@ -33,9 +33,6 @@ import nl.inl.util.CollUtil;
  */
 public class AnnotationWriter {
 
-    /** Maximum length a value is allowed to be. */
-    private static final int MAXIMUM_VALUE_LENGTH = 1000;
-
     private final AnnotatedFieldWriter fieldWriter;
 
     private final AnnotationSensitivities sensitivitySetting;
@@ -268,6 +265,7 @@ public class AnnotationWriter {
      * @return new position of the last token, in case it changed.
      */
     public int addValueAtPosition(String value, int position, BytesRef payload) {
+        assert position >= 0;
 
         if (fieldWriter.getIndexType() == BlackLabIndex.IndexType.INTEGRATED &&
                 AnnotatedFieldNameUtil.isRelationAnnotation(annotationName) &&
@@ -280,12 +278,6 @@ public class AnnotationWriter {
                     "inline tags. To work properly with the new index format, update it to use " +
                     "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
 
-        }
-
-        if (value.length() > MAXIMUM_VALUE_LENGTH) {
-            // Let's keep a sane maximum value length.
-            // (Lucene's is 32766, but we don't want to go that far)
-            value = value.substring(0, MAXIMUM_VALUE_LENGTH);
         }
 
         // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
@@ -348,6 +340,8 @@ public class AnnotationWriter {
      */
     private void insertValueAtIndex(int index, String value, int positionIncrement, BytesRef payload) {
         values.add(index, value);
+        if (positionIncrement < 0)
+            throw new RuntimeException("ERROR insertValueAtPosition(" + index + ", " + value + ", " + positionIncrement + ", payload): Negative position increment!");
         increments.addAtIndex(index, positionIncrement);
         if (hasPayload())
             payloads.add(index, payload);
@@ -358,7 +352,7 @@ public class AnnotationWriter {
             // correct it.
             int newPosIncr = increments.get(index + 1) - positionIncrement;
             if (newPosIncr < 0)
-                throw new RuntimeException("ERROR insertValueAtPosition(value, index, posIncr): Next token got a negative posIncrement!");
+                throw new RuntimeException("ERROR insertValueAtPosition(" + index + ", " + value + ", " + positionIncrement + ", payload): Next token got a negative posIncrement: " + newPosIncr);
             increments.set(index + 1, newPosIncr);
         }
     }
@@ -421,14 +415,17 @@ public class AnnotationWriter {
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
-        String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : RelationUtil.inlineTagFullType(tagName);
+        RelationInfo matchInfo = RelationInfo.create(false, startPos, startPos, endPos, endPos);
+        String fullRelationType;
+        fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
+                tagName :
+                RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
         return indexRelation(fullRelationType, attributes, indexType, matchInfo);
     }
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
+        RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd);
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort
@@ -449,7 +446,7 @@ public class AnnotationWriter {
             }
             // classic external index; tag name and attributes are indexed separately
             payload = relationInfo.getSpanEnd() >= 0 ?
-                    PayloadUtils.tagEndPositionPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
+                    PayloadUtils.inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
                             BlackLabIndex.IndexType.EXTERNAL_FILES) :
                     null;
             addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
@@ -465,13 +462,14 @@ public class AnnotationWriter {
             // for inline tags, we'll only know it when we encounter the closing tag,
             // and we'll add the payload then.
             payload = relationInfo.hasTarget() ? relationInfo.serialize() : null;
-            addValueAtPosition(RelationUtil.indexTerm(fullRelationType, attributes),
+            addValueAtPosition(RelationUtil.indexTerm(fullRelationType, attributes, false),
                     relationInfo.getSourceStart(), payload);
             boolean indexedTwice = false;
             if (attributes != null && !attributes.isEmpty()) {
                 // Also index a version without attributes. We'll use this for faster search if we don't filter on
-                // attributes.
-                addValueAtPosition(RelationUtil.indexTerm(fullRelationType, null),
+                // attributes. The indexed term will be tagged as an optimization term, so it won't be counted when we
+                // determine statistics.
+                addValueAtPosition(RelationUtil.indexTerm(fullRelationType, null, true),
                         relationInfo.getSourceStart(), payload);
                 indexedTwice = true;
             }

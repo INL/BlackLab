@@ -52,7 +52,7 @@ public class AuthDebugFixed implements AuthMethod {
         }
 
         // Return the appropriate User object
-        return User.loggedIn(userId, sessionId);
+        return User.fromIdAndSessionId(userId, sessionId);
     }
 
 }

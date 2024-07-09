@@ -34,9 +34,9 @@ public class ServletUtil {
     public static boolean getParameter(HttpServletRequest request, String name, boolean defaultValue) {
         String defStr = defaultValue ? "true" : "false";
         String value = getParameter(request, name, defStr);
-        if (value.equalsIgnoreCase("true"))
+        if (value.toLowerCase().matches("true|yes|1"))
             return true;
-        if (value.equalsIgnoreCase("false"))
+        if (value.toLowerCase().matches("false|no|0"))
             return false;
 
         logger.warn("Illegal value '" + value + "' given for boolean parameter '" + name

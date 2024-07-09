@@ -46,7 +46,7 @@ public class TextPatternDefaultValue extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryDefaultValue(context.queryInfo());
+        return new SpanQueryDefaultValue(context.queryInfo(), context.luceneField());
     }
 
     @Override

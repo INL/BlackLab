@@ -31,22 +31,22 @@ public class TestUniqueHits {
      *  we therefore expect the last two hits to both be returned, and not reduced to 1 using SpansUnique.
      */
     RelationInfo[] aRelationInfo = {
-            new RelationInfo(false, 10, 10, 11, 11, "abc", null),
-            new RelationInfo(false, 10, 10, 11, 11, "abc", null),
-            new RelationInfo(false, 10, 10, 11, 11, "abc", null),
-            new RelationInfo(false, 1, 1, 2, 2, "abc", null),
-            new RelationInfo(false, 1, 1, 1, 2, "abc", null),
+            RelationInfo.create(false, 10, 10, 11, 11, "abc"),
+            RelationInfo.create(false, 10, 10, 11, 11, "abc"),
+            RelationInfo.create(false, 10, 10, 11, 11, "abc"),
+            RelationInfo.create(false, 1, 1, 2, 2, "abc"),
+            RelationInfo.create(false, 1, 1, 1, 2, "abc"),
     };
 
     @Test
     public void testWithMatchInfoSpansUnique() throws IOException {
         BLSpans a = MockSpans.withRelationInfoObjectsInPayload(aDoc, aStart, aEnd, aRelationInfo);
-        BLSpans tags = new SpansRelations("test", a,
+        BLSpans tags = new SpansRelations("contents", "test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc");
         BLSpans spans = new SpansUnique(tags);
-        HitQueryContext context = new HitQueryContext();
-        context.registerMatchInfo("abc");
+        HitQueryContext context = new HitQueryContext(null, "contents");
+        context.registerMatchInfo("abc", MatchInfo.Type.RELATION);
         spans.setHitQueryContext(context);
 
         int[] expDoc   = {  1,  2, 3, 3 };
@@ -60,12 +60,12 @@ public class TestUniqueHits {
     public void testWithMatchInfoPerDocSortedSpans() throws IOException {
         MockSpans a = MockSpans.withRelationInfoObjectsInPayload(aDoc, aStart, aEnd, aRelationInfo);
         a.setGuarantees(SpanGuarantees.NONE); // so PerDocumentSortedSpans doesn't complain we're already sorted
-        BLSpans tags = new SpansRelations("test", a,
+        BLSpans tags = new SpansRelations("contents", "test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc");
         BLSpans spans = new PerDocumentSortedSpans(tags, true, true);
-        HitQueryContext context = new HitQueryContext();
-        context.registerMatchInfo("abc");
+        HitQueryContext context = new HitQueryContext(null, "contents");
+        context.registerMatchInfo("abc", MatchInfo.Type.RELATION);
         spans.setHitQueryContext(context);
 
         int[] expDoc   = {  1,  2, 3, 3 };

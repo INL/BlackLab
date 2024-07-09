@@ -44,7 +44,8 @@ import nl.inl.util.StringUtil;
  *  and each of those should only be used from one thread at a time)
  */
 public class DocPropertyStoredField extends DocProperty {
-    //private static final Logger logger = LogManager.getLogger(DocPropertyStoredField.class);
+
+    public static final String ID = "field";
 
     /** Lucene field name */
     private final String fieldName;
@@ -236,13 +237,9 @@ public class DocPropertyStoredField extends DocProperty {
         return friendlyName;
     }
 
-    public static DocPropertyStoredField deserialize(BlackLabIndex index, String info) {
-        return new DocPropertyStoredField(index, PropertySerializeUtil.unescapePart(info));
-    }
-
     @Override
     public String serialize() {
-        return serializeReverse() + PropertySerializeUtil.combineParts("field", fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts(ID, fieldName);
     }
 
     @Override

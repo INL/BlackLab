@@ -14,5 +14,5 @@ public class RelationType {
     public long count;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public Map<String, Map<String, Long>> attributes;
+    public Map<String, Map<String, AttributeType>> attributes;
 }

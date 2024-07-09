@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.PrefixQuery;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -24,11 +25,14 @@ public class TextPatternPrefix extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
+    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         try {
             context = context.withAnnotationAndSensitivity(annotation, sensitivity);
-            return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), new PrefixQuery(new Term(context.luceneField(),
-                    context.optDesensitize(optInsensitive(context, value)))));
+            return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(),
+                    new PrefixQuery(new Term(context.luceneField(),
+                            context.optDesensitize(optInsensitive(context, value)))));
+        } catch (InvalidQuery e) {
+            throw e;
         } catch (StackOverflowError e) {
             // If we pass in a prefix expression matching a lot of words,
             // stack overflow may occur inside Lucene's automaton building

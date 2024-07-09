@@ -34,10 +34,6 @@ public class PropertyValueString extends PropertyValue {
         return false;
     }
 
-    public static PropertyValue deserialize(String info) {
-        return new PropertyValueString(PropertySerializeUtil.unescapePart(info));
-    }
-
     @Override
     public String toString() {
         return value;

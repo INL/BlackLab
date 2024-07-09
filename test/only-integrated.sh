@@ -17,11 +17,11 @@ SERVICE_NAME="${1:-test}"
 cd $( dirname -- "$0"; )/
 
 # Check how to call Compose
-COMPOSE=docker-compose
-if ! command -v $COMPOSE &> /dev/null
-then
+#COMPOSE=docker-compose
+#if ! command -v $COMPOSE &> /dev/null
+#then
     COMPOSE="docker compose"
-fi
+#fi
 
 # Enable BuildKit
 export DOCKER_BUILDKIT=1
@@ -32,7 +32,7 @@ export DOCKER_BUILDKIT=1
 # Re-run to test the other index format as well
 echo === Testing integrated index format...
 $COMPOSE build testserver "$SERVICE_NAME"
-export BLACKLAB_FEATURE_integrateExternalFiles=true
+export BLACKLAB_FEATURE_defaultIndexType=integrated
 export INDEX_TYPE=integrated
 $COMPOSE up -d --force-recreate testserver # (--force-recreate to avoid error 'network not found')
 $COMPOSE run --rm "$SERVICE_NAME"

@@ -11,10 +11,10 @@ import org.apache.lucene.queries.spans.TermSpans;
  */
 final class TermSpansWrapper extends BLFilterSpans<Spans> {
 
-    TermSpansWrapper(Spans in) {
+    TermSpansWrapper(TermSpans in) {
         super(in, SpanGuarantees.TERM);
-        if (!(in instanceof TermSpans))
-            throw new IllegalArgumentException("Only use with TermSpans");
+        if (in == null)
+            throw new IllegalArgumentException("Clause may not be null");
     }
 
     @Override

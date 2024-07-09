@@ -17,15 +17,13 @@
 
 package nl.inl.blacklab.search.lucene;
 
-import static org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS;
-
 import java.io.IOException;
 import java.util.Objects;
 
-import org.apache.lucene.queries.spans.SpanCollector;
-import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.queries.spans.Spans;
 
 /**
  * A {@link Spans} implementation wrapping another spans instance (or any doc iterator, such as SpansInBuckets),
@@ -72,7 +70,8 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     }
 
     @Override
-    public final int docID() {
+    public int docID() {
+        assert in != null;
         return in.docID();
     }
 
@@ -96,7 +95,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     public abstract String toString();
 
     @Override
-    public final TwoPhaseIterator asTwoPhaseIterator() {
+    public TwoPhaseIterator asTwoPhaseIterator() {
         TwoPhaseIterator inner = in instanceof Spans ? ((Spans) in).asTwoPhaseIterator() : null;
         if (inner != null) {
             // wrapped instance has an approximation
@@ -117,7 +116,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
                 }
             };
         } else {
-            // wrapped instance has no approximation, but 
+            // wrapped instance has no approximation, but
             // we can still defer matching until absolutely needed.
             return new TwoPhaseIterator(in) {
                 @Override

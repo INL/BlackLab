@@ -8,9 +8,7 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyDoc extends HitProperty {
 
-    static HitPropertyDoc deserializeProp(BlackLabIndex index) {
-        return new HitPropertyDoc(index);
-    }
+    public static final String ID = "doc";
 
     private final BlackLabIndex index;
 
@@ -48,7 +46,7 @@ public class HitPropertyDoc extends HitProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "doc";
+        return serializeReverse() + ID;
     }
 
     @Override

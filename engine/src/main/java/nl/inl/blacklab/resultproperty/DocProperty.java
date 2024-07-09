@@ -87,61 +87,64 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
         if (serialized == null || serialized.isEmpty())
             return null;
 
-        if (PropertySerializeUtil.isMultiple(serialized)) {
-            boolean reverse = false;
-            if (serialized.startsWith("-(") && serialized.endsWith(")")) {
-                reverse = true;
-                serialized = serialized.substring(2, serialized.length() - 1);
-            }
-            DocProperty result = DocPropertyMultiple.deserialize(index, serialized);
-            if (reverse)
-                result = result.reverse();
-            return result;
-        }
+        if (PropertySerializeUtil.isMultiple(serialized))
+            return deserializeMultiple(index, serialized);
 
         boolean reverse = false;
         if (serialized.length() > 0 && serialized.charAt(0) == '-') {
             reverse = true;
             serialized = serialized.substring(1);
         }
-
-        String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
-        String type = parts[0].toLowerCase();
-        String info = parts.length > 1 ? parts[1] : "";
+        List<String> parts = PropertySerializeUtil.splitPartsList(serialized);
+        String type = parts.get(0).toLowerCase();
+        List<String> infos = parts.subList(1, parts.size());
+        String firstInfo = infos.isEmpty() ? "" : infos.get(0);
         DocProperty result;
         switch (type) {
-        case "decade":
-            result = DocPropertyDecade.deserialize(index, ResultProperty.ignoreSensitivity(info));
+        case DocPropertyDecade.ID:
+            result = new DocPropertyDecade(index, firstInfo);
             break;
-        case "numhits":
-            result = DocPropertyNumberOfHits.deserialize();
+        case DocPropertyNumberOfHits.ID:
+            result = new DocPropertyNumberOfHits();
             break;
-        case "field":
-            result = DocPropertyStoredField.deserialize(index, ResultProperty.ignoreSensitivity(info));
+        case DocPropertyStoredField.ID:
+            result = new DocPropertyStoredField(index, firstInfo);
             break;
-        case "fieldlen":
-            result = DocPropertyAnnotatedFieldLength.deserialize(index, ResultProperty.ignoreSensitivity(info));
+        case DocPropertyAnnotatedFieldLength.ID:
+            result = new DocPropertyAnnotatedFieldLength(index, firstInfo);
             break;
 
-        case "docid":
-        case "doc":
+        case HitPropertyDocumentId.ID:
+        case HitPropertyDoc.ID:
             throw new BlackLabRuntimeException("Grouping doc results by " + type + " is not yet supported");
 
-        case "hit":
-        case "before":
-        case "left":
-        case "after":
-        case "right":
-        case "wordleft":
-        case "wordright":
-        case "context":
-        case "hitposition":
+        case HitPropertyHitText.ID:
+        case HitPropertyBeforeHit.ID:
+        case HitPropertyLeftContext.ID:
+        case HitPropertyAfterHit.ID:
+        case HitPropertyRightContext.ID:
+        case "wordleft":  // deprecated
+        case "wordright": // deprecated
+        case "context":   // deprecated
+        case HitPropertyHitPosition.ID:
             throw new BlackLabRuntimeException("Cannot group doc results by " + type);
 
         default:
             logger.debug("Unknown DocProperty '" + type + "'");
             return null;
         }
+        if (reverse)
+            result = result.reverse();
+        return result;
+    }
+
+    private static DocProperty deserializeMultiple(BlackLabIndex index, String serialized) {
+        boolean reverse = false;
+        if (serialized.startsWith("-(") && serialized.endsWith(")")) {
+            reverse = true;
+            serialized = serialized.substring(2, serialized.length() - 1);
+        }
+        DocProperty result = DocPropertyMultiple.deserialize(index, serialized);
         if (reverse)
             result = result.reverse();
         return result;

@@ -81,6 +81,8 @@ class IndexerImpl implements DocWriter, Indexer {
                     throw new PluginException(
                             "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + path);
                 }
+                if (file != null)
+                    docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
                 impl(docIndexer, path);
             }
         }
@@ -100,11 +102,13 @@ class IndexerImpl implements DocWriter, Indexer {
             try (UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
                     DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path,
                             inputStream, inputStream.getEncoding())) {
+                if (file != null)
+                    docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
                 impl(docIndexer, path);
             }
         }
 
-        private void impl(DocIndexer indexer, String documentName) throws MalformedInputFile, PluginException, IOException {
+        private void impl(DocIndexer indexer, String documentName) {
             if (!indexer.continueIndexing())
                 return;
 
@@ -112,7 +116,11 @@ class IndexerImpl implements DocWriter, Indexer {
             int docsDoneBefore = indexer.numberOfDocsDone();
             long tokensDoneBefore = indexer.numberOfTokensDone();
 
-            indexer.index();
+            try {
+                indexer.index();
+            } catch (Throwable e) {
+                throw new RuntimeException("Error while indexing input file: " + documentName, e);
+            }
             listener().fileDone(documentName);
             
             int docsDoneAfter = indexer.numberOfDocsDone();

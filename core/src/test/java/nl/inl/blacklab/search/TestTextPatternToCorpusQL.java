@@ -71,6 +71,16 @@ public class TestTextPatternToCorpusQL {
     }
 
     @Test
+    public void testEscape() throws InvalidQuery {
+        assertCanonicalized("'c\\\\at'", "'c\\\\at'");
+        assertCanonicalized("'c\\'at'", "'c\\'at'");
+        assertCanonicalized("'c\\at'", "'c\\at'");
+        assertCanonicalized("'c\\'at'", "'c\\'at'");
+        assertCanonicalized("'c\"at'", "\"c\\\"at\"");
+        assertCanonicalized("'c\\?at'", "'c\\?at'");
+    }
+
+    @Test
     public void testExtraParens() throws InvalidQuery {
         assertCanonicalized("('the' & ('c\\\\at' | 'do\\'g')) 'turtle'",
                 "(('the' & ('c\\\\at' | 'do\\'g')) ('turtle'))");
@@ -85,9 +95,9 @@ public class TestTextPatternToCorpusQL {
 
     @Test
     public void testRelationsWithoutRspan() throws InvalidQuery {
-        assertCanonicalized("rspan(_ -test-> _, 'all')", "_ -test-> _");
-        assertCanonicalized("rspan([]+ -test-> []+, 'all')", "[]+ -test-> []+");
-        assertCanonicalized("rspan(^--> _, 'all')", "^--> _");
+        assertCanonicalized("_ -test-> _", "_ -test-> _");
+        assertCanonicalized("[]+ -test-> []+", "[]+ -test-> []+");
+        assertCanonicalized("^--> _", "^--> _");
     }
 
     @Test

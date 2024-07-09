@@ -3,7 +3,9 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.search.results.DocGroup;
 
 public class DocGroupPropertyIdentity extends DocGroupProperty {
-    
+
+    public static final String ID = HitGroupPropertyIdentity.ID;
+
     DocGroupPropertyIdentity(DocGroupPropertyIdentity prop, boolean invert) {
         super(prop, invert);
     }
@@ -26,7 +28,7 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "identity";
+        return serializeReverse() + ID;
     }
 
     @Override

@@ -91,6 +91,7 @@
     "titleField": "title"
   },
   "indexName": "test",
+  "mainAnnotatedField": "contents",
   "metadataFieldGroups": [
     {
       "fields": [
@@ -165,8 +166,15 @@
   "status": "available",
   "textDirection": "ltr",
   "tokenCount": 766,
+  "tokenCounts": [
+    {
+      "fieldName": "contents",
+      "tokenCount": 766
+    }
+  ],
   "versionInfo": {
     "blacklabBuildTime": "VALUE_REMOVED",
+    "blacklabScmRevision": "UNKNOWN",
     "blacklabVersion": "VALUE_REMOVED",
     "indexFormat": "VALUE_REMOVED",
     "timeCreated": "VALUE_REMOVED",

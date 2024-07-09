@@ -10,6 +10,39 @@ import java.util.Set;
  */
 public class ConfigInlineTag {
 
+    /** Configuration for extra attributes to index using XPath */
+    public static class ConfigExtraAttribute {
+        /** Attribute name */
+        private String name;
+        /** XPath to get attribute's value */
+        private String valuePath;
+
+        public ConfigExtraAttribute() {
+
+        }
+
+        public ConfigExtraAttribute(String name, String valuePath) {
+            this.name = name;
+            this.valuePath = valuePath;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getValuePath() {
+            return valuePath;
+        }
+
+        public void setValuePath(String valuePath) {
+            this.valuePath = valuePath;
+        }
+    }
+
     /** XPath to the inline tag, relative to the container element */
     private String path;
 
@@ -28,7 +61,14 @@ public class ConfigInlineTag {
      */
     private String tokenIdPath = null;
 
+    /** Don't index attributes in this list (unless includeAttributes is set). */
     private Set<String> excludeAttributes = Collections.emptySet();
+
+    /** If set: ignore excludeAttributes and don't index attributes not in this list. */
+    private List<String> includeAttributes = null;
+
+    /** Extra attributes to index with the tag via an XPath expression */
+    private List<ConfigExtraAttribute> extraAttributes = Collections.emptyList();
 
     public ConfigInlineTag() {
     }
@@ -81,5 +121,25 @@ public class ConfigInlineTag {
 
     public Set<String> getExcludeAttributes() {
         return excludeAttributes;
+    }
+
+    public void setIncludeAttributes(List<String> includeAttributes) {
+        this.includeAttributes = includeAttributes;
+    }
+
+    public List<String> getIncludeAttributes() {
+        return includeAttributes;
+    }
+
+    public void setExtraAttributes(List<ConfigExtraAttribute> extraAttributes) {
+        this.extraAttributes = extraAttributes;
+    }
+
+    public List<ConfigExtraAttribute> getExtraAttributes() {
+        return extraAttributes;
+    }
+
+    public boolean hasDetailedAttributeConfig() {
+        return includeAttributes != null || !excludeAttributes.isEmpty() || !extraAttributes.isEmpty();
     }
 }

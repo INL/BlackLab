@@ -202,9 +202,10 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      */
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
-        byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
-        if (contents != null) // FIXME: getValue always returns "", while contents can be null.
-            storedFieldVisitor.stringField(fieldInfo, contentStore().getValue(docId, fieldInfo.name));
+        // TODO look into character encoding
+        String contents = contentStore().getValue(docId, fieldInfo.name);
+        if (contents != null)
+            storedFieldVisitor.stringField(fieldInfo, contents);
     }
 
     @Override

@@ -50,6 +50,13 @@ import org.apache.lucene.util.PriorityQueue;
  */
 public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
 
+    /** One subspans exhausted in current doc, so there's no more hits in this doc. */
+    boolean oneExhaustedInCurrentDoc;
+
+    /** Our subspans are already at the first hit, but our startPosition() method should still return -1. */
+    boolean atFirstInCurrentDoc;
+
+    /** Keeps our subspans in order, and keeps track of total length and end position. */
     private SpanTotalLengthEndPositionWindow spanWindow;
 
     private HitQueryContext context;
@@ -84,6 +91,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
                 SpanQueryAnd.createGuarantees(SpanGuarantees.from(subSpans), false));
 
         this.spanWindow = new SpanTotalLengthEndPositionWindow();
+        this.atFirstInCurrentDoc = true; // ensure for doc -1 that start/end positions are -1
     }
 
     /** Maintain totalSpanLength and maxEndPosition */
@@ -155,11 +163,13 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
 
     @Override
     boolean twoPhaseCurrentDocMatches() throws IOException {
+        oneExhaustedInCurrentDoc = false;
         atFirstInCurrentDoc = false;
         assert positionedInDoc();
         // at doc with all subSpans
         relationsReturnedAtThisPosition.clear(); // don't return the same combination of relations twice
         spanWindow.startDocument();
+        assert spanWindow.size() == subSpans.length;
         while (true) {
             if (spanWindow.atMatch()) {
                 oneExhaustedInCurrentDoc = false;
@@ -325,5 +335,10 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
         // we cannot collect because our clauses are bucketized.
         // that's okay, we only use payload directly in "simple" spans anyway,
         // we don't need to propagate it to "parent" spans.
+    }
+
+    @Override
+    public String toString() {
+        return "ANDUNIQREL(" + subSpans[0] + ", " + subSpans[1] + ")";
     }
 }

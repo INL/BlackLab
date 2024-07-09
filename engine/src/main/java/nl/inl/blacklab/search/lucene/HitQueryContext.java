@@ -3,9 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.results.QueryInfo;
+import java.util.Optional;
 
 /**
  * Provides per-hit query-wide context, such as captured groups.
@@ -21,23 +19,37 @@ public class HitQueryContext {
     private BLSpans rootSpans;
 
     /** Match info names for our query, in index order */
-    List<String> matchInfoNames = new ArrayList<>();
+    List<MatchInfo.Def> matchInfoDefs = new ArrayList<>();
 
-    /** We use this to check if subclauses capture groups or not */
-    private int numberOfTimesMatchInfoRegistered = 0;
+    /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
+    private final String defaultField;
 
-    public HitQueryContext(BLSpans spans) {
+    /** The field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
+    private final String field;
+
+    public HitQueryContext(BLSpans spans, String defaultField) {
+        this(spans, defaultField, defaultField);
+    }
+
+    private HitQueryContext(BLSpans spans, String defaultField, String field) {
         this.rootSpans = spans;
+        this.defaultField = defaultField;
+        assert field != null;
+        this.field = field;
     }
 
-    public HitQueryContext() {
-        this(null);
+    public HitQueryContext withSpans(BLSpans spans) {
+        HitQueryContext result = new HitQueryContext(spans, defaultField, field);
+        result.matchInfoDefs = matchInfoDefs;
+        return result;
     }
 
-    public HitQueryContext copyWith(BLSpans spans) {
-        HitQueryContext result = new HitQueryContext(spans);
-        result.matchInfoNames = matchInfoNames;
-        result.numberOfTimesMatchInfoRegistered = numberOfTimesMatchInfoRegistered;
+    public HitQueryContext withField(String overriddenField) {
+        HitQueryContext result = this;
+        if (overriddenField != null) {
+            result = new HitQueryContext(rootSpans, defaultField, overriddenField);
+            result.matchInfoDefs = matchInfoDefs;
+        }
         return result;
     }
 
@@ -57,15 +69,35 @@ public class HitQueryContext {
      * Register a match info (e.g. captured group), assigning it a unique index number.
      *
      * @param name the group's name
+     * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name) {
-        numberOfTimesMatchInfoRegistered++;
-        while (matchInfoNames.contains(name)) {
-            return matchInfoNames.indexOf(name); // already registered, reuse
+    public int registerMatchInfo(String name, MatchInfo.Type type) {
+        return registerMatchInfo(name, type, getField(), null);
+    }
+
+    /**
+     * Register a match info (e.g. captured group), assigning it a unique index number.
+     *
+     * @param name the group's name
+     * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
+     * @param field the group's field. Never null. Used e.g. when capturing relation, which should always
+     *                    be captured in the source field, even if the span mode is target (and the context reflects that).
+     * @param targetField for relation and list of relations: the target field, or empty string if not applicable
+     * @return the group's assigned index
+     */
+    public int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
+        Optional<MatchInfo.Def> mi = matchInfoDefs.stream()
+                .filter(mid -> mid.getName().equals(name))
+                .findFirst();
+        if (mi.isPresent()) {
+            mi.get().updateType(type); // update type (e.g. if group is referred to before we know its type)
+            return mi.get().getIndex(); // already registered, reuse
         }
-        matchInfoNames.add(name);
-        return matchInfoNames.size() - 1; // index in array
+        assert field != null;
+        MatchInfo.Def newMatchInfo = new MatchInfo.Def(matchInfoDefs.size(), name, type, field, targetField);
+        matchInfoDefs.add(newMatchInfo);
+        return newMatchInfo.getIndex(); // index in array
     }
 
     /**
@@ -74,7 +106,7 @@ public class HitQueryContext {
      * @return number of captured groups
      */
     public int numberOfMatchInfos() {
-        return matchInfoNames.size();
+        return matchInfoDefs.size();
     }
 
     /**
@@ -89,15 +121,28 @@ public class HitQueryContext {
     }
 
     /**
-     * Get the names of the captured groups, in index order.
+     * Get the match infos definitions.
      *
-     * @return the list of names
+     * The list is in index order.
+     *
+     * @return the list of match infos
      */
-    public List<String> getMatchInfoNames() {
-        return Collections.unmodifiableList(matchInfoNames);
+    public List<MatchInfo.Def> getMatchInfoDefs() {
+        return Collections.unmodifiableList(matchInfoDefs);
     }
 
-    public int getMatchInfoRegisterNumber() {
-        return numberOfTimesMatchInfoRegistered;
+    /**
+     * Get the field for this part of the query.
+     *
+     * Used for parallel corpora.
+     *
+     * @return the field this part of the query searches
+     */
+    public String getField() {
+        return field;
+    }
+
+    public String getDefaultField() {
+        return defaultField;
     }
 }

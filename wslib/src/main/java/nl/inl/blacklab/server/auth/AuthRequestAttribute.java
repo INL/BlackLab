@@ -18,15 +18,27 @@ public class AuthRequestAttribute implements AuthMethod {
     static final Logger logger = LogManager.getLogger(AuthRequestAttribute.class);
 
     private String attributeName = null;
+    private enum AttributeType {
+        ATTRIBUTE,
+        HEADER,
+        PARAMETER
+    }
+    private AttributeType type = AttributeType.ATTRIBUTE;
 
     public AuthRequestAttribute(Map<String, Object> parameters) {
         Object parName = parameters.get("attributeName");
+        Object type = parameters.get("attributeType");
+        if (type == null) type = parameters.get("type");
+        if (type == null) type = "attribute";
         if (parName == null) {
-            logger.error("authSystem.attributeName parameter missing in blacklab-server.json");
-        } else {
-            this.attributeName = parName.toString();
-            if (parameters.size() > 1)
-                logger.warn("AuthRequestAttribute only takes one parameters (attributeName), but others were passed.");
+            logger.error("AuthRequestAttribute: attributeName parameter missing in blacklab-server.json");
+            return;
+        }
+
+        this.attributeName = parName.toString();
+        this.type = AttributeType.valueOf(type.toString().toUpperCase());
+        if (parameters.size() > 2) {
+            logger.warn("AuthRequestAttribute only takes two parameters (attributeName, attributeType|type [attribute, header, parameter]), but others were passed.");
         }
     }
 
@@ -39,7 +51,7 @@ public class AuthRequestAttribute implements AuthMethod {
         if (attributeName == null) {
             // (not configured correctly)
             logger.warn(
-                    "Cannot determine current user; missing authSystem.attributeName parameter in blacklab-server.json");
+                    "AuthRequestAttribute: cannot determine current user; missing attributeName parameter in blacklab-server.json");
             return User.anonymous(sessionId);
         }
 
@@ -50,11 +62,10 @@ public class AuthRequestAttribute implements AuthMethod {
         if (userId == null || userId.length() == 0) {
             return User.anonymous(sessionId);
         }
-        return User.loggedIn(userId, sessionId);
+        return User.fromIdAndSessionId(userId, sessionId);
     }
 
     protected String getUserId(UserRequest request) {
-
         String userId = null;
 
         // Overridden in URL?
@@ -64,12 +75,19 @@ public class AuthRequestAttribute implements AuthMethod {
         }
 
         if (userId == null) {
-            Object attribute = request.getAttribute(attributeName);
-            if (attribute != null)
-                userId = attribute.toString();
+            switch (this.type) {
+                case ATTRIBUTE:
+                    userId = request.getAttribute(attributeName).toString();
+                    break;
+                case HEADER:
+                    userId = request.getHeader(attributeName);
+                    break;
+                case PARAMETER:
+                    userId = request.getParameter(attributeName);
+                    break;
+            }
         }
 
         return userId;
     }
-
 }

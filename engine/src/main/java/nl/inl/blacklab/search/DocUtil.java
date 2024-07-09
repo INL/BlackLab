@@ -2,6 +2,7 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -264,30 +265,50 @@ public class DocUtil {
         int startAtChar = startEndCharPos[0];
         int endAtChar = startEndCharPos[1];
         String content = contentsByCharPos(index, docId, null, field, startAtChar, endAtChar);
+        int highlightFromOffset = startAtChar < 0 ? 0 : startAtChar;
+        boolean fixUnbalancedTags = startAtWord != -1 || endAtWord != -1; // fix required if part of content
+        return highlightContent(index, docId, hits, fixUnbalancedTags, highlightFromOffset, content);
+    }
 
-        boolean wholeDocument = startAtWord == -1 && endAtWord == -1;
-        boolean mustFixUnbalancedTags = !wholeDocument;
-
+    private static String highlightContent(BlackLabIndex index, int docId, Hits hits, boolean fixUnbalancedTags,
+            int highlightFromOffset, String content) {
         // Do we have anything to highlight, or do we have an XML fragment that needs balancing?
         ResultsStats hitsStats = hits.hitsStats();
-        if (hitsStats.processedAtLeast(1) || mustFixUnbalancedTags) {
+        if (hitsStats.processedAtLeast(1) || fixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitSpans = null;
             if (hitsStats.processedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
                 hitSpans = getCharacterOffsets(index, docId, hits);
             XmlHighlighter hl = new XmlHighlighter();
             hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
-            if (startAtChar == -1)
-                startAtChar = 0;
-            content = hl.highlight(content, hitSpans, startAtChar);
+            content = hl.highlight(content, hitSpans, highlightFromOffset);
         }
         return content;
     }
 
+    /**
+     * Highlight entire document (version).
+     *
+     * This takes parallel corpora into account, where a single contents store for the entire
+     * input file containing all the versions exists, and each version stores a start and end offset.
+     *
+     * @param index our index
+     * @param contentsField field to get contents for
+     * @param docId document id
+     * @param hits hits to highlight
+     * @return document with highlighting
+     */
+    public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, Hits hits) {
+        Document doc = index.luceneDoc(docId);
+        String contents = index.contentAccessor(contentsField).getDocumentContents(docId, doc);
+        return highlightContent(index, docId, hits, false, 0, contents);
+    }
+
     private static String[] getSubstringsFromDocument(BlackLabIndex index,
-            int docId, Document d, Field field, int[] starts, int[] ends) {
+            int docId, Document d, AnnotatedField field, int[] starts, int[] ends) {
         try {
-            if (!field.hasContentStore()) {
+            ContentAccessor contentAccessor = index.contentAccessor(field);
+            if (contentAccessor == null) {
                 // No special content accessor set; assume a non-annotated stored field
                 String[] content;
                 String fieldName = field.contentsFieldName();
@@ -302,7 +323,7 @@ public class DocUtil {
             } else {
                 // Content accessor set. Use it to retrieve the content.
                 d = fetchDocumentIfRequired(index, docId, d, field);
-                return index.contentAccessor(field).getSubstringsFromDocument(docId, d, starts, ends);
+                return contentAccessor.getSubstringsFromDocument(docId, d, starts, ends);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -324,7 +345,7 @@ public class DocUtil {
      * @return concordances
      */
     public static List<Concordance> makeConcordancesFromContentStore(BlackLabIndex index, int docId,
-            Field field, int[] startsOfWords, int[] endsOfWords, XmlHighlighter hl) {
+            AnnotatedField field, int[] startsOfWords, int[] endsOfWords, XmlHighlighter hl) {
         // Determine starts and ends
         int n = startsOfWords.length / 2;
         int[] starts = new int[n];
@@ -375,9 +396,10 @@ public class DocUtil {
      * @param d Lucene document if available, otherwise null
      * @return contents
      */
-    public static String contents(BlackLabIndex index, int docId, Document d) {
+    public static String contents(BlackLabIndex index, AnnotatedField field, int docId, Document d) {
+        if (field == null)
+            field = index.mainAnnotatedField();
         try {
-            Field field = index.mainAnnotatedField();
             if (!field.hasContentStore()) {
                 // Regular stored field
                 String fieldName = field.contentsFieldName();
@@ -390,8 +412,8 @@ public class DocUtil {
                 return content;
             } else {
                 d = fetchDocumentIfRequired(index, docId, d, field);
-                int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
-                return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
+                //int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
+                return index.contentAccessor(field).getDocumentContents(docId, d);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -407,11 +429,16 @@ public class DocUtil {
      * @param field field to get content for
      * @return Lucene document
      */
-    private static Document fetchDocumentIfRequired(BlackLabIndex index, int docId, Document d, Field field)
+    private static Document fetchDocumentIfRequired(BlackLabIndex index, int docId, Document d, AnnotatedField field)
             throws IOException {
-        if (d == null && index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
-            // We need the document (classic index format so we need to look op content store id)
-            d = index.reader().document(docId, Set.of(field.contentIdField()));
+        if (d == null) {
+            if (index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+                // We need the document (classic index format so we need to look op content store id)
+                d = index.reader().document(docId, Set.of(field.contentIdField()));
+            } else {
+                // Integrated index. Fetch doc start/end offset if present (parallel corpora).
+                d = index.reader().document(docId, Collections.emptySet());
+            }
         }
         return d;
     }

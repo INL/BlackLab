@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.datastream;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 
@@ -11,16 +12,18 @@ import nl.inl.blacklab.server.lib.results.ApiVersion;
  * the DataObject classes.
  */
 public abstract class DataStreamAbstract implements DataStream {
-    
-    public static DataStream create(DataFormat format, PrintWriter out, boolean prettyPrint, ApiVersion api) {
+
+    public static DataStream create(DataFormat format, boolean prettyPrint, ApiVersion api) {
         if (format == DataFormat.JSON)
-            return new DataStreamJson(out, prettyPrint);
+            return new DataStreamJson(prettyPrint);
         if (format == DataFormat.CSV)
-            return new DataStreamCsv(out, prettyPrint);
-        return new DataStreamXml(out, prettyPrint, api);
+            return new DataStreamCsv(prettyPrint);
+        return new DataStreamXml(prettyPrint, api);
     }
 
     protected final PrintWriter out;
+
+    private final StringWriter stringWriter;
 
     private int indent = 0;
 
@@ -30,9 +33,28 @@ public abstract class DataStreamAbstract implements DataStream {
 
     private final boolean prettyPrintPref;
 
-    public DataStreamAbstract(PrintWriter out, boolean prettyPrint) {
-        this.out = out;
+    public DataStreamAbstract(boolean prettyPrint) {
+        this.stringWriter = new StringWriter();
+        this.out = new PrintWriter(stringWriter);
         this.prettyPrintPref = this.prettyPrint = prettyPrint;
+    }
+
+    /**
+     * Get the output so far as a string.
+     * @return the output
+     */
+    @Override
+    public String getOutput() {
+        return stringWriter.toString();
+    }
+
+    /**
+     * Get the length of the output so far.
+     * @return the length
+     */
+    @Override
+    public int length() {
+        return stringWriter.toString().length();
     }
 
     public DataStreamAbstract print(String str) {
@@ -125,6 +147,12 @@ public abstract class DataStreamAbstract implements DataStream {
     public DataStream plain(String value) {
         return print(value);
     }
+
+    /* NOTE: the attrEntry methods that follow mirror the entry methods above.
+     *       Both sets of methods are intended only for entries in maps.
+     *       The attrEntry versions are specifically meant for the case where you're not sure
+     *       your keys are valid XML element names. They will use a different XML serialization using
+     *       an attribute for the key. */
 
     /**
      * Output an XML fragment, either as a string

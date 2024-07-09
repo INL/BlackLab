@@ -5,11 +5,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * A (variable-size) list of captured relations, e.g. all relations in a sentence.
  */
-public class RelationListInfo implements MatchInfo {
+public class RelationListInfo extends MatchInfo {
+
+    public static RelationListInfo create(List<RelationInfo> relations, String overriddenField) {
+        return new RelationListInfo(relations, overriddenField);
+    }
 
     List<RelationInfo> relations;
 
@@ -17,7 +22,8 @@ public class RelationListInfo implements MatchInfo {
 
     private final Integer spanEnd;
 
-    public RelationListInfo(List<RelationInfo> relations) {
+    private RelationListInfo(List<RelationInfo> relations, String overriddenField) {
+        super(overriddenField);
         this.relations = new ArrayList<>(relations);
         spanStart = relations.stream().map(RelationInfo::getSpanStart).min(Integer::compare).orElse(-1);
         spanEnd = relations.stream().map(RelationInfo::getSpanEnd).max(Integer::compare).orElse(-1);
@@ -37,15 +43,15 @@ public class RelationListInfo implements MatchInfo {
     }
 
     @Override
-    public String toString() {
-        return "listrel(" + relations + ")";
+    public String toString(String defaultField) {
+        return "listrel(" + relations.stream().map(r -> r.toString(defaultField)).collect(Collectors.joining(", ")) + ")";
     }
 
     @Override
     public int compareTo(MatchInfo o) {
         if (o instanceof RelationListInfo)
             return compareTo((RelationListInfo) o);
-        return MatchInfo.super.compareTo(o);
+        return super.compareTo(o);
     }
 
     public int compareTo(RelationListInfo o) {

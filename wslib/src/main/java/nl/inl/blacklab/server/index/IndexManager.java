@@ -161,13 +161,14 @@ public class IndexManager {
     /**
      * Return the specified user's collection dir.
      *
-     * @param userId the user
+     * @param user the user
      * @return the user's collection dir, or null if it can't be read or created
      */
-    private File getUserCollectionDir(String userId) {
-        if (userCollectionsDir == null || userId == null || userId.isEmpty())
+    private File getUserCollectionDir(User user) {
+        assert user != null;
+        if (userCollectionsDir == null || !user.isLoggedIn() || user.getId().isEmpty())
             return null;
-        File dir = new File(userCollectionsDir, User.getUserDirNameFromId(userId));
+        File dir = new File(userCollectionsDir, user.getUserDirName());
         if (!dir.exists())
             dir.mkdir();
         if (!dir.canRead()) {
@@ -182,9 +183,9 @@ public class IndexManager {
         try {
             if (userIdFile.exists()) {
                 String readUserId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8);
-                assert userId.equals(readUserId);
+                assert user.getId().equals(readUserId);
             } else {
-                FileUtils.writeStringToFile(userIdFile, userId, StandardCharsets.UTF_8);
+                FileUtils.writeStringToFile(userIdFile, user.getId(), StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -205,7 +206,7 @@ public class IndexManager {
         try {
             if (!indices.containsKey(indexId)) {
                 if (Index.isUserIndex(indexId))
-                    loadUserIndices(Index.getUserId(indexId));
+                    loadUserIndices(User.fromId(Index.getUserId(indexId)));
                 else
                     loadPublicIndices();
             }
@@ -241,8 +242,8 @@ public class IndexManager {
             throw new BadRequest("INDEX_ALREADY_EXISTS",
                     "Could not create index. Index already exists.");
 
-        String userId = Index.getUserId(indexId);
-        if (!userId.equals(user.getUserId()) && !user.isSuperuser())
+        User indexOwner = Index.getUser(indexId);
+        if (!indexOwner.getId().equals(user.getId()) && !user.isSuperuser())
             throw new NotAuthorized("Could not create index. Can only create your own private indices.");
         String indexName = Index.getIndexName(indexId);
 
@@ -257,7 +258,7 @@ public class IndexManager {
                             + maxNumberOfIndices + " indices.");
 
 
-        File userDir = getUserCollectionDir(userId);
+        File userDir = getUserCollectionDir(indexOwner);
         if (userDir == null || !userDir.canWrite())
             throw new InternalServerError("Could not create index. Cannot write in user dir: " + userDir, "CANNOT_WRITE_USER_DIR");
 
@@ -311,7 +312,7 @@ public class IndexManager {
             return true;
         }
         return userCollectionsDir != null &&
-            (getAvailablePrivateIndices(user.getUserId()).size() <= maxNumberOfIndices || user.isSuperuser());
+            (getAvailablePrivateCorporaOwnedBy(user).size() <= maxNumberOfIndices || user.isSuperuser());
     }
 
     /**
@@ -334,7 +335,7 @@ public class IndexManager {
         Index index = getIndex(indexId);
 
         File indexDir = index.getDir();
-        File userDir = getUserCollectionDir(index.getUserId());
+        File userDir = getUserCollectionDir(index.getUser());
 
         // Generally these should never happen as they would have been triggered when the Index was first loaded
         // But, it can't hurt to be certain
@@ -394,7 +395,7 @@ public class IndexManager {
         try {
             if (!indices.containsKey(indexId)) {
                 if (Index.isUserIndex(indexId))
-                    loadUserIndices(Index.getUserId(indexId));
+                    loadUserIndices(Index.getUser(indexId));
                 else
                     loadPublicIndices();
             }
@@ -427,34 +428,57 @@ public class IndexManager {
      * Get all public indices plus all indices owned by this user. Attempts to load
      * any new public indices and indices owned by this user.
      *
-     * @param userId the user
+     * @param user the user
      * @return the list of indices
      */
-    public synchronized List<Index> getAllAvailableIndices(String userId) {
+    public synchronized List<Index> getAllAvailableCorpora(User user) {
         List<Index> availableIndices = new ArrayList<>();
-        availableIndices.addAll(getAvailablePrivateIndices(userId));
-        availableIndices.addAll(getAvailablePublicIndices());
+        availableIndices.addAll(getAvailablePublicCorpora());
+        availableIndices.addAll(getAvailablePrivateCorporaOwnedBy(user));
+        availableIndices.addAll(getPrivateCorporaSharedWith(user));
+        String ownPrefix = user.isLoggedIn() ? user.getId() + ":" : null;
+        availableIndices.sort((o1, o2) -> {
+            // Sort public before private
+            boolean o1priv = o1.isUserIndex();
+            boolean o2priv = o2.isUserIndex();
+            if (o1priv != o2priv)
+                return o1priv ? 1 : -1;
 
-        availableIndices.sort(Index.COMPARATOR);
+            // Sort own indexes before other's
+            if (ownPrefix != null) {
+                boolean isOwn1 = o1.getUserId() == null ? false : o1.getUserId().startsWith(ownPrefix);
+                boolean isOwn2 = o2.getUserId() == null ? false : o2.getUserId().startsWith(ownPrefix);
+                if (isOwn1 != isOwn2)
+                    return isOwn1 ? -1 : 1;
+            }
+
+            // Sort rest case-insensitively
+            return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
+        });
         return availableIndices;
+    }
+
+    private List<Index> getPrivateCorporaSharedWith(User user) {
+        return getAllLoadedCorpora().stream().filter(i -> i.sharedWith(user)).collect(Collectors.toList());
     }
 
     /**
      * Return the list of private indices available for searching. Attempts to load
      * any new indices for this user.
      *
-     * @param userId the user
+     * @param user the user
      * @return the list of indices
      */
-    public synchronized Collection<Index> getAvailablePrivateIndices(String userId) {
-        if (userId == null)
+    public synchronized Collection<Index> getAvailablePrivateCorporaOwnedBy(User user) {
+        assert user != null;
+        if (!user.isLoggedIn())
             return Collections.emptyList();
 
-        loadUserIndices(userId);
+        loadUserIndices(user);
 
         Set<Index> availableIndices = new HashSet<>();
         for (Index i : indices.values()) {
-            if (userId.equals(i.getUserId()))
+            if (user.getId().equals(i.getUserId()))
                 availableIndices.add(i);
         }
 
@@ -467,7 +491,7 @@ public class IndexManager {
      *
      * @return the list of indices
      */
-    public synchronized Collection<Index> getAvailablePublicIndices() {
+    public synchronized Collection<Index> getAvailablePublicCorpora() {
         Set<Index> availableIndices = new HashSet<>();
 
         loadPublicIndices();
@@ -586,12 +610,12 @@ public class IndexManager {
      *
      * @param userId the user for which to load indices
      */
-    private synchronized void loadUserIndices(String userId) {
-        File userDir = getUserCollectionDir(userId);
+    private synchronized void loadUserIndices(User user) {
+        File userDir = getUserCollectionDir(user);
         if (userDir == null)
             return;
 
-        loadUserCorporaInDir(userId, userDir);
+        loadUserCorporaInDir(user, userDir);
     }
 
     /**
@@ -610,7 +634,7 @@ public class IndexManager {
             if (userIdFile.exists() && userIdFile.canRead()) {
                 try {
                     String userId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
-                    loadUserCorporaInDir(userId, userDir);
+                    loadUserCorporaInDir(User.fromId(userId), userDir);
                 } catch (IOException e) {
                     throw new BlackLabRuntimeException(e);
                 }
@@ -618,7 +642,7 @@ public class IndexManager {
         }
     }
 
-    private synchronized void loadUserCorporaInDir(String userId, File userDir) {
+    private synchronized void loadUserCorporaInDir(User user, File userDir) {
         /*
          * User indices are stored as a flat list of directories inside the user's private directory like so:
          * 	userDir
@@ -642,7 +666,7 @@ public class IndexManager {
                 continue;
 
             try {
-                String indexId = Index.getIndexId(f.getName(), userId);
+                String indexId = Index.getIndexId(f.getName(), user.getId());
                 if (indices.containsKey(indexId))
                     continue;
 

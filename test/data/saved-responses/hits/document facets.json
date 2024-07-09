@@ -37,6 +37,7 @@
     "numberOfHitsRetrieved": 21,
     "pattern": {
       "bcql": "'the'",
+      "fieldName": "contents",
       "json": {
         "type": "regex",
         "value": "the"

@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 
 # Build plugin JAR
-RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
+RUN --mount=type=cache,target=/root/.m2 mvn -q --no-transfer-progress package
 
 
 ## Stage 1: Solr

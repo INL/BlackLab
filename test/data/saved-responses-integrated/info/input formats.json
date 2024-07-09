@@ -115,6 +115,7 @@
   },
   "user": {
     "canCreateIndex": false,
+    "debugMode": false,
     "loggedIn": false
   }
 }

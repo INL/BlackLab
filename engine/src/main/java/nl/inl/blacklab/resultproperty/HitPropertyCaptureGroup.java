@@ -1,55 +1,82 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.List;
 import java.util.Objects;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on a matched group.
  */
 public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
-    static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        HitPropertyCaptureGroup hp = deserializeProp(HitPropertyCaptureGroup.class, index, field, info);
+    public static final String ID = "capture"; //TODO: deprecate, change to matchinfo? (to synch with response)
 
-        // Decode group name
-        String[] parts = PropertySerializeUtil.splitParts(info);
-        hp.groupName = parts.length > 2 ? parts[2] : "";
-
-        return hp;
+    static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        String matchInfoName = i.extraParam(0);
+        String strSpanMode = i.extraParam(1); // source, target or full(default)
+        RelationInfo.SpanMode spanMode = strSpanMode.toLowerCase().matches("source|target|full") ?
+                RelationInfo.SpanMode.fromCode(strSpanMode) : RelationInfo.SpanMode.FULL_SPAN;
+        return new HitPropertyCaptureGroup(index, i.annotation, i.sensitivity, matchInfoName, spanMode);
     }
 
-    String groupName;
+    /** Name of match info to use */
+    private String groupName;
 
-    int groupIndex = -1;
+    /** Part of the match info to use. Uses the full span by default, but can also
+     *  use only the source of a relation or only the target. (full span of relation includes
+     *  both source and target) */
+    private RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.FULL_SPAN;
+
+    private int groupIndex = -1;
 
     HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+        super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName));
         groupName = prop.groupName;
+        spanMode = prop.spanMode;
 
         // Determine group index. We don't use the one from prop (if any), because
         // index might be different for different hits object.
-        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoNames().indexOf(groupName);
+        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoIndex(groupName);
         if (groupIndex < 0)
-            throw new IllegalArgumentException("Unknown group name '" + groupName + "'");
+            throw new MatchInfoNotFound(groupName);
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
-    @SuppressWarnings("unused")
+    /**
+     * Determine what field the given match info is from.
+     *
+     * Only relevant for parallel corpora, where you can capture information from
+     * other fields.
+     *
+     * @param hits     the hits object
+     * @param groupName the match info group name
+     * @return the field name
+     */
+    private static String determineMatchInfoField(Hits hits, String groupName) {
+        return hits.matchInfoDefs().stream()
+                .filter(d -> d.getName().equals(groupName))
+                .map(d -> d.getField())
+                .findFirst().orElse(null);
+    }
+
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        this(index, annotation, sensitivity, "");
+        this(index, annotation, sensitivity, "", RelationInfo.SpanMode.FULL_SPAN);
     }
 
-    public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName) {
-        super("captured group", "capture", index, annotation, sensitivity, false);
+    public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName, RelationInfo.SpanMode spanMode) {
+        super("captured group", ID, index, annotation, sensitivity, false);
         this.groupName = groupName;
+        this.spanMode = spanMode;
     }
 
     @Override
@@ -61,8 +88,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     public void fetchContext() {
         fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
             MatchInfo group = hit.matchInfo()[groupIndex];
-            starts[indexInArrays] = group.getSpanStart();
-            ends[indexInArrays] = group.getSpanEnd();
+            starts[indexInArrays] = group == null ? 0 : group.spanStart(spanMode);
+            ends[indexInArrays] = group == null ? 0 : group.spanEnd(spanMode);
         });
     }
 
@@ -81,11 +108,12 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         if (!super.equals(o))
             return false;
         HitPropertyCaptureGroup that = (HitPropertyCaptureGroup) o;
-        return Objects.equals(groupName, that.groupName);
+        return groupIndex == that.groupIndex && Objects.equals(groupName, that.groupName)
+                && spanMode == that.spanMode;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), groupName);
+        return Objects.hash(super.hashCode(), groupName, spanMode, groupIndex);
     }
 }

@@ -16,6 +16,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo.Def;
 
 /**
  * A list of hits, optionally with captured groups.
@@ -56,8 +57,8 @@ public interface Hits extends Results<Hit, HitProperty> {
         return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds, null), null);
     }
 
-    static Hits list(QueryInfo queryInfo, HitsInternal hits, List<String> matchInfoNames) {
-        return new HitsList(queryInfo, hits, matchInfoNames);
+    static Hits list(QueryInfo queryInfo, HitsInternal hits, List<MatchInfo.Def> matchInfoDefs) {
+        return new HitsList(queryInfo, hits, matchInfoDefs);
     }
 
     static Hits list(
@@ -68,7 +69,7 @@ public interface Hits extends Results<Hit, HitProperty> {
             long hitsCounted,
             long docsRetrieved,
             long docsCounted,
-            List<String> matchInfoNames,
+            List<MatchInfo.Def> matchInfoDefs,
             boolean ascendingLuceneDocIds) {
         return new HitsList(
                 queryInfo,
@@ -78,7 +79,7 @@ public interface Hits extends Results<Hit, HitProperty> {
                 hitsCounted,
                 docsRetrieved,
                 docsCounted,
-                matchInfoNames,
+                matchInfoDefs,
                 ascendingLuceneDocIds);
     }
 
@@ -297,7 +298,17 @@ public interface Hits extends Results<Hit, HitProperty> {
      */
     Hits window(Hit hit);
 
-    List<String> matchInfoNames();
+    /**
+     * Type of each of our match infos.
+     *
+     * @return list of match info definitions
+     */
+    List<MatchInfo.Def> matchInfoDefs();
+
+    default int matchInfoIndex(String name) {
+        return matchInfoDefs().stream().filter(def -> def.getName().equals(name)).map(Def::getIndex)
+                .findFirst().orElse(-1);
+    }
 
     boolean hasMatchInfo();
 
@@ -353,7 +364,7 @@ public interface Hits extends Results<Hit, HitProperty> {
         for (int i = 0; i < matchInfo.length; i++) {
             if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
                 continue;
-            map.put(matchInfoNames().get(i), matchInfo[i]);
+            map.put(matchInfoDefs().get(i).getName(), matchInfo[i]);
         }
         return map;
     }

@@ -134,7 +134,7 @@ public class RequestHandlerStaticResponse extends RequestHandler {
             else
                 rs.getDataStream().internalError(internalErrorCode);
         } else if (isError) {
-            rs.getDataStream().error(code, msg);
+            rs.getDataStream().error(code, msg, null);
         } else {
             rs.getDataStream().statusObject(code, msg);
         }

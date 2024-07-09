@@ -1,6 +1,7 @@
 package nl.inl.util;
 
 import java.text.Normalizer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -35,8 +36,8 @@ public final class StringUtil {
     private static final Pattern PATT_REGEX_CHARACTERS_JAVA = Pattern.compile("([|\\\\?!*+()<>\\[\\]\\-=^${}.])");
 
     /** Any characters that should be escaped when constructing a Lucene regular expression matching a value.
-        (compared to Java, doesn't escape &lt;&gt;-=!^$) but does escape &quot;) */
-    private static final Pattern PATT_REGEX_CHARACTERS_LUCENE = Pattern.compile("([|\\\\?*+()\\[\\]\\{}.\"])");
+        (compared to Java, doesn't escape &lt;&gt;-=!^$) but does escape &quot; and <) */
+    private static final Pattern PATT_REGEX_CHARACTERS_LUCENE = Pattern.compile("([|\\\\?*+()\\[\\]\\{}\\<.\"])");
 
     /**
      * Escape regex special characters
@@ -275,5 +276,47 @@ public final class StringUtil {
 
     public static String removeCharsIgnoredByInsensitiveCollator(String s) {
         return s.replaceAll("[\t\n\r" + CHAR_EM_SPACE + CHAR_NON_BREAKING_SPACE + CHAR_DELETE + "]", "");
+    }
+
+    /** A backslash followed by any other character (which will be captured). */
+    private static final Pattern ANY_BACKSLASH_ESCAPED_CHAR = Pattern.compile("\\\\(.)");
+
+    /** Unescape backslash-escaped single or double quote.
+     */
+    public static String unescapeQuote(String input, String quoteToUnescape) {
+        assert quoteToUnescape.equals("'") || quoteToUnescape.equals("\"") : "only meant for quotes";
+        StringBuilder result = new StringBuilder();
+        Matcher matcher = ANY_BACKSLASH_ESCAPED_CHAR.matcher(input);
+        while (matcher.find()) { // NOTE: will NOT find overlapping matches, which is exactly what we want!
+            String escapedChar = matcher.group(1);
+            // See if we want to keep this character escaped or unescape it
+            String optionalBackslash = escapedChar.equals(quoteToUnescape) ? "" : "\\";
+            matcher.appendReplacement(result, Matcher.quoteReplacement(optionalBackslash + escapedChar));
+        }
+        matcher.appendTail(result); // add the final bit
+        return result.toString();
+    }
+
+    /** A character optionally preceded by a backslash */
+    private static final Pattern REGULAR_OR_ESCAPED_CHAR = Pattern.compile("(\\\\?)(.)");
+
+    /** Backslash-escape single or double quote.
+     */
+    public static String escapeQuote(String input, String quoteToEscape) {
+        assert quoteToEscape.equals("'") || quoteToEscape.equals("\"") : "only meant for quotes";
+        StringBuilder result = new StringBuilder();
+        Matcher matcher = REGULAR_OR_ESCAPED_CHAR.matcher(input);
+        while (matcher.find()) { // NOTE: will NOT find overlapping matches, which is exactly what we want!
+            String optEscape = matcher.group(1); // either a backslash or empty string; we can just double it below
+            String charFound = matcher.group(2);
+            // See if we want to escape this character.
+            // If yes, and the character was already escaped, also escape that backslash.
+            // (so ' becomes \' but \' becomes \\')
+            // This ensures that unescaping later will work correctly.
+            String optionalBackslash = charFound.equals(quoteToEscape) ? "\\" : "";
+            matcher.appendReplacement(result, Matcher.quoteReplacement(optEscape + optionalBackslash + charFound));
+        }
+        matcher.appendTail(result); // add the final bit
+        return result.toString();
     }
 }

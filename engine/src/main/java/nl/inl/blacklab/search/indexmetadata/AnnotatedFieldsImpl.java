@@ -28,15 +28,13 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     private final Map<String, AnnotatedFieldImpl> annotatedFields;
     
     /**
-     * The main contents field in our index. This is either the annotated field with
-     * the name "contents", or if that doesn't exist, the first annotated field found.
+     * The main contents field in our index. This is the first annotated field found.
      */
     @XmlTransient
     private AnnotatedFieldImpl mainAnnotatedField;
 
     /**
-     * The main contents field in our index. This is either the annotated field with
-     * the name "contents", or if that doesn't exist, the first annotated field found.
+     * The main contents field in our index. This is the first annotated field found.
      */
     @JsonProperty("mainAnnotatedField")
     private String mainAnnotatedFieldName;
@@ -81,7 +79,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     @Override
     public AnnotatedFieldImpl get(String fieldName) {
         if (!annotatedFields.containsKey(fieldName))
-            throw new IllegalArgumentException("Annotated field '" + fieldName + "' not found!");
+            return null;
         return annotatedFields.get(fieldName);
     }
 
@@ -104,7 +102,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
 
     public void put(String fieldName, AnnotatedFieldImpl fieldDesc) {
         annotatedFields.put(fieldName, fieldDesc);
-        if ( (mainAnnotatedField == null && mainAnnotatedFieldName == null) || fieldName.equals("contents")) {
+        if (mainAnnotatedField == null && mainAnnotatedFieldName == null) {
             mainAnnotatedFieldName = fieldName;
             mainAnnotatedField = fieldDesc;
         }

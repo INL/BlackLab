@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -25,9 +26,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -85,7 +86,7 @@ public class IndexTool {
                 switch (name) {
                 case "index-type":
                     if (i + 1 == args.length || !List.of("integrated", "external").contains(args[i + 1].toLowerCase())) {
-                        System.err.println("--index-type needs a parameter: integrated or external.");
+                        System.err.println("--index-type needs a parameter: integrated (the default) or external (legacy index type).");
                         usage();
                         return;
                     }
@@ -93,7 +94,7 @@ public class IndexTool {
                     i++;
                     break;
                 case "integrate-external-files":
-                    // NOTE: deprecated, use  --index-type integrated  instead
+                    // NOTE: deprecated; this is the default (or use  --index-type external  to use the legacy variant)
                     if (i + 1 == args.length || !List.of("true", "false").contains(args[i + 1].toLowerCase())) {
                         System.err.println("--integrate-external-files needs a parameter: true or false.");
                         usage();
@@ -291,7 +292,7 @@ public class IndexTool {
         //  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
         //  and the parent(s) of the input and index dirs)
         File currentWorkingDir = new File(System.getProperty("user.dir"));
-        List<File> formatDirs = new ArrayList<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
+        Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
         if (!formatDirs.contains(indexDirParent))
             formatDirs.add(indexDirParent);
 
@@ -377,7 +378,7 @@ public class IndexTool {
 
             String indexInfo =
                     "documentCount: " + index.metadata().documentCount() + "\n" +
-                    "tokenCount: " + index.metadata().tokenCount() + "\n";
+                    "tokenCount: " + index.metadata().tokenCount() + "\n"; // TODO: per field
             File indexInfoFile = new File(indexDir, "indexinfo.yaml");
             System.out.println("Writing " + indexInfoFile);
             FileUtils.write(indexInfoFile, indexInfo, StandardCharsets.UTF_8);
@@ -434,7 +435,7 @@ public class IndexTool {
                         + "  --format-dir <d>               Look in directory <d> for formats (i.e. .blf.yaml files)\n"
                         + "  --nothreads                    Disable multithreaded indexing (enabled by default)\n"
                         + "  --threads <n>                  Number of threads to use\n"
-                        + "  --index-type <t>               Set the index type, external (old) or integrated (new)\n"
+                        + "  --index-type <t>               Set the index type, integrated (new, default) or external (legacy)\n"
                         + "  --create-empty                 Create an empty index (ignore inputdir param)\n"
                         + "\n"
                         + "Available input format configurations:");

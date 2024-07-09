@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.datastream;
 
-import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,8 +22,8 @@ public class DataStreamJson extends DataStreamAbstract {
     /** First entry in map/list: don't print separator */
     boolean firstEntry = true;
 
-    public DataStreamJson(PrintWriter out, boolean prettyPrint) {
-        super(out, prettyPrint);
+    public DataStreamJson(boolean prettyPrint) {
+        super(prettyPrint);
     }
 
     DataStream openbl(String str) {

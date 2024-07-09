@@ -20,14 +20,18 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryDefaultValue extends BLSpanQuery {
 
-    public SpanQueryDefaultValue(QueryInfo queryInfo) {
+    private final String luceneField;
+
+    public SpanQueryDefaultValue(QueryInfo queryInfo, String luceneField) {
         super(queryInfo);
         this.guarantees = SpanGuarantees.NONE;
+        this.luceneField = luceneField;
     }
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        throw new BlackLabRuntimeException("SpanQueryDefaultValue must not occur here (should have been replaced)");
+        return SpanQueryAnyToken.anyNGram(queryInfo, luceneField);
+        //throw new BlackLabRuntimeException("SpanQueryDefaultValue must not occur here (should have been replaced)");
     }
 
     @Override

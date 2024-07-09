@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -59,6 +60,33 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     BlackLabIndexExternal(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
         super(indexDir.getName(), blackLab, null, indexDir, indexMode, createNewIndex, null, indexTemplateFile);
+    }
+
+    /**
+     * If this directory contains any external index files/subdirs, delete them.
+     *
+     * Doesn't delete the Lucene index (Lucene does this when creating a new index in a dir).
+     *
+     * @param indexDir the directory to clean up
+     */
+    public static void deleteOldIndexFiles(File indexDir) {
+        if (VersionFile.exists(indexDir)) {
+            for (File f: indexDir.listFiles()) {
+                if (f.getName().equals(VersionFile.FILE_NAME)) {
+                    if (!f.delete())
+                        logger.warn("Could not delete version file " + f);
+                } else if (f.getName().matches("(fi|cs)_.+|indexmetadata\\.(ya?ml|json)")) {
+                    try {
+                        if (f.isDirectory())
+                            FileUtils.deleteDirectory(f);
+                        else if (!f.delete())
+                            logger.warn("Could not delete index metadata file: " + f);
+                    } catch (IOException e) {
+                        logger.warn("Could not delete subdirectory " + f);
+                    }
+                }
+            }
+        }
     }
 
     @Override

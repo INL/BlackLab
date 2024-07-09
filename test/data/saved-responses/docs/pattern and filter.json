@@ -12,6 +12,12 @@
         ],
         "title": [
           "service encounter about getting an address printed out"
+        ],
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokenCount": 164
+          }
         ]
       },
       "docPid": "PBsve435",
@@ -418,6 +424,7 @@
     "numberOfHitsRetrieved": 9,
     "pattern": {
       "bcql": "'the'",
+      "fieldName": "contents",
       "json": {
         "type": "regex",
         "value": "the"

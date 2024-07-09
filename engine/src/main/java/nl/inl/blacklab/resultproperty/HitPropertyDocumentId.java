@@ -10,9 +10,7 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyDocumentId extends HitProperty {
 
-    static HitPropertyDocumentId deserializeProp() {
-        return new HitPropertyDocumentId();
-    }
+    public static final String ID = "docid";
 
     HitPropertyDocumentId(HitPropertyDocumentId prop, Hits hits, boolean invert) {
         super(prop, hits, invert);
@@ -46,7 +44,7 @@ public class HitPropertyDocumentId extends HitProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "docid";
+        return serializeReverse() + ID;
     }
 
     @Override

@@ -1,9 +1,16 @@
 {
   "description": "",
   "displayName": "test",
+  "documentCount": 3,
   "documentFormat": "voice-tei",
   "indexName": "test",
   "status": "available",
   "timeModified": "VALUE_REMOVED",
-  "tokenCount": 766
+  "tokenCount": 766,
+  "tokenCounts": [
+    {
+      "fieldName": "contents",
+      "tokenCount": 766
+    }
+  ]
 }

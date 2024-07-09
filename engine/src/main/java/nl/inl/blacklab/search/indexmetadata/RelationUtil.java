@@ -7,18 +7,32 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.QueryExecutionContext;
 
 public class RelationUtil {
 
     /** Relation class used for inline tags. Deliberately obscure to avoid collisions with "real" relations. */
-    public static final String RELATION_CLASS_INLINE_TAG = "__tag";
+    public static final String CLASS_INLINE_TAG = "__tag";
 
-    /** Relation class to use for dependency relations. */
-    public static final String RELATION_CLASS_DEPENDENCY = "dep";
+    /** Relation class to use for relations if not specified (both during indexing and searching). */
+    public static final String DEFAULT_CLASS = "rel";
+
+    /** Relation class to use for dependency relations (by convention). */
+    public static final String CLASS_DEPENDENCY = "dep";
+
+    /** Relation class to use for alignment relations in parallel corpus (by convention).
+     * Note that this will be suffixed with the target version, e.g. "al__de" for an alignment
+     * relation to the field "contents__de".
+     */
+    @SuppressWarnings("unused")
+    public static final String CLASS_ALIGNMENT = "al";
+
+    /** Default relation type: any */
+    public static final String ANY_TYPE_REGEX = ".*";
 
     /** Separator between relation class (e.g. "__tag", "dep" for dependency relation, etc.) and relation type
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
-    public static final String RELATION_CLASS_TYPE_SEPARATOR = "::";
+    public static final String CLASS_TYPE_SEPARATOR = "::";
 
     /** Separator after relation type and attribute value in _relation annotation. */
     private static final String ATTR_SEPARATOR = "\u0001";
@@ -29,16 +43,26 @@ public class RelationUtil {
     /** Character before attribute name in _relation annotation. */
     private static final String CH_NAME_START = "\u0003";
 
+    /** An indexed term that ends with this character should not be counted, it is an extra search helper.
+     *  (used for relations, which are indexed with and without attributes so we can search faster if we don't
+     *   care about attributes)
+     */
+    static final String IS_OPTIMIZATION_INDICATOR = "\u0004";
+
     /**
      * Determine the term to index in Lucene for a relation.
      *
      * @param fullRelationType full relation type
      * @param attributes any attributes for this relation
+     * @param isOptimization is this an extra index term to help speed up search in some cases? Such terms should
+     *                not be counted when determining stats. This will be indicated in the term encoding.
      * @return term to index in Lucene
      */
-    public static String indexTerm(String fullRelationType, Map<String, String> attributes) {
+    public static String indexTerm(String fullRelationType, Map<String, String> attributes, boolean isOptimization) {
+        String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
+
         if (attributes == null || attributes.isEmpty())
-            return fullRelationType + ATTR_SEPARATOR;
+            return fullRelationType + ATTR_SEPARATOR + isOptSuffix;
 
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
@@ -48,7 +72,7 @@ public class RelationUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return fullRelationType + ATTR_SEPARATOR + attrPart;
+        return fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
     }
 
     /**
@@ -59,11 +83,15 @@ public class RelationUtil {
      *
      * @param fullRelationType full relation type
      * @param attributes any attributes for this relation
+     * @param isOptimization is this an extra index term to help speed up search in some cases? Such terms should
+     *                not be counted when determining stats. This will be indicated in the term encoding.
      * @return term to index in Lucene
      */
-    public static String indexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes) {
+    public static String indexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes,
+            boolean isOptimization) {
+        String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
         if (attributes == null)
-            return fullRelationType + ATTR_SEPARATOR;
+            return fullRelationType + ATTR_SEPARATOR + isOptSuffix;
 
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
@@ -71,16 +99,18 @@ public class RelationUtil {
                 .map(e -> e.getValue().stream()
                         .map( v -> tagAttributeIndexValue(e.getKey(), v,
                                     BlackLabIndex.IndexType.INTEGRATED))
-                        .collect(Collectors.joining()))
+                        .collect(Collectors.joining(" ")))
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return fullRelationType + ATTR_SEPARATOR + attrPart;
+        return fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
     }
 
     public static Map<String, String> attributesFromIndexedTerm(String indexedTerm) {
         int i = indexedTerm.indexOf(ATTR_SEPARATOR);
-        if (i < 0 || i == indexedTerm.length() - 1)
+        boolean isFinalChar = i == indexedTerm.length() - 1;
+        boolean isFinalCharBeforeOptIndicator = i == indexedTerm.length() - 2 && indexedTerm.charAt(i + 1) == IS_OPTIMIZATION_INDICATOR.charAt(0);
+        if (i < 0 || isFinalChar || isFinalCharBeforeOptIndicator)
             return Collections.emptyMap();
         Map<String, String> attributes = new HashMap<>();
         for (String attrPart: indexedTerm.substring(i + 1).split(ATTR_SEPARATOR)) {
@@ -94,6 +124,36 @@ public class RelationUtil {
     }
 
     /**
+     * Optionally surround a regular expression with parens.
+     *
+     * Necessary when concatenating certain regexes, e.g. ones that use the "|" operator.
+     *
+     * If it is already parenthesized, or clearly doesn't need parens
+     * (simple regexes like e.g. ".*" or "hello"), leave it as is.
+     *
+     * Not very smart, but it doesn't hurt to add parens.
+     *
+     * @param regex regular expression
+     * @return possibly parenthesized regex
+     */
+    private static String optParRegex(String regex) {
+        if (regex.startsWith("(") && regex.endsWith(")") || regex.matches("\\.[*+?]|\\w+"))
+            return regex;
+        return "(" + regex + ")";
+    }
+
+    /**
+     * Get the full relation type for a relation class and relation type regex.
+     *
+     * @param relClass relation class regex, e.g. "dep" for dependency relations
+     * @param type relation type regex, e.g. "nsubj" for a nominal subject
+     * @return full relation type regex
+     */
+    public static String fullTypeRegex(String relClass, String type) {
+        return optParRegex(relClass) + CLASS_TYPE_SEPARATOR + optParRegex(type);
+    }
+
+    /**
      * Get the full relation type for a relation class and relation type.
      *
      * @param relClass relation class, e.g. "dep" for dependency relations
@@ -101,17 +161,7 @@ public class RelationUtil {
      * @return full relation type
      */
     public static String fullType(String relClass, String type) {
-        return relClass + RELATION_CLASS_TYPE_SEPARATOR + type;
-    }
-
-    /**
-     * Get the full relation type for an inline tag.
-     *
-     * @param tagName tag name
-     * @return full relation type
-     */
-    public static String inlineTagFullType(String tagName) {
-        return fullType(RELATION_CLASS_INLINE_TAG, tagName);
+        return relClass + CLASS_TYPE_SEPARATOR + type;
     }
 
     /**
@@ -145,7 +195,8 @@ public class RelationUtil {
      * @param value attribute value
      * @return value to index for this attribute
      */
-    public static String tagAttributeIndexValue(boolean useOldEncoding, String name, String value, BlackLabIndex.IndexType indexType) {
+    public static String tagAttributeIndexValue(boolean useOldEncoding, String name, String value,
+            BlackLabIndex.IndexType indexType) {
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             // NOTE: this means that we cannot distinguish between attributes for
             // different start tags occurring at the same token position!
@@ -180,38 +231,72 @@ public class RelationUtil {
      * @param fullRelationType full relation type
      * @return relation class and relation type
      */
-    public static String[] classAndType(String fullRelationType) {
-        int sep = fullRelationType.indexOf(RELATION_CLASS_TYPE_SEPARATOR);
+    private static String[] classAndType(String fullRelationType) {
+        int sep = fullRelationType.indexOf(CLASS_TYPE_SEPARATOR);
         if (sep < 0)
             return new String[] { "", fullRelationType };
         return new String[] {
             fullRelationType.substring(0, sep),
-            fullRelationType.substring(sep + RELATION_CLASS_TYPE_SEPARATOR.length())
+            fullRelationType.substring(sep + CLASS_TYPE_SEPARATOR.length())
         };
+    }
+
+    /**
+     * Get the relation class from a full relation type [regex]
+     * <p>
+     * Relations are indexed with a full type, consisting of a relation class and a relation type.
+     * The class is used to distinguish between different groups of relations, e.g. inline tags
+     * and dependency relations.
+     *
+     * @param fullRelationType full relation type
+     * @return relation class
+     */
+    public static String classFromFullType(String fullRelationType) {
+        return classAndType(fullRelationType)[0];
+    }
+
+
+    /**
+     * Get the relation type from a full relation type [regex]
+     * <p>
+     * Relations are indexed with a full type, consisting of a relation class and a relation type.
+     * The type is used to distinguish between different types of relations within a class.
+     *
+     * @param fullRelationType full relation type
+     * @return relation type
+     */
+    public static String typeFromFullType(String fullRelationType) {
+        return classAndType(fullRelationType)[1];
     }
 
     /**
      * Determine the search regex for a relation.
      * <p>
-     * NOTE: both fullRelationType and attribute names/values are interpreted as regexes,
+     * NOTE: both fullRelationTypeRegex and attribute names/values are interpreted as regexes,
      * so any regex special characters you wish to find should be escaped!
      *
      * @param index index we're using (to check index flag IFL_INDEX_RELATIONS_TWICE)
-     * @param fullRelationType full relation type
+     * @param fullRelationTypeRegex full relation type
      * @param attributes any attribute criteria for this relation
      * @return regex to find this relation
      */
-    public static String searchRegex(BlackLabIndex index, String fullRelationType, Map<String, String> attributes) {
+    public static String searchRegex(BlackLabIndex index, String fullRelationTypeRegex, Map<String, String> attributes) {
 
         // Check if this is an older index that uses the attribute encoding without CH_NAME_START
         // (will be removed eventually)
         boolean useOldRelationsEncoding = index != null && index.metadata()
                 .indexFlag(IndexMetadataIntegrated.IFL_INDEX_RELATIONS_TWICE).isEmpty();
 
+        String typeRegex = optParRegex(fullRelationTypeRegex);
         if (attributes == null || attributes.isEmpty()) {
             // No attribute filters, so find the faster term that only has the relation type.
             // (for older encoding, just do a prefix query on the slower terms)
-            return fullRelationType + ATTR_SEPARATOR + (useOldRelationsEncoding ? ".*" : "");
+            if (useOldRelationsEncoding)
+                return typeRegex + ATTR_SEPARATOR + ".*";
+
+            // Note: we make the optimization indicator optional so older indexes (created with
+            // alpha version) don't break; remove this eventually.
+            return typeRegex + ATTR_SEPARATOR + "(" + IS_OPTIMIZATION_INDICATOR + ")?";
         }
 
         // Sort and concatenate the attribute names and values
@@ -222,6 +307,14 @@ public class RelationUtil {
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
         // The regex consists of the type part followed by the (sorted) attributes part.
-        return fullRelationType + ATTR_SEPARATOR + ".*" + attrPart + ".*";
+        return typeRegex + ATTR_SEPARATOR + ".*" + attrPart + ".*";
+    }
+
+    public static String optPrependDefaultClass(String relationTypeRegex, QueryExecutionContext context) {
+        if (!relationTypeRegex.contains(CLASS_TYPE_SEPARATOR)) {
+            String defaultClass = context.resolveDefaultRelationClass();
+            relationTypeRegex = fullTypeRegex(defaultClass, optParRegex(relationTypeRegex));
+        }
+        return relationTypeRegex;
     }
 }

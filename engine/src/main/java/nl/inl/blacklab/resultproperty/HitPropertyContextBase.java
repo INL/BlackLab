@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.lang.reflect.Constructor;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -12,12 +12,14 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -36,6 +38,49 @@ public abstract class HitPropertyContextBase extends HitProperty {
      */
     protected boolean compareInReverse;
 
+    /**
+     * Find a "foreign hit" in a parallel corpus.
+     *
+     * A foreign hit is a hit in another field than the one that was searched.
+     * E.g. for a query like <pre>"the" ==>nl "de"</pre>, the right side would
+     * be the foreign field (likely named <pre>contents__nl</pre>).
+     *
+     * The start and end are determined by scanning the match info for captures
+     * and relations in to the field we're asking about. (for relations, either
+     * the source or the target, or both, might be in this field)
+     *
+     * @param hit our hit
+     * @param fieldName foreign field we're interested in
+     * @return array of length 2, containing start and end positions for the hit in this field
+     */
+    protected static int[] getForeignHitStartEnd(Hit hit, String fieldName) {
+        int[] startEnd = { Integer.MAX_VALUE, Integer.MIN_VALUE };
+        for (MatchInfo mi: hit.matchInfo()) {
+            if (mi == null)
+                continue;
+            if (mi.getField().equals(fieldName)) {
+                // Span (or source of relation) is in the correct field. Adjust the hit boundaries.
+                startEnd[0] = Math.min(startEnd[0], mi.getSpanStart());
+                startEnd[1] = Math.max(startEnd[1], mi.getSpanEnd());
+            }
+            if (mi instanceof RelationInfo) {
+                RelationInfo rmi = (RelationInfo) mi;
+                String tfield = rmi.getTargetField() == null ? mi.getField() : rmi.getTargetField();
+                if (tfield.equals(fieldName)) {
+                    // Relation target is in the correct field. Adjust the hit boundaries.
+                    startEnd[0] = Math.min(startEnd[0], rmi.getTargetStart());
+                    startEnd[1] = Math.max(startEnd[1], rmi.getTargetEnd());
+                }
+            }
+        }
+        // Set fallback values if no match info for this target field was found
+        if (startEnd[0] == Integer.MAX_VALUE)
+            startEnd[0] = 0;
+        if (startEnd[1] == Integer.MIN_VALUE)
+            startEnd[1] = 0;
+        return startEnd;
+    }
+
     /** Used by fetchContext() to get required context part boundaries for a hit */
     @FunctionalInterface
     interface StartEndSetter {
@@ -51,24 +96,94 @@ public abstract class HitPropertyContextBase extends HitProperty {
     /** Stores the sort order for the relevant context tokens for each hit index */
     protected BigList<int[]> contextSortOrder;
 
-    protected static <T extends HitPropertyContextBase> T deserializeProp(Class<T> cls, BlackLabIndex index,
-            AnnotatedField field, String info) {
-        String[] parts = PropertySerializeUtil.splitParts(info);
-        String propName = parts[0];
-        if (propName.length() == 0)
-            propName = field.mainAnnotation().name();
-        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
-                : MatchSensitivity.SENSITIVE;
-        Annotation annotation = field.annotation(propName);
-        try {
-            Constructor<T> ctor = cls.getConstructor(BlackLabIndex.class, Annotation.class, MatchSensitivity.class);
-            T t = ctor.newInstance(index, annotation, sensitivity);
-            if (parts.length > 2)
-                t.deserializeParam(parts[2]);  // e.g. number of tokens
-            return t;
-        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
-            throw new BlackLabRuntimeException("Couldn't deserialize hit property: " + cls.getName() + ":" + info, e);
+    /** Information deserialized from extra parameters.
+     *
+     * E.g. for before:lemma:s:1, this would be the annotation (lemma), sensitivity (s) and
+     * the extra parameter 1, the number of words.
+     */
+    protected static class DeserializeInfos {
+        Annotation annotation;
+        MatchSensitivity sensitivity;
+
+        /** One extra parameter: e.g. capture group name or number of tokens (before/after hit) */
+        List<String> extraParams;
+
+        public DeserializeInfos(Annotation annotation, MatchSensitivity sensitivity, List<String> extraParams) {
+            this.annotation = annotation;
+            this.sensitivity = sensitivity;
+            this.extraParams = extraParams;
         }
+
+        public String extraParam(int index) {
+            return extraParam(index, "");
+        }
+
+        public String extraParam(int index, String defaultValue) {
+            return index >= extraParams.size() ? defaultValue : extraParams.get(index);
+        }
+
+        public int extraIntParam(int index) {
+            return extraIntParam(index, -1);
+        }
+
+        public int extraIntParam(int index, int defaultValue) {
+            try {
+                return Integer.parseInt(extraParam(index));
+            } catch (NumberFormatException e) {
+                // ok, just return default
+            }
+            return defaultValue;
+        }
+    }
+
+    protected static DeserializeInfos deserializeProp(AnnotatedField field, List<String> infos) {
+        String annotationName = infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0);
+        Annotation annotation = field.annotation(annotationName);
+        if (annotation == null)
+                throw new BlackLabRuntimeException("Unknown annotation for hit property: " + annotationName);
+        MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1))
+                : MatchSensitivity.SENSITIVE;
+        List<String> params = infos.size() > 2 ? infos.subList(2, infos.size()) : Collections.emptyList();
+        return new DeserializeInfos(annotation, sensitivity, params);
+    }
+
+    protected static int getOrDefaultContextSize(int i, int d) {
+        return i <= 0 ? d : i;
+    }
+
+    /**
+     * Choose either the specified annotation, or if an override field/version is given, the equivalent in that field.
+     * @param index index to use
+     * @param annotation annotation to use (or annotation name, if overrideField is given)
+     * @param overrideFieldOrVersion field (or alternate parallel version of the annotation's field) to use
+     *                               instead of the annotation's field, or null to return annotation unchanged
+     * @return the annotation to use
+     */
+    protected static Annotation annotationOverrideFieldOrVersion(BlackLabIndex index, Annotation annotation,
+            String overrideFieldOrVersion) {
+        String overrideField;
+        if (overrideFieldOrVersion != null && !AnnotatedFieldNameUtil.isParallelField(overrideFieldOrVersion)) {
+            // Specified a parallel version, not a complete field name.
+            overrideField = AnnotatedFieldNameUtil.changeParallelFieldVersion(annotation.field().name(),
+                    overrideFieldOrVersion);
+        } else
+            overrideField = overrideFieldOrVersion;
+        return annotationOverrideField(index, annotation, overrideField);
+    }
+
+    /**
+     * Choose either the specified annotation, or the equivalent in the overrideField if given.
+     * @param index index to use
+     * @param annotation annotation to use (or annotation name, if overrideField is given)
+     * @param overrideField field to use instead of the annotation's field, or null to return annotation unchanged
+     * @return the annotation to use
+     */
+    protected static Annotation annotationOverrideField(BlackLabIndex index, Annotation annotation, String overrideField) {
+        if (overrideField != null && !overrideField.equals(annotation.field().name())) {
+            // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
+            annotation = index.annotatedField(overrideField).annotation(annotation.name());
+        }
+        return annotation;
     }
 
     /** Some context properties, e.g. context before, can get an extra parameter (number of tokens).
@@ -81,31 +196,32 @@ public abstract class HitPropertyContextBase extends HitProperty {
         // just ignore extra param by default when deserializing
     }
 
-    protected final Terms terms;
+    protected Terms terms;
 
-    protected final Annotation annotation;
+    protected Annotation annotation;
 
-    protected MatchSensitivity sensitivity;
+    protected final MatchSensitivity sensitivity;
 
-    protected String name;
+    protected final String name;
 
-    protected String serializeName;
+    protected final String serializeName;
 
-    protected BlackLabIndex index;
+    protected final BlackLabIndex index;
 
-    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert) {
+    /** Copy constructor, used to create a copy with e.g. a different Hits object. */
+    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
         super(prop, hits, invert);
-        this.terms = prop.terms;
-        this.annotation = prop.annotation;
-        if (hits != null && !hits.field().equals(this.annotation.field())) {
-            throw new IllegalArgumentException(
-                    "Hits passed to HitProperty must be in the field it was declared with! (declared with "
-                            + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
-        }
+        this.index = hits == null ? prop.index : hits.index();
+        this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
+        this.terms = index.annotationForwardIndex(this.annotation).terms();
+//        if (hits != null && !hits.field().equals(this.annotation.field())) {
+//            throw new IllegalArgumentException(
+//                    "Hits passed to HitProperty must be in the field it was declared with! (declared with "
+//                            + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
+//        }
         this.sensitivity = prop.sensitivity;
         this.name = prop.name;
         this.serializeName = prop.serializeName;
-        this.index = hits == null ? prop.index : hits.index();
         this.compareInReverse = prop.compareInReverse;
         initForwardIndex();
         if (prop.hits == hits) {
@@ -126,10 +242,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.compareInReverse = compareInReverse;
         initForwardIndex();
-    }
-
-    public void setSerializeAs(String type) {
-        this.serializeName = type;
     }
 
     public Annotation getAnnotation() {
@@ -165,10 +277,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     void initForwardIndex() {
-        if (hits != null) {
-            ForwardIndex fi = index.forwardIndex(hits.queryInfo().field());
-            afi = fi.get(annotation);
-        }
+        afi = index.annotationForwardIndex(annotation);
     }
 
     protected synchronized void fetchContext(StartEndSetter setStartEnd) {

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.lib;
 
+import java.util.Map;
+
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
@@ -29,9 +31,9 @@ public class ConcordanceContext {
         return concordanceContext;
     }
 
-    private Concordances concordances = null;
+    private Concordances concordances;
 
-    private Kwics kwics = null;
+    private Kwics kwics;
 
     private ConcordanceContext(Kwics kwics, Concordances concordances) {
         this.kwics = kwics;
@@ -48,5 +50,9 @@ public class ConcordanceContext {
 
     public Kwic getKwic(Hit hit) {
         return kwics.get(hit);
+    }
+
+    public Map<String, Kwic> getForeignKwics(Hit hit) {
+        return kwics.getForeignKwics(hit);
     }
 }

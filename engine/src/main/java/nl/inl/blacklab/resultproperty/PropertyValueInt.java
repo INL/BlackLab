@@ -35,12 +35,12 @@ public class PropertyValueInt extends PropertyValue {
         return false;
     }
 
-    public static PropertyValue deserialize(String info) {
+    public static PropertyValue deserialize(String value) {
         int v;
         try {
-            v = Integer.parseInt(info);
+            v = Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            logger.warn("PropertyValueInt.deserialize(): '" + info + "' is not a valid integer.");
+            logger.warn("PropertyValueInt.deserialize(): '" + value + "' is not a valid integer.");
             v = 0;
         }
         return new PropertyValueInt(v);

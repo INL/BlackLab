@@ -114,6 +114,9 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             if (tp.min == 1 && tp.max == 1) {
                 // Repeat of a single any token
                 return new SpanQueryAnyToken(queryInfo, min, max, base.getRealField());
+            } else if (min == 0 && max == 1 && tp.min == 0) {
+                // Making an already optional (tp.min == 0) anytoken clause optional again
+                return tp;
             } else if (min == max && tp.min == tp.max) {
                 // Exact number of any tokens
                 int n = min * tp.min;
@@ -134,8 +137,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
                     return new SpanQueryRepetition(tp.clauses.get(0), min * tp.min, max);
                 }
             } else {
-                if (min == 0 && max == 1 && tp.min == 0 && tp.max == 1) {
-                    // A?? == A?
+                if (min == 0 && max == 1 && tp.min == 0) {
+                    // Making an already optional (tp.min == 0) anytoken clause optional again
                     return tp;
                 }
                 // (A{x,y}{1,1} == A{x,y} has been rewritten above already)

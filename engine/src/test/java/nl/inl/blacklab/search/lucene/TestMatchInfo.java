@@ -38,13 +38,13 @@ public class TestMatchInfo {
                 sourceStart = targetStart;
                 sourceEnd = targetEnd;
             }
-            RelationInfo matchInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+            RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
 
             // Encode the payload
             byte[] payload = matchInfo.serialize().bytes;
 
             // Decode it again
-            RelationInfo decoded = new RelationInfo();
+            RelationInfo decoded = RelationInfo.create();
             decoded.deserialize(sourceStart, new ByteArrayDataInput(payload));
 
             Assert.assertEquals(matchInfo, decoded);

@@ -19,14 +19,15 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.extensions.XFRelations;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
 import nl.inl.blacklab.searches.SearchDocs;
@@ -128,9 +129,15 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public Optional<TextPattern> pattern() throws BlsException {
         if (pattern == null) {
-            pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData());
+            pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData(),
+                    getAdjustRelationHits());
         }
         return pattern == null ? Optional.empty() : Optional.of(pattern);
+    }
+
+    @Override
+    public boolean getAdjustRelationHits() {
+        return params.getAdjustRelationHits();
     }
 
     /** Pattern, optionally within s if context=s was specified. */
@@ -144,20 +151,18 @@ public class WebserviceParamsImpl implements WebserviceParams {
             patternWithin = pattern;
             String tagName = getContext().inlineTagName();
             if (tagName != null) {
-                patternWithin = ensureWithinTag(patternWithin, tagName);
+                patternWithin = ensureWithinTag(patternWithin, tagName, XFRelations.DEFAULT_CONTEXT_REL_NAME);
             }
         }
         return patternWithin == null ? Optional.empty() : Optional.of(patternWithin);
     }
 
-    private static TextPattern ensureWithinTag(TextPattern pattern, String tagName) {
+    private static TextPattern ensureWithinTag(TextPattern pattern, String tagName, String captureRelsAs) {
         boolean withinTag = pattern instanceof TextPatternPositionFilter &&
                 ((TextPatternPositionFilter) pattern).isWithinTag(tagName);
         if (!withinTag) {
-            // add "within <TAGNAME/>" to the pattern, so we can produce the requested context later
-            return new TextPatternPositionFilter(pattern,
-                    new TextPatternTags(tagName, null, TextPatternTags.Adjust.FULL_TAG, null),
-                    SpanQueryPositionFilter.Operation.WITHIN);
+            // add "within rcapture(<TAGNAME/>)" to the pattern, so we can produce the requested context later
+            return TextPattern.createRelationCapturingWithinQuery(pattern, tagName, captureRelsAs);
         }
         return pattern;
     }
@@ -311,7 +316,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
         Optional<String> sortBy = getSortProps();
         if (sortBy.isEmpty())
             return null;
-        HitProperty sortProp = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), sortBy.get());
+        HitProperty sortProp = HitProperty.deserialize(blIndex(), getAnnotatedField(),
+                sortBy.get(), getContext());
         return new HitSortSettings(sortProp);
     }
 
@@ -424,13 +430,14 @@ public class WebserviceParamsImpl implements WebserviceParams {
         String hitFilterVal = getHitFilterValue();
         if (StringUtils.isEmpty(hitFilterCrit) || StringUtils.isEmpty(hitFilterVal))
             return hits();
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterCrit);
-        PropertyValue value = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterVal);
+        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), hitFilterCrit,
+                getContext());
+        PropertyValue value = PropertyValue.deserialize(blIndex(), getAnnotatedField(), hitFilterVal);
         return hits().filter(prop, value);
     }
 
     private SearchHits hits() throws BlsException {
-        SearchEmpty search = blIndex().search(null, useCache());
+        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
         try {
             Query filter = filterQuery();
             Optional<TextPattern> pattern = patternWithinContextTag();
@@ -442,6 +449,30 @@ public class WebserviceParamsImpl implements WebserviceParams {
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
         }
+    }
+
+    /**
+     * Get the annotated field we want to search.
+     *
+     * Uses the main field if none was specified or the specified field doesn't exist,
+     * so we can always return a valid field.
+     *
+     * @return the annotated field
+     */
+    @Override
+    public AnnotatedField getAnnotatedField() {
+        String fieldName = getFieldName();
+        AnnotatedField field = blIndex().annotatedField(fieldName);
+        if (field == null) {
+            // See if field is actually a different version in a parallel corpus of the main field, e.g. "nl" if the
+            // field is "contents__nl"
+            String fieldVersion = AnnotatedFieldNameUtil.changeParallelFieldVersion(blIndex().mainAnnotatedField().name(),
+                    fieldName);
+            field = blIndex().annotatedField(fieldVersion);
+        }
+        if (field == null)
+            field = blIndex().mainAnnotatedField();
+        return field;
     }
 
     @Override
@@ -475,7 +506,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (docFilterQuery == null) {
             docFilterQuery = blIndex().getAllRealDocsQuery();
         }
-        SearchEmpty search = blIndex().search(null, useCache());
+        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
         return search.findDocuments(docFilterQuery);
     }
 
@@ -493,7 +524,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (docFilterQuery == null) {
             docFilterQuery = blIndex().getAllRealDocsQuery();
         }
-        SearchEmpty search = blIndex().search(null, useCache());
+        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
         return search.findDocuments(docFilterQuery);
     }
 
@@ -514,7 +545,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
         HitGroupSettings hitGroupSettings = hitGroupSettings();
         assert hitGroupSettings != null;
         String groupProps = hitGroupSettings.groupBy();
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupProps);
+        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), groupProps,
+                getContext());
         if (prop == null)
             throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
         return prop;
@@ -625,12 +657,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public long getNumberOfResultsToShow() {
         return params.getNumberOfResultsToShow();
-    }
-
-    @Override
-    @Deprecated
-    public int getWordsAroundHit() {
-        return params.getWordsAroundHit();
     }
 
     public ContextSize getContext() {

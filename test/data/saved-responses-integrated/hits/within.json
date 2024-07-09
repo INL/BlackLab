@@ -11,11 +11,24 @@
       ],
       "title": [
         "interview about conference experience and impressions of city"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 268
+        }
       ]
     }
   },
   "hits": [
     {
+      "captureGroups": [
+        {
+          "end": 246,
+          "name": "u",
+          "start": 226
+        }
+      ],
       "docPid": "PRint602",
       "end": 234,
       "left": {
@@ -93,6 +106,7 @@
     "numberOfHitsRetrieved": 1,
     "pattern": {
       "bcql": "('very' 'good') within <u/>",
+      "fieldName": "contents",
       "json": {
         "filter": {
           "name": "u",
@@ -114,9 +128,11 @@
         },
         "type": "posfilter"
       },
-      "matchInfoNames": [
-        "u"
-      ]
+      "matchInfos": {
+        "u": {
+          "type": "tag"
+        }
+      }
     },
     "requestedWindowSize": 50,
     "searchParam": {

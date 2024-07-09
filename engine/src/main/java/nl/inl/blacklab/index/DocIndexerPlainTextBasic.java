@@ -45,7 +45,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         boolean needsPrimaryValuePayloads = getDocWriter().needsPrimaryValuePayloads();
-        contentsField = new AnnotatedFieldWriter(getDocWriter(), Indexer.DEFAULT_CONTENTS_FIELD_NAME,
+        contentsField = new AnnotatedFieldWriter(getDocWriter(), DocIndexerLegacy.DEFAULT_CONTENTS_FIELD_NAME,
                 mainPropName, AnnotationSensitivities.defaultForAnnotation(mainPropName),
                 false, needsPrimaryValuePayloads);
         annotMain = contentsField.mainAnnotation();

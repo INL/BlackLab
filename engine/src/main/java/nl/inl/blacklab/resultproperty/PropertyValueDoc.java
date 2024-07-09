@@ -37,12 +37,12 @@ public class PropertyValueDoc extends PropertyValue {
         return false;
     }
 
-    public static PropertyValue deserialize(BlackLabIndex index, String info) {
+    public static PropertyValue deserialize(BlackLabIndex index, String strDocId) {
         int id;
         try {
-            id = Integer.parseInt(info);
+            id = Integer.parseInt(strDocId);
         } catch (NumberFormatException e) {
-            logger.warn("PropertyValueDoc.deserialize(): '" + info + "' is not a valid integer.");
+            logger.warn("PropertyValueDoc.deserialize(): '" + strDocId + "' is not a valid integer.");
             id = -1;
         }
         return new PropertyValueDoc(index, id);

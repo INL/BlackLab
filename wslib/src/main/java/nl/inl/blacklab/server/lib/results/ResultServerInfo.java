@@ -29,10 +29,10 @@ public class ResultServerInfo {
 
         userInfo = WebserviceOperations.userInfo(params);
         indexStatuses = new ArrayList<>();
-        Collection<Index> indices = params.getIndexManager().getAllAvailableIndices(params.getUser().getUserId());
+        Collection<Index> indices = params.getIndexManager().getAllAvailableCorpora(params.getUser());
         for (Index index: indices) {
             try {
-                indexStatuses.add(WebserviceOperations.resultIndexStatus(index));
+                indexStatuses.add(WebserviceOperations.resultIndexStatus(index, params.getUser()));
             } catch (ErrorOpeningIndex e) {
                 // Cannot open this index; log and skip it.
                 logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());

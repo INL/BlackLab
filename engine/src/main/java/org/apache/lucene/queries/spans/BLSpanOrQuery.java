@@ -24,6 +24,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
+import nl.inl.blacklab.search.lucene.SpanGuaranteesAdapter;
+import nl.inl.blacklab.search.lucene.SpanQueryAnd;
+import nl.inl.blacklab.search.lucene.SpanQueryNoHits;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -34,6 +46,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.util.PriorityQueue;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -159,7 +172,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      * @param clauses clauses to OR together
      */
     public BLSpanOrQuery(BLSpanQuery... clauses) {
-        super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo() : null);
+        super(clauses.length > 0 && clauses[0] != null ? clauses[0].getQueryInfo() : null);
         if (clauses.length == 0)
             throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
         inner = new SpanOrQuery(clauses);
@@ -449,7 +462,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 //return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
             }
 
-            SpanDisiPriorityQueue byDocQueue = new SpanDisiPriorityQueue(subSpans.size());
+            final SpanDisiPriorityQueue byDocQueue = new SpanDisiPriorityQueue(subSpans.size());
             for (Spans spans : subSpans) {
                 byDocQueue.add(new SpanDisiWrapper(spans));
             }
@@ -457,7 +470,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             SpanPositionQueue byPositionQueue =
                     new SpanPositionQueue(subSpans.size()); // when empty use -1
 
-            return new BLSpans() {
+            return new BLSpans(SpanGuarantees.NONE) {
                 Spans topPositionSpans = null;
 
                 @Override

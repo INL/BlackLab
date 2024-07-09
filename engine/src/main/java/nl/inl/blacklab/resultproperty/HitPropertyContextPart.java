@@ -4,33 +4,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A hit property for sorting on a number of tokens before a hit.
  */
 public class HitPropertyContextPart extends HitPropertyContextBase {
 
-    public static final int MAX_CONTEXT_PART_LENGTH = 20;
+    public static final String ID = "ctx";
 
-    static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        return deserializeProp(HitPropertyContextPart.class, index, field, info);
+    public static final char PART_BEFORE = 'B';
+
+    public static final char PART_AFTER = 'A';
+
+    public static final char PART_MATCH_FROM_END = 'E';
+
+    public static final char PART_MATCH = 'H';
+
+    @Deprecated
+    public static final char PART_LEFT = 'L';
+
+    @Deprecated
+    public static final char PART_RIGHT = 'R';
+
+    static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, i.extraParam(1));
+        return new HitPropertyContextPart(index, annotation, i.sensitivity, i.extraParam(0));
     }
 
-    static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, String info) {
-        String[] parts = PropertySerializeUtil.splitParts(info);
-        String propName = parts[0];
-        if (propName.length() == 0)
-            propName = field.mainAnnotation().name();
-        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
-        Annotation annotation = field.annotation(propName);
-        return contextWords(index, annotation, sensitivity, parts.length > 2 ? parts[2] : "H1-");
+    static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        DeserializeInfos i = deserializeProp(field, infos);
+        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, i.extraParam(1));
+        return contextWords(index, annotation, i.sensitivity, i.extraParam(0, "H1-"));
     }
 
     public static HitProperty contextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String wordSpec) {
@@ -78,29 +91,35 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             this.confineToHit = confineToHit;
         }
 
-        private static ContextPart forString(String param) {
+        private static ContextPart forString(String param, ContextSize defaultContextSize) {
             boolean fromHitEnd = false;
             int direction = 1;
             boolean confineToHit = false;
+            int lastWord;
             switch (param.charAt(0)) {
-            case 'L':
+            case PART_BEFORE:
+            case PART_LEFT: // (old)
                 direction = -1;
+                lastWord = defaultContextSize.before();
                 break;
-            case 'E':
+            case PART_MATCH_FROM_END:
                 fromHitEnd = true;
                 direction = -1;
                 confineToHit = true;
+                lastWord = defaultContextSize.maxSnippetHitLength();
                 break;
-            case 'R':
+            case PART_AFTER:
+            case PART_RIGHT: // (old)
                 fromHitEnd = true;
+                lastWord = defaultContextSize.after();
                 break;
-            case 'H':
+            case PART_MATCH:
             default:
                 confineToHit = true;
+                lastWord = defaultContextSize.maxSnippetHitLength();
                 break;
             }
             int firstWord = 0;
-            int lastWord = Integer.MAX_VALUE; // == "as much as possible"
             if (param.length() > 1) {
                 if (param.contains("-")) {
                     // Two numbers, or a number followed by a dash ("until end of part")
@@ -127,11 +146,12 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
         @Override
         public String toString() {
-            String anchor = fromHitEnd ? (direction == 1 ? "R" : "E") : (direction == 1 ? "H" : "L");
+            char anchor = fromHitEnd ? (direction == 1 ? PART_AFTER : PART_MATCH_FROM_END) :
+                    (direction == 1 ? PART_MATCH : PART_BEFORE);
             int from = first + (direction == 1 ? 1 : 0); // (1-based)
             int to = last + (direction == 1 ? 1 : 0);
             if (from == to)
-                return anchor + from;
+                return "" + anchor + from;
             return anchor + from + "-" + (to == -1 ? "" : to);
         }
 
@@ -165,29 +185,23 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     private ContextPart part;
 
     HitPropertyContextPart(HitPropertyContextPart prop, Hits hits, boolean invert) {
-        super(prop, hits, invert);
+        super(prop, hits, invert, null);
         this.part = prop.part;
     }
 
-    // Used by HitPropertyContextBase.deserializeProp() via reflection
-    @SuppressWarnings("unused")
-    public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        this(index, annotation, sensitivity, (ContextPart)null);
-    }
-
     public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String partSpec) {
-        this(index, annotation, sensitivity, ContextPart.forString(partSpec));
+        this(index, annotation, sensitivity, ContextPart.forString(partSpec, index.defaultContextSize()));
     }
 
     public HitPropertyContextPart(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextPart part) {
-        super("context part", "ctx", index, annotation, sensitivity, false);
+        super("context part", ID, index, annotation, sensitivity, false);
         this.part = part;
         this.compareInReverse = part != null && part.compareInReverse();
     }
 
     @Override
     void deserializeParam(String param) {
-        part = ContextPart.forString(param);
+        part = ContextPart.forString(param, index.defaultContextSize());
         compareInReverse = part.direction == -1;
     }
 
@@ -205,8 +219,21 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     @Override
     public void fetchContext() {
-        int smaller = part.first < part.last ? part.first : part.last;
-        int larger = part.first < part.last ? part.last : part.first;
+        int smaller = Math.min(part.first, part.last);
+        int larger = Math.max(part.first, part.last);
+        StartEndSetter func;
+        if (annotation.field() == hits.field()) {
+            // Regular hit; use start and end offsets from the hit itself
+            func = fetchContextRegular(smaller, larger);
+        } else {
+            // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
+            // Determine start and end using matchInfo instead.
+            func = fetchContextParallel(smaller, larger);
+        }
+        fetchContext(func);
+    }
+
+    private StartEndSetter fetchContextRegular(int smaller, int larger) {
         StartEndSetter func;
         if (part.fromHitEnd) {
             if (part.direction == 1) {
@@ -250,7 +277,68 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 };
             }
         }
-        fetchContext(func);
+        return func;
+    }
+
+    private StartEndSetter fetchContextParallel(int smaller, int larger) {
+        StartEndSetter func;
+        if (part.fromHitEnd) {
+            if (part.direction == 1) {
+                // From hit end forwards.
+                func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                    int pos = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                    starts[j] = pos + smaller;
+                    ends[j] = pos + larger + 1;
+                };
+            } else {
+                // From hit end backwards.
+                if (part.confineToHit) {
+                    func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                        starts[j] = Math.max(start, end - larger);
+                        ends[j] = Math.max(start, end - smaller + 1);
+                    };
+                } else {
+                    func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                        starts[j] = Math.max(0, end - larger);
+                        ends[j] = Math.max(0, end - smaller + 1);
+                    };
+                }
+            }
+        } else {
+            if (part.direction == 1) {
+                // From hit start forwards.
+                if (part.confineToHit) {
+                    func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                        starts[j] = Math.min(end, start + smaller);
+                        ends[j] = Math.min(end, start + larger + 1);
+                    };
+                } else {
+                    func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                        starts[j] = start + smaller;
+                        ends[j] = start + larger + 1;
+                    };
+                }
+            } else {
+                func = (int[] starts, int[] ends, int j, Hit hit) -> {
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                    int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                    starts[j] = Math.max(0, start - larger);
+                    ends[j] = Math.max(0, start - smaller + 1);
+                };
+            }
+        }
+        return func;
     }
 
     @Override

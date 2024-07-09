@@ -277,7 +277,7 @@ public class HitGroupsTokenFrequencies {
                     // What we do instead is for every document just retrieve how many tokens it contains (from its metadata), and add that count to the appropriate group
                     numberOfDocsProcessed = docIds.size();
                     try (BlockTimer ignored = c.child("Grouping documents (metadata only path)")) {
-                        String fieldName =  index.mainAnnotatedField().name();
+                        String fieldName = queryInfo.field().name();
                         DocPropertyAnnotatedFieldLength propTokens = new DocPropertyAnnotatedFieldLength(index, fieldName);
                         final int[] emptyTokenValuesArray = new int[0];
 
@@ -313,7 +313,7 @@ public class HitGroupsTokenFrequencies {
                     //       another setting that can limit this operation as well.
                     final long maxHitsToCount = searchSettings.maxHitsToCount() > 0 ? searchSettings.maxHitsToCount() : Long.MAX_VALUE;
                     //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
-                    final String fieldName = index.mainAnnotatedField().name(); // FIXME: shouldn't this be source.queryInfo().field() ?
+                    final String fieldName = queryInfo.field().name();
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
                     // Determine all the fields we want to be able to load, so we don't need to load the entire document

@@ -79,13 +79,6 @@ parameters:
 #  Settings for job caching.
 cache:
 
-    # Maximum size the cache may grow to (in megabytes), or -1 for no limit.
-    # (we can only approximate the cache size, because different tasks refer to the same data.
-    # In the real-world we will probably stay well under this. On the other hand, cache size is
-    # a lot smaller than peak memory usage, so don't this too high either; around 15% of total
-    # memory should be an okay value)
-    maxSizeMegs: 500
-
     # How many search tasks will we cache at most? (or -1 for no limit)
     # A note about tasks: a request to BlackLab Server routinely results in 3+ simultaneous search tasks
     # being launched: a task to get a window into the sorted hits, which launches a task to get sorted hits,
@@ -138,19 +131,6 @@ performance:
     # e.g. if you set this to the same number as maxConcurrentSearches, a single
     # search may queue all other searches until it's done)
     maxThreadsPerSearch: 3
-
-    # Do we want to automatically pause long-running searches if there's
-    # many simultaneous users?
-    pausingEnabled: true
-
-    # How many searches may be paused at most before we start aborting them
-    # (higher values means fewer aborted searches when multiple users are searching
-    # simultaneously, but it may also lead to memory being exhausted)
-    maxPausedSearches: 6
-
-    # Pause a count if the client hasn't asked about it for 10s
-    # (lower values are easier on the CPU, but might take up more memory)
-    abandonedCountPauseTimeSec: 10
 
     # Abhort a count if the client hasn't asked about it for 30s
     # (lower values are easier on the server, but might abort a count too soon)

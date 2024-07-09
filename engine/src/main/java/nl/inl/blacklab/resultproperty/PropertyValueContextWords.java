@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.Arrays;
+import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -10,10 +11,21 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
+
+    /** String to use to indicate there was no value.
+     *
+     * For example: you're grouping by the word left of the match, but the
+     * match occurred at the start of the document.
+     */
+    public static final String NO_VALUE_STR = "(no value)";
+
+    /** Term ids for this value */
     int[] valueTokenId;
 
+    /** Sort orders for our term ids */
     final int[] valueSortOrder;
 
+    /** Sensitivity to use for comparisons */
     private MatchSensitivity sensitivity;
 
     /**
@@ -71,25 +83,25 @@ public class PropertyValueContextWords extends PropertyValueContext {
         return false;
     }
 
-    public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, String info, boolean reverseOnDisplay) {
-        String[] parts = PropertySerializeUtil.splitParts(info);
-        String propName = parts[0];
+    public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, List<String> infos, boolean reverseOnDisplay) {
+        String propName = infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0);
         Annotation annotation = field.annotation(propName);
-        MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
-        int[] ids = new int[parts.length - 2];
+        MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1)) :
+                annotation.mainSensitivity().sensitivity();
+        int[] ids = new int[infos.size() - 2];
         Terms termsObj = index.annotationForwardIndex(annotation).terms();
-        for (int i = 2; i < parts.length; i++) {
-            ids[i - 2] = deserializeToken(termsObj, parts[i]);
+        for (int i = 2; i < infos.size(); i++) {
+            ids[i - 2] = deserializeToken(termsObj, infos.get(i));
         }
         return new PropertyValueContextWords(index, annotation, sensitivity, ids, reverseOnDisplay);
     }
 
-    public static PropertyValue deserializeSingleWord(BlackLabIndex index, AnnotatedField field, String info) {
-        String[] parts = PropertySerializeUtil.splitParts(info);
-        String annotationName = parts[0];
+    public static PropertyValue deserializeSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        String annotationName = infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0);
         Annotation annotation = field.annotation(annotationName);
-        MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
-        String term = parts[2];
+        MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1)) :
+                annotation.mainSensitivity().sensitivity();
+        String term = infos.size() > 2 ? infos.get(2) : "";
         Terms termsObj = index.annotationForwardIndex(annotation).terms();
         int termId = deserializeToken(termsObj, term);
         return new PropertyValueContextWords(index, annotation, sensitivity, new int[] { termId }, false);
@@ -102,7 +114,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         if (reverseOnDisplay) {
             for (int i = valueTokenId.length - 1; i >= 0; i--) {
                 int v = valueTokenId[i];
-                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
+                String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
@@ -111,7 +123,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
             }
         } else {
             for (int v : valueTokenId) {
-                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
+                String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");

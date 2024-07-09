@@ -11,6 +11,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.util.StringUtil;
 
 /**
  * A TextPattern matching a regular expression.
@@ -36,8 +37,13 @@ public class TextPatternRegex extends TextPatternTerm {
             return result.translate(context);
         context = context.withAnnotationAndSensitivity(annotation, sensitivity);
         String valueNoStartEndMatch = optInsensitive(context, value);
+
+        // Lucene's regex engine requires double quotes to be escaped, unlike most others.
+        // Escape double quotes
+        valueNoStartEndMatch = StringUtil.escapeQuote(valueNoStartEndMatch, "\"");
+
         try {
-            Term term = new Term(context.luceneField(), context.optDesensitize(valueNoStartEndMatch));
+            Term term = new Term(context.luceneField(), valueNoStartEndMatch);
             RegexpQuery regexpQuery = new RegexpQuery(term); //, RegExp.COMPLEMENT); causes issues with NFA matching!
             return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), regexpQuery);
         } catch (IllegalArgumentException e) {
@@ -65,11 +71,6 @@ public class TextPatternRegex extends TextPatternTerm {
      * @return the TextPattern
      */
     private TextPattern rewriteForQuery() {
-        // Is it "any token"?
-        if (value.equals(".*")) {
-            return new TextPatternAnyToken(1, 1);
-        }
-
         // Do we want to force an (in)sensitive search?
         boolean forceSensitive = false;
         boolean forceInsensitive = false;
@@ -83,6 +84,11 @@ public class TextPatternRegex extends TextPatternTerm {
         } else if (newValue.startsWith("(?i)")) {
             forceInsensitive = true;
             newValue = newValue.substring(4);
+        }
+
+        // Is it "any token"?
+        if (value.equals(".*")) {
+            return new TextPatternAnyToken(1, 1);
         }
 
         // If this contains no funny characters, only (Unicode) letters and digits,

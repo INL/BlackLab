@@ -13,7 +13,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -107,8 +106,8 @@ public class SpanQueryAnyToken extends BLSpanQuery {
      * @param context query execution context
      * @return the query
      */
-    public static SpanQueryAnyToken anyNGram(QueryInfo queryInfo, QueryExecutionContext context) {
-        return new SpanQueryAnyToken(queryInfo, 0, MAX_UNLIMITED, context.luceneField());
+    public static SpanQueryAnyToken anyNGram(QueryInfo queryInfo, String luceneField) {
+        return new SpanQueryAnyToken(queryInfo, 0, MAX_UNLIMITED, luceneField);
     }
 
     @Override
@@ -173,6 +172,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public BLSpanWeight createWeight(final IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
         return new BLSpanWeight(this, searcher, null, boost) {
+
             @Override
             public boolean isCacheable(LeafReaderContext ctx) {
                 return true;

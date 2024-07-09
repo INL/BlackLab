@@ -18,44 +18,44 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class Kwic {
 
-    private final DocContentsFromForwardIndex fragment;
+    private final DocFragment fragment;
 
+    /** Token number (from start of fragment) where the hit begins. */
     private final int hitStart;
 
+    /** Number of first token (from start of fragment) after the hit. */
     private final int hitEnd;
+
+    /** Token number (from start of document) where this fragment begins. */
+    private final int fragmentStartInDoc;
 
     /**
      * Construct a Kwic object
      *
      * @param annotations What annotations are stored in what order for this Kwic
      *            (e.g. word, lemma, pos)
-     * @param tokens the contents
-     * @param matchStart where the match starts, in word positions
-     * @param matchEnd where the match ends, in word positions
+     * @param tokens tokens (per word: the token string for each annotation)
+     * @param matchStart where the match starts (token positions from start of fragment)
+     * @param matchEnd where the match ends (exclusive; token positions from start of fragment)
+     * @param fragmentStartInDoc where the fragment starts, in word positions
      */
-    public Kwic(List<Annotation> annotations, List<String> tokens, int matchStart, int matchEnd) {
-        fragment = new DocContentsFromForwardIndex(annotations, tokens);
+    public Kwic(List<Annotation> annotations, List<String> tokens, int matchStart, int matchEnd, int fragmentStartInDoc) {
+        fragment = new DocFragment(annotations, tokens);
         this.hitStart = matchStart;
         this.hitEnd = matchEnd;
+        this.fragmentStartInDoc = fragmentStartInDoc;
         assert hitStart * fragment.annotations.size() <= tokens.size();
         assert hitEnd * fragment.annotations.size() <= tokens.size();
     }
 
-    /**
-     * Construct a Kwic object
-     *
-     * @param fragment the content fragment to make the Kwic from
-     * @param matchStart where the match starts, in word positions
-     * @param matchEnd where the match ends, in word positions
-     */
-    public Kwic(DocContentsFromForwardIndex fragment, int matchStart, int matchEnd) {
-        this.fragment = fragment;
-        this.hitStart = matchStart;
-        this.hitEnd = matchEnd;
+    public List<String> before() {
+        return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.annotations.size()));
     }
 
+    /** @deprecated use {@link #before()} */
+    @Deprecated
     public List<String> left() {
-        return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.annotations.size()));
+        return before();
     }
 
     /**
@@ -64,8 +64,14 @@ public class Kwic {
      * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> left(Annotation annotation) {
+    public List<String> before(Annotation annotation) {
         return singlePropertyContext(annotation, 0, hitStart);
+    }
+
+    /** @deprecated use {@link #before(Annotation)} */
+    @Deprecated
+    public List<String> left(Annotation annotation) {
+        return before(annotation);
     }
 
     public List<String> match() {
@@ -84,9 +90,15 @@ public class Kwic {
         return singlePropertyContext(annotation, hitStart, hitEnd);
     }
 
-    public List<String> right() {
+    public List<String> after() {
         return Collections
                 .unmodifiableList(fragment.tokens.subList(hitEnd * fragment.annotations.size(), fragment.tokens.size()));
+    }
+
+    /** @deprecated use {@link #after()} */
+    @Deprecated
+    public List<String> right() {
+        return after();
     }
 
     /**
@@ -95,8 +107,14 @@ public class Kwic {
      * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> right(Annotation annotation) {
+    public List<String> after(Annotation annotation) {
         return singlePropertyContext(annotation, hitEnd, fragment.tokens.size() / fragment.annotations.size());
+    }
+
+    /** @deprecated use {@link #after(Annotation)} */
+    @Deprecated
+    public List<String> right(Annotation annotation) {
+        return after(annotation);
     }
 
     /**
@@ -108,15 +126,16 @@ public class Kwic {
         return fragment.tokens();
     }
 
-    /**
-     * Get all values for a single annotation for all the tokens in the hit's context
-     * fragment.
-     *
-     * @param annotation the annotation to get
-     * @return the values of this annotation for all tokens
-     */
-    public List<String> tokens(Annotation annotation) {
-        return fragment.tokens(annotation);
+    public DocFragment fragBefore() {
+        return fragment.subFragment(0, hitStart);
+    }
+
+    public DocFragment fragMatch() {
+        return fragment.subFragment(hitStart, hitEnd);
+    }
+
+    public DocFragment fragAfter() {
+        return fragment.subFragment(hitEnd, fragment.length());
     }
 
     /**
@@ -176,9 +195,9 @@ public class Kwic {
         String[] conc = new String[3];
         List<String> match = match();
         String addPunctAfter = !match.isEmpty() ? match.get(0) : "";
-        conc[0] = xmlString(left(), addPunctAfter, true, produceXml);
+        conc[0] = xmlString(before(), addPunctAfter, true, produceXml);
         conc[1] = xmlString(match, null, true, produceXml);
-        conc[2] = xmlString(right(), null, false, produceXml);
+        conc[2] = xmlString(after(), null, false, produceXml);
         return new Concordance(conc);
     }
 
@@ -259,11 +278,25 @@ public class Kwic {
         return hitStart;
     }
 
-    public String fullXml() {
-        return fragment.xml();
+    /**
+     * Return the token number where this fragment starts in the document.
+     *
+     * @return the fragment start index
+     */
+    public int fragmentStartInDoc() {
+        return fragmentStartInDoc;
     }
 
-    public DocContentsFromForwardIndex docContents() {
+    /**
+     * Return the token number where this fragment ends in the document.
+     *
+     * @return the fragment end index (first word not in fragment)
+     */
+    public int fragmentEndInDoc() {
+        return fragmentStartInDoc + fragment.length();
+    }
+
+    public DocFragment fragment() {
         return fragment;
     }
 
@@ -271,5 +304,4 @@ public class Kwic {
     public String toString() {
         return toConcordance().toString();
     }
-
 }

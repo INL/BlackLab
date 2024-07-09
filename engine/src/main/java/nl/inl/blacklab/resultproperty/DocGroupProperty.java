@@ -33,7 +33,7 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
         }
         String propName = ResultProperty.ignoreSensitivity(serialized);
         DocGroupProperty result;
-        if (propName.equalsIgnoreCase("identity"))
+        if (propName.equalsIgnoreCase(DocGroupPropertyIdentity.ID))
             result = propIdentity;
         else
             result = propSize;

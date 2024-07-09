@@ -38,7 +38,7 @@ public class TextPatternAnnotation extends TextPattern {
         Annotation annotation = context.field().annotation(name);
         if (annotation == null)
             throw new InvalidQuery("Invalid query: annotation '" + name + "' doesn't exist");
-        return clause.translate(context.withAnnotation(annotation));
+        return clause.translate(context.withAnnotationAndSensitivity(annotation, null));
     }
 
     @Override

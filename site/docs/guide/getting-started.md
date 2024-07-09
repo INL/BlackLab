@@ -35,10 +35,10 @@ Create an empty directory where you want to store your indexed corpora. Make sur
 sudo mkdir -p /data/blacklab-corpora
 
 # Make sure you own it, so you can create corpora there
-sudo chown $USER:$GROUP /data/blacklab-corpora
+sudo chown -R $USER:$GROUP /data/blacklab-corpora
 
 # Make sure it's world-readable so Tomcat can read it
-chmod a+rx /data/blacklab-corpora
+chmod -R a+rx /data/blacklab-corpora
 ```
 
 Now create a directory `/etc/blacklab` with a file named `blacklab-server.yaml`:

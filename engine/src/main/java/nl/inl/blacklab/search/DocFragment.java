@@ -1,8 +1,10 @@
 package nl.inl.blacklab.search;
 
-import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -28,7 +30,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * the extra annotations being attributes and the word itself being the element
  * content of the word tags)
  */
-public class DocContentsFromForwardIndex extends DocContents {
+public class DocFragment extends DocContents {
 
     /**
      * What annotations are stored in what order for this Kwic (e.g. word, lemma,
@@ -48,7 +50,7 @@ public class DocContentsFromForwardIndex extends DocContents {
      * @param annotations the order of annotations in the tokens list
      * @param tokens the tokens
      */
-    public DocContentsFromForwardIndex(List<Annotation> annotations, List<String> tokens) {
+    public DocFragment(List<Annotation> annotations, List<String> tokens) {
         this.annotations = annotations;
         this.tokens = tokens;
     }
@@ -61,14 +63,21 @@ public class DocContentsFromForwardIndex extends DocContents {
         return Collections.unmodifiableList(tokens);
     }
 
-    /**
-     * Get the tokens of a specific annotation
-     * 
-     * @param annotation annotation to get the tokens for
-     * @return the tokens
-     */
-    public List<String> tokens(Annotation annotation) {
-        return singlePropertyContext(annotation);
+    public List<Map<String, String>> map() {
+        int valuesPerWord = annotations.size();
+        int numberOfWords = tokens.size() / valuesPerWord;
+        List<Map<String, String>> map = new ArrayList<>();
+        for (int i = 0; i < numberOfWords; i++) {
+            int vIndex = i * valuesPerWord;
+            Map<String, String> m = new HashMap<>();
+            for (int k = 1; k < annotations.size() - 1; k++) {
+                String name = annotations.get(k).name();
+                String value = tokens.get(vIndex + 1 + k);
+                m.put(name, value);
+            }
+            map.add(m);
+        }
+        return map;
     }
 
     @Override
@@ -95,29 +104,23 @@ public class DocContentsFromForwardIndex extends DocContents {
         return b.toString();
     }
 
-    /**
-     * Get the context of a specific annotation from the complete context list.
-     *
-     * @param annotation the annotation to get the context for
-     * @return the context for this annotation
-     */
-    private List<String> singlePropertyContext(Annotation annotation) {
-        final int nProp = annotations.size();
-        final int size = tokens.size() / nProp;
-        final int annotIndex = annotations.indexOf(annotation);
-        if (annotIndex == -1)
-            return null;
-        return new AbstractList<>() {
-            @Override
-            public String get(int index) {
-                return tokens.get(annotIndex + nProp * index);
-            }
-
-            @Override
-            public int size() {
-                return size;
-            }
-        };
+    public int length() {
+        return tokens.size() / annotations.size();
     }
 
+    public DocFragment subFragment(int start, int end) {
+        int valuesPerWord = annotations.size();
+        int startIndex = start * valuesPerWord;
+        int endIndex = end * valuesPerWord;
+        return new DocFragment(annotations, tokens.subList(startIndex, endIndex));
+    }
+
+    public String getValue(int pos, String annotationName) {
+        for (int i = 0; i < annotations.size(); i++) {
+            if (annotations.get(i).name().equals(annotationName)) {
+                return tokens.get(pos * annotations.size() + i);
+            }
+        }
+        return null;
+    }
 }

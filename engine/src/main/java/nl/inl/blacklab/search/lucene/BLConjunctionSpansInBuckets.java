@@ -36,8 +36,6 @@ abstract class BLConjunctionSpansInBuckets extends BLSpans {
     protected final SpansInBuckets[] subSpans; // in query order
     protected final int[] indexInBucket;     // our position in the bucket
     final DocIdSetIterator conjunction; // use to move to next doc with all clauses
-    boolean atFirstInCurrentDoc; // a first start position is available in current doc for nextStartPosition
-    boolean oneExhaustedInCurrentDoc; // one subspans exhausted in current doc
 
     BLConjunctionSpansInBuckets(List<SpansInBuckets> subSpans, SpanGuarantees guarantees) {
         super(guarantees);
@@ -48,7 +46,6 @@ abstract class BLConjunctionSpansInBuckets extends BLSpans {
         this.indexInBucket = new int[subSpans.size()];
         Arrays.fill(indexInBucket, -1);
         this.conjunction = ConjunctionUtils.intersectIterators(Collections.unmodifiableList(subSpans));
-        this.atFirstInCurrentDoc = true; // ensure for doc -1 that start/end positions are -1
     }
 
     @Override
@@ -64,30 +61,33 @@ abstract class BLConjunctionSpansInBuckets extends BLSpans {
     @Override
     public int  nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
-        atFirstInCurrentDoc = false;
-        return (conjunction.nextDoc() == NO_MORE_DOCS)
-                ? NO_MORE_DOCS
-                : toMatchDoc();
+        int doc = conjunction.nextDoc();
+        assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
+        if (doc == NO_MORE_DOCS)
+            return NO_MORE_DOCS;
+        return toMatchDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
-        atFirstInCurrentDoc = false;
-        return (conjunction.advance(target) == NO_MORE_DOCS)
-                ? NO_MORE_DOCS
-                : toMatchDoc();
+        int doc = conjunction.advance(target);
+        assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
+        if (doc == NO_MORE_DOCS)
+            return NO_MORE_DOCS;
+        return toMatchDoc();
     }
 
     int toMatchDoc() throws IOException {
-        oneExhaustedInCurrentDoc = false;
         while (true) {
             if (twoPhaseCurrentDocMatches()) {
                 return docID();
             }
-            if (conjunction.nextDoc() == NO_MORE_DOCS) {
+            int doc = conjunction.nextDoc();
+            if (doc == NO_MORE_DOCS) {
                 return NO_MORE_DOCS;
             }
+            assert Arrays.stream(subSpans).allMatch(a -> a.docID() == doc);
         }
     }
 

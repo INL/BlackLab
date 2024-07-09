@@ -62,8 +62,6 @@ public class ProxyConfig {
             if (!configFile.exists())
                 configFile = new File("/etc/blacklab/proxy.yaml");
             if (!configFile.exists())
-                configFile = new File("/vol1/etc/blacklab/proxy.yaml");
-            if (!configFile.exists())
                 throw new RuntimeException("No config file found in $BLACKLAB_PROXY_CONFIG_FILE, ~/.blacklab/proxy.yaml, or /etc/blacklab/proxy.yaml");
         } else
             configFile = new File(path);

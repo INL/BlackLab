@@ -25,7 +25,7 @@ public class LimitUtil {
                 .limit(limitValue)
                 .map(entry -> Map.entry(entry.getKey(), limit(entry.getValue(), limitValue)))
                 .collect(TreeMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()),
-                        (mapTarget, mapSource) -> mapTarget.putAll(mapSource));
+                        Map::putAll);
     }
 
     private static <T> List<T> limitList(List<T> list, long maxItems) {

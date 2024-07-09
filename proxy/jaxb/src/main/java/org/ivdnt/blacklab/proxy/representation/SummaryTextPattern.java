@@ -10,16 +10,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class SummaryTextPattern {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String corpusql;
-
-    @XmlElement(name = "corpusql-error")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String corpusqlError;
+    public String bcql;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Object json;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String error;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    Map<String, MatchInfoDef> matchInfos;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String fieldName;
 
 }

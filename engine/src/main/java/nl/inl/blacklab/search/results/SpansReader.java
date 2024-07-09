@@ -191,7 +191,7 @@ class SpansReader implements Runnable {
             this.twoPhaseIt = spans.asTwoPhaseIterator();
             this.twoPhaseApproximation = twoPhaseIt == null ? spans : twoPhaseIt.approximation();
 
-            this.hitQueryContext = this.sourceHitQueryContext.copyWith(this.spans);
+            this.hitQueryContext = this.sourceHitQueryContext.withSpans(this.spans);
             this.spans.setHitQueryContext(this.hitQueryContext);
             this.sourceHitQueryContext = null;
         } catch (IOException e) {
@@ -220,6 +220,7 @@ class SpansReader implements Runnable {
         // No more matches in this document. Find first match in next matching document.
         while (true) {
             assert twoPhaseApproximation.docID() != DocIdSetIterator.NO_MORE_DOCS;
+            int docPrev = twoPhaseApproximation.docID();
             int doc1 = twoPhaseApproximation.nextDoc();
             if (doc1 == DocIdSetIterator.NO_MORE_DOCS) {
                 // We're done.

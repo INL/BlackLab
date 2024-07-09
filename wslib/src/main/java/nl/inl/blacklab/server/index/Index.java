@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,21 +59,6 @@ public class Index {
             return name().toLowerCase();
         }
     }
-
-    /**
-     * Sort all public indices first, then sort alphabetically within all public and
-     * private indices.
-     */
-    public static final Comparator<Index> COMPARATOR = (o1, o2) -> {
-        // Sort public before private
-        boolean o1priv = o1.isUserIndex();
-        boolean o2priv = o2.isUserIndex();
-        if (o1priv != o2priv)
-            return o1priv ? 1 : -1;
-
-        // Sort rest case-insensitively
-        return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
-    };
 
     private final String id;
 
@@ -403,15 +387,34 @@ public class Index {
      * @return the username or null if this is not a user index.
      */
     public String getUserId() {
-        Matcher m = PATT_INDEXID.matcher(this.getId());
+        Matcher m = PATT_INDEXID.matcher(getId());
         if (!m.matches())
             throw new RuntimeException();
         return m.group(1);
     }
 
+    /**
+     * Get the user that owns this index. Returns null if this is not a user index.
+     *
+     * @param indexId the index id
+     * @return the username, or null if this is not a user index
+     */
+    public static User getUser(String indexId) {
+        return User.fromId(getUserId(indexId));
+    }
+
+    /**
+     * Get the user that owns this index. Returns null if this is not a user index.
+     *
+     * @return the username, or null if this is not a user index
+     */
+    public User getUser() {
+        return User.fromId(getUserId());
+    }
+
     public boolean sharedWith(User user) {
         // Any user the index is explicitly shared with can read it too
-        return shareWithUsers.contains(user.getUserId());
+        return shareWithUsers.contains(user.getId());
     }
 
     public boolean userMayRead(User user) {
@@ -424,7 +427,7 @@ public class Index {
             return true;
 
         // Owner can always read their own index
-        if (user.getUserId().equals(getUserId()))
+        if (user.getId().equals(getUserId()))
             return true;
 
         // Any user the index is explicitly shared with can read it too
@@ -433,7 +436,7 @@ public class Index {
 
     private boolean authorizedForIndex(User user) {
         // You are authorized (can add to, can delete) a private index if it's yours or you're the superuser
-        return isUserIndex() && (getUserId().equals(user.getUserId()) || user.isSuperuser());
+        return isUserIndex() && (getUserId().equals(user.getId()) || user.isSuperuser());
     }
 
     public boolean userMayAddData(User user) {

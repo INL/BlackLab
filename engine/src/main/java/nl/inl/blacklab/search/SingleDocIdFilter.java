@@ -34,6 +34,7 @@ public class SingleDocIdFilter extends Query {
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         return new Weight(null) {
+
             @Override
             public Explanation explain(LeafReaderContext context, int doc) {
                 return null;

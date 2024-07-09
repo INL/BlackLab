@@ -14,6 +14,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public class DocPropertyDecade extends DocProperty {
 
+    public static final String ID = "decade";
+
     private final BlackLabIndex index;
     
     private final String fieldName;
@@ -106,16 +108,12 @@ public class DocPropertyDecade extends DocProperty {
 
     @Override
     public String name() {
-        return "decade";
-    }
-
-    public static DocPropertyDecade deserialize(BlackLabIndex index, String info) {
-        return new DocPropertyDecade(index, PropertySerializeUtil.unescapePart(info));
+        return ID;
     }
 
     @Override
     public String serialize() {
-        return serializeReverse() + PropertySerializeUtil.combineParts("decade", fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts(ID, fieldName);
     }
 
     @Override

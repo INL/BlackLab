@@ -21,10 +21,12 @@ public class SingleDocIdSet extends DocIdSet {
         return new DocIdSetIterator() {
             private boolean nexted = false;
 
-            private final boolean done = false;
+            private boolean done = false;
 
             @Override
             public int nextDoc() {
+                if (nexted)
+                    done = true;
                 if (done)
                     return NO_MORE_DOCS;
                 nexted = true;
@@ -33,15 +35,20 @@ public class SingleDocIdSet extends DocIdSet {
 
             @Override
             public int docID() {
-                if (!nexted || done)
+                if (!nexted)
+                    return -1;
+                if (done)
                     return NO_MORE_DOCS;
                 return id;
             }
 
             @Override
             public int advance(int target) {
+                if (nexted)
+                    done = true;
                 if (done || target > id)
                     return NO_MORE_DOCS;
+                nexted = true;
                 return id;
             }
 
@@ -49,11 +56,21 @@ public class SingleDocIdSet extends DocIdSet {
             public long cost() {
                 return 100; // (we don't use this)
             }
+
+            @Override
+            public String toString() {
+                return "SingleDocIdSetIt(" + id + ")";
+            }
         };
     }
 
     @Override
     public long ramBytesUsed() {
         return Integer.BYTES;
+    }
+
+    @Override
+    public String toString() {
+        return "SingleDocIdSet(" + id + ")";
     }
 }

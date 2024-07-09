@@ -264,16 +264,6 @@ public abstract class QueryParamsAbstract implements QueryParams {
         return getLong(WebserviceParameter.NUMBER_OF_RESULTS);
     }
 
-    @Override
-    @Deprecated
-    public int getWordsAroundHit() {
-        // ("wordsaroundhit" is deprecated, now called "context")
-        WebserviceParameter par = has(WebserviceParameter.CONTEXT) ?
-                WebserviceParameter.CONTEXT :
-                WebserviceParameter.WORDS_AROUND_HIT;
-        return getInt(par);
-    }
-
     public ContextSize getContext() {
         // ("wordsaroundhit" is deprecated, now called "context")
         WebserviceParameter par = has(WebserviceParameter.WORDS_AROUND_HIT) ?
@@ -289,7 +279,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
             before = Integer.parseInt(parts[0]);
             after = Integer.parseInt(parts[1]);
         } else if (str.matches("\\w+")) {
-            inlineTagName = str; // TODO: determine actual match info index for inline tag
+            inlineTagName = str;
         } else {
             throw new IllegalArgumentException("Invalid context value: " + str);
         }
@@ -395,6 +385,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public long getLimitValues() { return getLong(WebserviceParameter.LIMIT_VALUES); }
+
+    @Override
+    public boolean getAdjustRelationHits() { return getBool(WebserviceParameter.REL_ADJUST_HITS); }
 
     @Override
     public boolean isCalculateCollocations() { return get(WebserviceParameter.CALCULATE_STATS).equals("colloc"); }

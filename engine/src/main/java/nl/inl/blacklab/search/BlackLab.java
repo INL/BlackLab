@@ -6,6 +6,8 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +74,13 @@ public final class BlackLab {
     /** Global settings are read from file and applied to the different parts of BL once. */
     private static boolean globalSettingsApplied = false;
 
-    public static final String FEATURE_INTEGRATE_EXTERNAL_FILES = "integrateExternalFiles";
+    /** Controls what BlackLab's default index type is. If not present, will default to the new
+     *  integrated index. Set to 'external' to use the legacy index with external forward index
+     *  that was the default in BlackLab 3.x. Used for testing.
+     */
+    public static final String FEATURE_DEFAULT_INDEX_TYPE = "defaultIndexType";
+
+    private static RuleBasedCollator fieldValueSortCollator = null;
 
     /**
      * Create a new engine instance.
@@ -266,6 +274,17 @@ public final class BlackLab {
         return valueFromManifest("Implementation-Version");
     }
 
+    /**
+     * Return the SCM revision this was built from.
+     *
+     * This is generally the short Git commit hash.
+     *
+     * @return SCM revision string, or UNKNOWN if it could not be found
+     */
+    public static String getBuildScmRevision() {
+        return valueFromManifest("Build-Scm-Revision");
+    }
+
     public static Collator defaultCollator() {
         return config().getSearch().getCollator().get();
     }
@@ -313,7 +332,6 @@ public final class BlackLab {
      * <li>$BLACKLAB_CONFIG_DIR (if env. var. is defined)</li>
      * <li>$HOME/.blacklab</li>
      * <li>/etc/blacklab</li>
-     * <li>/vol1/etc/blacklab (legacy, will be removed)</li>
      * <li>/tmp (legacy, will be removed)</li>
      * </ul>>
      *
@@ -338,7 +356,6 @@ public final class BlackLab {
             }
             configDirs.add(new File(System.getProperty("user.home"), ".blacklab"));
             configDirs.add(new File("/etc/blacklab"));
-            configDirs.add(new File("/vol1/etc/blacklab")); // TODO: remove, INT-specific
             configDirs.add(new File(System.getProperty("java.io.tmpdir")));
         }
         return new ArrayList<>(configDirs);
@@ -358,15 +375,22 @@ public final class BlackLab {
         return blackLabConfig;
     }
 
+    /**
+     * Get the value of a feature flag.
+     *
+     * Feature flags can be set in the environment (BLACKLAB_FEATURE_<flagName>) or in the
+     * blacklab[-server].yaml configuration file under the 'featureFlags' key.
+     *
+     * Used for testing both index types.
+     *
+     * @param name name of the feature flag
+     * @return value of the feature flag, or an empty string if not set
+     */
     public static String featureFlag(String name) {
         String value = System.getenv("BLACKLAB_FEATURE_" + name);
         if (value == null)
             value = config().getFeatureFlags().get(name);
-        return value;
-    }
-
-    public static boolean isFeatureEnabled(String name) {
-        return Boolean.parseBoolean(featureFlag(name));
+        return value == null ? "" : value;
     }
 
     /**
@@ -444,4 +468,26 @@ public final class BlackLab {
     }
 
     private BlackLab() { }
+
+    /**
+     * Returns a collator that sort field values "properly", ignoring parentheses.
+     *
+     * @return the collator
+     */
+    public static Collator getFieldValueSortCollator() {
+        if (fieldValueSortCollator == null) {
+            fieldValueSortCollator = (RuleBasedCollator) defaultCollator();
+            try {
+                // Make sure it ignores parentheses when comparing
+                String rules = fieldValueSortCollator.getRules();
+                // Set parentheses equal to NULL, which is ignored.
+                rules += "&\u0000='('=')'";
+                fieldValueSortCollator = new RuleBasedCollator(rules);
+            } catch (ParseException e) {
+                // Oh well, we'll use the collator as-is
+                //throw new RuntimeException();//DEBUG
+            }
+        }
+        return fieldValueSortCollator;
+    }
 }

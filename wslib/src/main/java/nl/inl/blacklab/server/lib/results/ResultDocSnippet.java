@@ -10,19 +10,18 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.extensions.XFRelations;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
-import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
-import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
@@ -47,6 +46,7 @@ public class ResultDocSnippet {
         this.params = params;
 
         BlackLabIndex index = params.blIndex();
+        AnnotatedField field = params.getAnnotatedField();
         String docPid = params.getDocPid();
         int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
         if (luceneDocId < 0)
@@ -82,21 +82,25 @@ public class ResultDocSnippet {
 
         if (context.isInlineTag()) {
             // Make sure we capture the tag so we can use its boundaries for the snippet
-            String captureInlineTagAs = context.inlineTagName();
-            TextPattern pattern = new TextPatternPositionFilter(new TextPatternFixedSpan(start, end),
-                    new TextPatternTags(captureInlineTagAs, null, TextPatternTags.Adjust.FULL_TAG, captureInlineTagAs),
-                    SpanQueryPositionFilter.Operation.WITHIN);
-            // Also capture any relations that are in the tag
-            pattern = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(pattern, captureInlineTagAs, "rels"));
-            QueryExecutionContext queryContext = new QueryExecutionContext(index,
-                    index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
+            TextPatternFixedSpan producer = new TextPatternFixedSpan(start, end);
+            String tagName = context.inlineTagName();
+            TextPattern pattern = TextPattern.createRelationCapturingWithinQuery(producer, tagName, XFRelations.DEFAULT_CONTEXT_REL_NAME);
+            QueryExecutionContext queryContext = QueryExecutionContext.get(index,
+                    params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {
                 BLSpanQuery query = pattern.translate(queryContext);
-                hits = index.search().find(query).execute();
+                query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
+                hits = index.search(field, params.useCache()).find(query).execute();
             } catch (InvalidQuery e) {
                 throw new BlackLabRuntimeException(e);
             }
-        } else {
+        }
+        if (hits != null && !hits.hitsStats().processedAtLeast(1)) {
+            // We couldn't find the tag for the context; use a context of 0 words instead
+            hits = null;
+            context = ContextSize.get(0, maxSnippetSize);
+        }
+        if (hits == null) {
             // Limit context if necessary
             // (done automatically as well, but this should ensure equal before/after parts)
             int snippetSize = end - start + context.before() + context.after();
@@ -110,7 +114,7 @@ public class ResultDocSnippet {
                 int newAfter = (int)(context.after() * factor);
                 context = ContextSize.get(newBefore, newAfter, maxSnippetSize);
             }
-            hits = Hits.singleton(QueryInfo.create(index), luceneDocId, start, end);
+            hits = Hits.singleton(QueryInfo.create(index, field), luceneDocId, start, end);
         }
 
         origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;

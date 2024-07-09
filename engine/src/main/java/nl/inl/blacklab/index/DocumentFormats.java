@@ -70,7 +70,7 @@ public class DocumentFormats {
     public static synchronized InputFormat add(InputFormat inputFormat) {
         String formatIdentifier = inputFormat.getIdentifier();
         if (inputFormats.containsKey(formatIdentifier)) {
-            logger.warn("Overwriting existing config format " + formatIdentifier + " with " + inputFormat + ".");
+            logger.info("Loading " + inputFormat + " overrode previously loaded format with this name");
         }
         inputFormats.put(formatIdentifier, inputFormat);
         return inputFormat;
@@ -224,7 +224,7 @@ public class DocumentFormats {
      *
      * @throws InvalidInputFormatConfig when one of the formats could not be loaded
      */
-    public static void addConfigFormatsInDirectories(List<File> dirs) throws InvalidInputFormatConfig {
+    public static void addConfigFormatsInDirectories(Collection<File> dirs) throws InvalidInputFormatConfig {
         // Finds all new configs and add them to the supported list
         FileUtil.FileTask configLocator = new FileUtil.FileTask() {
             @Override

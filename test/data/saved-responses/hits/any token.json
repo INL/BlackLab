@@ -11,6 +11,12 @@
       ],
       "title": [
         "service encounter about visa application for family members"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 334
+        }
       ]
     }
   },
@@ -2380,6 +2386,7 @@
     "numberOfHitsRetrieved": 766,
     "pattern": {
       "bcql": "[]",
+      "fieldName": "contents",
       "json": {
         "max": 1,
         "min": 1,

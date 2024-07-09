@@ -126,6 +126,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
 
     @Override
     public AnnotationForwardIndex get(Annotation annotation) {
+        assert annotation != null;
         if (closed)
             throw new RuntimeException("ForwardIndex was closed");
         if (!annotation.hasForwardIndex())

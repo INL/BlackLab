@@ -52,7 +52,7 @@ Sometimes, certain advanced queries may be slow as well. You can experiment with
 
 ## Why can't I view whole documents?
 
-You may be getting "permission denied" or such when trying to view a whole document in corpus-frontend or via BlackLab Server. This is due to the `contentViewable` setting.
+You may be getting "permission denied" or such when trying to view a whole document in corpus-frontend or via BlackLab Server. This is due to the `corpusConfig.contentViewable` setting in the indexing configuration file.
 
 See the note about `contentViewable` on the [BlackLab Server overview](/server/) page.
 

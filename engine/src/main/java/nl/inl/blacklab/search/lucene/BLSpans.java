@@ -81,9 +81,9 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
     /** We will delegate our guarantee methods to this. */
     protected SpanGuarantees guarantees;
 
-    public BLSpans() {
-        this(null);
-    }
+    /** If we're querying a parallel corpus, this may indicate that this part of the hit
+     *  comes from a different anntotated field, e.g. contents__nl. */
+    private String overriddenField = null;
 
     public BLSpans(SpanGuarantees guarantees) {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
@@ -102,28 +102,40 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
      * <p>
-     * Subclasses should override this method, pass the context to their child
-     * clauses (if any), and either:
+     * Subclasses should implement {@link #passHitQueryContextToClauses(HitQueryContext)}.
+     *
+     * @param context the hit query context, that e.g. keeps track of captured groups
+     */
+    public final void setHitQueryContext(HitQueryContext context) {
+        childClausesCaptureMatchInfo = hasMatchInfo();
+        overriddenField = context.getField(); // will be null unless this is a parallel corpus query
+        passHitQueryContextToClauses(context);
+    }
+
+    /**
+     * Get the overridden field, if any.
+     *
+     * Used for parallel corpus queries, where part of the query may
+     * concern a field other than the primary field we're searching.
+     * For non-parallel corpora, this will always return null.
+     *
+     * @return the overridden field, or null if none
+     */
+    public String getOverriddenField() {
+        return overriddenField;
+    }
+
+    /**
+     * Called by setHitQueryContext() to pass the context to child clauses.
+     * <p>
+     * Subclasses should implement this method to pass the context to their
+     * child clauses (if any), and either:
      *
      * <ul>
      *   <li>register the match info they represent with the context (SpansCaptureGroup, SpansRelations do this), OR</li>
      *   <li>store the context so they can later use it to access match info (although this can be problematic
      *       as it may not be available during matching)</li>
      * </ul>
-     *
-     * As an alternative, they can also only override {@link #passHitQueryContextToClauses(HitQueryContext)}.
-     *
-     * @param context the hit query context, that e.g. keeps track of captured groups
-     */
-    public final void setHitQueryContext(HitQueryContext context) {
-        childClausesCaptureMatchInfo = hasMatchInfo();
-        passHitQueryContextToClauses(context);
-    }
-
-    /**
-     * Called by setHitQueryContext() to pass the context to child clauses.
-     * <p>
-     * Subclasses can override this to avoid having to override {@link #setHitQueryContext(HitQueryContext)}.
      *
      * @param context the hit query context, that e.g. keeps track of captured
      *            groups
