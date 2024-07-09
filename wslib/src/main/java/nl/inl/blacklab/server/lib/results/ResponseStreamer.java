@@ -127,6 +127,8 @@ public class ResponseStreamer {
 
     // Fields
     public static final String KEY_FIELD_NAME = "fieldName";
+    public static final String KEY_TARGET_FIELD = "targetField";
+    public static final String KEY_OTHER_FIELDS = "otherFields";
     public static final String KEY_FIELD_IS_ANNOTATED = "isAnnotatedField";
     public static final String KEY_VALUE_LIST_COMPLETE = "valueListComplete";
 
@@ -365,6 +367,13 @@ public class ResponseStreamer {
             }
             String searchField = summaryFields.getSearchField();
             ds.entry(KEY_FIELD_NAME, searchField);
+            if (!summaryFields.getOtherFields().isEmpty()) {
+                ds.startEntry(KEY_OTHER_FIELDS).startList();
+                for (String field: summaryFields.getOtherFields()) {
+                    ds.item(KEY_FIELD_NAME, field);
+                }
+                ds.endList().endEntry();
+            }
             List<MatchInfo.Def> matchInfoDefs = summaryFields.getMatchInfoDefs().stream()
                     .filter(d -> !d.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT))
                     .collect(Collectors.toList());
@@ -378,6 +387,8 @@ public class ResponseStreamer {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
                         if (!def.getField().equals(searchField))
                             ds.entry(KEY_FIELD_NAME, def.getField());
+                        if (def.getTargetField() != null && !def.getTargetField().equals(searchField))
+                            ds.entry(KEY_TARGET_FIELD, def.getTargetField());
                     }
                     ds.endMap().endDynEntry();
                 }
@@ -686,7 +697,7 @@ public class ResponseStreamer {
             if (modernizeApi) {
                 Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
                 if (foreignKwics != null) {
-                    ds.startEntry("otherFields").startMap();
+                    ds.startEntry(KEY_OTHER_FIELDS).startMap();
                     for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
                         String field = e.getKey();
                         Kwic kwic = e.getValue();
@@ -842,7 +853,7 @@ public class ResponseStreamer {
 
             if (!relationInfo.getField().equals(relationInfo.getTargetField())) {
                 // Report targetField for cross-field relations
-                ds.entry("targetField", relationInfo.getTargetField());
+                ds.entry(KEY_TARGET_FIELD, relationInfo.getTargetField());
             }
         }
         ds.endMap();

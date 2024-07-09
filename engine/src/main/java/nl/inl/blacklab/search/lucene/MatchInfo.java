@@ -150,12 +150,16 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         /** What field is this match info for? Never null. */
         private final String field;
 
-        public Def(int index, String name, Type type, String field) {
+        /** Target field of (list of) relations, or null if same as source or not applicable. */
+        private final String targetField;
+
+        public Def(int index, String name, Type type, String field, String targetField) {
             this.index = index;
             this.name = name;
             this.type = type;
             assert field != null;
             this.field = field;
+            this.targetField = targetField == null || targetField.equals(field) ? null : targetField;
         }
 
         public int getIndex() {
@@ -172,6 +176,10 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
 
         public String getField() {
             return field;
+        }
+
+        public String getTargetField() {
+            return targetField;
         }
 
         public void updateType(Type type) {

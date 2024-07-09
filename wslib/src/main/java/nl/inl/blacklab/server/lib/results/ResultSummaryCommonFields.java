@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,10 +21,11 @@ public class ResultSummaryCommonFields {
     private ResultGroups<?> groups;
     private WindowStats window;
     private final String searchField;
+    private final Collection<String> otherFields;
 
     ResultSummaryCommonFields(WebserviceParams searchParam, Index.IndexStatus indexStatus,
             SearchTimings timings, List<MatchInfo.Def> matchInfoDefs,
-            ResultGroups<?> groups, WindowStats window, String searchField) {
+            ResultGroups<?> groups, WindowStats window, String searchField, Collection<String> otherFields) {
         this.searchParam = searchParam;
         if (searchParam.hasPattern())
             this.textPattern = searchParam.pattern().orElse(null);
@@ -33,6 +35,7 @@ public class ResultSummaryCommonFields {
         this.groups = groups;
         this.window = window;
         this.searchField = searchField;
+        this.otherFields = otherFields;
     }
 
     public WebserviceParams getSearchParam() {
@@ -65,5 +68,9 @@ public class ResultSummaryCommonFields {
 
     public String getSearchField() {
         return searchField;
+    }
+
+    public Collection<String> getOtherFields() {
+        return otherFields;
     }
 }

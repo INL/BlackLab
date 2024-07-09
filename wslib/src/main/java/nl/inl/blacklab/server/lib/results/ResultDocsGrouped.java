@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.lib.results;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -77,7 +78,8 @@ public class ResultDocsGrouped {
         SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
         Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         summaryFields = WebserviceOperations.summaryCommonFields(params,
-                indexStatus, timings, null, groups, ourWindow, docResults.field().name());
+                indexStatus, timings, null, groups, ourWindow, docResults.field().name(),
+                Collections.emptyList());
 
         numResultDocs = null;
         numResultHits = null;

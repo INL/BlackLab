@@ -2,8 +2,10 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -365,12 +367,18 @@ public class ResultHits {
                 getHitsStats(), getDocsStats(),
                 params.getWaitForTotal(), searchTimings, null, totalTokens);
         List<MatchInfo.Def> matchInfoDefs = hits.matchInfoDefs();
+        Set<String> otherFields = new HashSet<>();
+        for (MatchInfo.Def def : matchInfoDefs) {
+            otherFields.add(def.getField());
+            if (def.getTargetField() != null)
+                otherFields.add(def.getTargetField());
+        }
+        otherFields.remove(hits.field().name());
         summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
                 getIndexStatus(), searchTimings, matchInfoDefs, null, window.windowStats(),
-                hits.field().name());
+                hits.field().name(), otherFields);
         listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
                 getDocIdToPid());
-
     }
 
     public long getSearchTime() {

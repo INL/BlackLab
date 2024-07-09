@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -180,7 +181,8 @@ public class ResultDocsResponse {
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
         Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus, timings,
-                null, null, window.windowStats(), docResults.field().name());
+                null, null, window.windowStats(), docResults.field().name(),
+                Collections.emptyList());
         ResultSummaryNumDocs numResultDocs = null;
         ResultSummaryNumHits numResultHits = null;
         if (hitsStats == null) {

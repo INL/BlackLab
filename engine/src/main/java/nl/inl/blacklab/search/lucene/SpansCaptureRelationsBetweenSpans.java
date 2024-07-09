@@ -81,7 +81,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         void setContext(HitQueryContext context) {
             matchRelations.setHitQueryContext(context);
             captureRelations.setHitQueryContext(context);
-            captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS);
+            captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
 
             HitQueryContext targetContext = context.withField(targetField);
             captureTargetAsIndex = targetContext.registerMatchInfo(captureTargetAs, MatchInfo.Type.SPAN);

@@ -73,7 +73,7 @@ public class HitQueryContext {
      * @return the group's assigned index
      */
     public int registerMatchInfo(String name, MatchInfo.Type type) {
-        return registerMatchInfo(name, type, getField());
+        return registerMatchInfo(name, type, getField(), null);
     }
 
     /**
@@ -83,9 +83,10 @@ public class HitQueryContext {
      * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
      * @param field the group's field. Never null. Used e.g. when capturing relation, which should always
      *                    be captured in the source field, even if the span mode is target (and the context reflects that).
+     * @param targetField for relation and list of relations: the target field, or empty string if not applicable
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name, MatchInfo.Type type, String field) {
+    public int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
         Optional<MatchInfo.Def> mi = matchInfoDefs.stream()
                 .filter(mid -> mid.getName().equals(name))
                 .findFirst();
@@ -94,7 +95,7 @@ public class HitQueryContext {
             return mi.get().getIndex(); // already registered, reuse
         }
         assert field != null;
-        MatchInfo.Def newMatchInfo = new MatchInfo.Def(matchInfoDefs.size(), name, type, field);
+        MatchInfo.Def newMatchInfo = new MatchInfo.Def(matchInfoDefs.size(), name, type, field, targetField);
         matchInfoDefs.add(newMatchInfo);
         return newMatchInfo.getIndex(); // index in array
     }
