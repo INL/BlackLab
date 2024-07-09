@@ -6,6 +6,8 @@ import jakarta.xml.bind.annotation.XmlElement;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.Map;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SummaryTextPattern {
 

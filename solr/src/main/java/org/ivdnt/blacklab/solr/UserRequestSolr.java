@@ -22,6 +22,8 @@ import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.ServletUtil;
 
+import javax.servlet.http.HttpServletRequest;
+
 public class UserRequestSolr implements UserRequest {
 
     private final ResponseBuilder rb;
@@ -63,8 +65,10 @@ public class UserRequestSolr implements UserRequest {
     public String getRemoteAddr() {
         if (rb.req.getHttpSolrCall() == null)
             return "UNKNOWN"; // test
-//        TODO solr still uses javax.servlet
-        return ServletUtil.getOriginatingAddress(rb.req.getHttpSolrCall().getReq());
+        final HttpServletRequest req = rb.req.getHttpSolrCall().getReq();
+        String header = req.getHeader("X-Forwarded-For");
+        if (header != null && header.length() > 0) header = req.getRemoteAddr();
+        return header;
     }
 
     @Override

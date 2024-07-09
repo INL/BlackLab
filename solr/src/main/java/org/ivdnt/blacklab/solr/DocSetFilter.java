@@ -157,7 +157,7 @@ public class DocSetFilter extends Query {
 
     @Override
     public void visit(QueryVisitor queryVisitor) {
-        visitor.visitLeaf(this);
+        queryVisitor.visitLeaf(this);
     }
 
     @Override
