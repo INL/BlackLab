@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Configuration | BlackLab</title>
+    <meta name="generator" content="VuePress 1.9.8">
+    
+    <meta name="description" content="Documentation for the corpus search engine BlackLab">
+    
+    <link rel="preload" href="/BlackLab/assets/css/0.styles.5760bb18.css" as="style"><link rel="preload" href="/BlackLab/assets/js/app.ff7e0bdb.js" as="script"><link rel="preload" href="/BlackLab/assets/js/2.3a027c82.js" as="script"><link rel="preload" href="/BlackLab/assets/js/39.f9614a8f.js" as="script"><link rel="prefetch" href="/BlackLab/assets/js/10.a97bc1f2.js"><link rel="prefetch" href="/BlackLab/assets/js/11.891fe32f.js"><link rel="prefetch" href="/BlackLab/assets/js/12.2db99efc.js"><link rel="prefetch" href="/BlackLab/assets/js/13.e93eed8a.js"><link rel="prefetch" href="/BlackLab/assets/js/14.9364ad4a.js"><link rel="prefetch" href="/BlackLab/assets/js/15.405632c8.js"><link rel="prefetch" href="/BlackLab/assets/js/16.f3063769.js"><link rel="prefetch" href="/BlackLab/assets/js/17.06d27b1c.js"><link rel="prefetch" href="/BlackLab/assets/js/18.b90032a5.js"><link rel="prefetch" href="/BlackLab/assets/js/19.1cd8af9b.js"><link rel="prefetch" href="/BlackLab/assets/js/20.42bb357a.js"><link rel="prefetch" href="/BlackLab/assets/js/21.6b25d228.js"><link rel="prefetch" href="/BlackLab/assets/js/22.577e00a3.js"><link rel="prefetch" href="/BlackLab/assets/js/23.18694c3e.js"><link rel="prefetch" href="/BlackLab/assets/js/24.3f96f03f.js"><link rel="prefetch" href="/BlackLab/assets/js/25.ebeb39f6.js"><link rel="prefetch" href="/BlackLab/assets/js/26.afa2791a.js"><link rel="prefetch" href="/BlackLab/assets/js/27.bbc1ac3e.js"><link rel="prefetch" href="/BlackLab/assets/js/28.1607f8a7.js"><link rel="prefetch" href="/BlackLab/assets/js/29.74d0eb7f.js"><link rel="prefetch" href="/BlackLab/assets/js/3.dd448380.js"><link rel="prefetch" href="/BlackLab/assets/js/30.d69bc359.js"><link rel="prefetch" href="/BlackLab/assets/js/31.8d716075.js"><link rel="prefetch" href="/BlackLab/assets/js/32.a0ff5456.js"><link rel="prefetch" href="/BlackLab/assets/js/33.c497f89b.js"><link rel="prefetch" href="/BlackLab/assets/js/34.43fcfa33.js"><link rel="prefetch" href="/BlackLab/assets/js/35.57d60f91.js"><link rel="prefetch" href="/BlackLab/assets/js/36.6b5464f5.js"><link rel="prefetch" href="/BlackLab/assets/js/37.aa245bfb.js"><link rel="prefetch" href="/BlackLab/assets/js/38.e2221bf1.js"><link rel="prefetch" href="/BlackLab/assets/js/4.250fd8f2.js"><link rel="prefetch" href="/BlackLab/assets/js/40.3e881176.js"><link rel="prefetch" href="/BlackLab/assets/js/41.19e38ff0.js"><link rel="prefetch" href="/BlackLab/assets/js/42.0465a6b1.js"><link rel="prefetch" href="/BlackLab/assets/js/43.2c80d081.js"><link rel="prefetch" href="/BlackLab/assets/js/44.43625a55.js"><link rel="prefetch" href="/BlackLab/assets/js/45.b5cea120.js"><link rel="prefetch" href="/BlackLab/assets/js/46.1b676431.js"><link rel="prefetch" href="/BlackLab/assets/js/47.85c2d39e.js"><link rel="prefetch" href="/BlackLab/assets/js/48.08158648.js"><link rel="prefetch" href="/BlackLab/assets/js/49.a4c61ca8.js"><link rel="prefetch" href="/BlackLab/assets/js/5.7080f60e.js"><link rel="prefetch" href="/BlackLab/assets/js/50.c78858d5.js"><link rel="prefetch" href="/BlackLab/assets/js/51.463bae8c.js"><link rel="prefetch" href="/BlackLab/assets/js/52.458bbe5f.js"><link rel="prefetch" href="/BlackLab/assets/js/53.39e9deef.js"><link rel="prefetch" href="/BlackLab/assets/js/54.425b4f2a.js"><link rel="prefetch" href="/BlackLab/assets/js/55.50c2c79a.js"><link rel="prefetch" href="/BlackLab/assets/js/56.eec17177.js"><link rel="prefetch" href="/BlackLab/assets/js/57.306ac3df.js"><link rel="prefetch" href="/BlackLab/assets/js/58.10fb9202.js"><link rel="prefetch" href="/BlackLab/assets/js/59.a192a7eb.js"><link rel="prefetch" href="/BlackLab/assets/js/6.bb3d2c40.js"><link rel="prefetch" href="/BlackLab/assets/js/60.8ff3f063.js"><link rel="prefetch" href="/BlackLab/assets/js/61.91d2ba44.js"><link rel="prefetch" href="/BlackLab/assets/js/62.f8d7a455.js"><link rel="prefetch" href="/BlackLab/assets/js/63.ba9049be.js"><link rel="prefetch" href="/BlackLab/assets/js/64.a10a4e4f.js"><link rel="prefetch" href="/BlackLab/assets/js/65.ab9870d5.js"><link rel="prefetch" href="/BlackLab/assets/js/66.b1a55608.js"><link rel="prefetch" href="/BlackLab/assets/js/67.c8966fb0.js"><link rel="prefetch" href="/BlackLab/assets/js/68.a0110da1.js"><link rel="prefetch" href="/BlackLab/assets/js/69.190cdd43.js"><link rel="prefetch" href="/BlackLab/assets/js/7.fe78c9fd.js"><link rel="prefetch" href="/BlackLab/assets/js/70.af6f5588.js"><link rel="prefetch" href="/BlackLab/assets/js/71.accb48b7.js"><link rel="prefetch" href="/BlackLab/assets/js/72.7d196c93.js"><link rel="prefetch" href="/BlackLab/assets/js/73.28b0fde7.js"><link rel="prefetch" href="/BlackLab/assets/js/74.60eed0ed.js"><link rel="prefetch" href="/BlackLab/assets/js/8.9dedd2e9.js"><link rel="prefetch" href="/BlackLab/assets/js/9.e6659fc6.js">
+    <link rel="stylesheet" href="/BlackLab/assets/css/0.styles.5760bb18.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/BlackLab/" class="home-link router-link-active"><!----> <span class="site-name">BlackLab</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/BlackLab/guide/" class="nav-link">
+  Guide
+</a></div><div class="nav-item"><a href="/BlackLab/server/" class="nav-link router-link-active">
+  Webservice
+</a></div><div class="nav-item"><a href="/BlackLab/frontend/" class="nav-link">
+  Frontend
+</a></div><div class="nav-item"><a href="/BlackLab/development/" class="nav-link">
+  Developers
+</a></div> <a href="https://github.com/INL/BlackLab" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/BlackLab/guide/" class="nav-link">
+  Guide
+</a></div><div class="nav-item"><a href="/BlackLab/server/" class="nav-link router-link-active">
+  Webservice
+</a></div><div class="nav-item"><a href="/BlackLab/frontend/" class="nav-link">
+  Frontend
+</a></div><div class="nav-item"><a href="/BlackLab/development/" class="nav-link">
+  Developers
+</a></div> <a href="https://github.com/INL/BlackLab" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/BlackLab/server/" aria-current="page" class="sidebar-link">BlackLab Server</a></li><li><a href="/BlackLab/server/overview.html" class="sidebar-link">How to use</a></li><li><a href="/BlackLab/server/rest-api/" class="sidebar-link">API reference</a></li><li><a href="/BlackLab/server/from-different-languages.html" class="sidebar-link">Using from different languages</a></li><li><a href="/BlackLab/server/configuration.html" aria-current="page" class="active sidebar-link">Configuration</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/BlackLab/server/configuration.html#yaml-vs-json" class="sidebar-link">YAML vs. JSON</a></li><li class="sidebar-sub-header"><a href="/BlackLab/server/configuration.html#blacklab-vs-blacklab-server-config" class="sidebar-link">BlackLab vs. BlackLab Server config</a></li><li class="sidebar-sub-header"><a href="/BlackLab/server/configuration.html#config-file-locations" class="sidebar-link">Config file locations</a></li><li class="sidebar-sub-header"><a href="/BlackLab/server/configuration.html#minimal-config-file" class="sidebar-link">Minimal config file</a></li><li class="sidebar-sub-header"><a href="/BlackLab/server/configuration.html#complete-config-file" class="sidebar-link">Complete config file</a></li></ul></li><li><a href="/BlackLab/server/howtos.html" class="sidebar-link">Tutorials / howtos</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="configuration"><a href="#configuration" class="header-anchor">#</a> Configuration</h1> <p>BlackLab and BlackLab Server settings can be configured in configuration files.</p> <h2 id="yaml-vs-json"><a href="#yaml-vs-json" class="header-anchor">#</a> YAML vs. JSON</h2> <p>These files can be in YAML or JSON format. On this page, we will use the YAML format (as it allows comments and is arguably more readable), but it the two can be easily converted back and forth (for example <a href="https://www.json2yaml.com/" target="_blank" rel="noopener noreferrer">here<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a>). Just be sure to use the <code>.json</code> extension for JSON and <code>.yaml</code> or <code>.yml</code> for YAML.</p> <h2 id="blacklab-vs-blacklab-server-config"><a href="#blacklab-vs-blacklab-server-config" class="header-anchor">#</a> BlackLab vs. BlackLab Server config</h2> <p>The configuration files are called <code>blacklab-server.yaml</code> and <code>blacklab.yaml</code>. You most likely only need <code>blacklab-server.yaml</code>, which can contain everything <code>blacklab.yaml</code> can and more.</p> <p>To be precise: BlackLab programs such as QueryTool, IndexTool and BlackLab Server always look for <code>blacklab.yaml</code>. BlackLab Server also looks for <code>blacklab-server.yaml</code>. So if you're just running BlackLab Server, you probably only need a <code>blacklab-server.yaml</code> file, but if you also want to configure some detail about how IndexTool and QueryTool (or other BlackLab-based applications) run, it can be useful to have a <code>blacklab.yaml</code> file too.</p> <h2 id="config-file-locations"><a href="#config-file-locations" class="header-anchor">#</a> Config file locations</h2> <p>Where should this file (or files) be located? BlackLab looks for them in the following places:</p> <ul><li>the directory specified in <code>$BLACKLAB_CONFIG_DIR</code>, if this environment variable was defined</li> <li><code>$HOME/.blacklab</code></li> <li><code>/etc/blacklab</code></li> <li>the Java classpath</li></ul> <p>In addition, BlackLab Server will also look for <code>blacklab-server.yaml</code> in the directory where the .war file is located, e.g. <code>/usr/share/tomcat/webapps</code>.</p> <h2 id="minimal-config-file"><a href="#minimal-config-file" class="header-anchor">#</a> Minimal config file</h2> <p>Here's a minimal configuration file for BlackLab Server. Name it <code>blacklab-server.yaml</code> and place it in the same directory as the <code>blacklab-server.war</code> file or in <code>/etc/blacklab</code> (or configure a different location as just described).</p> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token punctuation">---</span>
+<span class="token key atrule">configVersion</span><span class="token punctuation">:</span> <span class="token number">2</span>
+
+<span class="token comment"># Where indexes can be found</span>
+<span class="token comment"># (list directories whose subdirectories are indexes, or directories containing a single index)</span>
+<span class="token key atrule">indexLocations</span><span class="token punctuation">:</span>
+<span class="token punctuation">-</span> /data/index
+</code></pre></div><p>This simply tells BlackLab Server where to find its indexes.</p> <p>A minimal example of <code>blacklab.yaml</code> would be no file at all, as no setting in <code>blacklab.yaml</code> is required for IndexTool or QueryTool to run.</p> <h2 id="complete-config-file"><a href="#complete-config-file" class="header-anchor">#</a> Complete config file</h2> <p>Below is a fully populated version of <code>blacklab-server.yaml</code>.</p> <div class="custom-block tip"><p class="custom-block-title">TIP</p> <p>You don't need all these sections! Just use the ones you want to specifically influence, and leave the rest out. See the minimal config file above to get started.</p></div> <div class="custom-block tip"><p class="custom-block-title">TIP</p> <p>You can also use a file called <code>blacklab.yaml</code> if you want to configure details about running <code>IndexTool</code> and <code>QueryTool</code> as well. It can only contain the <code>log</code>, <code>search</code>, <code>indexing</code> and <code>plugin</code> sections (located at the end of this example config). This file may be useful if you want to increase the number of metadata values stored in the index metadata file, for example. If you're not sure, you probably don't need this.</p></div> <div class="language-yaml extra-class"><pre class="language-yaml"><code><span class="token punctuation">---</span>
+<span class="token comment"># BlackLab Server config file</span>
+<span class="token comment"># ===============================================================</span>
+
+<span class="token comment"># This indicates we're using the new index format.</span>
+<span class="token key atrule">configVersion</span><span class="token punctuation">:</span> <span class="token number">2</span>
+
+<span class="token comment"># Where indexes can be found</span>
+<span class="token comment"># (list directories whose subdirectories are indexes, or directories containing a single index)</span>
+<span class="token key atrule">indexLocations</span><span class="token punctuation">:</span>
+<span class="token punctuation">-</span> /data/index
+
+<span class="token comment"># Directory containing each users' private indexes</span>
+<span class="token comment"># (only works if you've configured an authentication system, see below)</span>
+<span class="token key atrule">userIndexes</span><span class="token punctuation">:</span> /data/user<span class="token punctuation">-</span>index
+
+<span class="token comment"># Settings related to BlackLab Server's protocol, i.e. requests and responses</span>
+<span class="token key atrule">protocol</span><span class="token punctuation">:</span>
+
+    <span class="token comment"># If true, omits empty annotation values from XML results.</span>
+    <span class="token key atrule">omitEmptyProperties</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+    
+    <span class="token comment"># Default response type (XML or JSON; default XML)</span>
+    <span class="token key atrule">defaultOutputType</span><span class="token punctuation">:</span> XML
+    
+    <span class="token comment"># Value for the Access-Control-Allow-Origin HTTP header (default: *)</span>
+    <span class="token key atrule">accessControlAllowOrigin</span><span class="token punctuation">:</span> <span class="token string">&quot;*&quot;</span>
+    
+
+
+<span class="token comment"># Defaults and maximum values for parameters</span>
+<span class="token comment"># (some values will affect server load)</span>
+<span class="token key atrule">parameters</span><span class="token punctuation">:</span>
+
+    <span class="token comment"># Are searches case/accent-sensitive or -insensitive by default?</span>
+    <span class="token key atrule">defaultSearchSensitivity</span><span class="token punctuation">:</span> insensitive
+
+    <span class="token comment"># The maximum number of hits to process (return as results, and </span>
+    <span class="token comment"># use for sorting, grouping, etc.). -1 means no limit.</span>
+    <span class="token comment"># (&quot;maxretrieve&quot; parameter)</span>
+    <span class="token comment"># (higher values will put more stress on the server)</span>
+    <span class="token key atrule">processHits</span><span class="token punctuation">:</span>
+        <span class="token key atrule">default</span><span class="token punctuation">:</span> <span class="token number">1000000</span>
+        <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">2000000</span>
+
+    <span class="token comment"># The maximum number of hits to count. -1 means no limit.</span>
+    <span class="token comment"># (&quot;maxcount&quot; parameter)</span>
+    <span class="token comment"># (higher values will put more stress on the server)</span>
+    <span class="token key atrule">countHits</span><span class="token punctuation">:</span>
+        <span class="token key atrule">default</span><span class="token punctuation">:</span> <span class="token number">-1</span>
+        <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">10000000</span>
+
+    <span class="token comment"># Number of results per page (&quot;number&quot; parameter). -1 means no limit.</span>
+    <span class="token comment"># (a very high max value might lead to performance problems)</span>
+    <span class="token key atrule">pageSize</span><span class="token punctuation">:</span>
+        <span class="token key atrule">default</span><span class="token punctuation">:</span> <span class="token number">50</span>
+        <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">3000</span>
+
+    <span class="token comment"># Context around match (&quot;context&quot; parameter)</span>
+    <span class="token comment"># (higher values might cause copyright issues and may stress the server)</span>
+    <span class="token comment"># Set to 0 to omit the left and right context altogether.</span>
+    <span class="token key atrule">contextSize</span><span class="token punctuation">:</span>
+        <span class="token key atrule">default</span><span class="token punctuation">:</span> <span class="token number">5</span>
+        <span class="token key atrule">max</span><span class="token punctuation">:</span> <span class="token number">20</span>
+
+    <span class="token comment">#  Default pattern language to use.</span>
+    <span class="token comment">#  The pattlang URL parameter override this value.</span>
+    <span class="token key atrule">patternLanguage</span><span class="token punctuation">:</span> bcql
+
+    <span class="token comment">#  Default filter language to use.</span>
+    <span class="token comment">#  The filterlang URL parameter override this value.</span>
+    <span class="token key atrule">filterLanguage</span><span class="token punctuation">:</span> luceneql
+
+    <span class="token comment"># By default, should we include the grouped hits in</span>
+    <span class="token comment"># grouped responses? If false, just include group </span>
+    <span class="token comment"># identity and size. Defaults to false. Can be overridden </span>
+    <span class="token comment"># using the &quot;includegroupcontents&quot; URL parameter.</span>
+    <span class="token key atrule">writeHitsAndDocsInGroupedHits</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+
+    <span class="token comment"># If we're capturing part of our matches, should</span>
+    <span class="token comment"># we include empty captures? This can happen when the</span>
+    <span class="token comment"># clause to capture is optional, e.g. A:[]?</span>
+    <span class="token comment"># Defaults to false. Can be overridden using the </span>
+    <span class="token comment"># &quot;omitemptycaptures&quot; URL parameter.</span>
+    <span class="token key atrule">omitEmptyCaptures</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+
+    <span class="token comment"># What REST API version to attempt compatibility with.</span>
+    <span class="token comment"># Valid values are currently: 3.0, 4.0, current, experimental.</span>
+    <span class="token comment"># Defaults to current.</span>
+    <span class="token key atrule">api</span><span class="token punctuation">:</span> current
+
+
+
+<span class="token comment">#  Settings for job caching.</span>
+<span class="token key atrule">cache</span><span class="token punctuation">:</span>
+
+    <span class="token comment"># How much free memory the cache should shoot for (in megabytes) while cleaning up.</span>
+    <span class="token comment"># Because we don't have direct control over the garbage collector, we can't reliably clean up until</span>
+    <span class="token comment"># this exact number is available. Instead we just get rid of a few cached tasks whenever a</span>
+    <span class="token comment"># new task is added and we're under this target number.</span>
+    <span class="token key atrule">targetFreeMemMegs</span><span class="token punctuation">:</span> <span class="token number">100</span>
+
+    <span class="token comment"># The minimum amount of free memory required to start a new search task. If this memory is not available,</span>
+    <span class="token comment"># your search will be queued.</span>
+    <span class="token key atrule">minFreeMemForSearchMegs</span><span class="token punctuation">:</span> <span class="token number">50</span>
+    
+    <span class="token comment"># Maximum number of searches that may be queued. If you try to add another search, this will return an error.</span>
+    <span class="token comment"># Queued searches don't take up memory, but it's no use building up a huge queue that will take a very long time</span>
+    <span class="token comment"># to get through. Better to ask users to return when server load is lower.</span>
+    <span class="token key atrule">maxQueuedSearches</span><span class="token punctuation">:</span> <span class="token number">20</span><span class="token punctuation">,</span>
+
+    <span class="token comment"># How long after it was last accessed will a completed search task be removed from </span>
+    <span class="token comment"># the cache? (in seconds)</span>
+    <span class="token comment"># (don't set this too low; instead, set targetFreeMemMegs, the target amount of free memory)</span>
+    <span class="token comment"># If you want to disable the cache altogether, set this to 0.</span>
+    <span class="token key atrule">maxJobAgeSec</span><span class="token punctuation">:</span> <span class="token number">3600</span>
+
+    <span class="token comment"># If a search is aborted, how long should we keep the search in the cache to prevent</span>
+    <span class="token comment"># the client from resubmitting right away? A sort of &quot;deny list&quot; if you will.</span>
+    <span class="token key atrule">denyAbortedSearchSec</span><span class="token punctuation">:</span> <span class="token number">600</span>
+
+    <span class="token comment"># After how much time should a running search be aborted?</span>
+    <span class="token comment"># (larger values put stress on the server, but allow complicated searches to complete)</span>
+    <span class="token key atrule">maxSearchTimeSec</span><span class="token punctuation">:</span> <span class="token number">300</span>
+
+    <span class="token comment"># How long the client may keep results we give them in their local (browser) cache.</span>
+    <span class="token comment"># This is used to write HTTP cache headers. Low values mean clients might re-request</span>
+    <span class="token comment"># the same information, making clients less responsive and consuming more network resources.</span>
+    <span class="token comment"># Higher values make clients more responsive but could cause problems if the data (or worse,</span>
+    <span class="token comment"># the protocol) changes after an update. A value of an hour or so seems reasonable.</span>
+    <span class="token key atrule">clientCacheTimeSec</span><span class="token punctuation">:</span> <span class="token number">3600</span>
+
+    <span class="token comment"># Maximum number of cache entries to keep.</span>
+    <span class="token comment"># Please note that memory use per cache entry may vary wildly,</span>
+    <span class="token comment"># so you may prefer to use targetFreeMemMegs to set a &quot;free memory goal&quot;</span>
+    <span class="token comment"># and/or maxJobAgeSec to set a maximum age for cache entries.</span>
+    <span class="token key atrule">maxNumberOfJobs</span><span class="token punctuation">:</span> <span class="token number">100</span>
+    
+    <span class="token comment"># The cache implementation to use.</span>
+    <span class="token comment"># (FQDN or class name (in package nl.inl.blacklab.server.search) of</span>
+    <span class="token comment"># SearchCache subclass to instantiate)</span>
+    <span class="token comment"># The default is BlsCache. An alternative is ResultsCache, which is more</span>
+    <span class="token comment"># efficient if you have a large number of small, short-lived indexes.</span>
+    <span class="token key atrule">implementation</span><span class="token punctuation">:</span> BlsCache
+
+
+
+<span class="token comment"># Settings related to tuning server load and client responsiveness</span>
+<span class="token key atrule">performance</span><span class="token punctuation">:</span>
+
+    <span class="token comment"># How many search tasks should be able to run simultaneously</span>
+    <span class="token comment"># (set this to take advantage of the cores/threads available to the machine;</span>
+    <span class="token comment"># probably don't set it any larger, as this won't help and might hurt)</span>
+    <span class="token comment"># Note that this is a rough guideline, not an absolute maximum number of threads</span>
+    <span class="token comment"># that will ever be running. New searches are only started (unqueued) if there's </span>
+    <span class="token comment"># fewer than this number of threads running.</span>
+    <span class="token comment"># (-1 to autodetect)</span>
+    <span class="token key atrule">maxConcurrentSearches</span><span class="token punctuation">:</span> <span class="token number">6</span>
+
+    <span class="token comment"># How many threads may a single search task use at most?</span>
+    <span class="token comment"># (lower values will allow more simultaneous searches to run;</span>
+    <span class="token comment"># higher values improve search performance, but will crowd out other searches.</span>
+    <span class="token comment"># e.g. if you set this to the same number as maxConcurrentSearches, a single </span>
+    <span class="token comment"># search may queue all other searches until it's done)</span>
+    <span class="token key atrule">maxThreadsPerSearch</span><span class="token punctuation">:</span> <span class="token number">3</span>
+
+    <span class="token comment"># Abhort a count if the client hasn't asked about it for 30s</span>
+    <span class="token comment"># (lower values are easier on the server, but might abort a count too soon)</span>
+    <span class="token key atrule">abandonedCountAbortTimeSec</span><span class="token punctuation">:</span> <span class="token number">30</span>
+
+
+<span class="token comment"># Settings for diagnosing problems</span>
+<span class="token key atrule">debug</span><span class="token punctuation">:</span>
+    <span class="token comment">#  A list of IPs that will run in debug mode.</span>
+    <span class="token comment">#  In debug mode, ...</span>
+    <span class="token comment">#  - the /cache-info resource show the contents of the job cache</span>
+    <span class="token comment">#    (other debug information resources may be added in the future)</span>
+    <span class="token comment">#  - output is prettyprinted by default (can be overriden with the prettyprint</span>
+    <span class="token comment">#    GET parameter)</span>
+    <span class="token key atrule">addresses</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> 127.0.0.1       <span class="token comment">#  IPv4 localhost</span>
+    <span class="token punctuation">-</span> 0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span><span class="token number">1</span> <span class="token comment">#  IPv6 localhost</span>
+
+
+<span class="token comment"># How to determine current user</span>
+<span class="token comment"># (you only need this if you want per-user private indices or authorization)</span>
+<span class="token key atrule">authentication</span><span class="token punctuation">:</span>
+    <span class="token key atrule">system</span><span class="token punctuation">:</span>
+        <span class="token key atrule">class</span><span class="token punctuation">:</span> AuthDebugFixed
+        <span class="token key atrule">userId</span><span class="token punctuation">:</span> jan.niestadt@ivdnt.org
+        <span class="token comment"># For CLARIN (Shibboleth), use the following authentication config:</span>
+        <span class="token comment">#class: AuthClarinEppn</span>
+
+    <span class="token comment">#  Clients from these IPs may choose their own user id and send it along in a GET parameter userid.</span>
+    <span class="token comment">#  This setting exists for web applications that contact the webservice (partly) through the</span>
+    <span class="token comment">#  server component. They would get the same session id for each user, making them likely </span>
+    <span class="token comment">#  to hit the maxRunningJobsPerUser setting. Instead, they should assign session IDs for each of</span>
+    <span class="token comment">#  their clients and send them along with any request to the webservice.</span>
+    <span class="token key atrule">overrideUserIdIps</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> 127.0.0.1       <span class="token comment">#  IPv4 localhost</span>
+    <span class="token punctuation">-</span> 0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span>0<span class="token punctuation">:</span><span class="token number">1</span> <span class="token comment">#  IPv6 localhost</span>
+    
+    <span class="token comment"># This is an insecure way of authenticating to BlackLab Server by sending</span>
+    <span class="token comment"># two HTTP headers. It is only intended for testing purposes.</span>
+    <span class="token comment"># </span>
+    <span class="token comment"># Choose a 'secret' password here. Then send your requests to BlackLab Server </span>
+    <span class="token comment"># with the extra HTTP headers X-BlackLabAccessToken (the 'secret' password) and</span>
+    <span class="token comment"># X-BlackLabUserId (the user you wish to authenticate as).</span>
+    <span class="token comment"># </span>
+    <span class="token comment"># Needless to say this method is insecure because it allows full access to</span>
+    <span class="token comment"># all users' corpora, and the access token could potentially leak to an</span>
+    <span class="token comment"># attacker.</span>
+    <span class="token comment">#</span>
+    <span class="token comment"># DO NOT USE EXCEPT FOR TESTING</span>
+    <span class="token comment">#debugHttpHeaderAuthToken: secret</span>
+
+
+<span class="token comment"># ---------------------------------------------------------------------------</span>
+<span class="token comment"># What follows are general BlackLab settings that can apply to different </span>
+<span class="token comment"># BlackLab applications, not just to BlackLab Server.</span>
+<span class="token comment"># (These can go in a separate file named blacklab.yaml, which is read by all</span>
+<span class="token comment"># BlackLab applications. Make sure to include configVersion as well)</span>
+<span class="token comment"># (you generally don't need to change these if you're running BlackLab Server,</span>
+<span class="token comment"># unless you're using some of the advanced features such as indexing/plugins,</span>
+<span class="token comment"># or you're trying to diagnose problems)</span>
+
+
+<span class="token comment"># Settings related to logging</span>
+<span class="token key atrule">log</span><span class="token punctuation">:</span>
+
+    <span class="token comment"># What subjects to log messages for</span>
+    <span class="token key atrule">trace</span><span class="token punctuation">:</span>
+        <span class="token comment"># BL trace settings</span>
+        <span class="token key atrule">indexOpening</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+        <span class="token key atrule">optimization</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+        <span class="token key atrule">queryExecution</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+
+        <span class="token comment"># BLS trace settings</span>
+        <span class="token key atrule">cache</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+
+
+<span class="token comment"># Defaults for searching</span>
+<span class="token comment"># NOTE: these are BlackLab defaults, not the defaults for the BlackLab Server parameters;</span>
+<span class="token comment"># see the parameters section for those.</span>
+<span class="token key atrule">search</span><span class="token punctuation">:</span>
+
+    <span class="token comment"># Collator to use for sorting, grouping, etc.</span>
+    <span class="token key atrule">collator</span><span class="token punctuation">:</span>
+        <span class="token key atrule">language</span><span class="token punctuation">:</span> nl   <span class="token comment"># required</span>
+        <span class="token key atrule">country</span><span class="token punctuation">:</span> NL    <span class="token comment"># optional</span>
+        <span class="token comment">#variant: x     # optional</span>
+
+    <span class="token comment"># Default number of words around hit.</span>
+    <span class="token key atrule">contextSize</span><span class="token punctuation">:</span> <span class="token number">5</span>
+
+    <span class="token comment"># The default maximum number of hits to retrieve (and use for sorting, grouping, etc.).</span>
+    <span class="token comment"># -1 means no limit, but be careful, this may stress your server.</span>
+    <span class="token key atrule">maxHitsToRetrieve</span><span class="token punctuation">:</span> <span class="token number">1000000</span>
+    
+    <span class="token comment"># The default maximum number of hits to count.</span>
+    <span class="token comment"># -1 means no limit, but be careful, this may stress your server.</span>
+    <span class="token key atrule">maxHitsToCount</span><span class="token punctuation">:</span> <span class="token number">-1</span>
+
+    <span class="token comment"># How eagerly to apply &quot;forward index matching&quot; to certain queries</span>
+    <span class="token comment"># [advanced technical setting; don't worry about this unless you want to experiment]</span>
+    <span class="token comment"># [if you want to disable forward index matching, which may be beneficial</span>
+    <span class="token comment">#  if you indexes are small and your query volume is high, set this to 0]</span>
+    <span class="token key atrule">fiMatchFactor</span><span class="token punctuation">:</span> <span class="token number">900</span>
+    
+    <span class="token comment"># Enable result sets larger than 2^31?</span>
+    <span class="token comment"># If you don't need this, you can disable it for slightly better performance.</span>
+    <span class="token comment"># (defaults to true)</span>
+    <span class="token key atrule">enableHugeResultSets</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+
+
+<span class="token comment"># Options for indexing operations, if enabled</span>
+<span class="token comment"># (right now, in BLS, they're only enabled for logged-in users in</span>
+<span class="token comment">#  their own private area)</span>
+<span class="token key atrule">indexing</span><span class="token punctuation">:</span>
+
+    <span class="token comment"># (By default, http downloads of e.g. metadata are not allowed)</span>
+    <span class="token key atrule">downloadAllowed</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+
+    <span class="token comment"># Where to store cached files</span>
+    <span class="token key atrule">downloadCacheDir</span><span class="token punctuation">:</span> /tmp/bls<span class="token punctuation">-</span>download<span class="token punctuation">-</span>cache
+
+    <span class="token comment"># Max. size of entire cache in MB</span>
+    <span class="token key atrule">downloadCacheSizeMegs</span><span class="token punctuation">:</span> <span class="token number">100</span>
+
+    <span class="token comment"># Max. size of single download in MB</span>
+    <span class="token key atrule">downloadCacheMaxFileSizeMegs</span><span class="token punctuation">:</span> <span class="token number">1</span>
+
+    <span class="token comment"># Max. number of zip files to keep opened</span>
+    <span class="token key atrule">zipFilesMaxOpen</span><span class="token punctuation">:</span> <span class="token number">10</span>
+    
+    <span class="token comment"># Number of threads to use for indexing operations</span>
+    <span class="token comment"># (more threads is faster, but uses more memory)</span>
+    <span class="token key atrule">numberOfThreads</span><span class="token punctuation">:</span> <span class="token number">2</span>
+    
+    <span class="token comment"># Max. number of values to store per metadata field</span>
+    <span class="token key atrule">maxMetadataValuesToStore</span><span class="token punctuation">:</span> <span class="token number">100</span>
+    
+    <span class="token comment"># Max. number of indices per user</span>
+    <span class="token comment"># (only relevant if you've configured private indices and authorization)</span>
+    <span class="token key atrule">maxNumberOfIndicesPerUser</span><span class="token punctuation">:</span> <span class="token number">10</span>
+
+
+<span class="token comment"># Plugin options. Plugins allow you to automatically convert files (e.g. .html, .docx) or </span>
+<span class="token comment"># apply linguistic tagging before indexing via BLS (experimental functionality).</span>
+<span class="token key atrule">plugins</span><span class="token punctuation">:</span>
+
+    <span class="token comment"># Should we initialize plugins when they are first used?</span>
+    <span class="token comment"># (plugin initialization can take a while; during development, delayed initialization is</span>
+    <span class="token comment"># often convenient, but during production, you usually want to initialize right away)</span>
+    <span class="token key atrule">delayInitialization</span><span class="token punctuation">:</span> <span class="token boolean important">false</span>
+
+    <span class="token comment"># # Individual plugin configurations</span>
+    <span class="token key atrule">plugins</span><span class="token punctuation">:</span>
+
+        <span class="token comment"># Conversion plugin</span>
+        <span class="token key atrule">OpenConvert</span><span class="token punctuation">:</span>
+            <span class="token key atrule">jarPath</span><span class="token punctuation">:</span> <span class="token string">&quot;/home/jan/projects/openconvert_en_tagger/OpenConvertMaven/target/OpenConvert-0.2.0.jar&quot;</span>
+
+        <span class="token comment"># Tagging plugin</span>
+        <span class="token key atrule">DutchTagger</span><span class="token punctuation">:</span>
+            <span class="token key atrule">jarPath</span><span class="token punctuation">:</span> <span class="token string">&quot;/home/jan/projects/openconvert_en_tagger/DutchTagger/target/DutchTagger-0.2.0.jar&quot;</span>
+            <span class="token key atrule">vectorFile</span><span class="token punctuation">:</span>  <span class="token string">&quot;/home/jan/projects/openconvert_en_tagger/tagger-data/sonar.vectors.bin&quot;</span>
+            <span class="token key atrule">modelFile</span><span class="token punctuation">:</span>   <span class="token string">&quot;/home/jan/projects/openconvert_en_tagger/tagger-data/withMoreVectorrs&quot;</span>
+            <span class="token key atrule">lexiconFile</span><span class="token punctuation">:</span> <span class="token string">&quot;/home/jan/projects/openconvert_en_tagger/tagger-data/spelling.tab&quot;</span>
+
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/INL/BlackLab/edit/dev/site/docs/server/configuration.md" target="_blank" rel="noopener noreferrer">Help us improve this page!</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">10/19/2023, 1:54:17 PM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/BlackLab/server/from-different-languages.html" class="prev">
+        Using from different languages
+      </a></span> <span class="next"><a href="/BlackLab/server/howtos.html">
+        Tutorials / howtos
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/BlackLab/assets/js/app.ff7e0bdb.js" defer></script><script src="/BlackLab/assets/js/2.3a027c82.js" defer></script><script src="/BlackLab/assets/js/39.f9614a8f.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>New API examples | BlackLab</title>
+    <meta name="generator" content="VuePress 1.9.8">
+    
+    <meta name="description" content="Documentation for the corpus search engine BlackLab">
+    
+    <link rel="preload" href="/BlackLab/assets/css/0.styles.5760bb18.css" as="style"><link rel="preload" href="/BlackLab/assets/js/app.ff7e0bdb.js" as="script"><link rel="preload" href="/BlackLab/assets/js/2.3a027c82.js" as="script"><link rel="preload" href="/BlackLab/assets/js/12.2db99efc.js" as="script"><link rel="prefetch" href="/BlackLab/assets/js/10.a97bc1f2.js"><link rel="prefetch" href="/BlackLab/assets/js/11.891fe32f.js"><link rel="prefetch" href="/BlackLab/assets/js/13.e93eed8a.js"><link rel="prefetch" href="/BlackLab/assets/js/14.9364ad4a.js"><link rel="prefetch" href="/BlackLab/assets/js/15.405632c8.js"><link rel="prefetch" href="/BlackLab/assets/js/16.f3063769.js"><link rel="prefetch" href="/BlackLab/assets/js/17.06d27b1c.js"><link rel="prefetch" href="/BlackLab/assets/js/18.b90032a5.js"><link rel="prefetch" href="/BlackLab/assets/js/19.1cd8af9b.js"><link rel="prefetch" href="/BlackLab/assets/js/20.42bb357a.js"><link rel="prefetch" href="/BlackLab/assets/js/21.6b25d228.js"><link rel="prefetch" href="/BlackLab/assets/js/22.577e00a3.js"><link rel="prefetch" href="/BlackLab/assets/js/23.18694c3e.js"><link rel="prefetch" href="/BlackLab/assets/js/24.3f96f03f.js"><link rel="prefetch" href="/BlackLab/assets/js/25.ebeb39f6.js"><link rel="prefetch" href="/BlackLab/assets/js/26.afa2791a.js"><link rel="prefetch" href="/BlackLab/assets/js/27.bbc1ac3e.js"><link rel="prefetch" href="/BlackLab/assets/js/28.1607f8a7.js"><link rel="prefetch" href="/BlackLab/assets/js/29.74d0eb7f.js"><link rel="prefetch" href="/BlackLab/assets/js/3.dd448380.js"><link rel="prefetch" href="/BlackLab/assets/js/30.d69bc359.js"><link rel="prefetch" href="/BlackLab/assets/js/31.8d716075.js"><link rel="prefetch" href="/BlackLab/assets/js/32.a0ff5456.js"><link rel="prefetch" href="/BlackLab/assets/js/33.c497f89b.js"><link rel="prefetch" href="/BlackLab/assets/js/34.43fcfa33.js"><link rel="prefetch" href="/BlackLab/assets/js/35.57d60f91.js"><link rel="prefetch" href="/BlackLab/assets/js/36.6b5464f5.js"><link rel="prefetch" href="/BlackLab/assets/js/37.aa245bfb.js"><link rel="prefetch" href="/BlackLab/assets/js/38.e2221bf1.js"><link rel="prefetch" href="/BlackLab/assets/js/39.f9614a8f.js"><link rel="prefetch" href="/BlackLab/assets/js/4.250fd8f2.js"><link rel="prefetch" href="/BlackLab/assets/js/40.3e881176.js"><link rel="prefetch" href="/BlackLab/assets/js/41.19e38ff0.js"><link rel="prefetch" href="/BlackLab/assets/js/42.0465a6b1.js"><link rel="prefetch" href="/BlackLab/assets/js/43.2c80d081.js"><link rel="prefetch" href="/BlackLab/assets/js/44.43625a55.js"><link rel="prefetch" href="/BlackLab/assets/js/45.b5cea120.js"><link rel="prefetch" href="/BlackLab/assets/js/46.1b676431.js"><link rel="prefetch" href="/BlackLab/assets/js/47.85c2d39e.js"><link rel="prefetch" href="/BlackLab/assets/js/48.08158648.js"><link rel="prefetch" href="/BlackLab/assets/js/49.a4c61ca8.js"><link rel="prefetch" href="/BlackLab/assets/js/5.7080f60e.js"><link rel="prefetch" href="/BlackLab/assets/js/50.c78858d5.js"><link rel="prefetch" href="/BlackLab/assets/js/51.463bae8c.js"><link rel="prefetch" href="/BlackLab/assets/js/52.458bbe5f.js"><link rel="prefetch" href="/BlackLab/assets/js/53.39e9deef.js"><link rel="prefetch" href="/BlackLab/assets/js/54.425b4f2a.js"><link rel="prefetch" href="/BlackLab/assets/js/55.50c2c79a.js"><link rel="prefetch" href="/BlackLab/assets/js/56.eec17177.js"><link rel="prefetch" href="/BlackLab/assets/js/57.306ac3df.js"><link rel="prefetch" href="/BlackLab/assets/js/58.10fb9202.js"><link rel="prefetch" href="/BlackLab/assets/js/59.a192a7eb.js"><link rel="prefetch" href="/BlackLab/assets/js/6.bb3d2c40.js"><link rel="prefetch" href="/BlackLab/assets/js/60.8ff3f063.js"><link rel="prefetch" href="/BlackLab/assets/js/61.91d2ba44.js"><link rel="prefetch" href="/BlackLab/assets/js/62.f8d7a455.js"><link rel="prefetch" href="/BlackLab/assets/js/63.ba9049be.js"><link rel="prefetch" href="/BlackLab/assets/js/64.a10a4e4f.js"><link rel="prefetch" href="/BlackLab/assets/js/65.ab9870d5.js"><link rel="prefetch" href="/BlackLab/assets/js/66.b1a55608.js"><link rel="prefetch" href="/BlackLab/assets/js/67.c8966fb0.js"><link rel="prefetch" href="/BlackLab/assets/js/68.a0110da1.js"><link rel="prefetch" href="/BlackLab/assets/js/69.190cdd43.js"><link rel="prefetch" href="/BlackLab/assets/js/7.fe78c9fd.js"><link rel="prefetch" href="/BlackLab/assets/js/70.af6f5588.js"><link rel="prefetch" href="/BlackLab/assets/js/71.accb48b7.js"><link rel="prefetch" href="/BlackLab/assets/js/72.7d196c93.js"><link rel="prefetch" href="/BlackLab/assets/js/73.28b0fde7.js"><link rel="prefetch" href="/BlackLab/assets/js/74.60eed0ed.js"><link rel="prefetch" href="/BlackLab/assets/js/8.9dedd2e9.js"><link rel="prefetch" href="/BlackLab/assets/js/9.e6659fc6.js">
+    <link rel="stylesheet" href="/BlackLab/assets/css/0.styles.5760bb18.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/BlackLab/" class="home-link router-link-active"><!----> <span class="site-name">BlackLab</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/BlackLab/guide/" class="nav-link">
+  Guide
+</a></div><div class="nav-item"><a href="/BlackLab/server/" class="nav-link">
+  Webservice
+</a></div><div class="nav-item"><a href="/BlackLab/frontend/" class="nav-link">
+  Frontend
+</a></div><div class="nav-item"><a href="/BlackLab/development/" class="nav-link router-link-active">
+  Developers
+</a></div> <a href="https://github.com/INL/BlackLab" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/BlackLab/guide/" class="nav-link">
+  Guide
+</a></div><div class="nav-item"><a href="/BlackLab/server/" class="nav-link">
+  Webservice
+</a></div><div class="nav-item"><a href="/BlackLab/frontend/" class="nav-link">
+  Frontend
+</a></div><div class="nav-item"><a href="/BlackLab/development/" class="nav-link router-link-active">
+  Developers
+</a></div> <a href="https://github.com/INL/BlackLab" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/BlackLab/development/" aria-current="page" class="sidebar-link">Development resources</a></li><li><a href="/BlackLab/development/downloads.html" class="sidebar-link">Downloads</a></li><li><a href="/BlackLab/development/examples/example-application.html" class="sidebar-link">The Example Application</a></li><li><a href="/BlackLab/development/query-tool.html" class="sidebar-link">QueryTool</a></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>Customization</span> <span class="arrow right"></span></p> <!----></section></li><li><a href="/BlackLab/development/solr/" class="sidebar-link">Solr (EXPERIMENTAL)</a></li><li><a href="/BlackLab/development/migration-guide.html" class="sidebar-link">Migration guide</a></li><li><a href="/BlackLab/development/changelog.html" class="sidebar-link">Change Log</a></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading open"><span>API redesign</span> <span class="arrow down"></span></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/BlackLab/development/api-redesign/" aria-current="page" class="sidebar-link">Blacklab webservice API evolution</a></li><li><a href="/BlackLab/development/api-redesign/API.html" aria-current="page" class="active sidebar-link">New API examples</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/BlackLab/development/api-redesign/API.html#todo" class="sidebar-link">TODO</a></li><li class="sidebar-sub-header"><a href="/BlackLab/development/api-redesign/API.html#server-info" class="sidebar-link">Server info</a></li><li class="sidebar-sub-header"><a href="/BlackLab/development/api-redesign/API.html#corpus-info" class="sidebar-link">Corpus info</a></li><li class="sidebar-sub-header"><a href="/BlackLab/development/api-redesign/API.html#hits-request" class="sidebar-link">Hits request</a></li></ul></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="new-api-examples"><a href="#new-api-examples" class="header-anchor">#</a> New API examples</h1> <div class="custom-block warning"><p class="custom-block-title">OLDER CONTENT</p> <p>This page contains ideas that are partially obsolete.
+See <a href="/BlackLab/server/rest-api/api-versions.html">API versions</a> for the current state of the API.</p></div> <p>Here's some requests and (commented) JSON responses to illustrate
+a possible new REST API for Blacklab.</p> <p>There would be a way to choose the API, probably using the <code>api</code> parameter that already exists. Another option would be to expose the new API on a different path, e.g. <code>/v2/</code>.</p> <p>The older API would eventually be removed, after a transition period.</p> <p>Any information not generated or used by BlackLab, such as <code>displayName</code>, <code>description</code>,
+<code>documentFormat</code>, <code>textDirection</code>, <code>uiType</code>, etc. was moved into <code>&quot;custom&quot;: {}</code>
+objects, that are only included if you specify <code>includeCustom=true</code>.</p> <p>Generic parameters:</p> <ul><li><code>includeCustom</code>: include <code>&quot;custom&quot;</code> data? (boolean, default false)</li> <li><code>outputformat</code>: output type (<code>wt</code> also supported?)</li></ul> <h2 id="todo"><a href="#todo" class="header-anchor">#</a> TODO</h2> <ul><li>when grouping, at least <code>identityDisplay</code> should be a list of values, so grouping
+by multiple context parts can be displayed properly. Maybe rethink how these values
+are encoded altogether while we're at it. Standard encodings such as JSON are almost
+always better than a custom encoding. Using <code>~</code> to mean &quot;no value&quot; is also not great;
+maybe use <code>null</code> instead, or include a flag to indicate the value is missing.</li></ul> <h2 id="server-info"><a href="#server-info" class="header-anchor">#</a> Server info</h2> <p>Request:</p> <ul><li><code>/blacklab/v2/</code> (no <code>&quot;custom&quot;</code> information included)</li> <li><code>/blacklab/v2/?includeCustom=true</code> (<code>&quot;custom&quot;</code> information included, see below)</li></ul> <p>Response:</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token comment">// What version of the API does this speak?</span>
+  <span class="token comment">// (NEW)</span>
+  <span class="token property">&quot;apiVersion&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2.0&quot;</span><span class="token punctuation">,</span>
+  
+  <span class="token comment">// Information about the backend software</span>
+  <span class="token comment">// (were previously top-level keys)</span>
+  <span class="token property">&quot;software&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// What implementation are we talking to?</span>
+    <span class="token comment">// (NEW)</span>
+    <span class="token property">&quot;implementation&quot;</span><span class="token operator">:</span> <span class="token string">&quot;aggregator-experimental&quot;</span><span class="token punctuation">,</span>
+    <span class="token comment">// What is the version number?</span>
+    <span class="token comment">// (renamed from blacklabVersion)</span>
+    <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;4.0.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token comment">// When was it built?</span>
+    <span class="token comment">// (renamed from blacklabBuildTime)</span>
+    <span class="token property">&quot;buildTime&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2022-10-01 09:28:24&quot;</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  
+  <span class="token comment">// Available corpora</span>
+  <span class="token comment">// (previously called &quot;indices&quot;)</span>
+  <span class="token property">&quot;corpora&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    
+    <span class="token property">&quot;MyCorpus&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Information BlackLab passes on without doing anything with it</span>
+      <span class="token comment">// Could e.g. be used by GUI application.</span>
+      <span class="token property">&quot;tokenCount&quot;</span><span class="token operator">:</span> <span class="token number">459354</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;documentCount&quot;</span><span class="token operator">:</span> <span class="token number">1033</span><span class="token punctuation">,</span> <span class="token comment">// added to summary</span>
+      <span class="token property">&quot;timeCreated&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2020-12-08 10:06:26&quot;</span><span class="token punctuation">,</span> <span class="token comment">// added to summary</span>
+      <span class="token property">&quot;timeModified&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2020-12-08 10:06:26&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;pidField&quot;</span><span class="token operator">:</span> <span class="token string">&quot;pid&quot;</span><span class="token punctuation">,</span> <span class="token comment">// pulled up from fieldInfo</span>
+      <span class="token property">&quot;contentViewable&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token comment">// added to summary</span>
+      <span class="token property">&quot;status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;available&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;indexFormat&quot;</span><span class="token operator">:</span> <span class="token string">&quot;3.1&quot;</span><span class="token punctuation">,</span> <span class="token comment">// pulled up from versionInfo</span>
+      <span class="token property">&quot;custom&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;displayName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Brieven als Buit&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Approximately 40,000 Dutch letters sent by sailors from the second half of the 17th to the early 19th centuries.&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;documentFormat&quot;</span><span class="token operator">:</span> <span class="token string">&quot;zeebrieven&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;textDirection&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ltr&quot;</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  
+  <span class="token property">&quot;user&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;loggedIn&quot;</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;mayCreateCorpus&quot;</span><span class="token operator">:</span> <span class="token boolean">false</span> <span class="token comment">// (changed from canCreateIndex)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  
+  <span class="token comment">// Previously top-level key.</span>
+  <span class="token comment">// Meant to be a free-for-all area where any useful</span>
+  <span class="token comment">// debug info can temporarily be added. Only added in debug mode.</span>
+  <span class="token comment">// Can also occur in (parts of) other responses?</span>
+  <span class="token property">&quot;debugInfo&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;cacheStatus&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token comment">// ...</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="corpus-info"><a href="#corpus-info" class="header-anchor">#</a> Corpus info</h2> <p>Request:</p> <ul><li><code>/blacklab/v2/corpora/CORPUS-NAME</code> (no <code>&quot;custom&quot;</code> information included)</li> <li><code>/blacklab/v2/corpora/CORPUS-NAME?custom=true</code> (<code>&quot;custom&quot;</code> information included, see below)</li></ul> <p>Response:</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;BaB&quot;</span><span class="token punctuation">,</span>
+
+  <span class="token property">&quot;tokenCount&quot;</span><span class="token operator">:</span> <span class="token number">459354</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;documentCount&quot;</span><span class="token operator">:</span> <span class="token number">1033</span><span class="token punctuation">,</span> <span class="token comment">// added to summary</span>
+  <span class="token property">&quot;timeCreated&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2020-12-08 10:06:26&quot;</span><span class="token punctuation">,</span> <span class="token comment">// added to summary</span>
+  <span class="token property">&quot;timeModified&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2020-12-08 10:06:26&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;pidField&quot;</span><span class="token operator">:</span> <span class="token string">&quot;pid&quot;</span><span class="token punctuation">,</span> <span class="token comment">// pulled up from fieldInfo</span>
+  <span class="token property">&quot;contentViewable&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token comment">// added to summary</span>
+  <span class="token property">&quot;status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;available&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;indexFormat&quot;</span><span class="token operator">:</span> <span class="token string">&quot;3.1&quot;</span><span class="token punctuation">,</span> <span class="token comment">// pulled up from versionInfo</span>
+    
+  <span class="token comment">// Software used to create this</span>
+  <span class="token comment">// (renamed from versionInfo)</span>
+  <span class="token property">&quot;createdBy&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;implementation&quot;</span><span class="token operator">:</span> <span class="token string">&quot;blacklab&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2.0.0-RC1&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;buildTime&quot;</span><span class="token operator">:</span> <span class="token string">&quot;2019-12-18 11:33:58&quot;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Information about our annotated fields</span>
+  <span class="token property">&quot;annotatedFields&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;contents&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token comment">// (removed, duplicate)</span>
+      <span class="token comment">//&quot;fieldName&quot;: &quot;contents&quot;,</span>
+      <span class="token comment">// (removed, superfluous)</span>
+      <span class="token comment">//&quot;isAnnotatedField&quot;: true,</span>
+      <span class="token property">&quot;hasContentStore&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;hasXmlTags&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;mainAnnotation&quot;</span><span class="token operator">:</span> <span class="token string">&quot;word_or_lemma&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;custom&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;displayName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Contents&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Contents of the documents.&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;displayOrder&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;word_or_lemma&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;word&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;word_xml&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;lemma&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;grouping_lemma&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;isclitic&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;iswordpart&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;grouping_pos&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;grouping_pos_full&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;lempos&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;wordform_group_id&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;pos&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;pos_type&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;pos_subtype&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;pos_wordpart&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;annotations&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;word_or_lemma&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">&quot;custom&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">&quot;displayName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Word or lemma&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;uiType&quot;</span><span class="token operator">:</span> <span class="token string">&quot;combobox&quot;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;hasForwardIndex&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;sensitivity&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ONLY_INSENSITIVE&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;offsetsAlternative&quot;</span><span class="token operator">:</span> <span class="token string">&quot;i&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;isInternal&quot;</span><span class="token operator">:</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;word&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">&quot;custom&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">&quot;displayName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Word&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;&quot;</span><span class="token punctuation">,</span>
+            <span class="token property">&quot;uiType&quot;</span><span class="token operator">:</span> <span class="token string">&quot;combobox&quot;</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;hasForwardIndex&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;sensitivity&quot;</span><span class="token operator">:</span> <span class="token string">&quot;SENSITIVE_AND_INSENSITIVE&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;offsetsAlternative&quot;</span><span class="token operator">:</span> <span class="token string">&quot;&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;isInternal&quot;</span><span class="token operator">:</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+  <span class="token property">&quot;metadataFields&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;adr_loc_land_norm&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token comment">// Removed, duplicate</span>
+      <span class="token comment">//&quot;fieldName&quot;: &quot;adr_loc_land_norm&quot;,</span>
+      <span class="token comment">// Removed, superfluous</span>
+      <span class="token comment">//&quot;isAnnotatedField&quot;: false,</span>
+      <span class="token property">&quot;type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;TOKENIZED&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;analyzer&quot;</span><span class="token operator">:</span> <span class="token string">&quot;DEFAULT&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;unknownCondition&quot;</span><span class="token operator">:</span> <span class="token string">&quot;NEVER&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;unknownValue&quot;</span><span class="token operator">:</span> <span class="token string">&quot;unknown&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;fieldValues&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;België&quot;</span><span class="token operator">:</span> <span class="token number">27</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;China&quot;</span><span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Curaçao&quot;</span><span class="token operator">:</span> <span class="token number">37</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Denemarken&quot;</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Duitsland&quot;</span><span class="token operator">:</span> <span class="token number">10</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Engeland&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Frankrijk&quot;</span><span class="token operator">:</span> <span class="token number">13</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Ghana&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Guadeloupe&quot;</span><span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Guyana&quot;</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;India&quot;</span><span class="token operator">:</span> <span class="token number">23</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Indonesië&quot;</span><span class="token operator">:</span> <span class="token number">71</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Italië&quot;</span><span class="token operator">:</span> <span class="token number">11</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Maleisië&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Martinique&quot;</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Nederland&quot;</span><span class="token operator">:</span> <span class="token number">532</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Polen&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Saint Croix&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Saint Kitts&quot;</span><span class="token operator">:</span> <span class="token number">17</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Sint Eustatius&quot;</span><span class="token operator">:</span> <span class="token number">8</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Spanje&quot;</span><span class="token operator">:</span> <span class="token number">11</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Sri Lanka&quot;</span><span class="token operator">:</span> <span class="token number">43</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Suriname&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Thailand&quot;</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;Zuid-Afrika&quot;</span><span class="token operator">:</span> <span class="token number">2</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;valueListComplete&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;custom&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;displayName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Country&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;uiType&quot;</span><span class="token operator">:</span> <span class="token string">&quot;&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;displayValues&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">&quot;Nederland&quot;</span><span class="token operator">:</span> <span class="token string">&quot;NL&quot;</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+  <span class="token comment">// Any custom information for applications using</span>
+  <span class="token comment">// this index, such as information for generating a </span>
+  <span class="token comment">// GUI, etc.</span>
+  <span class="token property">&quot;custom&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token comment">// (pushed down from top-level)</span>
+    <span class="token property">&quot;displayName&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Brieven als Buit&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Approximately 40,000 Dutch letters sent by sailors from the second half of the 17th to the early 19th centuries.&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;documentFormat&quot;</span><span class="token operator">:</span> <span class="token string">&quot;zeebrieven&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;textDirection&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ltr&quot;</span><span class="token punctuation">,</span>
+    
+    <span class="token comment">// (pushed down from top-level; renamed from fieldInfo)</span>
+    <span class="token property">&quot;specialFields&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;titleField&quot;</span><span class="token operator">:</span> <span class="token string">&quot;title&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;authorField&quot;</span><span class="token operator">:</span> <span class="token string">&quot;author&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;dateField&quot;</span><span class="token operator">:</span> <span class="token string">&quot;witnessYear_from&quot;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token comment">// (pushed down from top-level)</span>
+    <span class="token property">&quot;metadataFieldGroups&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+      <span class="token punctuation">{</span>
+        <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Letter&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;fields&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;datum_jaar&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;type_brief&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;autograaf&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;signatuur&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span>
+        <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Sender&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;fields&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;afz_naam_norm&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;afz_geslacht&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;afz_klasse&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;afz_geb_lftcat&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;regiocode&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;afz_rel_tot_adr&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span>
+        <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Addressee&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;fields&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;adr_naam_norm&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;adr_loc_plaats_norm&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;adr_loc_land_norm&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;adr_loc_regio_norm&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;adr_loc_schip_norm&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">{</span>
+        <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Sent from&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;fields&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;afz_loc_plaats_norm&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;afz_loc_land_norm&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;afz_loc_regio_norm&quot;</span><span class="token punctuation">,</span>
+          <span class="token string">&quot;afz_loc_schip_norm&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+
+    <span class="token comment">// (pushed down from top-level)</span>
+    <span class="token property">&quot;annotationGroups&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;contents&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Basics&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;annotations&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token string">&quot;word&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;lemma&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;grouping_lemma&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;pos&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;grouping_pos&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;grouping_pos_full&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;isclitic&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;iswordpart&quot;</span>
+          <span class="token punctuation">]</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">&quot;name&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Part of Speech features&quot;</span><span class="token punctuation">,</span>
+          <span class="token property">&quot;annotations&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token string">&quot;pos_type&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;pos_wordpart&quot;</span>
+          <span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  
+<span class="token punctuation">}</span>
+</code></pre></div><h2 id="hits-request"><a href="#hits-request" class="header-anchor">#</a> Hits request</h2> <p>Path: <code>/blacklab/v2/corpora/CORPUS-NAME/hits</code></p> <p>Parameters:</p> <ul><li><code>patt</code>: CorpusQL pattern to search</li> <li><code>sort</code>: how to sort the hits</li> <li><code>first</code>: first row to return (<code>start</code> also supported?)</li> <li><code>number</code>: number of rows to return (<code>rows</code> also supported?)</li> <li><code>filter</code>: document filter query (<code>q</code> also supported?)</li></ul> <p>Example request: <code>/blacklab/v2/corpora/CORPUS-NAME/hits?patt=&quot;schip&quot;&amp;start=0&amp;rows=100&amp;outputformat=json</code></p> <p>Response:</p> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;parameters&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;first&quot;</span><span class="token operator">:</span> <span class="token string">&quot;0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;number&quot;</span><span class="token operator">:</span> <span class="token string">&quot;100&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;indexname&quot;</span><span class="token operator">:</span> <span class="token string">&quot;CORPUS-NAME&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;patt&quot;</span><span class="token operator">:</span> <span class="token string">&quot;\&quot;schip\&quot;&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;outputformat&quot;</span><span class="token operator">:</span> <span class="token string">&quot;json&quot;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;stats&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;time&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;search&quot;</span><span class="token operator">:</span> <span class="token number">4</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;count&quot;</span><span class="token operator">:</span> <span class="token number">16003</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;window&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;first&quot;</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;numberRequested&quot;</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;number&quot;</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;hasNext&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token comment">// (hasPrevious == first &gt; 0)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;progress&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;completed&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token comment">// if false, we're still retrieving and/sor counting</span>
+      <span class="token property">&quot;counted&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;hits&quot;</span><span class="token operator">:</span> <span class="token number">553766</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;docs&quot;</span><span class="token operator">:</span> <span class="token number">281822</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;limitReached&quot;</span><span class="token operator">:</span> <span class="token boolean">false</span> <span class="token comment">// == stoppedCountingHits</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;retrieved&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;hits&quot;</span><span class="token operator">:</span> <span class="token number">553766</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;docs&quot;</span><span class="token operator">:</span> <span class="token number">281822</span>
+        <span class="token property">&quot;limitReached&quot;</span><span class="token operator">:</span> <span class="token boolean">false</span> <span class="token comment">// == stoppedRetrievingHits</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;hits&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">&quot;doc&quot;</span><span class="token operator">:</span> <span class="token string">&quot;WR-P-E-A-0000008964&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;start&quot;</span><span class="token operator">:</span> <span class="token number">6</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;end&quot;</span><span class="token operator">:</span> <span class="token number">7</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;before&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;lemma&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;nie&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;pos&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;BW()&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;word&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;nie&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;match&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;lemma&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;waar&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;pos&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;VNW(vb,adv-pron,obl,vol,3o,getal)&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;word&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;waar&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;after&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;lemma&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;pos&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;word&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">&quot;docPid&quot;</span><span class="token operator">:</span> <span class="token string">&quot;WR-P-E-A-0000016858&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;start&quot;</span><span class="token operator">:</span> <span class="token number">28</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;end&quot;</span><span class="token operator">:</span> <span class="token number">29</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;before&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;lemma&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;kweenimeren&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;pos&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;WW(pv,tgw,ev)&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;word&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;kweenimeer&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;match&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;lemma&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;waar&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;pos&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;VNW(vb,adv-pron,obl,vol,3o,getal)&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;word&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;waar&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;after&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;lemma&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;pos&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;word&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">&quot;&quot;</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;docInfos&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">&quot;WR-P-E-A-0000016858&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;metadata&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;OriginalLanguage&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span> <span class="token string">&quot;Unspecified&quot;</span> <span class="token punctuation">]</span><span class="token punctuation">,</span> 
+        <span class="token property">&quot;LicenseCode&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span> <span class="token string">&quot;SoNaR.1-0.VL.031&quot;</span> <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;AuthorNameOrPseudonym&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span> <span class="token string">&quot;Unspecified&quot;</span> <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;CollectionCode&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span> <span class="token string">&quot;TMF - Topic: Actualiteit&quot;</span> <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;lengthInTokens&quot;</span><span class="token operator">:</span> <span class="token number">29</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;mayView&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span>  <span class="token comment">// omit unless we implement granular permissions?</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;WR-P-E-A-0000008964&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">&quot;metadata&quot;</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">&quot;Continent&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span> <span class="token string">&quot;Europe&quot;</span> <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;PublicationPlace&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span> <span class="token string">&quot;Unspecified&quot;</span> <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;lengthInTokens&quot;</span><span class="token operator">:</span> <span class="token number">7</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;mayView&quot;</span><span class="token operator">:</span> <span class="token boolean">true</span>  <span class="token comment">// omit unless we implement granular permissions?</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/INL/BlackLab/edit/dev/site/docs/development/api-redesign/API.md" target="_blank" rel="noopener noreferrer">Help us improve this page!</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">10/19/2023, 1:54:17 PM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/BlackLab/development/api-redesign/" class="prev router-link-active">
+        Blacklab webservice API evolution
+      </a></span> <!----></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/BlackLab/assets/js/app.ff7e0bdb.js" defer></script><script src="/BlackLab/assets/js/2.3a027c82.js" defer></script><script src="/BlackLab/assets/js/12.2db99efc.js" defer></script>
+  </body>
+</html>

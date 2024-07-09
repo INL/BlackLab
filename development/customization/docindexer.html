@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Custom DocIndexer | BlackLab</title>
+    <meta name="generator" content="VuePress 1.9.8">
+    
+    <meta name="description" content="Documentation for the corpus search engine BlackLab">
+    
+    <link rel="preload" href="/BlackLab/assets/css/0.styles.5760bb18.css" as="style"><link rel="preload" href="/BlackLab/assets/js/app.ff7e0bdb.js" as="script"><link rel="preload" href="/BlackLab/assets/js/2.3a027c82.js" as="script"><link rel="preload" href="/BlackLab/assets/js/18.b90032a5.js" as="script"><link rel="prefetch" href="/BlackLab/assets/js/10.a97bc1f2.js"><link rel="prefetch" href="/BlackLab/assets/js/11.891fe32f.js"><link rel="prefetch" href="/BlackLab/assets/js/12.2db99efc.js"><link rel="prefetch" href="/BlackLab/assets/js/13.e93eed8a.js"><link rel="prefetch" href="/BlackLab/assets/js/14.9364ad4a.js"><link rel="prefetch" href="/BlackLab/assets/js/15.405632c8.js"><link rel="prefetch" href="/BlackLab/assets/js/16.f3063769.js"><link rel="prefetch" href="/BlackLab/assets/js/17.06d27b1c.js"><link rel="prefetch" href="/BlackLab/assets/js/19.1cd8af9b.js"><link rel="prefetch" href="/BlackLab/assets/js/20.42bb357a.js"><link rel="prefetch" href="/BlackLab/assets/js/21.6b25d228.js"><link rel="prefetch" href="/BlackLab/assets/js/22.577e00a3.js"><link rel="prefetch" href="/BlackLab/assets/js/23.18694c3e.js"><link rel="prefetch" href="/BlackLab/assets/js/24.3f96f03f.js"><link rel="prefetch" href="/BlackLab/assets/js/25.ebeb39f6.js"><link rel="prefetch" href="/BlackLab/assets/js/26.afa2791a.js"><link rel="prefetch" href="/BlackLab/assets/js/27.bbc1ac3e.js"><link rel="prefetch" href="/BlackLab/assets/js/28.1607f8a7.js"><link rel="prefetch" href="/BlackLab/assets/js/29.74d0eb7f.js"><link rel="prefetch" href="/BlackLab/assets/js/3.dd448380.js"><link rel="prefetch" href="/BlackLab/assets/js/30.d69bc359.js"><link rel="prefetch" href="/BlackLab/assets/js/31.8d716075.js"><link rel="prefetch" href="/BlackLab/assets/js/32.a0ff5456.js"><link rel="prefetch" href="/BlackLab/assets/js/33.c497f89b.js"><link rel="prefetch" href="/BlackLab/assets/js/34.43fcfa33.js"><link rel="prefetch" href="/BlackLab/assets/js/35.57d60f91.js"><link rel="prefetch" href="/BlackLab/assets/js/36.6b5464f5.js"><link rel="prefetch" href="/BlackLab/assets/js/37.aa245bfb.js"><link rel="prefetch" href="/BlackLab/assets/js/38.e2221bf1.js"><link rel="prefetch" href="/BlackLab/assets/js/39.f9614a8f.js"><link rel="prefetch" href="/BlackLab/assets/js/4.250fd8f2.js"><link rel="prefetch" href="/BlackLab/assets/js/40.3e881176.js"><link rel="prefetch" href="/BlackLab/assets/js/41.19e38ff0.js"><link rel="prefetch" href="/BlackLab/assets/js/42.0465a6b1.js"><link rel="prefetch" href="/BlackLab/assets/js/43.2c80d081.js"><link rel="prefetch" href="/BlackLab/assets/js/44.43625a55.js"><link rel="prefetch" href="/BlackLab/assets/js/45.b5cea120.js"><link rel="prefetch" href="/BlackLab/assets/js/46.1b676431.js"><link rel="prefetch" href="/BlackLab/assets/js/47.85c2d39e.js"><link rel="prefetch" href="/BlackLab/assets/js/48.08158648.js"><link rel="prefetch" href="/BlackLab/assets/js/49.a4c61ca8.js"><link rel="prefetch" href="/BlackLab/assets/js/5.7080f60e.js"><link rel="prefetch" href="/BlackLab/assets/js/50.c78858d5.js"><link rel="prefetch" href="/BlackLab/assets/js/51.463bae8c.js"><link rel="prefetch" href="/BlackLab/assets/js/52.458bbe5f.js"><link rel="prefetch" href="/BlackLab/assets/js/53.39e9deef.js"><link rel="prefetch" href="/BlackLab/assets/js/54.425b4f2a.js"><link rel="prefetch" href="/BlackLab/assets/js/55.50c2c79a.js"><link rel="prefetch" href="/BlackLab/assets/js/56.eec17177.js"><link rel="prefetch" href="/BlackLab/assets/js/57.306ac3df.js"><link rel="prefetch" href="/BlackLab/assets/js/58.10fb9202.js"><link rel="prefetch" href="/BlackLab/assets/js/59.a192a7eb.js"><link rel="prefetch" href="/BlackLab/assets/js/6.bb3d2c40.js"><link rel="prefetch" href="/BlackLab/assets/js/60.8ff3f063.js"><link rel="prefetch" href="/BlackLab/assets/js/61.91d2ba44.js"><link rel="prefetch" href="/BlackLab/assets/js/62.f8d7a455.js"><link rel="prefetch" href="/BlackLab/assets/js/63.ba9049be.js"><link rel="prefetch" href="/BlackLab/assets/js/64.a10a4e4f.js"><link rel="prefetch" href="/BlackLab/assets/js/65.ab9870d5.js"><link rel="prefetch" href="/BlackLab/assets/js/66.b1a55608.js"><link rel="prefetch" href="/BlackLab/assets/js/67.c8966fb0.js"><link rel="prefetch" href="/BlackLab/assets/js/68.a0110da1.js"><link rel="prefetch" href="/BlackLab/assets/js/69.190cdd43.js"><link rel="prefetch" href="/BlackLab/assets/js/7.fe78c9fd.js"><link rel="prefetch" href="/BlackLab/assets/js/70.af6f5588.js"><link rel="prefetch" href="/BlackLab/assets/js/71.accb48b7.js"><link rel="prefetch" href="/BlackLab/assets/js/72.7d196c93.js"><link rel="prefetch" href="/BlackLab/assets/js/73.28b0fde7.js"><link rel="prefetch" href="/BlackLab/assets/js/74.60eed0ed.js"><link rel="prefetch" href="/BlackLab/assets/js/8.9dedd2e9.js"><link rel="prefetch" href="/BlackLab/assets/js/9.e6659fc6.js">
+    <link rel="stylesheet" href="/BlackLab/assets/css/0.styles.5760bb18.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/BlackLab/" class="home-link router-link-active"><!----> <span class="site-name">BlackLab</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/BlackLab/guide/" class="nav-link">
+  Guide
+</a></div><div class="nav-item"><a href="/BlackLab/server/" class="nav-link">
+  Webservice
+</a></div><div class="nav-item"><a href="/BlackLab/frontend/" class="nav-link">
+  Frontend
+</a></div><div class="nav-item"><a href="/BlackLab/development/" class="nav-link router-link-active">
+  Developers
+</a></div> <a href="https://github.com/INL/BlackLab" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/BlackLab/guide/" class="nav-link">
+  Guide
+</a></div><div class="nav-item"><a href="/BlackLab/server/" class="nav-link">
+  Webservice
+</a></div><div class="nav-item"><a href="/BlackLab/frontend/" class="nav-link">
+  Frontend
+</a></div><div class="nav-item"><a href="/BlackLab/development/" class="nav-link router-link-active">
+  Developers
+</a></div> <a href="https://github.com/INL/BlackLab" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/BlackLab/development/" aria-current="page" class="sidebar-link">Development resources</a></li><li><a href="/BlackLab/development/downloads.html" class="sidebar-link">Downloads</a></li><li><a href="/BlackLab/development/examples/example-application.html" class="sidebar-link">The Example Application</a></li><li><a href="/BlackLab/development/query-tool.html" class="sidebar-link">QueryTool</a></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading open"><span>Customization</span> <span class="arrow down"></span></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/BlackLab/development/customization/docindexer.html" aria-current="page" class="active sidebar-link">Custom DocIndexer</a></li><li><a href="/BlackLab/development/customization/query-language.html" class="sidebar-link">Custom query language</a></li><li><a href="/BlackLab/development/customization/plugins.html" class="sidebar-link">Plugins for converting/tagging</a></li><li><a href="/BlackLab/development/customization/legacy-docindexers.html" class="sidebar-link">Write a DocIndexer (legacy)</a></li></ul></section></li><li><a href="/BlackLab/development/solr/" class="sidebar-link">Solr (EXPERIMENTAL)</a></li><li><a href="/BlackLab/development/migration-guide.html" class="sidebar-link">Migration guide</a></li><li><a href="/BlackLab/development/changelog.html" class="sidebar-link">Change Log</a></li><li><section class="sidebar-group collapsable depth-0"><p class="sidebar-heading"><span>API redesign</span> <span class="arrow right"></span></p> <!----></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="custom-docindexer"><a href="#custom-docindexer" class="header-anchor">#</a> Custom DocIndexer</h1> <p>In most cases, you won't need to write Java code to add support for your input format. See <a href="/BlackLab/guide/how-to-configure-indexing.html">How to configure indexing</a> to learn how.
+For more information about indexing in general, see <a href="/BlackLab/guide/indexing-with-blacklab.html">Indexing with BlackLab</a>.</p> <p>In rare cases, you may want to implement your own DocIndexer. This page provides a simple tutorial for getting started with that.</p> <p>If you have text in a format that isn't supported by BlackLab yet, you will have to create a DocIndexer class to support the format. You can have a look at the DocIndexer classes supplied with BlackLab (see the nl.inl.blacklab.indexers package), but here we'll build one from the ground up, step by step.</p> <p>It's important to note that we assume you have an XML format that is tagged per word. That is, in the main content of your documents, every word should have its own XML tag. If your format is not like that, it's still possible to index it using BlackLab, but the process will be a little bit different. Please <a href="/BlackLab/guide/about.html#contact-us">contact us</a> and we'd be happy to help.</p> <p>For this example, we'll build a simple TEI DocIndexer. We'll keep it a little bit simpler than DocIndexerTei that's already included in BlackLab, but all the basic features will be in there.</p> <p>Let's get started. The easiest way to add support for an indexer is to derive from DocIndexerXmlHandlers. This base class will take care of XML parsing for you and will call any element handlers you set at the appropriate times.</p> <p>Here's the first version of our TEI indexer:</p> <div class="language- extra-class"><pre><code>public class DocIndexerTei extends DocIndexerXmlHandlers {
+	public DocIndexerTei(Indexer indexer, String fileName, Reader reader) {
+		super(indexer, fileName, reader);
+		DocumentElementHandler documentElementHandler = new DocumentElementHandler();
+		addHandler(&quot;TEI&quot;, documentElementHandler);
+		addHandler(&quot;TEI.2&quot;, documentElementHandler);
+	}
+}
+</code></pre></div><p>We create a DocumentElementHandler (an inner class defined in DocIndexerXmlHandlers) and add it as a handler for the &lt;TEI&amp;gt; and &lt;TEI.2&amp;gt; elements. Why two different elements? Because we want to support both TEI P4 (which uses &lt;TEI.2&amp;gt;) and P5 (which uses &lt;TEI&amp;gt;). The handler will get triggered every time one of these elements is found.</p> <p>Note that, if we want, we can customize the handler. We'll see an example of this later. But for this document element handler, we don't need any customization. The default DocumentElementHandler will make sure BlackLab knows where our documents start and end and get added to the index in the correct way. It will also automatically add any attributes of the element as metadata fields, but the TEI document elements don't have attributes, so that doesn't apply here.</p> <p>Let's say you TEI files are part of speech tagged and lemmatized, and you want to add these annotations to your index as well. To do so, you will need to add these lines at the top of your constructor, just after calling the superclass constructor:</p> <div class="language- extra-class"><pre><code>// Add some extra annotations
+final AnnotationWriter annotLemma = addAnnotation(&quot;lemma&quot;);
+final AnnotationWriter annotPartOfSpeech = addAnnotation(&quot;pos&quot;);
+</code></pre></div><p>Because we will also be working with the two default annotations that every indexer gets, word and punct, we also need to store a reference to those:</p> <div class="language- extra-class"><pre><code>// Get handles to the default annotations (the main one &amp; punct)
+final AnnotationWriter annotMain = mainAnnotation();
+final AnnotationWriter annotPunct = punctAnnotation();
+</code></pre></div><p>The main annotation (named &quot;word&quot;) generally contains the word forms of the text. The punct annotation is used to store the characters between the words: punctuation and whitespace. These two annotations together can be used to generate snippets of context when needed.</p> <p>Before we create the handler for the word tags, let's create another one for the body tag. We only want to index word tags that occur in a body tag, and we will refer back to this handler to see when we're inside a body tag. Place this line at the end of the constructor:</p> <div class="language- extra-class"><pre><code>final ElementHandler body = addHandler(&quot;body&quot;, new ElementHandler());
+</code></pre></div><p>Now it's time to add a handler for word tags:</p> <div class="language- extra-class"><pre><code>// Word elements: index as main contents
+addHandler(&quot;w&quot;, new WordHandlerBase() {
+	@Override
+	public void startElement(String uri, String localName, String qName,
+			Attributes attributes) {
+		if (!body.insideElement())
+			return;
+		super.startElement(uri, localName, qName, attributes);
+
+		// Determine lemma and part of speech from the attributes
+		String lemma = attributes.getValue(&quot;lemma&quot;);
+		if (lemma == null)
+			lemma = &quot;&quot;;
+		annotLemma.addValue(lemma);
+		String pos = attributes.getValue(&quot;type&quot;);
+		if (pos == null)
+			pos = &quot;?&quot;;
+		annotPartOfSpeech.addValue(pos);
+
+		// Add punctuation
+		annotPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
+	}
+
+	@Override
+	public void endElement(String uri, String localName, String qName) {
+		if (!body.insideElement())
+			return;
+		super.endElement(uri, localName, qName);
+		annotMain.addValue(consumeCharacterContent());
+	}
+});
+</code></pre></div><p>Here we see an example of customizing a default handler. The default handler is called WordHandlerBase, and it takes care of storing character positions (needed if we want to highlight hits in the original XML) and reporting progress, but nothing else. You are responsible for indexing the different annotations (the defaults word and punct, plus the we you added ourselves, lemma and pos). We use an anonymous inner class and override the startElement() and endElement() methods.</p> <p>At the top of those methods, notice how we use the body handler we added earlier: we check if we're inside a body element, and return if not, even before calling the superclass method. This makes sure any &lt;w/&gt; tags outside &lt;body/&gt; tags are skipped.</p> <p>The values for lemma and part of speech are taken from the element attributes and added to the annotations we created earlier; simple enough. For the main annotation (&quot;word&quot;, the actual word forms) and the &quot;punct&quot; annotation (punctuation and whitespace between words), we use the consumeCharacterContent() method. All character content in the XML is collected, and calling consumeCharacterContent() returns the context collected since the last call, and clears the buffer again. At the start of each word, we consume the character content and add it to the punct annotation; at the end of each word, we do the same again and add it to the main annotation (&quot;word&quot;).</p> <p>If we also want to capture sentence tags, so we can search for sentences containing a word for example, we can add this handler:</p> <div class="language- extra-class"><pre><code>// Sentence tags: index as tags in the content
+addHandler(&quot;s&quot;, new InlineTagHandler() {
+	@Override
+	public void startElement(String uri, String localName, String qName,
+			Attributes attributes) {
+		if (body.insideElement())
+			super.startElement(uri, localName, qName, attributes);
+	}
+
+	@Override
+	public void endElement(String uri, String localName, String qName) {
+		if (body.insideElement())
+			super.endElement(uri, localName, qName);
+	}
+});
+</code></pre></div><p>We only customize this handler because we want to make sure we don't capture sentence tags outside body elements.</p> <p>We're almost done, but there's one subtle thing to take care of. What happens to the bit of punctuation after the last word? The way we have our indexer now, it would never get added to the index. We should customize the body handler a little bit to take care of that:</p> <div class="language- extra-class"><pre><code>	final ElementHandler body = addHandler(&quot;body&quot;, new ElementHandler() {
+		@Override
+		public void startElement(String uri, String localName, String qName,
+				Attributes attributes) {
+			consumeCharacterContent(); // clear it to capture punctuation and words
+		}
+
+		@Override
+		public void endElement(String uri, String localName, String qName) {
+
+			// Before ending the document, add the final bit of punctuation.
+			annotPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
+
+			super.endElement(uri, localName, qName);
+		}
+	});
+});
+</code></pre></div><p>Note how we've also overridden the startElement() method in order to clean the character content buffer at the start of the body element. If we didn't do that, we might get some junk at the first position of the punct annotation.</p> <p>That's all there is to it, really. Well, we haven't covered capturing metadata, mostly because TEI doesn't have a clear standard for how metadata is represented. But indexing your particular type of metadata is easy. There's a few helper classes: MetadataElementHandler assumes the matched element name is the name of your metadata field and the character content is the value. MetadataAttributesHandler stores all the attributes from the matched element as metadata fields. MetadataNameValueAttributeHandler assumes the matched element has a name attribute and a value attribute (the attribute names can be specified in the constructor) and stores those as metadata fields.</p> <p>If you need something fancy for metadata, have a look at the DocIndexers in BlackLab and the implementation of the helper classes mentioned above. It's not hard to make a version that will work for you.</p> <p>That concludes this simple tutorial. If you have a question, please <a href="/BlackLab/guide/about.html#contact-us">contact us</a>.</p></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/INL/BlackLab/edit/dev/site/docs/development/customization/docindexer.md" target="_blank" rel="noopener noreferrer">Help us improve this page!</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">11/15/2022, 2:13:30 PM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/BlackLab/development/query-tool.html" class="prev">
+        QueryTool
+      </a></span> <span class="next"><a href="/BlackLab/development/customization/query-language.html">
+        Custom query language
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/BlackLab/assets/js/app.ff7e0bdb.js" defer></script><script src="/BlackLab/assets/js/2.3a027c82.js" defer></script><script src="/BlackLab/assets/js/18.b90032a5.js" defer></script>
+  </body>
+</html>

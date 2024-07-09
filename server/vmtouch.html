@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>vmtouch | BlackLab</title>
+    <meta name="generator" content="VuePress 1.9.8">
+    
+    <meta name="description" content="Documentation for the corpus search engine BlackLab">
+    
+    <link rel="preload" href="/BlackLab/assets/css/0.styles.5760bb18.css" as="style"><link rel="preload" href="/BlackLab/assets/js/app.ff7e0bdb.js" as="script"><link rel="preload" href="/BlackLab/assets/js/2.3a027c82.js" as="script"><link rel="preload" href="/BlackLab/assets/js/73.28b0fde7.js" as="script"><link rel="prefetch" href="/BlackLab/assets/js/10.a97bc1f2.js"><link rel="prefetch" href="/BlackLab/assets/js/11.891fe32f.js"><link rel="prefetch" href="/BlackLab/assets/js/12.2db99efc.js"><link rel="prefetch" href="/BlackLab/assets/js/13.e93eed8a.js"><link rel="prefetch" href="/BlackLab/assets/js/14.9364ad4a.js"><link rel="prefetch" href="/BlackLab/assets/js/15.405632c8.js"><link rel="prefetch" href="/BlackLab/assets/js/16.f3063769.js"><link rel="prefetch" href="/BlackLab/assets/js/17.06d27b1c.js"><link rel="prefetch" href="/BlackLab/assets/js/18.b90032a5.js"><link rel="prefetch" href="/BlackLab/assets/js/19.1cd8af9b.js"><link rel="prefetch" href="/BlackLab/assets/js/20.42bb357a.js"><link rel="prefetch" href="/BlackLab/assets/js/21.6b25d228.js"><link rel="prefetch" href="/BlackLab/assets/js/22.577e00a3.js"><link rel="prefetch" href="/BlackLab/assets/js/23.18694c3e.js"><link rel="prefetch" href="/BlackLab/assets/js/24.3f96f03f.js"><link rel="prefetch" href="/BlackLab/assets/js/25.ebeb39f6.js"><link rel="prefetch" href="/BlackLab/assets/js/26.afa2791a.js"><link rel="prefetch" href="/BlackLab/assets/js/27.bbc1ac3e.js"><link rel="prefetch" href="/BlackLab/assets/js/28.1607f8a7.js"><link rel="prefetch" href="/BlackLab/assets/js/29.74d0eb7f.js"><link rel="prefetch" href="/BlackLab/assets/js/3.dd448380.js"><link rel="prefetch" href="/BlackLab/assets/js/30.d69bc359.js"><link rel="prefetch" href="/BlackLab/assets/js/31.8d716075.js"><link rel="prefetch" href="/BlackLab/assets/js/32.a0ff5456.js"><link rel="prefetch" href="/BlackLab/assets/js/33.c497f89b.js"><link rel="prefetch" href="/BlackLab/assets/js/34.43fcfa33.js"><link rel="prefetch" href="/BlackLab/assets/js/35.57d60f91.js"><link rel="prefetch" href="/BlackLab/assets/js/36.6b5464f5.js"><link rel="prefetch" href="/BlackLab/assets/js/37.aa245bfb.js"><link rel="prefetch" href="/BlackLab/assets/js/38.e2221bf1.js"><link rel="prefetch" href="/BlackLab/assets/js/39.f9614a8f.js"><link rel="prefetch" href="/BlackLab/assets/js/4.250fd8f2.js"><link rel="prefetch" href="/BlackLab/assets/js/40.3e881176.js"><link rel="prefetch" href="/BlackLab/assets/js/41.19e38ff0.js"><link rel="prefetch" href="/BlackLab/assets/js/42.0465a6b1.js"><link rel="prefetch" href="/BlackLab/assets/js/43.2c80d081.js"><link rel="prefetch" href="/BlackLab/assets/js/44.43625a55.js"><link rel="prefetch" href="/BlackLab/assets/js/45.b5cea120.js"><link rel="prefetch" href="/BlackLab/assets/js/46.1b676431.js"><link rel="prefetch" href="/BlackLab/assets/js/47.85c2d39e.js"><link rel="prefetch" href="/BlackLab/assets/js/48.08158648.js"><link rel="prefetch" href="/BlackLab/assets/js/49.a4c61ca8.js"><link rel="prefetch" href="/BlackLab/assets/js/5.7080f60e.js"><link rel="prefetch" href="/BlackLab/assets/js/50.c78858d5.js"><link rel="prefetch" href="/BlackLab/assets/js/51.463bae8c.js"><link rel="prefetch" href="/BlackLab/assets/js/52.458bbe5f.js"><link rel="prefetch" href="/BlackLab/assets/js/53.39e9deef.js"><link rel="prefetch" href="/BlackLab/assets/js/54.425b4f2a.js"><link rel="prefetch" href="/BlackLab/assets/js/55.50c2c79a.js"><link rel="prefetch" href="/BlackLab/assets/js/56.eec17177.js"><link rel="prefetch" href="/BlackLab/assets/js/57.306ac3df.js"><link rel="prefetch" href="/BlackLab/assets/js/58.10fb9202.js"><link rel="prefetch" href="/BlackLab/assets/js/59.a192a7eb.js"><link rel="prefetch" href="/BlackLab/assets/js/6.bb3d2c40.js"><link rel="prefetch" href="/BlackLab/assets/js/60.8ff3f063.js"><link rel="prefetch" href="/BlackLab/assets/js/61.91d2ba44.js"><link rel="prefetch" href="/BlackLab/assets/js/62.f8d7a455.js"><link rel="prefetch" href="/BlackLab/assets/js/63.ba9049be.js"><link rel="prefetch" href="/BlackLab/assets/js/64.a10a4e4f.js"><link rel="prefetch" href="/BlackLab/assets/js/65.ab9870d5.js"><link rel="prefetch" href="/BlackLab/assets/js/66.b1a55608.js"><link rel="prefetch" href="/BlackLab/assets/js/67.c8966fb0.js"><link rel="prefetch" href="/BlackLab/assets/js/68.a0110da1.js"><link rel="prefetch" href="/BlackLab/assets/js/69.190cdd43.js"><link rel="prefetch" href="/BlackLab/assets/js/7.fe78c9fd.js"><link rel="prefetch" href="/BlackLab/assets/js/70.af6f5588.js"><link rel="prefetch" href="/BlackLab/assets/js/71.accb48b7.js"><link rel="prefetch" href="/BlackLab/assets/js/72.7d196c93.js"><link rel="prefetch" href="/BlackLab/assets/js/74.60eed0ed.js"><link rel="prefetch" href="/BlackLab/assets/js/8.9dedd2e9.js"><link rel="prefetch" href="/BlackLab/assets/js/9.e6659fc6.js">
+    <link rel="stylesheet" href="/BlackLab/assets/css/0.styles.5760bb18.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/BlackLab/" class="home-link router-link-active"><!----> <span class="site-name">BlackLab</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/BlackLab/guide/" class="nav-link">
+  Guide
+</a></div><div class="nav-item"><a href="/BlackLab/server/" class="nav-link router-link-active">
+  Webservice
+</a></div><div class="nav-item"><a href="/BlackLab/frontend/" class="nav-link">
+  Frontend
+</a></div><div class="nav-item"><a href="/BlackLab/development/" class="nav-link">
+  Developers
+</a></div> <a href="https://github.com/INL/BlackLab" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/BlackLab/guide/" class="nav-link">
+  Guide
+</a></div><div class="nav-item"><a href="/BlackLab/server/" class="nav-link router-link-active">
+  Webservice
+</a></div><div class="nav-item"><a href="/BlackLab/frontend/" class="nav-link">
+  Frontend
+</a></div><div class="nav-item"><a href="/BlackLab/development/" class="nav-link">
+  Developers
+</a></div> <a href="https://github.com/INL/BlackLab" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a></nav>  <ul class="sidebar-links"><li><a href="/BlackLab/server/" aria-current="page" class="sidebar-link">BlackLab Server</a></li><li><a href="/BlackLab/server/overview.html" class="sidebar-link">How to use</a></li><li><a href="/BlackLab/server/rest-api/" class="sidebar-link">API reference</a></li><li><a href="/BlackLab/server/from-different-languages.html" class="sidebar-link">Using from different languages</a></li><li><a href="/BlackLab/server/configuration.html" class="sidebar-link">Configuration</a></li><li><a href="/BlackLab/server/howtos.html" class="sidebar-link">Tutorials / howtos</a></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="vmtouch"><a href="#vmtouch" class="header-anchor">#</a> vmtouch</h1> <p>::: warn Not recommended</p> <p>These days, we don't recommend using vmtouch unless you are certain you need it. Operating systems are good at managing disk cache, so leaving it to the OS will likely result in better overall performance.</p> <p>:::</p> <p>At the Dutch Language Institute, we used to use a tool called <a href="http://hoytech.com/vmtouch/" target="_blank" rel="noopener noreferrer">vmtouch<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> written by Doug Hoyte to 'lock' our forward indices in the operating system's disk cache, keeping them in memory at all times. This speeds up sorting and grouping operations, as well as generating (large amounts of) KWICs (keyword-in-context results).</p> <p>vmtouch is a tool that can &quot;lock&quot; a file in disk cache. It benefits applications that need to perform fast random access to large files (i.e. several gigabytes). Corpus search applications fall into this domain: they need random access to the &quot;forward index&quot; component of the index to do fast sorting and grouping.</p> <p>You should be careful to ensure the machine you're using has enough RAM to keep the required files in memory permanently, and will still have memory left over for the operating system and applications.</p> <p>Also important is to run vmtouch as the root user; user accounts have a limit to the amount of memory they may lock. Vmtouch will terminate with an out of memory error if it hits that limit. (it may be possible to raise this limit for a user by changing a configuration file - we haven't experimented with this)</p> <p>The <a href="http://hoytech.com/vmtouch/" target="_blank" rel="noopener noreferrer">official page for vmtouch<span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></a> has the C source code and the online manual. In the past, we have made a slight modification to the source code to allow for larger files to be cached.</p> <h3 id="filesize-limit"><a href="#filesize-limit" class="header-anchor">#</a> Filesize limit</h3> <p>The original vmtouch has a built-in 500 MB per file limit (probably as a safety precaution). We needed to raise this limit to allow for our 2GB+ files. Hence this line:</p> <div class="language- extra-class"><pre><code>size_t o_max_file_size=500*1024*1024;
+</code></pre></div><p>was changed to:</p> <div class="language- extra-class"><pre><code>size_t o_max_file_size=6L*1024*1024*1024;
+</code></pre></div><p>(Please note that if you wish to cache files larger than 6 GB, you will need to change this line again)</p> <h2 id="running-vmtouch"><a href="#running-vmtouch" class="header-anchor">#</a> Running vmtouch</h2> <p>To run vmtouch in daemon mode, so that it will lock files in the disk cache, use the following command line:</p> <div class="language- extra-class"><pre><code>sudo vmtouch -vtld &lt;list_of_files&gt;
+</code></pre></div><p>The switches: v=verbose, t=touch (load into disk cache), l=lock (lock in disk cache), d=daemon (keep the program running). For example, we use the following command line to keep all four forward indices of our BlackLab index locked in disk cache (run from within the index directory):</p> <div class="language- extra-class"><pre><code>sudo vmtouch -vtld fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
+</code></pre></div><p>The daemon will start up and will take a while to load all files into disk cache. You can check its progress by only specifying the -v option:</p> <div class="language- extra-class"><pre><code>sudo vmtouch -v fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
+</code></pre></div><h2 id="helper-scripts"><a href="#helper-scripts" class="header-anchor">#</a> Helper scripts</h2> <p>We have written a few simple helper scripts for using vmtouch. These scripts are included in the vmtouch/script/ directory of the BlackLab source distribution, but they are reproduced here for convenience.</p> <p>The first shell script activates the vmtouch daemon for a number of corpora under the same base directory. The second shell script checks the cache status for these files. The third is an init script you can place in /etc/init.d (under Debian) to (automatically) start/stop the daemon on a server.</p> <h3 id="activatevmtouch-sh"><a href="#activatevmtouch-sh" class="header-anchor">#</a> activateVmtouch.sh</h3> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token shebang important">#!/bin/bash</span>
+<span class="token comment"># This script will read specific large files in BlackLab indices into the</span>
+<span class="token comment"># disk cache and lock them there. This improves performance for</span>
+<span class="token comment"># applications needing random access on those files.</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">[</span> <span class="token string">&quot;<span class="token environment constant">$EUID</span>&quot;</span> <span class="token parameter variable">-ne</span> <span class="token number">0</span> <span class="token punctuation">]</span>
+<span class="token keyword">then</span>
+    <span class="token builtin class-name">echo</span> <span class="token string">&quot;Please run as root&quot;</span>
+    <span class="token builtin class-name">exit</span>
+<span class="token keyword">fi</span>
+
+<span class="token assign-left variable">DATASETS_DIR</span><span class="token operator">=</span>/blacklab/indices
+<span class="token assign-left variable">VMTOUCH_BINARY</span><span class="token operator">=</span>/blacklab/bin/vmtouch/vmtouch
+
+<span class="token comment"># Figure out the list of files to cache</span>
+<span class="token builtin class-name">cd</span> <span class="token variable">$DATASETS_DIR</span>
+<span class="token assign-left variable">FILES_TO_CACHE</span><span class="token operator">=</span>
+<span class="token keyword">for</span> <span class="token for-or-select variable">DATASET</span> <span class="token keyword">in</span> <span class="token variable"><span class="token variable">`</span><span class="token function">ls</span> $DATASETS_DIR<span class="token variable">`</span></span>
+<span class="token keyword">do</span>
+    <span class="token keyword">if</span> <span class="token punctuation">[</span> <span class="token parameter variable">-d</span> <span class="token variable">$DATASET</span> <span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token keyword">then</span>
+    <span class="token builtin class-name">echo</span> <span class="token string">&quot;  <span class="token variable">$DATASET</span>&quot;</span>
+    <span class="token assign-left variable">FILES_TO_CACHE</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">$FILES_TO_CACHE</span> <span class="token variable">$DATASET</span>/fi_contents%word/tokens.dat <span class="token variable">$DATASET</span>/fi_contents%lemma/tokens.dat <span class="token variable">$DATASET</span>/fi_contents%pos/tokens.dat <span class="token variable">$DATASET</span>/fi_contents%punct/tokens.dat&quot;</span>
+    <span class="token keyword">fi</span>
+<span class="token keyword">done</span>
+
+<span class="token comment"># Start vmtouch daemon to keep files in disk cache</span>
+<span class="token variable">$VMTOUCH_BINARY</span> <span class="token parameter variable">-vtld</span> <span class="token variable">$FILES_TO_CACHE</span>
+
+<span class="token comment">### checkCache.sh</span>
+
+<span class="token comment">#!/bin/sh</span>
+<span class="token comment"># This script checks to see how much of the set of files to cache</span>
+<span class="token comment"># is currently in the disk cache. Should eventually reach and stay</span>
+<span class="token comment"># at 100%.</span>
+
+<span class="token assign-left variable">DATASETS_DIR</span><span class="token operator">=</span>/blacklab/indices
+<span class="token assign-left variable">VMTOUCH_BINARY</span><span class="token operator">=</span>/blacklab/bin/vmtouch/vmtouch
+
+<span class="token comment"># Figure out the list of files to cache</span>
+<span class="token builtin class-name">cd</span> <span class="token variable">$DATASETS_DIR</span>
+<span class="token assign-left variable">FILES_TO_CACHE</span><span class="token operator">=</span>
+<span class="token keyword">for</span> <span class="token for-or-select variable">DATASET</span> <span class="token keyword">in</span> <span class="token variable"><span class="token variable">`</span><span class="token function">ls</span> $DATASETS_DIR<span class="token variable">`</span></span>
+<span class="token keyword">do</span>
+    <span class="token keyword">if</span> <span class="token punctuation">[</span> <span class="token parameter variable">-d</span> <span class="token variable">$DATASET</span> <span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token keyword">then</span>
+    <span class="token assign-left variable">FILES_TO_CACHE</span><span class="token operator">=</span><span class="token string">&quot;<span class="token variable">$FILES_TO_CACHE</span> <span class="token variable">$DATASET</span>/fi_contents%word/tokens.dat <span class="token variable">$DATASET</span>/fi_contents%lemma/tokens.dat <span class="token variable">$DATASET</span>/fi_contents%pos/tokens.dat <span class="token variable">$DATASET</span>/fi_contents%punct/tokens.dat&quot;</span>
+    <span class="token keyword">fi</span>
+<span class="token keyword">done</span>
+
+<span class="token comment"># Check to see how much of the files has been cached</span>
+<span class="token variable">$VMTOUCH_BINARY</span> <span class="token parameter variable">-v</span> <span class="token variable">$FILES_TO_CACHE</span>
+</code></pre></div><h3 id="etc-init-d-vmtouch-startupscript"><a href="#etc-init-d-vmtouch-startupscript" class="header-anchor">#</a> /etc/init.d/vmtouch (startupscript)</h3> <div class="language-bash extra-class"><pre class="language-bash"><code><span class="token shebang important">#!/bin/sh</span>
+<span class="token comment">### BEGIN INIT INFO</span>
+<span class="token comment"># Provides:          vmtouch</span>
+<span class="token comment"># Required-Start:    $remote_fs $syslog</span>
+<span class="token comment"># Required-Stop:     $remote_fs $syslog</span>
+<span class="token comment"># Default-Start:     2 3 4 5</span>
+<span class="token comment"># Default-Stop:      0 1 6</span>
+<span class="token comment"># Short-Description: Start vmtouch at boot time</span>
+<span class="token comment"># Description:       Keeps certain files locked in the disk cache.</span>
+<span class="token comment">### END INIT INFO</span>
+
+<span class="token comment"># (Adapted from template at https://github.com/fhd/init-script-template/)</span>
+
+<span class="token comment"># Settings: dir to run from, user to run under, command to run</span>
+<span class="token assign-left variable">dir</span><span class="token operator">=</span><span class="token string">&quot;/blacklab/bin/vmtouch&quot;</span>
+<span class="token assign-left variable">user</span><span class="token operator">=</span><span class="token string">&quot;root&quot;</span>
+<span class="token assign-left variable">cmd</span><span class="token operator">=</span><span class="token string">&quot;/blacklab/bin/vmtouch/activateVmtouch.sh&quot;</span>
+
+<span class="token comment"># Daemon's name</span>
+<span class="token assign-left variable">name</span><span class="token operator">=</span><span class="token variable"><span class="token variable">`</span><span class="token function">basename</span> $0<span class="token variable">`</span></span>
+
+<span class="token comment"># Log files</span>
+<span class="token assign-left variable">stdout_log</span><span class="token operator">=</span><span class="token string">&quot;/var/log/<span class="token variable">$name</span>.log&quot;</span>
+<span class="token assign-left variable">stderr_log</span><span class="token operator">=</span><span class="token string">&quot;/var/log/<span class="token variable">$name</span>.err&quot;</span>
+
+<span class="token comment"># If vmtouch is running, return its PID.</span>
+<span class="token function-name function">get_pid</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token builtin class-name">echo</span> <span class="token variable"><span class="token variable">`</span><span class="token function">ps</span> <span class="token parameter variable">-ef</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-v</span> <span class="token function">grep</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">&quot;vmtouch -vtld&quot;</span> <span class="token operator">|</span> <span class="token function">awk</span> <span class="token string">'{print $2}'</span> <span class="token variable">`</span></span>
+<span class="token punctuation">}</span>
+
+<span class="token comment"># Check to see if vmtouch is running.</span>
+<span class="token function-name function">is_running</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">ps</span> <span class="token parameter variable">-ef</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token parameter variable">-v</span> <span class="token function">grep</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">&quot;vmtouch -vtld&quot;</span> <span class="token operator">&gt;</span>/dev/null
+<span class="token punctuation">}</span>
+
+<span class="token comment"># Start, stop, restart or show status of vmtouch, depending on commandline</span>
+<span class="token keyword">case</span> <span class="token string">&quot;<span class="token variable">$1</span>&quot;</span> <span class="token keyword">in</span>
+    start<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> is_running<span class="token punctuation">;</span> <span class="token keyword">then</span>
+        <span class="token builtin class-name">echo</span> <span class="token string">&quot;Already started&quot;</span>
+    <span class="token keyword">else</span>
+        <span class="token builtin class-name">echo</span> <span class="token string">&quot;Starting <span class="token variable">$name</span>&quot;</span>
+        <span class="token builtin class-name">cd</span> <span class="token string">&quot;<span class="token variable">$dir</span>&quot;</span>
+        <span class="token function">sudo</span> <span class="token parameter variable">-u</span> <span class="token string">&quot;<span class="token variable">$user</span>&quot;</span> <span class="token variable">$cmd</span> <span class="token operator">&gt;&gt;</span> <span class="token string">&quot;<span class="token variable">$stdout_log</span>&quot;</span> <span class="token operator"><span class="token file-descriptor important">2</span>&gt;&gt;</span> <span class="token string">&quot;<span class="token variable">$stderr_log</span>&quot;</span>
+        <span class="token keyword">if</span> <span class="token operator">!</span> is_running<span class="token punctuation">;</span> <span class="token keyword">then</span>
+            <span class="token builtin class-name">echo</span> <span class="token string">&quot;Unable to start, see <span class="token variable">$stdout_log</span> and <span class="token variable">$stderr_log</span>&quot;</span>
+            <span class="token builtin class-name">exit</span> <span class="token number">1</span>
+        <span class="token keyword">fi</span>
+    <span class="token keyword">fi</span>
+    <span class="token punctuation">;</span><span class="token punctuation">;</span>
+    stop<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> is_running<span class="token punctuation">;</span> <span class="token keyword">then</span>
+        <span class="token builtin class-name">echo</span> <span class="token parameter variable">-n</span> <span class="token string">&quot;Stopping <span class="token variable">$name</span>..&quot;</span>
+        <span class="token function">kill</span> <span class="token variable"><span class="token variable">`</span>get_pid<span class="token variable">`</span></span>
+        <span class="token keyword">for</span> <span class="token for-or-select variable">i</span> <span class="token keyword">in</span> <span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">..</span><span class="token number">10</span><span class="token punctuation">}</span>
+        <span class="token keyword">do</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span> is_running<span class="token punctuation">;</span> <span class="token keyword">then</span>
+                <span class="token builtin class-name">break</span>
+            <span class="token keyword">fi</span>
+
+            <span class="token builtin class-name">echo</span> <span class="token parameter variable">-n</span> <span class="token string">&quot;.&quot;</span>
+            <span class="token function">sleep</span> <span class="token number">1</span>
+        <span class="token keyword">done</span>
+        <span class="token builtin class-name">echo</span>
+
+        <span class="token keyword">if</span> is_running<span class="token punctuation">;</span> <span class="token keyword">then</span>
+            <span class="token builtin class-name">echo</span> <span class="token string">&quot;Not stopped; may still be shutting down or shutdown may have failed&quot;</span>
+            <span class="token builtin class-name">exit</span> <span class="token number">1</span>
+        <span class="token keyword">else</span>
+            <span class="token builtin class-name">echo</span> <span class="token string">&quot;Stopped&quot;</span>
+        <span class="token keyword">fi</span>
+    <span class="token keyword">else</span>
+        <span class="token builtin class-name">echo</span> <span class="token string">&quot;Not running&quot;</span>
+    <span class="token keyword">fi</span>
+    <span class="token punctuation">;</span><span class="token punctuation">;</span>
+    restart<span class="token punctuation">)</span>
+    <span class="token variable">$0</span> stop
+    <span class="token keyword">if</span> is_running<span class="token punctuation">;</span> <span class="token keyword">then</span>
+        <span class="token builtin class-name">echo</span> <span class="token string">&quot;Unable to stop, will not attempt to start&quot;</span>
+        <span class="token builtin class-name">exit</span> <span class="token number">1</span>
+    <span class="token keyword">fi</span>
+    <span class="token variable">$0</span> start
+    <span class="token punctuation">;</span><span class="token punctuation">;</span>
+    status<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> is_running<span class="token punctuation">;</span> <span class="token keyword">then</span>
+        <span class="token builtin class-name">echo</span> <span class="token string">&quot;Running&quot;</span>
+    <span class="token keyword">else</span>
+        <span class="token builtin class-name">echo</span> <span class="token string">&quot;Stopped&quot;</span>
+        <span class="token builtin class-name">exit</span> <span class="token number">1</span>
+    <span class="token keyword">fi</span>
+    <span class="token punctuation">;</span><span class="token punctuation">;</span>
+    *<span class="token punctuation">)</span>
+    <span class="token builtin class-name">echo</span> <span class="token string">&quot;Usage: <span class="token variable">$0</span> {start|stop|restart|status}&quot;</span>
+    <span class="token builtin class-name">exit</span> <span class="token number">1</span>
+    <span class="token punctuation">;</span><span class="token punctuation">;</span>
+<span class="token keyword">esac</span>
+
+<span class="token builtin class-name">exit</span> <span class="token number">0</span>
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/INL/BlackLab/edit/dev/site/docs/server/vmtouch.md" target="_blank" rel="noopener noreferrer">Help us improve this page!</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">9/22/2022, 1:02:09 PM</span></div></footer> <!----> </main></div><div class="global-ui"></div></div>
+    <script src="/BlackLab/assets/js/app.ff7e0bdb.js" defer></script><script src="/BlackLab/assets/js/2.3a027c82.js" defer></script><script src="/BlackLab/assets/js/73.28b0fde7.js" defer></script>
+  </body>
+</html>
