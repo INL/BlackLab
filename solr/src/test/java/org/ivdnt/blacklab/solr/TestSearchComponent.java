@@ -46,7 +46,6 @@ public class TestSearchComponent {
         if (!USE_EXISTING_INDEX)
             SolrTestServer.createCore(CORE_NAME, resourcePath.resolve("conf"));
         SolrClient client = SolrTestServer.client();
-        // TODO java.lang.ClassNotFoundException: solr.XSLTResponseWriter
         client.add(CORE_NAME, testDoc());
         client.commit(CORE_NAME);
 
