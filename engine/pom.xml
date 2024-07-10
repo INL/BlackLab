@@ -11,10 +11,6 @@
     <artifactId>blacklab-engine</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <blacklab.analyzersVersion>8.11.3</blacklab.analyzersVersion>
-    </properties>
-
     <name>BlackLab Engine</name>
     <description>
         The BlackLab "engine" that actually executes queries.
