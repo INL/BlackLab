@@ -40,7 +40,7 @@ public class TestBlsUtils {
 
     @Test
     public void testParsePatt() throws BlsException {
-        TextPattern pattThe = new TextPatternRegex("^the$");
+        TextPattern pattThe = new TextPatternRegex("the");
         Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "bcql"));
     }
 

@@ -86,13 +86,6 @@ public class CorpusQueryLanguageParser {
     }
 
     TextPatternTerm simplePattern(String str) {
-        if (str.length() > 0) {
-            if (str.charAt(0) != '^')
-                str = "^" + str;
-            if (str.charAt(str.length() - 1) != '$')
-                str += "$";
-        }
-
         // Treat everything like regex now; will be simplified later if possible
         return new TextPatternRegex(str);
     }
