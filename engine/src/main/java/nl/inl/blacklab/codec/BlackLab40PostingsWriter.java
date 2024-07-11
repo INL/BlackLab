@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
@@ -591,7 +592,9 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     @SuppressWarnings("SameParameterValue")
     private IndexInput openInput(String ext) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
-        IndexInput input = state.directory.openInput(fileName, state.context);
+        // NOTE: we have to deal with Lucene 9's switch to little-endian.
+        //IndexInput input = state.directory.openInput(fileName, state.context);
+        IndexInput input = EndiannessReverserUtil.openInput(state.directory, fileName, state.context);
 
         // Read and check standard header, with codec name and version and segment info.
         // Also check the delegate codec name (should be the expected version of Lucene's codec).

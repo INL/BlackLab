@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.StoredFieldsReader;
 import org.apache.lucene.index.FieldInfo;
@@ -144,7 +145,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     private IndexInput openInput(String extension, Directory directory, SegmentInfo segmentInfo, IOContext ioContext) throws IOException {
         String segmentSuffix = "";
         String fileName = IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, extension);
-        IndexInput input = directory.openInput(fileName, ioContext);
+        // NOTE: we have to deal with Lucene 9's switch to little-endian.
+        // IndexInput input = directory.openInput(fileName, ioContext);
+        IndexInput input = EndiannessReverserUtil.openInput(directory, fileName, ioContext);
         try {
             // Check index header
             String codecName = BlackLab40StoredFieldsFormat.NAME + "_" + extension;

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
@@ -130,7 +131,9 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      */
     public IndexInput openIndexFile(String extension) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, extension);
-        IndexInput input = state.directory.openInput(fileName, state.context);
+        // NOTE: we have to deal with Lucene 9's switch to little-endian.
+        //IndexInput input = state.directory.openInput(fileName, state.context);
+        IndexInput input = EndiannessReverserUtil.openInput(state.directory, fileName, state.context);
         try {
             // Check index header
             CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
