@@ -2,6 +2,9 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 
+import org.apache.lucene.backward_codecs.lucene84.Lucene84Codec;
+import org.apache.lucene.backward_codecs.lucene86.Lucene86Codec;
+import org.apache.lucene.backward_codecs.lucene87.Lucene87Codec;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.CompoundFormat;
 import org.apache.lucene.codecs.DocValuesFormat;
@@ -76,7 +79,7 @@ public class BlackLab40Codec extends Codec {
         if (_delegate == null) {
             // We defer initialization to prevent an error about getting the default codec before all codecs
             // are initialized.
-            _delegate = Codec.getDefault();
+            _delegate = new Lucene87Codec(); //Codec.getDefault();
         }
         return _delegate;
     }
@@ -116,7 +119,7 @@ public class BlackLab40Codec extends Codec {
         }*/
 
         if (delegate().postingsFormat() instanceof PerFieldPostingsFormat) {
-            Codec defaultCodec = Codec.getDefault();
+            Codec defaultCodec = new Lucene87Codec(); //Codec.getDefault();
             PostingsFormat defaultPostingsFormat = defaultCodec.postingsFormat();
             if (defaultPostingsFormat instanceof PerFieldPostingsFormat) {
                 defaultPostingsFormat = ((PerFieldPostingsFormat) defaultPostingsFormat)
