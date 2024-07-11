@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab40;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -9,9 +9,7 @@ import java.util.Map;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.StoredFieldsWriter;
 import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.MergeState;
 import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.store.Directory;
@@ -22,6 +20,8 @@ import org.apache.lucene.util.Accountables;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.RamUsageEstimator;
 
+import nl.inl.blacklab.codec.ContentStoreBlockCodec;
+import nl.inl.blacklab.codec.ContentStoreBlockCodecZlib;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
 /**

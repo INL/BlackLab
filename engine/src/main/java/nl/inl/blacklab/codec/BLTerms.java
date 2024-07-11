@@ -2,6 +2,8 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
@@ -18,7 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 public class BLTerms extends Terms implements TermsSegmentReader {
 
     /** FieldProducer, so it can be accessed from outside the Codec (for access to forward index) */
-    private final BlackLab40PostingsReader fieldsProducer;
+    private final BlackLabPostingsReader fieldsProducer;
 
     /** The Lucene terms object we're wrapping */
     private final Terms terms;
@@ -29,17 +31,27 @@ public class BLTerms extends Terms implements TermsSegmentReader {
     /** Our segment number */
     private int ord;
 
-    public BLTerms(Terms terms, BlackLab40PostingsReader fieldsProducer) {
+    public BLTerms(Terms terms, BlackLabPostingsReader fieldsProducer) {
         this.terms = terms;
         this.fieldsProducer = fieldsProducer;
     }
 
-    public BlackLab40PostingsReader getFieldsProducer() {
-        return fieldsProducer;
+    public static BLTerms getTerms(LeafReaderContext lrc) {
+        // Find the first field that has terms.
+        for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
+            try {
+                BLTerms terms = (BLTerms) (lrc.reader().terms(fieldInfo.name));
+                if (terms != null)
+                    return terms;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        throw new IllegalStateException("No suitable field found for codec access!");
     }
 
-    public BlackLab40StoredFieldsReader getStoredFieldsReader() {
-        return fieldsProducer.getStoredFieldReader();
+    public BlackLabPostingsReader getFieldsProducer() {
+        return fieldsProducer;
     }
 
     @Override

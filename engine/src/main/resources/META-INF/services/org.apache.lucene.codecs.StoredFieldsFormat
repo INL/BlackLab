@@ -1,2 +1,2 @@
 # List of stored fields formats
-nl.inl.blacklab.codec.BlackLab40StoredFieldsFormat
+nl.inl.blacklab.codec.blacklab40.BlackLab40StoredFieldsFormat

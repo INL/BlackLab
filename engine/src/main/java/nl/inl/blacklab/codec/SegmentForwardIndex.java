@@ -13,7 +13,6 @@ import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
@@ -23,7 +22,7 @@ import nl.inl.blacklab.forwardindex.TermsSegmentReader;
  * Manages read access to forward indexes for a single segment.
  */
 @ThreadSafe
-class SegmentForwardIndex implements AutoCloseable {
+public class SegmentForwardIndex implements AutoCloseable {
 
     /** Tokens index file record consists of:
      * - offset in tokens file (long),
@@ -34,10 +33,10 @@ class SegmentForwardIndex implements AutoCloseable {
     private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES + Byte.BYTES;
 
     /** Our fields producer */
-    private final BlackLab40PostingsReader fieldsProducer;
+    private final BlackLabPostingsReader fieldsProducer;
 
     /** Contains field names and offsets to term index file, where the terms for the field can be found */
-    private final Map<String, Field> fieldsByName = new LinkedHashMap<>();
+    private final Map<String, ForwardIndexField> fieldsByName = new LinkedHashMap<>();
 
 
     /** Contains indexes into the tokens file for all field and documents */
@@ -47,19 +46,19 @@ class SegmentForwardIndex implements AutoCloseable {
     private IndexInput _tokensFile;
 
 
-    public SegmentForwardIndex(BlackLab40PostingsReader postingsReader) throws IOException {
+    public SegmentForwardIndex(BlackLabPostingsReader postingsReader) throws IOException {
         this.fieldsProducer = postingsReader;
 
-        try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.FIELDS_EXT)) {
+        try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLabCodec.FIELDS_EXT)) {
             long size = fieldsFile.length();
             while (fieldsFile.getFilePointer() < (size - CodecUtil.footerLength())) {
-                Field f = new Field(fieldsFile);
+                ForwardIndexField f = new ForwardIndexField(fieldsFile);
                 this.fieldsByName.put(f.getFieldName(), f);
             }
         }
 
-        _tokensIndexFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
-        _tokensFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_EXT);
+        _tokensIndexFile = postingsReader.openIndexFile(BlackLabCodec.TOKENS_INDEX_EXT);
+        _tokensFile = postingsReader.openIndexFile(BlackLabCodec.TOKENS_EXT);
     }
 
     private synchronized IndexInput getCloneOfTokensIndexFile() {
@@ -88,7 +87,7 @@ class SegmentForwardIndex implements AutoCloseable {
      * Though the reader is not Threadsafe, a new instance is returned every time, 
      * So this function can be used from multiple threads. 
      */
-    ForwardIndexSegmentReader reader() {
+    public ForwardIndexSegmentReader reader() {
         return new Reader();
     }
 

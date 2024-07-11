@@ -10,7 +10,7 @@ package nl.inl.blacklab.codec;
  * - codec (this) 
  * - codec parameter (usually 0, but can be set depending on codec).
  */
-enum TokensCodec {
+public enum TokensCodec {
     /** Simplest possible encoding, one 4-byte integer per token. */
     VALUE_PER_TOKEN((byte) 1),
 
@@ -18,7 +18,7 @@ enum TokensCodec {
     ALL_TOKENS_THE_SAME((byte) 2);
 
     /** How we'll write this encoding to the tokens index file. */
-    byte code;
+    public byte code;
 
     TokensCodec(byte code) {
         this.code = code;
@@ -42,7 +42,7 @@ enum TokensCodec {
         THREE_BYTES((byte) 2),
         INT((byte) 3);
 
-        final byte code;
+        public final byte code;
 
         VALUE_PER_TOKEN_PARAMETER(byte code) {
             this.code = code;

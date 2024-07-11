@@ -1,10 +1,8 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab40;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,15 +12,18 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.Terms;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.Accountable;
-import org.apache.lucene.util.Accountables;
 
 import net.jcip.annotations.ThreadSafe;
+import nl.inl.blacklab.codec.BLTerms;
+import nl.inl.blacklab.codec.SegmentForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
+import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
 
 /**
  * Adds forward index reading to default FieldsProducer.
@@ -39,7 +40,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
  * are cloned whenever a thread needs to use them.
  */
 @ThreadSafe
-public class BlackLab40PostingsReader extends FieldsProducer {
+public class BlackLab40PostingsReader extends BlackLabPostingsReader {
 
     protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsReader.class);
 
@@ -96,7 +97,8 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         return terms;
     }
 
-    BlackLab40StoredFieldsReader getStoredFieldReader() {
+    @Override
+    public BlackLabStoredFieldsReader getStoredFieldsReader() {
         try {
             BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
             return codec.storedFieldsFormat().fieldsReader(
@@ -123,6 +125,10 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         return getClass().getSimpleName() + "(delegate=" + delegateFieldsProducer + ")";
     }
 
+    public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
+        return EndiannessReverserUtil.openInput(directory, fileName, ioContext);
+    }
+
     /**
      * Open a custom file for reading and check the header.
      *
@@ -133,7 +139,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, extension);
         // NOTE: we have to deal with Lucene 9's switch to little-endian.
         //IndexInput input = state.directory.openInput(fileName, state.context);
-        IndexInput input = EndiannessReverserUtil.openInput(state.directory, fileName, state.context);
+        IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
         try {
             // Check index header
             CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
@@ -168,14 +174,14 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         return forwardIndex.reader();
     }
 
-    /**
-     * Get the BlackLab40PostingsReader for the given leafreader.
-     *
-     * @param lrc leafreader to get the BlackLab40PostingsReader for
-     * @return BlackLab40PostingsReader for this leafreader
-     */
-    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
-        return BlackLab40Codec.getTerms(lrc).getFieldsProducer();
-    }
+//    /**
+//     * Get the BlackLab40PostingsReader for the given leafreader.
+//     *
+//     * @param lrc leafreader to get the BlackLab40PostingsReader for
+//     * @return BlackLab40PostingsReader for this leafreader
+//     */
+//    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
+//        return (BlackLab40PostingsReader) BLTerms.getTerms(lrc).getFieldsProducer();
+//    }
 
 }

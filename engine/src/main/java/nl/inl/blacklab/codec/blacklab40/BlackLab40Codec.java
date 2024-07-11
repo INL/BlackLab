@@ -1,9 +1,5 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab40;
 
-import java.io.IOException;
-
-import org.apache.lucene.backward_codecs.lucene84.Lucene84Codec;
-import org.apache.lucene.backward_codecs.lucene86.Lucene86Codec;
 import org.apache.lucene.backward_codecs.lucene87.Lucene87Codec;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.CompoundFormat;
@@ -17,8 +13,8 @@ import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.codecs.SegmentInfoFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
-import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.LeafReaderContext;
+
+import nl.inl.blacklab.codec.BlackLabCodec;
 
 /**
  * The custom codec that BlackLab uses.
@@ -43,7 +39,7 @@ import org.apache.lucene.index.LeafReaderContext;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BlackLab40Codec extends Codec {
+public class BlackLab40Codec extends BlackLabCodec {
 
     /** Our codec's name. */
     static final String NAME = "BlackLab40";
@@ -59,20 +55,6 @@ public class BlackLab40Codec extends Codec {
 
     public BlackLab40Codec() {
         super(NAME);
-    }
-
-    public static BLTerms getTerms(LeafReaderContext lrc) {
-        // Find the first field that has terms.
-        for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
-            try {
-                BLTerms terms = (BLTerms) (lrc.reader().terms(fieldInfo.name));
-                if (terms != null)
-                    return terms;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        throw new IllegalStateException("No suitable field found for codec access!");
     }
 
     private synchronized Codec delegate() {

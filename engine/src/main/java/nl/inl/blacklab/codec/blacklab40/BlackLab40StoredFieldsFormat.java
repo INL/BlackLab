@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab40;
 
 import java.io.IOException;
 
@@ -9,6 +9,8 @@ import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
+
+import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
 
 /**
  * Stores certain fields as a content store, enabling random access to the stored values.
@@ -59,7 +61,7 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
     }
 
     @Override
-    public BlackLab40StoredFieldsReader fieldsReader(Directory directory, SegmentInfo segmentInfo,
+    public BlackLabStoredFieldsReader fieldsReader(Directory directory, SegmentInfo segmentInfo,
             FieldInfos fieldInfos, IOContext ioContext) throws IOException {
         StoredFieldsReader delegateReader = delegate.fieldsReader(directory, segmentInfo, fieldInfos, ioContext);
         String delegateFormatName = delegate.getClass().getSimpleName();

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab40;
 
 import java.io.IOException;
 import java.text.CollationKey;
@@ -35,12 +35,19 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.store.ByteArrayDataOutput;
 import org.apache.lucene.store.DataOutput;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.analysis.PayloadUtils;
+import nl.inl.blacklab.codec.BlackLabCodec;
+import nl.inl.blacklab.codec.ForwardIndexField;
+import nl.inl.blacklab.codec.ForwardIndexFieldMutable;
+import nl.inl.blacklab.codec.ThreeByteInt;
+import nl.inl.blacklab.codec.TokensCodec;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Collators;
@@ -140,63 +147,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         delegateFieldsConsumer.write(fields, norms);
     }
 
-    /** 
-     * Information about a Lucene field that represents a BlackLab annotation in the forward index.
-     * A Field's information is only valid for the segment (leafreadercontext) of the index it was read from.
-     * Contains offsets into files comprising the terms strings and forward index information.
-     * Such as where in the term strings file the strings for this field begin.
-     * See integrated.md
-    */
-    public static class Field {
-        private final String fieldName;
-        protected int numberOfTerms;
-        protected long termOrderOffset;
-        protected long termIndexOffset;
-        protected long tokensIndexOffset;
-
-        protected Field(String fieldName) {  this.fieldName = fieldName; }
-        
-        /** Read our values from the file */
-        public Field(IndexInput file) throws IOException {
-            this.fieldName = file.readString();
-            this.numberOfTerms = file.readInt();
-            this.termOrderOffset = file.readLong();
-            this.termIndexOffset = file.readLong();
-            this.tokensIndexOffset = file.readLong();
-        }
-
-        public Field(String fieldName, int numberOfTerms, long termIndexOffset, long termOrderOffset, long tokensIndexOffset) {
-            this.fieldName = fieldName;
-            this.numberOfTerms = numberOfTerms;
-            this.termOrderOffset = termOrderOffset;
-            this.termIndexOffset = termIndexOffset;
-            this.tokensIndexOffset = tokensIndexOffset;
-        }
-
-        public String getFieldName() { return fieldName; }
-        public int getNumberOfTerms() { return numberOfTerms; }
-        public long getTermIndexOffset() { return termIndexOffset; }
-        public long getTermOrderOffset() { return termOrderOffset; }
-        public long getTokensIndexOffset() { return tokensIndexOffset; }
-
-        public void write(IndexOutput file) throws IOException {
-            file.writeString(getFieldName());
-            file.writeInt(getNumberOfTerms());
-            file.writeLong(getTermOrderOffset());
-            file.writeLong(getTermIndexOffset());
-            file.writeLong(getTokensIndexOffset());
-        }
-    }
-
-    private static class FieldMutable extends Field {
-        public FieldMutable(String fieldName) { super(fieldName); }
-
-        public void setNumberOfTerms(int number) { this.numberOfTerms = number; }
-        public void setTermIndexOffset(long offset) { this.termIndexOffset = offset; }
-        public void setTermOrderOffset(long offset) { this.termOrderOffset = offset; }
-        public void setTokensIndexOffset(long offset) { this.tokensIndexOffset = offset; }
-    }
-
     /**
      * Offset in term vector file per term id for a single doc and field.
      *
@@ -261,13 +211,13 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      */
     private void write(FieldInfos fieldInfos, Fields fields) {
 
-        Map<String, FieldMutable> fiFields = new HashMap<>();
+        Map<String, ForwardIndexFieldMutable> fiFields = new HashMap<>();
 
-        try (   IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
-                IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT);
-                IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.TERMINDEX_EXT);
-                IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT);
-                IndexOutput termsOrderFile = createOutput(BlackLab40PostingsFormat.TERMORDER_EXT)
+        try (   IndexOutput outTokensIndexFile = createOutput(BlackLabCodec.TOKENS_INDEX_EXT);
+                IndexOutput outTokensFile = createOutput(BlackLabCodec.TOKENS_EXT);
+                IndexOutput termIndexFile = createOutput(BlackLabCodec.TERMINDEX_EXT);
+                IndexOutput termsFile = createOutput(BlackLabCodec.TERMS_EXT);
+                IndexOutput termsOrderFile = createOutput(BlackLabCodec.TERMORDER_EXT)
         ) {
 
             // Write our postings extension information
@@ -288,7 +238,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             //   we use temporary files because this might take a huge amount of memory)
             // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
             Map<String, LengthsAndOffsetsPerDocument> field2docTermVecFileOffsets = new LinkedHashMap<>();
-            try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
+            try (IndexOutput outTempTermVectorFile = createOutput(BlackLabCodec.TERMVEC_TMP_EXT)) {
 
                 // Process fields
                 for (String luceneField: fields) { // for each field
@@ -301,7 +251,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     if (!BlackLabIndexIntegrated.isForwardIndexField(fieldInfos.fieldInfo(luceneField))) {
                         continue;
                     }
-                    FieldMutable offsets = fiFields.computeIfAbsent(luceneField, FieldMutable::new);
+                    ForwardIndexFieldMutable offsets = fiFields.computeIfAbsent(luceneField, ForwardIndexFieldMutable::new);
 
                     // We're creating a forward index for this field.
                     // That also means that the payloads will include an "is-primary-value" indicator,
@@ -416,7 +366,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             // Reverse the reverse index to create forward index
             // (this time we iterate per field and per document first, then reconstruct the document by
             //  looking at each term's occurrences. This produces our forward index)
-            try (IndexInput inTermVectorFile = openInput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
+            try (IndexInput inTermVectorFile = openInput(BlackLabCodec.TERMVEC_TMP_EXT)) {
 
                 // For each field...
                 for (Entry<String, LengthsAndOffsetsPerDocument> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
@@ -440,13 +390,13 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                 }
             } finally {
                 // Clean up after ourselves
-                deleteIndexFile(BlackLab40PostingsFormat.TERMVEC_TMP_EXT);
+                deleteIndexFile(BlackLabCodec.TERMVEC_TMP_EXT);
             }
 
             // Write fields file, now that we know all the relevant offsets
-            try (IndexOutput fieldsFile = createOutput(BlackLab40PostingsFormat.FIELDS_EXT)) {
+            try (IndexOutput fieldsFile = createOutput(BlackLabCodec.FIELDS_EXT)) {
                 // for each field that has a forward index...
-                for (Field field : fiFields.values()) {
+                for (ForwardIndexField field : fiFields.values()) {
                     // write the information to fields file, see integrated.md
                     field.write(fieldsFile);
                 }
@@ -589,12 +539,16 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         return output;
     }
 
+    public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
+        return EndiannessReverserUtil.openInput(directory, fileName, ioContext);
+    }
+
     @SuppressWarnings("SameParameterValue")
     private IndexInput openInput(String ext) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
         // NOTE: we have to deal with Lucene 9's switch to little-endian.
         //IndexInput input = state.directory.openInput(fileName, state.context);
-        IndexInput input = EndiannessReverserUtil.openInput(state.directory, fileName, state.context);
+        IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
 
         // Read and check standard header, with codec name and version and segment info.
         // Also check the delegate codec name (should be the expected version of Lucene's codec).

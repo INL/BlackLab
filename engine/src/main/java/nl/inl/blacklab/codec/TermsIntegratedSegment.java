@@ -1,4 +1,4 @@
-package nl.inl.blacklab.forwardindex;
+package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -7,10 +7,6 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.codec.BlackLab40PostingsFormat;
-import nl.inl.blacklab.codec.BlackLab40PostingsReader;
-import nl.inl.blacklab.codec.BlackLab40PostingsWriter;
-import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
@@ -26,8 +22,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 @NotThreadSafe()
 public class TermsIntegratedSegment implements AutoCloseable {
     private boolean isClosed = false;
-    private BlackLab40PostingsReader segmentReader;
-    private BlackLab40PostingsWriter.Field field;
+    private BlackLabPostingsReader segmentReader;
+    private ForwardIndexField field;
     private final int ord;
 
     private IndexInput _termIndexFile;
@@ -35,18 +31,18 @@ public class TermsIntegratedSegment implements AutoCloseable {
     private IndexInput _termOrderFile;
 
 
-    public TermsIntegratedSegment(BlackLab40PostingsReader segmentReader, String luceneField, int ord) {
+    public TermsIntegratedSegment(BlackLabPostingsReader segmentReader, String luceneField, int ord) {
         try {
             this.segmentReader = segmentReader;
             this.ord = ord;
-            this._termIndexFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMINDEX_EXT);
-            this._termsFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMS_EXT);
-            this._termOrderFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMORDER_EXT);
+            this._termIndexFile = segmentReader.openIndexFile(BlackLabCodec.TERMINDEX_EXT);
+            this._termsFile = segmentReader.openIndexFile(BlackLabCodec.TERMS_EXT);
+            this._termOrderFile = segmentReader.openIndexFile(BlackLabCodec.TERMORDER_EXT);
 
             // OPT: read cache these fields somewhere so we don't read them once per annotation
-            try (IndexInput fieldInput = segmentReader.openIndexFile(BlackLab40PostingsFormat.FIELDS_EXT)) {
+            try (IndexInput fieldInput = segmentReader.openIndexFile(BlackLabCodec.FIELDS_EXT)) {
                 while (fieldInput.getFilePointer() < (fieldInput.length() - CodecUtil.footerLength())) {
-                    BlackLab40PostingsWriter.Field f = new BlackLab40PostingsWriter.Field(fieldInput);
+                    ForwardIndexField f = new ForwardIndexField(fieldInput);
                     if (f.getFieldName().equals(luceneField)) {
                         this.field = f;
                         break;
@@ -101,7 +97,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
          * such as how many terms in the field in this segment,
          * file offsets where to find the data in the segment's files, etc.
          */
-        private final Field field;
+        private final ForwardIndexField field;
 
         /** Ord (ordinal) of the segment */
         private final int ord;
@@ -203,7 +199,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
         return this.ord;
     }
 
-    public Field field() {
+    public ForwardIndexField field() {
         return this.field;
     }
 }

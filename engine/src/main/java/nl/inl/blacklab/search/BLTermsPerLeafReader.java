@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
-import nl.inl.blacklab.codec.BlackLab40Codec;
 
 /**
  * A cache for terms objects, keyed by leafreader context.
@@ -24,6 +23,6 @@ class BLTermsPerLeafReader {
      * @return terms object
      */
     public BLTerms terms(LeafReaderContext lrc) {
-        return termsPerSegment.computeIfAbsent(lrc.ord, __ -> BlackLab40Codec.getTerms(lrc));
+        return termsPerSegment.computeIfAbsent(lrc.ord, __ -> BLTerms.getTerms(lrc));
     }
 }

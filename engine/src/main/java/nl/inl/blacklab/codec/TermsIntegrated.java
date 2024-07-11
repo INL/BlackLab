@@ -1,4 +1,4 @@
-package nl.inl.blacklab.forwardindex;
+package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.text.CollationKey;
@@ -16,8 +16,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
-import nl.inl.blacklab.codec.BLTerms;
-import nl.inl.blacklab.codec.BlackLab40PostingsReader;
+import nl.inl.blacklab.forwardindex.Collators;
+import nl.inl.blacklab.forwardindex.TermsReaderAbstract;
 import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
@@ -172,8 +172,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
             return;
         }
         segmentTerms.setTermsIntegrated(this, lrc.ord);
-        BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
-        TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
+        TermsIntegratedSegment s = new TermsIntegratedSegment(BlackLabCodecUtil.getPostingsReader(lrc),
+                luceneField, lrc.ord);
 
         Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
         int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);

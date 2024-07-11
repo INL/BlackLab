@@ -3,7 +3,7 @@ package nl.inl.blacklab.codec;
 import java.io.IOException;
 
 /** A codec for blocks in the content store. */
-interface ContentStoreBlockCodec {
+public interface ContentStoreBlockCodec {
 
     interface Encoder extends AutoCloseable {
         /** Encode and return a new byte buffer.

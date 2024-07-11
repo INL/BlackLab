@@ -1,27 +1,25 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab50;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.StoredFieldsReader;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.index.StoredFieldVisitor;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.Accountable;
-import org.apache.lucene.util.Accountables;
 
+import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
+import nl.inl.blacklab.codec.ContentStoreBlockCodec;
+import nl.inl.blacklab.codec.blacklab40.BlackLab40StoredFieldsFormat;
+import nl.inl.blacklab.codec.blacklab40.BlackLab40StoredFieldsReader;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
@@ -29,7 +27,7 @@ import nl.inl.blacklab.search.BlackLabIndexIntegrated;
  * Provides random access to values stored as a content store.
  * Delegates non-content-store reads to the default implementation.
  */
-public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
+public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
 
     /** How large we allow the block decoding buffer to become before throwing an error. */
     private static final int MAX_DECODE_BUFFER_LENGTH = 100_000;
@@ -89,24 +87,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      *  We check the index files to make sure this matches. */
     private String delegateFormatName;
 
-    /**
-     * Get the BlackLab40StoredFieldsReader for the given leafreader.
-     *
-     * The luceneField must be any existing Lucene field in the index.
-     * It doesn't matter which. This is because BLTerms is used as an
-     * intermediate to get access to BlackLab40StoredFieldsReader.
-     *
-     * The returned BlackLab40StoredFieldsReader is not specific for the specified field,
-     * but can be used to read information related to any field from the segment.
-     *
-     * @param lrc leafreader to get the BLFieldsProducer for
-     * @return BlackLab40StoredFieldsReader for this leafreader
-     */
-    public static BlackLab40StoredFieldsReader get(LeafReaderContext lrc) {
-        return BlackLab40Codec.getTerms(lrc).getStoredFieldsReader();
-    }
-
-    public BlackLab40StoredFieldsReader(Directory directory, SegmentInfo segmentInfo, IOContext ioContext, FieldInfos fieldInfos,
+    public BlackLab50StoredFieldsReader(Directory directory, SegmentInfo segmentInfo, IOContext ioContext, FieldInfos fieldInfos,
             StoredFieldsReader delegate, String delegateFormatName)
             throws IOException {
         this.directory = directory;
@@ -131,6 +112,10 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         _blocksFile = openInput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
     }
 
+    public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
+        return directory.openInput(fileName, ioContext);
+    }
+
     /**
      * Open a custom file for reading and check the header.
      *
@@ -147,7 +132,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         String fileName = IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, extension);
         // NOTE: we have to deal with Lucene 9's switch to little-endian.
         // IndexInput input = directory.openInput(fileName, ioContext);
-        IndexInput input = EndiannessReverserUtil.openInput(directory, fileName, ioContext);
+        IndexInput input = openInputCorrectEndian(directory, fileName, ioContext);
         try {
             // Check index header
             String codecName = BlackLab40StoredFieldsFormat.NAME + "_" + extension;

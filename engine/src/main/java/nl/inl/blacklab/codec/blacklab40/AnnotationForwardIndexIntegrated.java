@@ -1,4 +1,4 @@
-package nl.inl.blacklab.forwardindex;
+package nl.inl.blacklab.codec.blacklab40;
 
 import java.text.Collator;
 import java.util.List;
@@ -7,8 +7,13 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.LeafReaderLookup;
+import nl.inl.blacklab.codec.TermsIntegrated;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
+import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
