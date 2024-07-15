@@ -181,7 +181,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
     protected static Annotation annotationOverrideField(BlackLabIndex index, Annotation annotation, String overrideField) {
         if (overrideField != null && !overrideField.equals(annotation.field().name())) {
             // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
-            annotation = index.annotatedField(overrideField).annotation(annotation.name());
+            AnnotatedField annotatedField = index.annotatedField(overrideField);
+            if (annotatedField == null)
+                throw new IllegalArgumentException("Unknown field: " + overrideField);
+            annotation = annotatedField.annotation(annotation.name());
         }
         return annotation;
     }
