@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec.blacklab50;
 
 import java.io.IOException;
 import java.text.CollationKey;
@@ -16,7 +16,6 @@ import java.util.TreeMap;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
@@ -63,9 +62,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
+public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
 
-    protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsWriter.class);
+    protected static final Logger logger = LogManager.getLogger(BlackLab50PostingsWriter.class);
 
     private static final int NO_TERM = nl.inl.blacklab.forwardindex.Terms.NO_TERM;
 
@@ -86,7 +85,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
      * @param delegatePostingsFormatName name of the delegate postings format
      *                                   (the one our PostingsFormat class adapts)
      */
-    public BlackLab40PostingsWriter(FieldsConsumer delegateFieldsConsumer, SegmentWriteState state,
+    public BlackLab50PostingsWriter(FieldsConsumer delegateFieldsConsumer, SegmentWriteState state,
             String delegatePostingsFormatName) {
         this.delegateFieldsConsumer = delegateFieldsConsumer;
         this.state = state;
@@ -533,7 +532,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
 
         // Write standard header, with the codec name and version, segment info.
         // Also write the delegate codec name (Lucene's default codec).
-        CodecUtil.writeIndexHeader(output, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_CURRENT,
+        CodecUtil.writeIndexHeader(output, BlackLab50PostingsFormat.NAME, BlackLab50PostingsFormat.VERSION_CURRENT,
                 state.segmentInfo.getId(), state.segmentSuffix);
         output.writeString(delegatePostingsFormatName);
 
@@ -541,7 +540,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
     }
 
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
-        return EndiannessReverserUtil.openInput(directory, fileName, ioContext);
+        return directory.openInput(fileName, ioContext);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -553,8 +552,8 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
 
         // Read and check standard header, with codec name and version and segment info.
         // Also check the delegate codec name (should be the expected version of Lucene's codec).
-        CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
-                BlackLab40PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+        CodecUtil.checkIndexHeader(input, BlackLab50PostingsFormat.NAME, BlackLab50PostingsFormat.VERSION_START,
+                BlackLab50PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
         String delegatePFN = input.readString();
         if (!delegatePostingsFormatName.equals(delegatePFN))
             throw new IOException("Segment file " + fileName +

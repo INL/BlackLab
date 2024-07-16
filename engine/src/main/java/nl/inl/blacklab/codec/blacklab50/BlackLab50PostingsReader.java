@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec.blacklab50;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
@@ -40,9 +39,9 @@ import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
  * are cloned whenever a thread needs to use them.
  */
 @ThreadSafe
-public class BlackLab40PostingsReader extends BlackLabPostingsReader {
+public class BlackLab50PostingsReader extends BlackLabPostingsReader {
 
-    protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsReader.class);
+    protected static final Logger logger = LogManager.getLogger(BlackLab50PostingsReader.class);
 
     private final SegmentReadState state;
 
@@ -58,7 +57,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
     /** Terms object for each field */
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
-    public BlackLab40PostingsReader(SegmentReadState state) throws IOException {
+    public BlackLab50PostingsReader(SegmentReadState state) throws IOException {
         this.state = state;
 
         // NOTE: opening the forward index calls openInputFile, which reads
@@ -100,7 +99,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
     @Override
     public BlackLabStoredFieldsReader getStoredFieldsReader() {
         try {
-            BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
+            BlackLab50Codec codec = (BlackLab50Codec) state.segmentInfo.getCodec();
             return codec.storedFieldsFormat().fieldsReader(
                     state.directory, state.segmentInfo, state.fieldInfos, state.context);
         } catch (IOException e) {
@@ -126,13 +125,13 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
     }
 
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
-        return EndiannessReverserUtil.openInput(directory, fileName, ioContext);
+        return directory.openInput(fileName, ioContext);
     }
 
     /**
      * Open a custom file for reading and check the header.
      *
-     * @param extension extension of the file to open (should be one of the prefixed constants from Blacklab40PostingsFormat)
+     * @param extension extension of the file to open (should be one of the prefixed constants from BlacklabPostingsFormat)
      * @return handle to the opened segment file
      */
     public IndexInput openIndexFile(String extension) throws IOException {
@@ -142,8 +141,8 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
         IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
         try {
             // Check index header
-            CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
-                    BlackLab40PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+            CodecUtil.checkIndexHeader(input, BlackLab50PostingsFormat.NAME, BlackLab50PostingsFormat.VERSION_START,
+                    BlackLab50PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
 
             // Check delegate format name
             String delegateFN = input.readString();
@@ -175,13 +174,13 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
     }
 
 //    /**
-//     * Get the BlackLab40PostingsReader for the given leafreader.
+//     * Get the BlackLab50PostingsReader for the given leafreader.
 //     *
-//     * @param lrc leafreader to get the BlackLab40PostingsReader for
-//     * @return BlackLab40PostingsReader for this leafreader
+//     * @param lrc leafreader to get the BlackLab50PostingsReader for
+//     * @return BlackLab50PostingsReader for this leafreader
 //     */
-//    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
-//        return (BlackLab40PostingsReader) BLTerms.getTerms(lrc).getFieldsProducer();
+//    public static BlackLab50PostingsReader get(LeafReaderContext lrc) {
+//        return (BlackLab50PostingsReader) BLTerms.getTerms(lrc).getFieldsProducer();
 //    }
 
 }

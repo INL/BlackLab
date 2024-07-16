@@ -2,7 +2,6 @@ package nl.inl.blacklab.codec.blacklab50;
 
 import java.io.IOException;
 
-import org.apache.lucene.backward_codecs.lucene87.Lucene87Codec;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.CompoundFormat;
 import org.apache.lucene.codecs.DocValuesFormat;
@@ -14,14 +13,13 @@ import org.apache.lucene.codecs.PointsFormat;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.codecs.SegmentInfoFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
+import org.apache.lucene.codecs.lucene99.Lucene99Codec;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabCodec;
-import nl.inl.blacklab.codec.blacklab40.BlackLab40PostingsFormat;
-import nl.inl.blacklab.codec.blacklab40.BlackLab40StoredFieldsFormat;
 
 /**
  * The custom codec that BlackLab uses.
@@ -33,13 +31,13 @@ import nl.inl.blacklab.codec.blacklab40.BlackLab40StoredFieldsFormat;
  * codec (usually the default Solr codec) and simply proxies
  * most requests to that codec. It will handle specific requests
  * itself, though, in this case the {@link #postingsFormat()} method
- * that returns the {@link BlackLab40PostingsFormat} object responsible for
+ * that returns the {@link BlackLab50PostingsFormat} object responsible for
  * saving/loading postings data (the actual inverted index, with
  * frequencies, offsets, payloads, etc.).
  *
  * This is referenced in Solr schema, e.g.:
  * <pre>
- * &lt;fieldType name="blacklab_text_example_test" class="solr.TextField" postingsFormat="BlackLab40"&gt;
+ * &lt;fieldType name="blacklab_text_example_test" class="solr.TextField" postingsFormat="BlackLab50"&gt;
  * </pre>
  *
  * This class is declared in META-INF/services/org.apache.lucene.codecs.Codec
@@ -55,10 +53,10 @@ public class BlackLab50Codec extends BlackLabCodec {
     private Codec _delegate;
 
     /** Our postings format, that takes care of the forward index as well. */
-    private BlackLab40PostingsFormat postingsFormat;
+    private BlackLab50PostingsFormat postingsFormat;
 
     /** Our stored fields format, that takes care of the content stores as well. */
-    private BlackLab40StoredFieldsFormat storedFieldsFormat;
+    private BlackLab50StoredFieldsFormat storedFieldsFormat;
 
     public BlackLab50Codec() {
         super(NAME);
@@ -82,7 +80,7 @@ public class BlackLab50Codec extends BlackLabCodec {
         if (_delegate == null) {
             // We defer initialization to prevent an error about getting the default codec before all codecs
             // are initialized.
-            _delegate = new Lucene87Codec(); //Codec.getDefault();
+            _delegate = new Lucene99Codec();
         }
         return _delegate;
     }
@@ -92,7 +90,7 @@ public class BlackLab50Codec extends BlackLabCodec {
      *
      * @return our postingsformat
      */
-    private BlackLab40PostingsFormat determinePostingsFormat() {
+    private BlackLab50PostingsFormat determinePostingsFormat() {
         /*
 
         // This causes errors. We cannot handle a per-field postings format properly yet.
@@ -112,17 +110,17 @@ public class BlackLab50Codec extends BlackLabCodec {
                         // this is probably why this doesn't work: we shouldn't instantiate independent postings formats
                         // for each field, because those will try to write the same files to the index directory.
                         // Instead there should be one class that handles all the read/writes with some per-field logic.
-                        return new BlackLab40PostingsFormat(delegatePF.getPostingsFormatForField(field));
+                        return new BlackLab50PostingsFormat(delegatePF.getPostingsFormatForField(field));
                     });
                 }
             };
         } else {
             // Simple delegate, not per-field.
-            return new BlackLab40PostingsFormat(delegate().postingsFormat());
+            return new BlackLab50PostingsFormat(delegate().postingsFormat());
         }*/
 
         if (delegate().postingsFormat() instanceof PerFieldPostingsFormat) {
-            Codec defaultCodec = new Lucene87Codec(); //Codec.getDefault();
+            Codec defaultCodec = new Lucene99Codec();
             PostingsFormat defaultPostingsFormat = defaultCodec.postingsFormat();
             if (defaultPostingsFormat instanceof PerFieldPostingsFormat) {
                 defaultPostingsFormat = ((PerFieldPostingsFormat) defaultPostingsFormat)
@@ -130,16 +128,16 @@ public class BlackLab50Codec extends BlackLabCodec {
                 if ((defaultPostingsFormat == null)
                         || (defaultPostingsFormat instanceof PerFieldPostingsFormat)) {
                     // fallback option
-                    defaultPostingsFormat = PostingsFormat.forName("Lucene87");
+                    defaultPostingsFormat = PostingsFormat.forName("Lucene99");
                 }
             }
-            return new BlackLab40PostingsFormat(defaultPostingsFormat);
+            return new BlackLab50PostingsFormat(defaultPostingsFormat);
         }
-        return new BlackLab40PostingsFormat(delegate().postingsFormat());
+        return new BlackLab50PostingsFormat(delegate().postingsFormat());
     }
 
     @Override
-    public synchronized BlackLab40PostingsFormat postingsFormat() {
+    public synchronized BlackLab50PostingsFormat postingsFormat() {
         if (postingsFormat == null)
             postingsFormat = determinePostingsFormat();
         return postingsFormat;
@@ -151,9 +149,9 @@ public class BlackLab50Codec extends BlackLabCodec {
     }
 
     @Override
-    public synchronized BlackLab40StoredFieldsFormat storedFieldsFormat() {
+    public synchronized BlackLab50StoredFieldsFormat storedFieldsFormat() {
         if (storedFieldsFormat == null)
-            storedFieldsFormat = new BlackLab40StoredFieldsFormat(delegate().storedFieldsFormat());
+            storedFieldsFormat = new BlackLab50StoredFieldsFormat(delegate().storedFieldsFormat());
         return storedFieldsFormat;
     }
 

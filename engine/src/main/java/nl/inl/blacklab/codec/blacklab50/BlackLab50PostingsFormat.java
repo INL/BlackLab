@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec.blacklab50;
 
 import java.io.IOException;
 
@@ -30,10 +30,10 @@ import nl.inl.blacklab.codec.BlackLabPostingsFormat;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BlackLab40PostingsFormat extends BlackLabPostingsFormat {
+public class BlackLab50PostingsFormat extends BlackLabPostingsFormat {
 
     /** Name of this codec. Written to the files and checked on reading. */
-    static final String NAME = "BlackLab40Postings";
+    static final String NAME = "BlackLab50Postings";
 
     /** Oldest version still supported */
     static final int VERSION_START = 1;
@@ -46,25 +46,25 @@ public class BlackLab40PostingsFormat extends BlackLabPostingsFormat {
 
     // Used when opening index (see corresponding PostingsReader constructor)
     @SuppressWarnings("unused")
-    public BlackLab40PostingsFormat() {
+    public BlackLab50PostingsFormat() {
         super(NAME);
-        BlackLab40PostingsFormat pf = ((BlackLab40Codec)Codec.forName(BlackLab40Codec.NAME)).postingsFormat();
+        BlackLab50PostingsFormat pf = ((BlackLab50Codec)Codec.forName(BlackLab50Codec.NAME)).postingsFormat();
         delegatePostingsFormat = pf.delegatePostingsFormat;
     }
 
-    public BlackLab40PostingsFormat(PostingsFormat delegate) {
+    public BlackLab50PostingsFormat(PostingsFormat delegate) {
         super(NAME);
         delegatePostingsFormat = delegate;
     }
 
     @Override
     public final FieldsProducer fieldsProducer(SegmentReadState state) throws IOException {
-        return new BlackLab40PostingsReader(state);
+        return new BlackLab50PostingsReader(state);
     }
 
     @Override
     public final FieldsConsumer fieldsConsumer(SegmentWriteState state) throws IOException {
-        return new BlackLab40PostingsWriter(delegatePostingsFormat.fieldsConsumer(state), state,
+        return new BlackLab50PostingsWriter(delegatePostingsFormat.fieldsConsumer(state), state,
                 delegatePostingsFormat.getName());
     }
 

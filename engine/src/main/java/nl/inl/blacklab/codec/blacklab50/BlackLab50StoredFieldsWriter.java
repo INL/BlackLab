@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec.blacklab50;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -29,7 +29,7 @@ import nl.inl.blacklab.search.BlackLabIndexIntegrated;
  * Stores values as a content store, to enable random access.
  * Delegates non-content-store writes to the default implementation.
  */
-public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
+public class BlackLab50StoredFieldsWriter extends StoredFieldsWriter {
 
     /** How large we allow the block encoding buffer to become before throwing an error. */
     private static final int MAX_ENCODE_BUFFER_LENGTH = 100_000;
@@ -64,12 +64,12 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     private final String delegateFormatName;
 
     /** How many characters per compressed block. */
-    private final int blockSizeChars = BlackLab40StoredFieldsFormat.DEFAULT_BLOCK_SIZE_CHARS;
+    private final int blockSizeChars = BlackLab50StoredFieldsFormat.DEFAULT_BLOCK_SIZE_CHARS;
 
     /** How many CS fields were written for the current document? */
     private byte numberOfFieldsWritten;
 
-    public BlackLab40StoredFieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext,
+    public BlackLab50StoredFieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext,
             StoredFieldsWriter delegate, String delegateFormatName)
             throws IOException {
         this.delegate = delegate;
@@ -90,11 +90,11 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     private IndexOutput createOutput(String ext, Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
             throws IOException {
         final IndexOutput indexOutput;
-        String codecName = BlackLab40StoredFieldsFormat.NAME + "_" + ext;
+        String codecName = BlackLab50StoredFieldsFormat.NAME + "_" + ext;
         String segmentSuffix = "";
         indexOutput = directory.createOutput(IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, ext),
                 ioContext);
-        CodecUtil.writeIndexHeader(indexOutput, codecName, BlackLab40StoredFieldsFormat.VERSION_CURRENT,
+        CodecUtil.writeIndexHeader(indexOutput, codecName, BlackLab50StoredFieldsFormat.VERSION_CURRENT,
                 segmentInfo.getId(), segmentSuffix);
         assert CodecUtil.indexHeaderLength(codecName, segmentSuffix) == indexOutput.getFilePointer();
         indexOutput.writeString(delegateFormatName);
@@ -318,7 +318,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
     @Override
     public String toString() {
-        return "BlackLab40StoredFieldsWriter(" + delegate.getClass().getName() + ")";
+        return "BlackLab50StoredFieldsWriter(" + delegate.getClass().getName() + ")";
     }
 
 }

@@ -16,10 +16,9 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
+import nl.inl.blacklab.codec.BlackLabStoredFieldsFormat;
 import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
 import nl.inl.blacklab.codec.ContentStoreBlockCodec;
-import nl.inl.blacklab.codec.blacklab40.BlackLab40StoredFieldsFormat;
-import nl.inl.blacklab.codec.blacklab40.BlackLab40StoredFieldsReader;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
@@ -97,7 +96,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
         this.delegate = delegate;
         this.delegateFormatName = delegateFormatName; // check that this matches what was written
 
-        IndexInput fieldsFile = openInput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
+        IndexInput fieldsFile = openInput(BlackLabStoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
         blockSizeChars = fieldsFile.readInt();
         while (fieldsFile.getFilePointer() < (fieldsFile.length() - CodecUtil.footerLength())) {
             String fieldName = fieldsFile.readString();
@@ -105,11 +104,11 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
             contentStoreFieldIndexes.put(fieldName, fieldIndex);
         }
         fieldsFile.close();
-        _docIndexFile = openInput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
+        _docIndexFile = openInput(BlackLabStoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
         docIndexFileOffset = _docIndexFile.getFilePointer(); // remember offset after header so we can calculate doc offsets.
-        _valueIndexFile = openInput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
-        _blockIndexFile = openInput(BlackLab40StoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
-        _blocksFile = openInput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
+        _valueIndexFile = openInput(BlackLabStoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
+        _blockIndexFile = openInput(BlackLabStoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
+        _blocksFile = openInput(BlackLabStoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
     }
 
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
@@ -135,9 +134,9 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
         IndexInput input = openInputCorrectEndian(directory, fileName, ioContext);
         try {
             // Check index header
-            String codecName = BlackLab40StoredFieldsFormat.NAME + "_" + extension;
-            CodecUtil.checkIndexHeader(input, codecName, BlackLab40StoredFieldsFormat.VERSION_START,
-                    BlackLab40StoredFieldsFormat.VERSION_CURRENT, segmentInfo.getId(), segmentSuffix);
+            String codecName = BlackLab50StoredFieldsFormat.NAME + "_" + extension;
+            CodecUtil.checkIndexHeader(input, codecName, BlackLab50StoredFieldsFormat.VERSION_START,
+                    BlackLab50StoredFieldsFormat.VERSION_CURRENT, segmentInfo.getId(), segmentSuffix);
 
             // Set or check delegate format name
             String delegateFN = input.readString();
@@ -199,7 +198,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
     @Override
     public StoredFieldsReader clone() {
         try {
-            return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
+            return new BlackLab50StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                     delegate.clone(), delegateFormatName);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -236,7 +235,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
             // The delegate has a specific merge instance (i.e. didn't return itself).
             // Create a new instance with the new delegate and return that.
             try {
-                return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
+                return new BlackLab50StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                         mergeInstance, delegateFormatName);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -247,7 +246,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
 
     @Override
     public String toString() {
-        return "BlackLab40StoredFieldsReader(" + delegate.toString() + ")";
+        return "BlackLab50StoredFieldsReader(" + delegate.toString() + ")";
     }
 
     /**
