@@ -9,9 +9,10 @@ import java.util.Map;
 
 import org.xml.sax.Locator;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.BigArrays;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongList;
 import net.sf.saxon.om.NodeInfo;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
@@ -36,19 +37,19 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
      * End-of-line characters are included in the count.
      * Used to translate line/column into character position.
      */
-    private IntList lineNumberToCharPos;
+    private LongList lineNumberToCharPos;
 
     /**
      * The positions of all open brackets &lt; in the document.
      * We use these to find the starting character position of a tag.
      */
-    private IntList openBracketPositions;
+    private LongList openBracketPositions;
 
     /**
      * Connects recorded SAX positions (just after start and end tags) to the calculated
      * characters positions of those tags.
      */
-    private Map<Integer, StartEndPos> startEndPosMap;
+    private Map<Long, StartEndPos> startEndPosMap;
 
     /**
      * Our element stack while parsing, so we can fill in the end tag character position when we encounter it.
@@ -59,29 +60,33 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
      * We need to be able to find the start char. position of a tag, but we only know the end position.
      * This iterator helps us find the corresponding start.
      */
-    private final IntIterator tagPosIterator;
+    private final LongIterator tagPosIterator;
 
     /**
      * The current open bracket position above iterator is on.
      */
-    private int currentTagPos;
+    private long currentTagPos;
 
     public CharPositionsTrackerImpl(char[] document) {
-        int lengthInChars = document.length;
+        this(BigArrays.wrap(document));
+    }
+
+    public CharPositionsTrackerImpl(char[][] document) {
+        long lengthInChars = BigArrays.length(document);
 
         // Find all open brackets and line endings
-        openBracketPositions = new IntArrayList(lengthInChars / AVERAGE_CHARS_PER_TAG_ESTIMATE);
-        lineNumberToCharPos = new IntArrayList(lengthInChars / AVERAGE_LINE_LENGTH_ESTIMATE);
+        openBracketPositions = new LongArrayList((int)(lengthInChars / AVERAGE_CHARS_PER_TAG_ESTIMATE));
+        lineNumberToCharPos = new LongArrayList((int)(lengthInChars / AVERAGE_LINE_LENGTH_ESTIMATE));
         lineNumberToCharPos.add(0); // first line always starts at character 0
         for (int i = 0; i < lengthInChars; i++) {
-            char c = document[i];
+            char c = BigArrays.get(document, i);
             if (c == '<') {
                 // Keep track of open bracket positions, so we can find the start of a tag
                 openBracketPositions.add(i);
             } else if (c == '\r' || c == '\n') {
                 // Keep track of line ending positions (or next-line-start-positions if you prefer)
                 if (c == '\r') {
-                    if (i < lengthInChars - 1 && document[i + 1] == '\n')
+                    if (i < lengthInChars - 1 && BigArrays.get(document, i + 1) == '\n')
                         i++; // windows-style line ending; also skip newline
                 }
                 lineNumberToCharPos.add(i + 1); // store character position after EOL char(s)
@@ -91,7 +96,7 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
         // Initialize tag iterator
         tagPosIterator = openBracketIterator();
         assert tagPosIterator.hasNext();
-        currentTagPos = tagPosIterator.nextInt();
+        currentTagPos = tagPosIterator.nextLong();
 
         // The map where we keep track of the real start and end positions of tags (as opposed to what Saxon provides,
         // which is always the position just after the tag)
@@ -100,11 +105,11 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
 
     public CharPositionsTrackerImpl(Reader document) {
         // Find all open brackets and line endings
-        openBracketPositions = new IntArrayList();
-        lineNumberToCharPos = new IntArrayList();
+        openBracketPositions = new LongArrayList();
+        lineNumberToCharPos = new LongArrayList();
         lineNumberToCharPos.add(0); // first line always starts at character 0
         int readAheadChar = 0;
-        int position = 0;
+        long position = 0;
         try {
             while (true) {
                 int iCurrentChar;
@@ -142,20 +147,20 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
         // Initialize tag iterator
         tagPosIterator = openBracketIterator();
         assert tagPosIterator.hasNext();
-        currentTagPos = tagPosIterator.nextInt();
+        currentTagPos = tagPosIterator.nextLong();
 
         // The map where we keep track of the real start and end positions of tags (as opposed to what Saxon provides,
         // which is always the position just after the tag)
-        startEndPosMap = new HashMap<>(position / AVERAGE_CHARS_PER_TAG_ESTIMATE);
+        startEndPosMap = new HashMap<>((int)(position / AVERAGE_CHARS_PER_TAG_ESTIMATE));
     }
 
     @Override
-    public IntIterator openBracketIterator() {
-        return openBracketPositions.intIterator();
+    public LongIterator openBracketIterator() {
+        return openBracketPositions.longIterator();
     }
 
     @Override
-    public int charPosForLineAndCol(NodeInfo nodeInfo) {
+    public long charPosForLineAndCol(NodeInfo nodeInfo) {
         return charPosForLineAndCol(nodeInfo.getLineNumber(), nodeInfo.getColumnNumber());
     }
 
@@ -163,20 +168,20 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
      * translation of recorded line and column number to character position in the document
      */
     @Override
-    public int charPosForLineAndCol(int lineNumber, int columnNumber) {
-        Integer charPosStartOfLine = lineNumberToCharPos.get(lineNumber - 1);
+    public long charPosForLineAndCol(int lineNumber, int columnNumber) {
+        Long charPosStartOfLine = lineNumberToCharPos.get(lineNumber - 1);
         // Note that we subtract 1 at the end because Saxon indicates the columnNumber just AFTER the tag
         // (JN: or because columnNumber is 1-based, like line number, and we want a character position that is 0-based?)
         return charPosStartOfLine + columnNumber - 1;
     }
 
     @Override
-    public int charPosForLineAndCol(Locator locator) {
+    public long charPosForLineAndCol(Locator locator) {
         return charPosForLineAndCol(locator.getLineNumber(), locator.getColumnNumber());
     }
 
     @Override
-    public void putStartEndPos(int end, StartEndPos startEndPos) {
+    public void putStartEndPos(long end, StartEndPos startEndPos) {
         startEndPosMap.put(end, startEndPos);
     }
 
@@ -185,7 +190,7 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
      *
      * @param nodeInfo the node to find the endtag for
      */
-    int findClosingTagPosition(NodeInfo nodeInfo) {
+    long findClosingTagPosition(NodeInfo nodeInfo) {
         return startEndPosMap.get(charPosForLineAndCol(nodeInfo)).endPos;
     }
 
@@ -195,7 +200,7 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
      * clients.
      */
     @Override
-    public int getNodeStartPos(NodeInfo node) {
+    public long getNodeStartPos(NodeInfo node) {
         return startEndPosMap.get(charPosForLineAndCol(node)).startPos;
     }
 
@@ -205,7 +210,7 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
      * clients.
      */
     @Override
-    public int getNodeEndPos(NodeInfo node) {
+    public long getNodeEndPos(NodeInfo node) {
         return findClosingTagPosition(node);
     }
 
@@ -219,13 +224,13 @@ public class CharPositionsTrackerImpl implements CharPositionsTracker {
      */
     @Override
     public void addNextStartElement(String qName, Locator locator) {
-        int end = charPosForLineAndCol(locator);
-        int begin = end;
+        long end = charPosForLineAndCol(locator);
+        long begin = end;
         // Now find the character position of the start of this tag
         // (last < character before the end position)
         while (currentTagPos < end) {
             begin = currentTagPos;
-            currentTagPos = tagPosIterator.nextInt();
+            currentTagPos = tagPosIterator.nextLong();
         }
         // NOTE more testing needed for self closing tags
         if (begin == end) {

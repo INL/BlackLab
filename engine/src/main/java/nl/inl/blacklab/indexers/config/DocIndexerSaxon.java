@@ -98,7 +98,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     private CharPositionsTracker charPositions;
 
     /** Current character position in the document */
-    private int charPos = 0;
+    private long charPos = 0;
 
     /** XPath util functions and caching of XPathExpressions */
     private XPathFinder finder;
@@ -204,7 +204,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     // process annotated field
 
-    Map<ConfigAnnotatedField, Pair<Integer, Integer>> docStartEndOffsetsPerField = new HashMap<>();
+    Map<ConfigAnnotatedField, Pair<Long, Long>> docStartEndOffsetsPerField = new HashMap<>();
 
     @Override
     protected void startDocument() {
@@ -220,8 +220,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             // Yes; determine boundaries of this annotated field container so we can later store
             // this version of the document in the field's content store.
             // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-            int start = charPositions.getNodeStartPos(container);
-            int end = charPositions.getNodeEndPos(container);
+            long start = charPositions.getNodeStartPos(container);
+            long end = charPositions.getNodeEndPos(container);
             docStartEndOffsetsPerField.put(annotatedField, Pair.of(start, end));
         }
 
@@ -427,9 +427,9 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         if (docStartEndOffsetsPerField.isEmpty()) {
             storeWholeDocument(document.getTextContent());
         } else {
-            for (Map.Entry<ConfigAnnotatedField, Pair<Integer, Integer>> entry: docStartEndOffsetsPerField.entrySet()) {
-                Integer startOffset = entry.getValue().getLeft();
-                Integer endOffset = entry.getValue().getRight();
+            for (Map.Entry<ConfigAnnotatedField, Pair<Long, Long>> entry: docStartEndOffsetsPerField.entrySet()) {
+                Long startOffset = entry.getValue().getLeft();
+                Long endOffset = entry.getValue().getRight();
                 storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
             }
         }
@@ -442,7 +442,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     @Override
     protected int getCharacterPosition() {
-        return charPos;
+        return (int)charPos;
     }
 
 }
