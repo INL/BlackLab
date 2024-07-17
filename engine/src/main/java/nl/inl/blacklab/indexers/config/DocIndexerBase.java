@@ -520,14 +520,14 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     /**
-     * calls {@link #getCharacterPosition()}
+     * calls {@link #getCharacterPositionWithinVersion()}
      */
     protected void beginWord() {
-        addStartChar(getCharacterPosition());
+        addStartChar(getCharacterPositionWithinVersion());
     }
 
     /**
-     * calls {@link #getCharacterPosition()}
+     * calls {@link #getCharacterPositionWithinVersion()}
      */
     protected void endWord() {
         String punct;
@@ -539,7 +539,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         preventNextDefaultPunctuation = false;
         // Normalize once more in case we hit more than one adjacent punctuation
         punctAnnotation().addValue(StringUtil.normalizeWhitespace(punct));
-        addEndChar(getCharacterPosition());
+        addEndChar(getCharacterPositionWithinVersion());
         wordsDone++;
         if (wordsDone > 0 && wordsDone % 5000 == 0) {
             reportCharsProcessed();
