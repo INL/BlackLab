@@ -54,6 +54,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * @return array of length 2, containing start and end positions for the hit in this field
      */
     protected static int[] getForeignHitStartEnd(Hit hit, String fieldName) {
+        assert hit != null : "Need a hit";
+        if (hit.matchInfo() == null)
+            return new int[] { 0, 0 };
         int[] startEnd = { Integer.MAX_VALUE, Integer.MIN_VALUE };
         for (MatchInfo mi: hit.matchInfo()) {
             if (mi == null)

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -152,7 +151,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             int to = last + (direction == 1 ? 1 : 0);
             if (from == to)
                 return "" + anchor + from;
-            return anchor + from + "-" + (to == -1 ? "" : to);
+            return "" + anchor + from + "-" + (to == -1 ? "" : to);
         }
 
         @Override
