@@ -194,4 +194,30 @@ public interface IndexMetadata extends Freezable {
     default void setIndexMetadataFromString(String indexmetadata) {
         throw new UnsupportedOperationException("Not supported for this index type (check dir for existing indexmetadata.yaml)");
     }
+
+    default Annotation annotationFromFieldAndName(String fieldAndAnnotationName, AnnotatedField defaultField) {
+        String annotationName = fieldAndAnnotationName;
+        if (annotationName.contains(Annotation.FIELD_ANNOTATION_SEPARATOR)) {
+            // Annotation is from a different field than the main search field.
+            String[] fieldAndAnnotation = annotationName.split(Annotation.FIELD_ANNOTATION_SEPARATOR);
+
+            // If we specified a parallel version, not a field (e.g. "nl%lemma" instead of "contents__nl%lemma",
+            // resolve the actual field name)
+            String fieldName = fieldAndAnnotation[0];
+            if (!annotatedFields().exists(fieldName)) {
+                fieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(defaultField.name(),
+                        fieldName);
+            }
+
+            defaultField = annotatedField(fieldName);
+            if (defaultField == null)
+                throw new IllegalArgumentException("Unknown field '" + fieldName +
+                        "' as part of field+annotation '" + fieldAndAnnotationName + "'");
+            annotationName = fieldAndAnnotation[1];
+        }
+        Annotation annotation = defaultField.annotation(annotationName);
+        if (annotation == null)
+            throw new IllegalArgumentException("Unknown annotation reference: " + fieldAndAnnotationName);
+        return annotation;
+    }
 }

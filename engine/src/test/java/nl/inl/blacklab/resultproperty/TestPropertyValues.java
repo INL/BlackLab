@@ -12,6 +12,10 @@ import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestPropertyValues {
@@ -34,10 +38,16 @@ public class TestPropertyValues {
     @Test
     public void testPropertyValueContextWords() {
         MatchSensitivity sensitivity = MatchSensitivity.INSENSITIVE;
-        PropertyValueContextWords twoThreeThree = new PropertyValueContextWords(terms, "lemma", sensitivity, new int[]{2, 3, 3}, false);
-        PropertyValueContextWords twoThreeThree2 = new PropertyValueContextWords(terms, "lemma", sensitivity, new int[]{2, 3, 3}, false);
-        PropertyValueContextWords oneThreeFour = new PropertyValueContextWords(terms, "lemma", sensitivity, new int[]{1, 3, 4}, false);
-        PropertyValueContextWords twoThreeFive = new PropertyValueContextWords(terms, "lemma", sensitivity, new int[]{2, 3, 5}, false);
+        AnnotatedField field = new AnnotatedFieldImpl("contents");
+        Annotation annotation = new AnnotationImpl(field, "lemma");
+        PropertyValueContextWords twoThreeThree = new PropertyValueContextWords(terms, annotation, sensitivity,
+                new int[]{2, 3, 3}, null, false, false);
+        PropertyValueContextWords twoThreeThree2 = new PropertyValueContextWords(terms, annotation, sensitivity,
+                new int[]{2, 3, 3}, null, false, false);
+        PropertyValueContextWords oneThreeFour = new PropertyValueContextWords(terms, annotation, sensitivity,
+                new int[]{1, 3, 4}, null, false, false);
+        PropertyValueContextWords twoThreeFive = new PropertyValueContextWords(terms, annotation, sensitivity,
+                new int[]{2, 3, 5}, null, false, false);
         Assert.assertEquals(0, twoThreeThree.compareTo(twoThreeThree2));
         Assert.assertEquals(-1, oneThreeFour.compareTo(twoThreeThree));
         Assert.assertEquals(1, twoThreeFive.compareTo(twoThreeThree));

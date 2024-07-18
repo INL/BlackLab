@@ -160,4 +160,14 @@ public interface Annotation {
     default boolean isRelationAnnotation() {
         return AnnotatedFieldNameUtil.isRelationAnnotation(name());
     }
+
+    /** We include the field name when serializing. This is the separator we use.
+     *  Field or annotation names cannot include this separator.
+     */
+    String FIELD_ANNOTATION_SEPARATOR = AnnotatedFieldNameUtil.ANNOT_SEP;
+
+    /** A combined field name and annotation name, used for e.g. serializing HitProperty and PropertyValue. */
+    default String fieldAndAnnotationName() {
+        return field().name() + FIELD_ANNOTATION_SEPARATOR + name();
+    }
 }

@@ -19,7 +19,7 @@ public class HitPropertyLeftContext extends HitPropertyBeforeHit {
     public static final String ID = "left";
 
     static HitPropertyBeforeHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
-        DeserializeInfos i = deserializeProp(field, infos);
+        DeserializeInfos i = deserializeInfos(index, field, infos);
         return new HitPropertyLeftContext(index, i.annotation, i.sensitivity, i.extraIntParam(0, contextSize.before()));
     }
 

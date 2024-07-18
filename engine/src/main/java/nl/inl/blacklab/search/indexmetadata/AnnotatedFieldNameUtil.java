@@ -63,7 +63,7 @@ public final class AnnotatedFieldNameUtil {
      * String used to separate the base field name (say, contents) and the field
      * annotation (pos, lemma, etc.)
      */
-    static final String ANNOT_SEP = "%";
+    public static final String ANNOT_SEP = "%";
 
     /**
      * String used to separate the field/annotation name (say, contents_lemma) and the

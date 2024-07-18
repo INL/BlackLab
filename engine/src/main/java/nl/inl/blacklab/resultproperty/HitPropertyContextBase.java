@@ -125,10 +125,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
             return index >= extraParams.size() ? defaultValue : extraParams.get(index);
         }
 
-        public int extraIntParam(int index) {
-            return extraIntParam(index, -1);
-        }
-
         public int extraIntParam(int index, int defaultValue) {
             try {
                 return Integer.parseInt(extraParam(index));
@@ -139,39 +135,13 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    protected static DeserializeInfos deserializeProp(AnnotatedField field, List<String> infos) {
-        String annotationName = infos.isEmpty() ? field.mainAnnotation().name() : infos.get(0);
-        Annotation annotation = field.annotation(annotationName);
-        if (annotation == null)
-                throw new BlackLabRuntimeException("Unknown annotation for hit property: " + annotationName);
+    protected static DeserializeInfos deserializeInfos(BlackLabIndex index, AnnotatedField field, List<String> infos) {
+        Annotation annotation = infos.isEmpty() ? field.mainAnnotation() :
+                index.metadata().annotationFromFieldAndName(infos.get(0), field);
         MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1))
                 : MatchSensitivity.SENSITIVE;
         List<String> params = infos.size() > 2 ? infos.subList(2, infos.size()) : Collections.emptyList();
         return new DeserializeInfos(annotation, sensitivity, params);
-    }
-
-    protected static int getOrDefaultContextSize(int i, int d) {
-        return i <= 0 ? d : i;
-    }
-
-    /**
-     * Choose either the specified annotation, or if an override field/version is given, the equivalent in that field.
-     * @param index index to use
-     * @param annotation annotation to use (or annotation name, if overrideField is given)
-     * @param overrideFieldOrVersion field (or alternate parallel version of the annotation's field) to use
-     *                               instead of the annotation's field, or null to return annotation unchanged
-     * @return the annotation to use
-     */
-    protected static Annotation annotationOverrideFieldOrVersion(BlackLabIndex index, Annotation annotation,
-            String overrideFieldOrVersion) {
-        String overrideField;
-        if (overrideFieldOrVersion != null && !AnnotatedFieldNameUtil.isParallelField(overrideFieldOrVersion)) {
-            // Specified a parallel version, not a complete field name.
-            overrideField = AnnotatedFieldNameUtil.changeParallelFieldVersion(annotation.field().name(),
-                    overrideFieldOrVersion);
-        } else
-            overrideField = overrideFieldOrVersion;
-        return annotationOverrideField(index, annotation, overrideField);
     }
 
     /**
@@ -264,7 +234,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     public List<String> serializeParts() {
-        return List.of(serializeName, annotation.name(), sensitivity.luceneFieldSuffix());
+        return List.of(serializeName, annotation.fieldAndAnnotationName(), sensitivity.luceneFieldSuffix());
     }
 
     @Override

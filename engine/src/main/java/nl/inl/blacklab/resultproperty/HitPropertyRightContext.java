@@ -18,7 +18,7 @@ public class HitPropertyRightContext extends HitPropertyAfterHit {
     public static final String ID = "right";
 
     static HitPropertyAfterHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
-        DeserializeInfos i = deserializeProp(field, infos);
+        DeserializeInfos i = deserializeInfos(index, field, infos);
         return new HitPropertyRightContext(index, i.annotation, i.sensitivity, i.extraIntParam(0, contextSize.after()));
     }
 

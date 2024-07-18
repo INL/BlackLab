@@ -1,72 +1,72 @@
 {
   "hitGroups": [
     {
-      "identity": "cws:word:i:much",
+      "identity": "cws:contents%word:i:much",
       "identityDisplay": "much",
       "numberOfDocs": 2,
       "properties": [
         {
-          "name": "after:word:i:1",
+          "name": "after:contents%word:i:1",
           "value": "much"
         }
       ],
       "size": 2
     },
     {
-      "identity": "cws:word:i:a",
+      "identity": "cws:contents%word:i:a",
       "identityDisplay": "a",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "after:word:i:1",
+          "name": "after:contents%word:i:1",
           "value": "a"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:briefly",
+      "identity": "cws:contents%word:i:briefly",
       "identityDisplay": "briefly",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "after:word:i:1",
+          "name": "after:contents%word:i:1",
           "value": "briefly"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:famous",
+      "identity": "cws:contents%word:i:famous",
       "identityDisplay": "famous",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "after:word:i:1",
+          "name": "after:contents%word:i:1",
           "value": "famous"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:fresh",
+      "identity": "cws:contents%word:i:fresh",
       "identityDisplay": "fresh",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "after:word:i:1",
+          "name": "after:contents%word:i:1",
           "value": "fresh"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:good",
+      "identity": "cws:contents%word:i:good",
       "identityDisplay": "good",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "after:word:i:1",
+          "name": "after:contents%word:i:1",
           "value": "good"
         }
       ],

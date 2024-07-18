@@ -8,15 +8,15 @@ public abstract class PropertyValueContext extends PropertyValue {
 
     protected final Terms terms;
 
-    protected final String annotationName;
+    protected final Annotation annotation;
 
-    public PropertyValueContext(BlackLabIndex index, Annotation annotation) {
-        this.annotationName = annotation.name();
+    PropertyValueContext(BlackLabIndex index, Annotation annotation) {
+        this.annotation = annotation;
         this.terms = index == null ? null : index.annotationForwardIndex(annotation).terms();
     }
 
-    public PropertyValueContext(Terms terms, String annotationName) {
-        this.annotationName = annotationName;
+    PropertyValueContext(Terms terms, Annotation annotation) {
+        this.annotation = annotation;
         this.terms = terms;
     }
 
@@ -54,7 +54,7 @@ public abstract class PropertyValueContext extends PropertyValue {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((annotationName == null) ? 0 : annotationName.hashCode());
+        result = prime * result + ((annotation == null) ? 0 : annotation.hashCode());
         return result;
     }
 
@@ -67,10 +67,10 @@ public abstract class PropertyValueContext extends PropertyValue {
         if (getClass() != obj.getClass())
             return false;
         PropertyValueContext other = (PropertyValueContext) obj;
-        if (annotationName == null) {
-            if (other.annotationName != null)
+        if (annotation == null) {
+            if (other.annotation != null)
                 return false;
-        } else if (!annotationName.equals(other.annotationName))
+        } else if (!annotation.equals(other.annotation))
             return false;
         return true;
     }

@@ -527,7 +527,8 @@ public class TestSearches {
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
         Terms terms = index.annotationForwardIndex(annotation).terms();
         int[] words = { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
-        PropertyValue value = new PropertyValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words, false);
+        PropertyValue value = new PropertyValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words, null,
+                false);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));
     }
 
@@ -541,7 +542,8 @@ public class TestSearches {
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
         Terms terms = index.annotationForwardIndex(annotation).terms();
         int[] words = { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
-        PropertyValue value = new PropertyValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words, false);
+        PropertyValue value = new PropertyValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words, null,
+                false);
         // Query below will be rewritten using POSFILTER(ANYTOKEN(1,INF), NOTCONTAINING, 'noot');
         // there used to be an issue with determining doc length that messed this up
         Assert.assertEquals(expected, testIndex.findConc("'noot'+ [word != 'noot']+ group:('aap')+", prop, value));

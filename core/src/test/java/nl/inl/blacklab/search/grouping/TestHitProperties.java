@@ -65,9 +65,11 @@ public class TestHitProperties {
         Hits hits = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyHitText(index, MatchSensitivity.SENSITIVE);
         HitGroups g = hits.group(p, Results.NO_LIMIT);
-        HitGroup group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("the") }, false));
+        HitGroup group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE,
+                new int[] { term("the") }, null, false));
         Assert.assertEquals(3, group.size());
-        group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("The") }, false));
+        group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE,
+                new int[] { term("The") }, null, false));
         Assert.assertEquals(1, group.size());
     }
 
@@ -76,17 +78,18 @@ public class TestHitProperties {
         Hits hits = testIndex.find(" A:'the' ");
         HitProperty p = new HitPropertyCaptureGroup(index, null, MatchSensitivity.SENSITIVE, "A", RelationInfo.SpanMode.FULL_SPAN);
         HitGroups g = hits.group(p, Results.NO_LIMIT);
-        HitGroup group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("the") }, false));
+        HitGroup group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE,
+                new int[] { term("the") }, null, false));
         Assert.assertEquals(3, group.size());
-        group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("The") }, false));
+        group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE,
+                new int[] { term("The") }, null, false));
         Assert.assertEquals(1, group.size());
     }
 
     public PropertyValue mcws(int[]... terms) {
         List<PropertyValue> l = new ArrayList<>();
         for (int[] t: terms) {
-            l.add(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE,
-                    t, false));
+            l.add(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, t, null, false));
         }
         return new PropertyValueMultiple(l);
     }
