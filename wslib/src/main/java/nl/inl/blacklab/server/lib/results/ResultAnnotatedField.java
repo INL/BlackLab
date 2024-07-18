@@ -15,12 +15,15 @@ public class ResultAnnotatedField {
 
     private Map<String, ResultAnnotationInfo> annotInfos;
 
+    private long tokenCount;
+
     ResultAnnotatedField(BlackLabIndex index, String indexName, AnnotatedField fieldDesc,
             Map<String, ResultAnnotationInfo> annotInfos) {
         this.index = index;
         this.indexName = indexName;
         this.fieldDesc = fieldDesc;
         this.annotInfos = annotInfos;
+        this.tokenCount = index.metadata().tokenCountPerField().get(fieldDesc.name());
     }
 
     public String getIndexName() {
@@ -42,5 +45,9 @@ public class ResultAnnotatedField {
         else if (index.mainAnnotatedField() == resultAnnotatedField.fieldDesc)
             return 1;
         return fieldDesc.name().compareTo(resultAnnotatedField.fieldDesc.name());
+    }
+
+    public long getTokenCount() {
+        return tokenCount;
     }
 }

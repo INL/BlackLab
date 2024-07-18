@@ -59,7 +59,8 @@
       "hasContentStore": true,
       "hasXmlTags": true,
       "isAnnotatedField": true,
-      "mainAnnotation": "word"
+      "mainAnnotation": "word",
+      "tokenCount": 766
     }
   },
   "annotationGroups": {
@@ -166,12 +167,6 @@
   "status": "available",
   "textDirection": "ltr",
   "tokenCount": 766,
-  "tokenCounts": [
-    {
-      "fieldName": "contents",
-      "tokenCount": 766
-    }
-  ],
   "versionInfo": {
     "blacklabBuildTime": "VALUE_REMOVED",
     "blacklabScmRevision": "UNKNOWN",
