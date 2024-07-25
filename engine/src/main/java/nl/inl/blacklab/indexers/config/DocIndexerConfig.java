@@ -590,7 +590,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         int i = -1;
         try { i = Integer.parseInt(keep); } catch (NumberFormatException e) { /* handled below */ }
         if (i < 0) {
-            warn("action 'split', parameter 'keep': must be at least 1");
+            warn("action 'split', parameter 'keep': must be at least 0");
             i = 0;
         }
 

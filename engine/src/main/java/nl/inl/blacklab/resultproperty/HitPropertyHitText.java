@@ -18,9 +18,8 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     public static final String ID = "hit";
 
     static HitPropertyHitText deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
-        DeserializeInfos i = deserializeProp(field, infos);
-        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, i.extraParam(0));
-        return new HitPropertyHitText(index, annotation, i.sensitivity);
+        DeserializeInfos i = deserializeInfos(index, field, infos);
+        return new HitPropertyHitText(index, i.annotation, i.sensitivity);
     }
 
     HitPropertyHitText(HitPropertyHitText prop, Hits hits, boolean invert) {

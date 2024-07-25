@@ -2,38 +2,38 @@ package nl.inl.blacklab.indexers.config.saxon;
 
 import org.xml.sax.Locator;
 
-import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.sf.saxon.om.NodeInfo;
 
 /** Tracks characters positions for each tag in an XML document. */
 public interface CharPositionsTracker {
-    IntIterator openBracketIterator();
+    LongIterator openBracketIterator();
 
-    int charPosForLineAndCol(NodeInfo nodeInfo);
+    long charPosForLineAndCol(NodeInfo nodeInfo);
 
-    int charPosForLineAndCol(int lineNumber, int columnNumber);
+    long charPosForLineAndCol(int lineNumber, int columnNumber);
 
-    int charPosForLineAndCol(Locator locator);
+    long charPosForLineAndCol(Locator locator);
 
-    void putStartEndPos(int end, CharPositionsTrackerImpl.StartEndPos startEndPos);
+    void putStartEndPos(long end, StartEndPos startEndPos);
 
-    int getNodeStartPos(NodeInfo node);
+    long getNodeStartPos(NodeInfo node);
 
-    int getNodeEndPos(NodeInfo node);
+    long getNodeEndPos(NodeInfo node);
 
     void addNextStartElement(String qName, Locator locator);
 
     void addNextEndElement(Locator locator);
 
     class StartEndPos {
-        final int startPos;
-        int endPos;
+        final long startPos;
+        long endPos;
 
-        public StartEndPos(int startPos) {
+        public StartEndPos(long startPos) {
             this.startPos = startPos;
         }
 
-        public void setEndPos(int endPos) {
+        public void setEndPos(long endPos) {
             this.endPos = endPos;
         }
     }

@@ -56,7 +56,7 @@ public abstract class PropertyValue implements Comparable<Object> {
         String type = parts.get(0).toLowerCase();
         List<String> infos = parts.subList(1, parts.size());
         switch (type) {
-        case "cwo":
+        case "cwo": // DEPRECATED, to be removed
             return PropertyValueContextWords.deserializeSingleWord(index, field, infos);
         case "cws": // cws  (context words)
         case "cwsr": // cwsr (context words, reverse order. e.g. left context)

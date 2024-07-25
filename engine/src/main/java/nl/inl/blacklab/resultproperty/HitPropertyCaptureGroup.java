@@ -22,7 +22,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     public static final String ID = "capture"; //TODO: deprecate, change to matchinfo? (to synch with response)
 
     static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
-        DeserializeInfos i = deserializeProp(field, infos);
+        DeserializeInfos i = deserializeInfos(index, field, infos);
         String matchInfoName = i.extraParam(0);
         String strSpanMode = i.extraParam(1); // source, target or full(default)
         RelationInfo.SpanMode spanMode = strSpanMode.toLowerCase().matches("source|target|full") ?

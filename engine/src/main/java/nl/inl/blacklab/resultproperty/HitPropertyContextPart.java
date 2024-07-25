@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -35,15 +34,13 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     public static final char PART_RIGHT = 'R';
 
     static HitPropertyContextPart deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
-        DeserializeInfos i = deserializeProp(field, infos);
-        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, i.extraParam(1));
-        return new HitPropertyContextPart(index, annotation, i.sensitivity, i.extraParam(0));
+        DeserializeInfos i = deserializeInfos(index, field, infos);
+        return new HitPropertyContextPart(index, i.annotation, i.sensitivity, i.extraParam(0));
     }
 
     static HitProperty deserializePropContextWords(BlackLabIndex index, AnnotatedField field, List<String> infos) {
-        DeserializeInfos i = deserializeProp(field, infos);
-        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, i.extraParam(1));
-        return contextWords(index, annotation, i.sensitivity, i.extraParam(0, "H1-"));
+        DeserializeInfos i = deserializeInfos(index, field, infos);
+        return contextWords(index, i.annotation, i.sensitivity, i.extraParam(0, "H1-"));
     }
 
     public static HitProperty contextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String wordSpec) {
@@ -152,7 +149,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             int to = last + (direction == 1 ? 1 : 0);
             if (from == to)
                 return "" + anchor + from;
-            return anchor + from + "-" + (to == -1 ? "" : to);
+            return "" + anchor + from + "-" + (to == -1 ? "" : to);
         }
 
         @Override
@@ -208,7 +205,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     @Override
     public List<String> serializeParts() {
         List<String> result = new ArrayList<>(super.serializeParts());
-        result.add(part.toString());
+        result.add(3, part.toString()); // before field name
         return result;
     }
 

@@ -267,7 +267,18 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         getDocWriter().addToForwardIndex(field, currentDoc);
     }
 
+    /**
+     * Character position within the current document.
+     */
     protected abstract int getCharacterPosition();
+
+    /** For parallel corpora where a document has multiple versions,
+      * this is the character position within the version. For other
+      * corpora, this is the same as {@link #getCharacterPosition()}.
+      */
+    protected int getCharacterPositionWithinVersion() {
+        return getCharacterPosition();
+    }
 
     /**
      * Keep track of how many tokens have been processed.

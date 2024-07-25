@@ -123,7 +123,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     AnnotatedFieldImpl() {
     }
 
-    AnnotatedFieldImpl(String name) {
+    public AnnotatedFieldImpl(String name) {
         super(name);
     }
 

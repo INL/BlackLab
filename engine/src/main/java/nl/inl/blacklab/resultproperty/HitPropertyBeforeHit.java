@@ -24,11 +24,9 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     protected int numberOfTokens;
 
     static HitPropertyBeforeHit deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos, ContextSize contextSize) {
-        DeserializeInfos i = deserializeProp(field, infos);
+        DeserializeInfos i = deserializeInfos(index, field, infos);
         int numberOfTokens = i.extraIntParam(0, contextSize.before());
-        String overrideField = i.extraParam(1);
-        Annotation annotation = annotationOverrideFieldOrVersion(index, i.annotation, overrideField);
-        return new HitPropertyBeforeHit(index, annotation, i.sensitivity, numberOfTokens);
+        return new HitPropertyBeforeHit(index, i.annotation, i.sensitivity, numberOfTokens);
     }
 
     static HitPropertyBeforeHit deserializePropSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {
@@ -71,7 +69,7 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     @Override
     public List<String> serializeParts() {
         List<String> result = new ArrayList<>(super.serializeParts());
-        result.add(Integer.toString(numberOfTokens));
+        result.add(3, Integer.toString(numberOfTokens)); // before field name
         return result;
     }
 

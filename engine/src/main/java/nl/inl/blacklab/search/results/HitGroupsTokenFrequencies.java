@@ -467,7 +467,8 @@ public class HitGroupsTokenFrequencies {
                             AnnotInfo annotInfo = hitProperties.get(indexInInput);
                             Annotation annot = annotInfo.getAnnotationForwardIndex().annotation();
                             MatchSensitivity sens = annotInfo.getMatchSensitivity();
-                            groupIdAsList[indexInOutput++] = new PropertyValueContextWords(index, annot, sens, new int[] {annotationValues[indexInInput]}, false);
+                            groupIdAsList[indexInOutput++] = new PropertyValueContextWords(index, annot, sens,
+                                    new int[] {annotationValues[indexInInput]}, null, false);
                         }
                     }
 

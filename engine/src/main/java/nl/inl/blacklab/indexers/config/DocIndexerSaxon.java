@@ -97,8 +97,22 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     /** Can calculate character position for a given line/column position. */
     private CharPositionsTracker charPositions;
 
-    /** Current character position in the document */
-    private int charPos = 0;
+    /** Current character position in the current document */
+    private long charPos = 0;
+
+    /** Start character position of the current document (within the input file).
+     *  Only really relevant if input file contains multiple documents to be indexed.
+     */
+    private long docStartPos = 0;
+
+    /** End character position of the current document (within the input file).
+     *  Only relevant if input file contains multiple documents to be indexed.
+     */
+    private long docEndPos = -1;
+
+    /** Start position of the current doc version we're indexing,
+     *  relative to docStartPos. */
+    private long docVersionStartPos = 0;
 
     /** XPath util functions and caching of XPathExpressions */
     private XPathFinder finder;
@@ -204,7 +218,14 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     // process annotated field
 
-    Map<ConfigAnnotatedField, Pair<Integer, Integer>> docStartEndOffsetsPerField = new HashMap<>();
+    Map<ConfigAnnotatedField, Pair<Long, Long>> docStartEndOffsetsPerField = new HashMap<>();
+
+    @Override
+    protected void indexDocument(NodeInfo doc) {
+        docStartPos = charPositions.getNodeStartPos(doc);
+        docEndPos = charPositions.getNodeEndPos(doc);
+        super.indexDocument(doc);
+    }
 
     @Override
     protected void startDocument() {
@@ -216,13 +237,14 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             Map<String, Span> tokenPositionsMap) {
 
         // Is this a parallel corpus annotated field?
+        docVersionStartPos = 0;
         if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
             // Yes; determine boundaries of this annotated field container so we can later store
             // this version of the document in the field's content store.
             // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-            int start = charPositions.getNodeStartPos(container);
-            int end = charPositions.getNodeEndPos(container);
-            docStartEndOffsetsPerField.put(annotatedField, Pair.of(start, end));
+            docVersionStartPos = charPositions.getNodeStartPos(container);
+            long docVersionEndPos = charPositions.getNodeEndPos(container);
+            docStartEndOffsetsPerField.put(annotatedField, Pair.of(docVersionStartPos, docVersionEndPos));
         }
 
         // Collect information outside word tags:
@@ -260,7 +282,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             }
 
             // Index our word
-            charPos = charPositions.getNodeStartPos(word);
+            charPos = charPositions.getNodeStartPos(word) - docStartPos;
             beginWord();
 
             // For each configured annotation...
@@ -268,7 +290,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                 processAnnotation(annotation, word, tokenPosition);
             }
 
-            charPos = charPositions.getNodeEndPos(word);
+            charPos = charPositions.getNodeEndPos(word) - docStartPos;
             endWord();
 
             // Make sure we close inline tags at the correct position
@@ -425,11 +447,11 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     @Override
     protected void storeDocument() {
         if (docStartEndOffsetsPerField.isEmpty()) {
-            storeWholeDocument(document.getTextContent());
+            storeWholeDocument(document.getTextContent(docStartPos, docEndPos));
         } else {
-            for (Map.Entry<ConfigAnnotatedField, Pair<Integer, Integer>> entry: docStartEndOffsetsPerField.entrySet()) {
-                Integer startOffset = entry.getValue().getLeft();
-                Integer endOffset = entry.getValue().getRight();
+            for (Map.Entry<ConfigAnnotatedField, Pair<Long, Long>> entry: docStartEndOffsetsPerField.entrySet()) {
+                Long startOffset = entry.getValue().getLeft();
+                Long endOffset = entry.getValue().getRight();
                 storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
             }
         }
@@ -442,7 +464,12 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     @Override
     protected int getCharacterPosition() {
-        return charPos;
+        return (int)charPos;
+    }
+
+    @Override
+    protected int getCharacterPositionWithinVersion() {
+        return (int)(charPos - docVersionStartPos);
     }
 
 }

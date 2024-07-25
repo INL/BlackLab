@@ -945,6 +945,8 @@ public class ResponseStreamer {
         ds
                 .entry(KEY_FIELD_NAME, fieldDesc.name())
                 .entry(KEY_FIELD_IS_ANNOTATED, true);
+        if (modernizeApi)
+            ds.entry(KEY_TOKEN_COUNT, annotatedField.getTokenCount());
         if (isNewApi) {
             if (includeCustom)
                 customInfoEntry(fieldDesc.custom());
@@ -1342,7 +1344,7 @@ public class ResponseStreamer {
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("timeModified", indexMetadata.timeModified());
-            indexTokenCount(indexMetadata, false);
+            indexTokenCount(indexMetadata);
             indexDocumentCount(indexMetadata);
             indexProgress(corpusStatus);
             if (!corpusStatus.getIndex().isUserIndex()) {
@@ -1361,17 +1363,7 @@ public class ResponseStreamer {
             ds.entry(KEY_DOCUMENT_COUNT, indexMetadata.documentCount());
     }
 
-    private void indexTokenCount(IndexMetadata indexMetadata, boolean isLegacyIndicesKey) {
-        if (modernizeApi && !isLegacyIndicesKey) {
-            ds.startEntry(KEY_TOKEN_COUNTS).startList();
-            for (Map.Entry<String, Long> entry: indexMetadata.tokenCountPerField().entrySet()) {
-                ds.startItem(KEY_TOKEN_COUNT).startMap();
-                ds.entry(KEY_FIELD_NAME, entry.getKey());
-                ds.entry(KEY_TOKEN_COUNT, entry.getValue());
-                ds.endMap().endItem();
-            }
-            ds.endList().endEntry();
-        }
+    private void indexTokenCount(IndexMetadata indexMetadata) {
         if (!isNewApi)
             ds.entry(KEY_TOKEN_COUNT, indexMetadata.tokenCount());
     }
@@ -1408,7 +1400,7 @@ public class ResponseStreamer {
                 if (formatIdentifier != null && !formatIdentifier.isEmpty())
                     ds.entry("documentFormat", formatIdentifier);
                 ds.entry("timeModified", indexMetadata.timeModified());
-                indexTokenCount(indexMetadata, true);
+                indexTokenCount(indexMetadata);
                 indexProgress(progress);
             }
             ds.endMap();
@@ -1437,7 +1429,7 @@ public class ResponseStreamer {
             String formatIdentifier = metadata.documentFormat();
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
-            indexTokenCount(metadata, false);
+            indexTokenCount(metadata);
             indexDocumentCount(metadata);
             indexProgress(result.getProgress());
 
@@ -1558,7 +1550,7 @@ public class ResponseStreamer {
             }
             ds.entry(KEY_STATS_STATUS, progress.getIndexStatus());
             ds.entry("timeModified", metadata.timeModified());
-            indexTokenCount(metadata, false);
+            indexTokenCount(metadata);
             indexDocumentCount(metadata);
             String formatIdentifier = metadata.documentFormat();
             if (!StringUtils.isEmpty(formatIdentifier))

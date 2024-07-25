@@ -12,13 +12,7 @@
       "documentCount": 3,
       "documentFormat": "voice-tei",
       "status": "available",
-      "timeModified": "VALUE_REMOVED",
-      "tokenCounts": [
-        {
-          "fieldName": "contents",
-          "tokenCount": 766
-        }
-      ]
+      "timeModified": "VALUE_REMOVED"
     }
   },
   "user": {

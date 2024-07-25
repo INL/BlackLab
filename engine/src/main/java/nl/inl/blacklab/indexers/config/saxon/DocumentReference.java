@@ -96,7 +96,7 @@ public class DocumentReference {
      * @param endOffset the offset to stop reading at, or -1 to read until the end
      * @return the content read
      */
-    public TextContent getTextContent(int startOffset, int endOffset) {
+    public TextContent getTextContent(long startOffset, long endOffset) {
         return new TextContent(getCharArray(startOffset, endOffset));
     }
 
@@ -117,11 +117,11 @@ public class DocumentReference {
      * @return the characters read
      * @throws IOException
      */
-    private static char[] toCharArrayPart(Reader reader, int startOffset, int endOffset) throws IOException {
+    private static char[] toCharArrayPart(Reader reader, long startOffset, long endOffset) throws IOException {
         if (startOffset > 0)
             IOUtils.skip(reader, startOffset);
         if (endOffset != -1) {
-            int length = endOffset - startOffset;
+            int length = (int)(endOffset - startOffset);
             char[] result = new char[length];
             if (reader.read(result, 0, length) < 0)
                 throw new RuntimeException("Unexpected end of file");
@@ -137,7 +137,7 @@ public class DocumentReference {
      * @param endOffset the offset to stop reading at, or -1 to read until the end
      * @return the characters read
      */
-    public char[] getCharArray(int startOffset, int endOffset) {
+    public char[] getCharArray(long startOffset, long endOffset) {
         if (useContentFromXIncludeResolver && xincludeResolver != null) {
             // Read from the Reader provided by the XIncludeResolver
             try (Reader reader = xincludeResolver.getDocumentReader()) {
@@ -166,7 +166,7 @@ public class DocumentReference {
      * @param endOffset the offset to stop reading at, or -1 to read until the end
      * @return the characters read
      */
-    public char[] getDocWithoutXIncludesResolved(int startOffset, int endOffset) {
+    public char[] getDocWithoutXIncludesResolved(long startOffset, long endOffset) {
         if (contents == null) {
             // Read from file
             try {

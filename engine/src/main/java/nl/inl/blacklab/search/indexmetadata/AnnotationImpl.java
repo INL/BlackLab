@@ -90,7 +90,7 @@ public class AnnotationImpl implements Annotation, Freezable {
         this(field, null);
     }
 
-    AnnotationImpl(AnnotatedField field, String name) {
+    public AnnotationImpl(AnnotatedField field, String name) {
         this.field = field;
         this.setName(name);
         forwardIndex = false;

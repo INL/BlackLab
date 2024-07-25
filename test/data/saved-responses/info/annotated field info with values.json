@@ -391,5 +391,6 @@
   "hasXmlTags": true,
   "indexName": "test",
   "isAnnotatedField": true,
-  "mainAnnotation": "word"
+  "mainAnnotation": "word",
+  "tokenCount": 766
 }

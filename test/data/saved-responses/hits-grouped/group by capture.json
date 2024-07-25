@@ -1,120 +1,120 @@
 {
   "hitGroups": [
     {
-      "identity": "cws:word:i:confirmation",
+      "identity": "cws:contents%word:i:confirmation",
       "identityDisplay": "confirmation",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "confirmation"
         }
       ],
       "size": 2
     },
     {
-      "identity": "cws:word:i:lot",
+      "identity": "cws:contents%word:i:lot",
       "identityDisplay": "lot",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "lot"
         }
       ],
       "size": 2
     },
     {
-      "identity": "cws:word:i:visa",
+      "identity": "cws:contents%word:i:visa",
       "identityDisplay": "visa",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "visa"
         }
       ],
       "size": 2
     },
     {
-      "identity": "cws:word:i:district",
+      "identity": "cws:contents%word:i:district",
       "identityDisplay": "district",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "district"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:end",
+      "identity": "cws:contents%word:i:end",
       "identityDisplay": "end",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "end"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:letter",
+      "identity": "cws:contents%word:i:letter",
       "identityDisplay": "letter",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "letter"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:look",
+      "identity": "cws:contents%word:i:look",
       "identityDisplay": "look",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "look"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:monthly",
+      "identity": "cws:contents%word:i:monthly",
       "identityDisplay": "monthly",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "monthly"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:right",
+      "identity": "cws:contents%word:i:right",
       "identityDisplay": "right",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "right"
         }
       ],
       "size": 1
     },
     {
-      "identity": "cws:word:i:scholarship",
+      "identity": "cws:contents%word:i:scholarship",
       "identityDisplay": "scholarship",
       "numberOfDocs": 1,
       "properties": [
         {
-          "name": "capture:word:i",
+          "name": "capture:contents%word:i",
           "value": "scholarship"
         }
       ],

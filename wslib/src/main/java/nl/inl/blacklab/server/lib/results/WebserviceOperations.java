@@ -462,10 +462,9 @@ public class WebserviceOperations {
                 return new BadRequest("UNKNOWN_MATCH_INFO",
                         "Reference to unknown match info (i.e. capture group) '" + e1.getMatchInfoName() + "'",
                         Map.of("name", e1.getMatchInfoName()));
-            } catch (BlackLabRuntimeException e1) {
-                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
-            } catch (BlackLabException e1) {
-                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
+            } catch (BlackLabRuntimeException | BlackLabException e1) {
+                e.printStackTrace();
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage(), e1);
             } catch (BlsException e1) {
                 return e1;
             } catch (Throwable e1) {

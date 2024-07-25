@@ -107,12 +107,13 @@ A few more examples:
 
 ::: details Parallel corpora and grouping/sorting on context
 
-In parallel corpora, you can add an extra parameter at the end of a context
-criterium like `hit` or `before` to specify what version you're referring to.
+In parallel corpora, you can prefix the annotation name with the version or field name and a `%` to specify what version you're referring to.
 
 For example, if your parallel corpus has versions `en` and `nl`, you can 
-specify `hit:word:s:en` to sort/group on the English version of the matched
-text, or `before:word:s:1:nl` to sort/group on the Dutch version of the word.
+specify `hit:en%word:s` to sort/group on the English version of the matched
+text, or `before:nl%word:s:1` to sort/group on the Dutch version of the word.
+
+You may also use the full field name, e.g. `hit:contents__en%word:s` or `before:contents__nl%word:s:1`.
 
 :::
 

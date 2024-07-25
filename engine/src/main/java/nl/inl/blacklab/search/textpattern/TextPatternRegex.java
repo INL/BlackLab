@@ -22,12 +22,7 @@ public class TextPatternRegex extends TextPatternTerm {
     }
 
     public TextPatternRegex(String value, String annotation, MatchSensitivity sensitivity) {
-        super(trimStartEnd(value), annotation, sensitivity);
-    }
-
-    /** Trim any start-of-match/end-of-match operators (that Lucene doesn't support) */
-    private static String trimStartEnd(String value) {
-        return value.replaceAll("^\\^|\\$$", "");
+        super(value, annotation, sensitivity);
     }
 
     @Override
