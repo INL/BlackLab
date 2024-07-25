@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -20,9 +20,6 @@ import org.apache.lucene.util.Accountables;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.RamUsageEstimator;
 
-import nl.inl.blacklab.codec.BlackLabStoredFieldsFormat;
-import nl.inl.blacklab.codec.ContentStoreBlockCodec;
-import nl.inl.blacklab.codec.ContentStoreBlockCodecZlib;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
 /**

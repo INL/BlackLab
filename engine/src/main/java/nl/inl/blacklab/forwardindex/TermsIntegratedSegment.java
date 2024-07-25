@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -7,6 +7,9 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
+import nl.inl.blacklab.codec.BlackLabCodec;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
+import nl.inl.blacklab.codec.ForwardIndexField;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**

@@ -1,6 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import nl.inl.blacklab.codec.blacklab40.AnnotationForwardIndexIntegrated;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.text.CollationKey;
@@ -43,12 +43,6 @@ import org.apache.lucene.util.BytesRef;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.analysis.PayloadUtils;
-import nl.inl.blacklab.codec.BlackLabCodec;
-import nl.inl.blacklab.codec.BlackLabPostingsWriter;
-import nl.inl.blacklab.codec.ForwardIndexField;
-import nl.inl.blacklab.codec.ForwardIndexFieldMutable;
-import nl.inl.blacklab.codec.ThreeByteInt;
-import nl.inl.blacklab.codec.TokensCodec;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Collators;

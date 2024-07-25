@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.text.CollationKey;
@@ -16,8 +16,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
-import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.TermsReaderAbstract;
+import nl.inl.blacklab.codec.BLTerms;
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.

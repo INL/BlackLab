@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,10 +17,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
-import nl.inl.blacklab.codec.BlackLabStoredFieldsFormat;
-import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
-import nl.inl.blacklab.codec.ContentStoreBlockCodec;
-import nl.inl.blacklab.codec.blacklab40.BlackLab40StoredFieldsFormat;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 

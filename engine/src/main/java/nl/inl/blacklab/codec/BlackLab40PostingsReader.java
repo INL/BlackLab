@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -19,10 +19,6 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.codec.BLTerms;
-import nl.inl.blacklab.codec.BlackLabPostingsReader;
-import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
-import nl.inl.blacklab.codec.SegmentForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 
 /**

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 
@@ -8,8 +8,6 @@ import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.SegmentWriteState;
-
-import nl.inl.blacklab.codec.BlackLabPostingsFormat;
 
 /**
  * The custom postings format that BlackLab uses.

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec.blacklab40;
+package nl.inl.blacklab.codec;
 
 import org.apache.lucene.backward_codecs.lucene87.Lucene87Codec;
 import org.apache.lucene.codecs.Codec;
@@ -13,8 +13,6 @@ import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.codecs.SegmentInfoFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
-
-import nl.inl.blacklab.codec.BlackLabCodec;
 
 /**
  * The custom codec that BlackLab uses.
