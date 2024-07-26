@@ -15,7 +15,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.BLSpanOrQuery;
+import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;

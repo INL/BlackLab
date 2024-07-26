@@ -17,7 +17,7 @@
     </description>
 
     <properties>
-        <solr.version>${blacklab.luceneVersion}</solr.version>
+        <solr.version>9.6.1</solr.version>
     </properties>
     
     <build>
@@ -58,7 +58,7 @@
 
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.6.0</version>
                 <configuration>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
@@ -134,16 +134,16 @@
     <dependencies>
 
         <!-- metadata serialization? -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.core</groupId>-->
+<!--            <artifactId>jackson-core</artifactId>-->
+<!--            <version>${jackson.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.core</groupId>-->
+<!--            <artifactId>jackson-databind</artifactId>-->
+<!--            <version>${jackson.version}</version>-->
+<!--        </dependency>-->
         <!-- blacklab wslib module (web service operations) -->
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
@@ -160,12 +160,34 @@
 
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.apache.solr/solr-scripting -->
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-scripting</artifactId>
+            <version>${solr.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Compile against SolrJ (but don't include in JAR with deps) -->
         <dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-solrj</artifactId>
             <version>${solr.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.6.4</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+            <version>10.0.0</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- For applying XSLT

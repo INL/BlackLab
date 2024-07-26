@@ -3,10 +3,10 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.lucene.search.ConjunctionDISI;
+import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 
@@ -95,7 +95,7 @@ class SpansPositionFilter extends BLSpans {
             this.conjunction = twoPhaseIterator == null ? producer : TwoPhaseIterator.asDocIdSetIterator(twoPhaseIterator);
         } else {
             // We can use conjunction of the producer and filter (both need to occur in document to produce matches)
-            this.conjunction = ConjunctionDISI.intersectIterators(List.of(this.producer, this.filter));
+            this.conjunction = ConjunctionUtils.intersectIterators(List.of(this.producer, this.filter));
         }
     }
 

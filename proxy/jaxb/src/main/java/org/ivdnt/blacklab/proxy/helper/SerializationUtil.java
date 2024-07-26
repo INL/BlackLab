@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBElement;
 
 import org.ivdnt.blacklab.proxy.representation.Annotation;
 import org.ivdnt.blacklab.proxy.representation.FacetValue;

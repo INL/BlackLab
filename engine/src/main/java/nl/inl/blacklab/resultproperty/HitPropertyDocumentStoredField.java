@@ -20,6 +20,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
         super(prop, hits, invert);
         this.fieldName = prop.fieldName;
         this.docPropStoredField = prop.docPropStoredField;
+        assert docPropStoredField != null;
     }
 
     public HitPropertyDocumentStoredField(BlackLabIndex index, String fieldName, String friendlyName) {

@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.bind.annotation.XmlTransient;
+import jakarta.xml.bind.annotation.XmlTransient;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
@@ -19,9 +19,8 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.codec.BlackLab40Codec;
-import nl.inl.blacklab.codec.BlackLab40PostingsReader;
-import nl.inl.blacklab.codec.BlackLab40StoredFieldsReader;
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.codec.blacklab50.BlackLab50Codec;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
@@ -44,6 +43,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
+import nl.inl.blacklab.codec.BlackLabCodec;
 
 /**
  * A BlackLab index with all files included in the Lucene index.
@@ -103,7 +103,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * @return content store
      */
     public static ContentStoreSegmentReader contentStore(LeafReaderContext lrc) {
-        return BlackLab40StoredFieldsReader.get(lrc).contentStore();
+        return BlackLabCodecUtil.getStoredFieldsReader(lrc).contentStore();
     }
 
     /**
@@ -115,7 +115,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * @return forward index
      */
     public static ForwardIndexSegmentReader forwardIndex(LeafReaderContext lrc) {
-        return BlackLab40PostingsReader.get(lrc).forwardIndex();
+        return BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex();
     }
 
     /**
@@ -183,7 +183,8 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     @Override
     protected void customizeIndexWriterConfig(IndexWriterConfig config) {
-        config.setCodec(new BlackLab40Codec()); // our own custom codec (extended from Lucene)
+        if (!(config.getCodec() instanceof BlackLabCodec))
+            config.setCodec(new BlackLab50Codec()); // our own custom codec (extended from Lucene)
 
         // disabling this can speed up indexing a bit but also uses a lot of file descriptors;
         // it can be useful to see individual files during development. maybe make this configurable?

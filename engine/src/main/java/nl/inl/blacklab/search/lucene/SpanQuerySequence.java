@@ -15,10 +15,11 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
-import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.queries.spans.SpanWeight;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
@@ -36,7 +37,7 @@ import nl.inl.util.StringUtil;
  * by a hit from the second.
  * <p>
  * Note that this class is different from
- * org.apache.lucene.search.spans.SpanNearQuery: it tries to make sure it
+ * org.apache.lucene.queries.spans.SpanNearQuery: it tries to make sure it
  * generates *all* possible sequence matches. SpanNearQuery doesn't do this;
  * once a hit is used in a SpanNearQuery match, it advances to the next hit.
  * <p>
@@ -613,14 +614,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             this.weights = weights;
         }
 
-        @Override
-        public void extractTerms(Set<Term> terms) {
-            for (SpanWeight weight : weights) {
-                weight.extractTerms(terms);
-            }
-        }
-
-        @Override
+         @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             for (SegmentCacheable weight : weights) {
                 if (!weight.isCacheable(ctx))

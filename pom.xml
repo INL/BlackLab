@@ -53,21 +53,27 @@
         <blacklab.version>${project.version}</blacklab.version>
 
         <!-- Library versions -->
-        <blacklab.luceneVersion>8.11.1</blacklab.luceneVersion>
-        <log4j.version>2.17.2</log4j.version>
-        <jackson.version>2.13.4</jackson.version>
-        <eclipse.collections.version>7.1.0</eclipse.collections.version>
+        <servlet.version>6.0.0</servlet.version>
+        <blacklab.luceneVersion>9.11.1</blacklab.luceneVersion>
+        <solr.version>9.6.1</solr.version>
+        <log4j.version>2.23.1</log4j.version>
+        <eclipse.collections.version>11.1.0</eclipse.collections.version>
+
+        <!-- servlet, rest, json, xml, yaml -->
+        <jackson.version>2.16.1</jackson.version>
+        <jersey.version>3.1.5</jersey.version>
+        <jaxb.version>4.0.4</jaxb.version>
 
         <!-- Java versions -->
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <maven.compiler.release>11</maven.compiler.release>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
 
         <!-- Plugin versions -->
         <checkstyle.version>3.1.2</checkstyle.version>
         <pmd.version>3.16.0</pmd.version>
         <findbugs.version>3.0.5</findbugs.version>
-        <javadoc.version>3.4.0</javadoc.version>
+        <javadoc.version>3.6.2</javadoc.version>
 
 
     </properties>
@@ -169,9 +175,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.12.1</version>
                 <configuration>
-                    <release>11</release>
+                    <release>17</release>
                 </configuration>
             </plugin>
 
@@ -202,7 +208,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -244,7 +250,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
+                <version>3.4.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -263,7 +269,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <!--<version>3.0.0-M1</version>-->
-                <version>3.0.0-M7</version>
+                <version>3.2.2</version>
             </plugin>
 
             <!-- Generates a "build number" (just a timestamp in our case)
@@ -271,7 +277,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.0</version>
                 <configuration>
                     <doCheck>false</doCheck>
                     <doUpdate>false</doUpdate>
@@ -376,14 +382,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.1.2</version>
             </plugin>
 
             <!-- Creates a release version -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>3.0.0-M6</version>
+                <version>3.0.1</version>
                 <configuration>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -409,17 +415,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.1</version>
             </plugin>
 
         </plugins>
@@ -435,12 +441,11 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
+                        <version>3.3.0</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
                                 <goals>
-
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
@@ -469,7 +474,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -486,7 +491,99 @@
         </profile>
     </profiles>
 
+    <dependencyManagement>
+        <dependencies>
+            <!--
+                a special BOM (Bill of Materials) file that contains compatible versions of all Java EE (Jakarta) API libraries
+                See https://reflectoring.io/maven-bom/
+
+                NOTE: these are NOT implementations. Just the empty interfaces, annotations, etc.
+
+                To find the library:
+                Start at the list of modules part of the Jakarta 10 specification:
+                There's a nice list here: https://tomee.apache.org/comparison.html
+
+                - Find the spec version for the module (ex. Jakarta RESTful Web Services 3.1)
+                  You can find this from the BOM
+                - Find an implementation for that specific version (so "jakarta restful web services 3.1 implementation")
+                  This returns jersey 3.1.1 for example.
+                  Now you can add that dependency to your project.
+            -->
+            <!-- https://mvnrepository.com/artifact/jakarta.platform/jakarta.jakartaee-bom -->
+            <dependency>
+                <groupId>jakarta.platform</groupId>
+                <artifactId>jakarta.jakartaee-bom</artifactId>
+                <version>10.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- jersey (rest) -->
+            <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-server -->
+            <dependency>
+                <groupId>org.glassfish.jersey.core</groupId>
+                <artifactId>jersey-server</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.glassfish.jersey.containers</groupId>
+                <artifactId>jersey-container-servlet</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <!-- xml -->
+            <dependency>
+                <groupId>org.glassfish.jersey.media</groupId>
+                <artifactId>jersey-media-jaxb</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+            <!-- json -->
+            <dependency>
+                <groupId>org.glassfish.jersey.media</groupId>
+                <artifactId>jersey-media-json-jackson</artifactId>
+                <version>3.1.5</version>
+            </dependency>
+
+            <!-- jersey injection framework -->
+            <dependency>
+                <groupId>org.glassfish.jersey.inject</groupId>
+                <artifactId>jersey-hk2</artifactId>
+                <version>${jersey.version}</version>
+            </dependency>
+
+
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
+
+<!--        <dependency>-->
+<!--            <groupId>jakarta.platform</groupId>-->
+<!--            <artifactId>jakarta.jakartaee-api</artifactId>-->
+<!--            <version>10.0.0</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
+
+        <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+            <version>12.4</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>xml-apis</artifactId>
+                    <groupId>xml-apis</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- Testing (JUnit and Mockito) -->
         <dependency>
@@ -498,7 +595,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.8.0</version>
+            <version>5.4.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -517,16 +614,16 @@
                     <artifactId>jmxtools</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.jms</groupId>
-                    <artifactId>jms</artifactId>
+                    <groupId>jakarta.jms</groupId>
+                    <artifactId>jakarta.jms-api</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.mail</groupId>
-                    <artifactId>mail</artifactId>
+                    <groupId>jakarta.mail</groupId>
+                    <artifactId>jakarta.mail-api</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.activation</groupId>
-                    <artifactId>activation</artifactId>
+                    <groupId>jakarta.activation</groupId>
+                    <artifactId>jakarta.activation-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -535,31 +632,29 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
+            <version>2.15.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.21</version>
+            <version>1.25.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
+            <version>3.13.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.10.0</version>
+            <version>1.11.0</version>
         </dependency>
         <!-- For indexing from tabular files: csv, tsv -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.9.0</version>
+            <version>1.10.0</version>
         </dependency>
-
-
     </dependencies>
 
     <reporting>
@@ -568,14 +663,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
             </plugin>
 
             <!-- Project info section of the project site -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.4.5</version>
                 <reportSets>
                     <reportSet>
                         <reports>
@@ -634,7 +729,7 @@
                     </rulesets>
                     <sourceEncoding>utf-8</sourceEncoding>
                     <minimumTokens>100</minimumTokens>
-                    <targetJdk>1.8</targetJdk>
+                    <targetJdk>1.17</targetJdk>
                     <excludes>
                         <exclude>**/queryParser/**/*</exclude>
                     </excludes>
@@ -711,7 +806,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.12.0</version>
+                <version>2.16.0</version>
                 <reportSets>
                     <reportSet>
                         <reports>

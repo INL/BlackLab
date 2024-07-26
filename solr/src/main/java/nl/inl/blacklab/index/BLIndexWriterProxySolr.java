@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.ivdnt.blacklab.solr.BLSolrXMLLoader;

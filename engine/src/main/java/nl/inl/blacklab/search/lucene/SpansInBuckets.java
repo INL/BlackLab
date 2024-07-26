@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.Spans;
 
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets")

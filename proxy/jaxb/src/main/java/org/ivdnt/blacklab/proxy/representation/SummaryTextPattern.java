@@ -1,11 +1,12 @@
 package org.ivdnt.blacklab.proxy.representation;
 
-import java.util.Map;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SummaryTextPattern {

@@ -11,6 +11,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
@@ -33,10 +34,6 @@ public class SingleDocIdFilter extends Query {
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         return new Weight(null) {
-            @Override
-            public void extractTerms(Set<Term> terms) {
-                // NOP
-            }
 
             @Override
             public Explanation explain(LeafReaderContext context, int doc) {
@@ -93,20 +90,26 @@ public class SingleDocIdFilter extends Query {
                         }
                     }
 
-					@Override
-					public float getMaxScore(int upTo) {
+                    @Override
+                    public float getMaxScore(int upTo) {
 						return 0;
 					}
                 };
             }
 
-			@Override
-			public boolean isCacheable(LeafReaderContext ctx) {
-				// OPT: Look in to isCacheable() and implement properly
-				return false;
-			}
+            @Override
+            public boolean isCacheable(LeafReaderContext ctx) {
+                // OPT: Look in to isCacheable() and implement properly
+                return false;
+            }
 
         };
+    }
+
+    // LUCENE-3041: A query introspection API has been added. Queries should implement a visit() method, taking a QueryVisitor, and either pass the visitor down to any child queries, or call a visitX() or consumeX() method on it. All locations in the code that called Weight.extractTerms() have been changed to use this API, and the extractTerms() method has been deprecated.
+    @Override
+    public void visit(QueryVisitor visitor) {
+        visitor.visitLeaf(this);
     }
 
     @Override
@@ -115,24 +118,24 @@ public class SingleDocIdFilter extends Query {
     }
 
     @Override
-  	public int hashCode() {
-  		final int prime = 31;
-  		int result = 1;
-  		result = prime * result + luceneDocId;
-  		return result;
-  	}
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + luceneDocId;
+        return result;
+    }
 
-  	@Override
-  	public boolean equals(Object obj) {
-  		if (this == obj)
-  			return true;
-  		if (obj == null)
-  			return false;
-  		if (getClass() != obj.getClass())
-  			return false;
-  		SingleDocIdFilter other = (SingleDocIdFilter) obj;
-  		if (luceneDocId != other.luceneDocId)
-  			return false;
-  		return true;
-  	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SingleDocIdFilter other = (SingleDocIdFilter) obj;
+        if (luceneDocId != other.luceneDocId)
+            return false;
+        return true;
+    }
 }

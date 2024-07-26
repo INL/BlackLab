@@ -75,7 +75,8 @@ public class DocValuesUtil {
                     }
                 }
             } else if (dv instanceof SortedDocValues) {
-                key = List.of(((SortedDocValues) dv).binaryValue().utf8ToString());
+                // TODO implement optimization re: LUCENE-9796 in https://lucene.apache.org/core/9_0_0/MIGRATE.html
+                key = List.of(((SortedDocValues) dv).lookupOrd(((SortedDocValues) dv).ordValue()).utf8ToString());
             } else {
                 throw new IllegalStateException("Unexpected DocValues type");
             }

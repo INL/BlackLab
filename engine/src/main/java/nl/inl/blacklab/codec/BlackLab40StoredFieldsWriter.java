@@ -9,9 +9,7 @@ import java.util.Map;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.StoredFieldsWriter;
 import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.MergeState;
 import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.store.Directory;
@@ -19,6 +17,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Accountables;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.RamUsageEstimator;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -73,16 +72,16 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         this.delegate = delegate;
         this.delegateFormatName = delegateFormatName;
 
-        fieldsFile = createOutput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
+        fieldsFile = createOutput(BlackLabStoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
 
         // NOTE: we can make this configurable later (to optimize for specific usage scenarios),
         // but for now we'll just use the default value.
         fieldsFile.writeInt(blockSizeChars);
 
-        docIndexFile = createOutput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
-        valueIndexFile = createOutput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
-        blockIndexFile = createOutput(BlackLab40StoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
-        blocksFile = createOutput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
+        docIndexFile = createOutput(BlackLabStoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
+        valueIndexFile = createOutput(BlackLabStoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
+        blockIndexFile = createOutput(BlackLabStoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
+        blocksFile = createOutput(BlackLabStoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
     }
 
     private IndexOutput createOutput(String ext, Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
@@ -107,6 +106,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         delegate.startDocument();
     }
 
+
     /**
      * Write a single stored field or content store value.
      *
@@ -114,16 +114,51 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
      * or will store the value in the content store.
      *
      * @param fieldInfo field to write
-     * @param indexableField value to write
+     * @param v value to write
      */
     @Override
-    public void writeField(FieldInfo fieldInfo, IndexableField indexableField) throws IOException {
+    public void writeField(FieldInfo fieldInfo, float v) throws IOException {
+        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        delegate.writeField(fieldInfo, v);
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, int v) throws IOException {
+        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        delegate.writeField(fieldInfo, v);
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, long v) throws IOException {
+        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        delegate.writeField(fieldInfo, v);
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, double v) throws IOException {
+        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        delegate.writeField(fieldInfo, v);
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, String v) throws IOException {
         if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
             // This is a content store field.
-            writeContentStoreField(fieldInfo, indexableField.stringValue());
+            writeContentStoreField(fieldInfo, v);
         } else {
             // This is a regular stored field. Delegate.
-            delegate.writeField(fieldInfo, indexableField);
+            delegate.writeField(fieldInfo, v);
+        }
+    }
+
+    @Override
+    public void writeField(FieldInfo fieldInfo, BytesRef v) throws IOException {
+        if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
+            // This is a content store field.
+            writeContentStoreField(fieldInfo, v.utf8ToString());
+        } else {
+            // This is a regular stored field. Delegate.
+            delegate.writeField(fieldInfo, v);
         }
     }
 
@@ -202,8 +237,8 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     }
 
     @Override
-    public void finish(FieldInfos fieldInfos, int i) throws IOException {
-        delegate.finish(fieldInfos, i);
+    public void finish(int i) throws IOException {
+        delegate.finish(i);
     }
 
     @Override

@@ -1,6 +1,9 @@
 # Stage "builder": build the WAR file
 #--------------------------------------
-FROM maven:3.6-jdk-11 AS builder
+FROM maven:3.8-amazoncorretto-17-debian AS builder
+
+# Make sure Git is installed (for maven buildnumber plugin)
+RUN apt-get update && apt-get install -y git
 
 # Copy source
 WORKDIR /app
@@ -14,7 +17,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -q --no-transfer-progress package
 
 # Tomcat container with the WAR file
 #--------------------------------------
-FROM tomcat:9-jre17
+FROM tomcat:10-jre17
 
 # Create config directory
 RUN mkdir /etc/blacklab/

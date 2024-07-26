@@ -112,11 +112,6 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            weight.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return weight.isCacheable(ctx);
         }

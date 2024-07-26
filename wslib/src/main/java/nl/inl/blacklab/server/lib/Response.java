@@ -1,8 +1,6 @@
 package nl.inl.blacklab.server.lib;
 
-import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,6 +8,8 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
+
+import java.util.Map;
 
 /**
  * Different BLS responses with response code and message.

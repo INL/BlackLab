@@ -2,24 +2,20 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.StoredFieldsReader;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.index.StoredFieldVisitor;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.Accountable;
-import org.apache.lucene.util.Accountables;
 
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -28,7 +24,7 @@ import nl.inl.blacklab.search.BlackLabIndexIntegrated;
  * Provides random access to values stored as a content store.
  * Delegates non-content-store reads to the default implementation.
  */
-public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
+public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
 
     /** How large we allow the block decoding buffer to become before throwing an error. */
     private static final int MAX_DECODE_BUFFER_LENGTH = 100_000;
@@ -88,23 +84,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      *  We check the index files to make sure this matches. */
     private String delegateFormatName;
 
-    /**
-     * Get the BlackLab40StoredFieldsReader for the given leafreader.
-     *
-     * The luceneField must be any existing Lucene field in the index.
-     * It doesn't matter which. This is because BLTerms is used as an
-     * intermediate to get access to BlackLab40StoredFieldsReader.
-     *
-     * The returned BlackLab40StoredFieldsReader is not specific for the specified field,
-     * but can be used to read information related to any field from the segment.
-     *
-     * @param lrc leafreader to get the BLFieldsProducer for
-     * @return BlackLab40StoredFieldsReader for this leafreader
-     */
-    public static BlackLab40StoredFieldsReader get(LeafReaderContext lrc) {
-        return BlackLab40Codec.getTerms(lrc).getStoredFieldsReader();
-    }
-
     public BlackLab40StoredFieldsReader(Directory directory, SegmentInfo segmentInfo, IOContext ioContext, FieldInfos fieldInfos,
             StoredFieldsReader delegate, String delegateFormatName)
             throws IOException {
@@ -115,7 +94,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         this.delegate = delegate;
         this.delegateFormatName = delegateFormatName; // check that this matches what was written
 
-        IndexInput fieldsFile = openInput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
+        IndexInput fieldsFile = openInput(BlackLabStoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
         blockSizeChars = fieldsFile.readInt();
         while (fieldsFile.getFilePointer() < (fieldsFile.length() - CodecUtil.footerLength())) {
             String fieldName = fieldsFile.readString();
@@ -123,11 +102,15 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             contentStoreFieldIndexes.put(fieldName, fieldIndex);
         }
         fieldsFile.close();
-        _docIndexFile = openInput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
+        _docIndexFile = openInput(BlackLabStoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
         docIndexFileOffset = _docIndexFile.getFilePointer(); // remember offset after header so we can calculate doc offsets.
-        _valueIndexFile = openInput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
-        _blockIndexFile = openInput(BlackLab40StoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
-        _blocksFile = openInput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
+        _valueIndexFile = openInput(BlackLabStoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
+        _blockIndexFile = openInput(BlackLabStoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
+        _blocksFile = openInput(BlackLabStoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
+    }
+
+    public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
+        return EndiannessReverserUtil.openInput(directory, fileName, ioContext);
     }
 
     /**
@@ -144,7 +127,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     private IndexInput openInput(String extension, Directory directory, SegmentInfo segmentInfo, IOContext ioContext) throws IOException {
         String segmentSuffix = "";
         String fileName = IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, extension);
-        IndexInput input = directory.openInput(fileName, ioContext);
+        // NOTE: we have to deal with Lucene 9's switch to little-endian.
+        // IndexInput input = directory.openInput(fileName, ioContext);
+        IndexInput input = openInputCorrectEndian(directory, fileName, ioContext);
         try {
             // Check index header
             String codecName = BlackLab40StoredFieldsFormat.NAME + "_" + extension;
@@ -165,10 +150,13 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         }
     }
 
+    // TODO: check if we have already implemented this mentioned optimization
+    // https://lucene.apache.org/core/9_0_0/changes/Changes.html
+    // LUCENE-6898: In the default codec, the last stored field value will not be fully read from disk if the supplied StoredFieldVisitor doesn't want it. So put your largest text field value last to benefit.
     @Override
-    public void visitDocument(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
+    public void document(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
         // Visit each regular stored field.
-        delegate.visitDocument(docId, storedFieldVisitor);
+        delegate.document(docId, storedFieldVisitor);
 
         // Visit each content store field.
         for (FieldInfo fieldInfo: fieldInfos) {
@@ -199,7 +187,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      */
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
-        byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
+        // TODO look into character encoding
+        String contents = contentStore().getValue(docId, fieldInfo.name);
         if (contents != null)
             storedFieldVisitor.stringField(fieldInfo, contents);
     }
@@ -231,24 +220,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
         // Let the delegate close its files.
         delegate.close();
-    }
-
-    @Override
-    public long ramBytesUsed() {
-        return delegate.ramBytesUsed() /* +
-                RamUsageEstimator.sizeOfObject(fieldsFile) +
-                RamUsageEstimator.sizeOfObject(docIndexFile) +
-                RamUsageEstimator.sizeOfObject(valueIndexFile) +
-                RamUsageEstimator.sizeOfObject(blockIndexFile) +
-                RamUsageEstimator.sizeOfObject(blocksFile) +
-                Integer.BYTES * 2 + // blockSizeChars, numberOfFieldsWritten
-                RamUsageEstimator.sizeOfMap(fields)
-                */ ;
-    }
-
-    @Override
-    public Collection<Accountable> getChildResources() {
-        return List.of(Accountables.namedAccountable("delegate", delegate));
     }
 
     @Override
