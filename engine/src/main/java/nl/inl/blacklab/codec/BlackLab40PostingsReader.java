@@ -16,6 +16,8 @@ import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.Terms;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Accountables;
@@ -38,7 +40,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
  * are cloned whenever a thread needs to use them.
  */
 @ThreadSafe
-public class BlackLab40PostingsReader extends FieldsProducer {
+public class BlackLab40PostingsReader extends BlackLabPostingsReader {
 
     protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsReader.class);
 
@@ -95,7 +97,8 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         return terms;
     }
 
-    BlackLab40StoredFieldsReader getStoredFieldReader() {
+    @Override
+    public BlackLabStoredFieldsReader getStoredFieldsReader() {
         try {
             BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
             return codec.storedFieldsFormat().fieldsReader(
@@ -132,6 +135,11 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         return getClass().getSimpleName() + "(delegate=" + delegateFieldsProducer + ")";
     }
 
+    /** Lucene 8 uses big-endian, Lucene 9 little-endian */
+    public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
+        return directory.openInput(fileName, ioContext);
+    }
+
     /**
      * Open a custom file for reading and check the header.
      *
@@ -140,7 +148,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      */
     public IndexInput openIndexFile(String extension) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, extension);
-        IndexInput input = state.directory.openInput(fileName, state.context);
+        IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
         try {
             // Check index header
             CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
@@ -175,14 +183,14 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         return forwardIndex.reader();
     }
 
-    /**
-     * Get the BlackLab40PostingsReader for the given leafreader.
-     *
-     * @param lrc leafreader to get the BlackLab40PostingsReader for
-     * @return BlackLab40PostingsReader for this leafreader
-     */
-    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
-        return BlackLab40Codec.getTerms(lrc).getFieldsProducer();
-    }
+//    /**
+//     * Get the BlackLab40PostingsReader for the given leafreader.
+//     *
+//     * @param lrc leafreader to get the BlackLab40PostingsReader for
+//     * @return BlackLab40PostingsReader for this leafreader
+//     */
+//    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
+//        return (BlackLab40PostingsReader) BLTerms.getTerms(lrc).getFieldsProducer();
+//    }
 
 }

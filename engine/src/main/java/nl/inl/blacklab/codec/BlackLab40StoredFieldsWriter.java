@@ -73,16 +73,16 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         this.delegate = delegate;
         this.delegateFormatName = delegateFormatName;
 
-        fieldsFile = createOutput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
+        fieldsFile = createOutput(BlackLabStoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
 
         // NOTE: we can make this configurable later (to optimize for specific usage scenarios),
         // but for now we'll just use the default value.
         fieldsFile.writeInt(blockSizeChars);
 
-        docIndexFile = createOutput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
-        valueIndexFile = createOutput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
-        blockIndexFile = createOutput(BlackLab40StoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
-        blocksFile = createOutput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
+        docIndexFile = createOutput(BlackLabStoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
+        valueIndexFile = createOutput(BlackLabStoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
+        blockIndexFile = createOutput(BlackLabStoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
+        blocksFile = createOutput(BlackLabStoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
     }
 
     private IndexOutput createOutput(String ext, Directory directory, SegmentInfo segmentInfo, IOContext ioContext)

@@ -15,7 +15,7 @@ import org.apache.lucene.store.IOContext;
  *
  * Delegates non-content-store writes and reads to the default implementation.
  */
-public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
+public class BlackLab40StoredFieldsFormat extends BlackLabStoredFieldsFormat {
 
     /** Name of this codec. Written to the files and checked on reading. */
     public static final String NAME = "BlackLab40ContentStore";
@@ -25,24 +25,6 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
 
     /** Current version */
     public static final int VERSION_CURRENT = 1;
-
-    /** Every file extension will be prefixed with this to indicate it is part of the content store. */
-    private static final String EXT_PREFIX = "blcs.";
-
-    /** Extension for the fields file, that stores block size and Lucene fields with a CS. */
-    public static final String FIELDS_EXT = EXT_PREFIX + "fields";
-
-    /** Extension for the docindex file. */
-    public static final String DOCINDEX_EXT = EXT_PREFIX + "docindex";
-
-    /** Extension for the valueindex file. */
-    public static final String VALUEINDEX_EXT = EXT_PREFIX + "valueindex";
-
-    /** Extension for the blockindex file. */
-    public static final String BLOCKINDEX_EXT = EXT_PREFIX + "blockindex";
-
-    /** Extension for the blocks file. */
-    public static final String BLOCKS_EXT = EXT_PREFIX + "blocks";
 
     /**
      * Default uncompressed block size (in characters) for the values files.
@@ -59,7 +41,7 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
     }
 
     @Override
-    public BlackLab40StoredFieldsReader fieldsReader(Directory directory, SegmentInfo segmentInfo,
+    public BlackLabStoredFieldsReader fieldsReader(Directory directory, SegmentInfo segmentInfo,
             FieldInfos fieldInfos, IOContext ioContext) throws IOException {
         StoredFieldsReader delegateReader = delegate.fieldsReader(directory, segmentInfo, fieldInfos, ioContext);
         String delegateFormatName = delegate.getClass().getSimpleName();
