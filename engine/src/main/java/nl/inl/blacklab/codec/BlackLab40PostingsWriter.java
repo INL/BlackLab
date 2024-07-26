@@ -208,11 +208,11 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
 
         Map<String, ForwardIndexFieldMutable> fiFields = new HashMap<>();
 
-        try (   IndexOutput outTokensIndexFile = createOutput(BlackLabCodec.TOKENS_INDEX_EXT);
-                IndexOutput outTokensFile = createOutput(BlackLabCodec.TOKENS_EXT);
-                IndexOutput termIndexFile = createOutput(BlackLabCodec.TERMINDEX_EXT);
-                IndexOutput termsFile = createOutput(BlackLabCodec.TERMS_EXT);
-                IndexOutput termsOrderFile = createOutput(BlackLabCodec.TERMORDER_EXT)
+        try (   IndexOutput outTokensIndexFile = createOutput(BlackLabPostingsFormat.TOKENS_INDEX_EXT);
+                IndexOutput outTokensFile = createOutput(BlackLabPostingsFormat.TOKENS_EXT);
+                IndexOutput termIndexFile = createOutput(BlackLabPostingsFormat.TERMINDEX_EXT);
+                IndexOutput termsFile = createOutput(BlackLabPostingsFormat.TERMS_EXT);
+                IndexOutput termsOrderFile = createOutput(BlackLabPostingsFormat.TERMORDER_EXT)
         ) {
 
             // Write our postings extension information
@@ -233,7 +233,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
             //   we use temporary files because this might take a huge amount of memory)
             // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
             Map<String, LengthsAndOffsetsPerDocument> field2docTermVecFileOffsets = new LinkedHashMap<>();
-            try (IndexOutput outTempTermVectorFile = createOutput(BlackLabCodec.TERMVEC_TMP_EXT)) {
+            try (IndexOutput outTempTermVectorFile = createOutput(BlackLabPostingsFormat.TERMVEC_TMP_EXT)) {
 
                 // Process fields
                 for (String luceneField: fields) { // for each field
@@ -361,7 +361,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
             // Reverse the reverse index to create forward index
             // (this time we iterate per field and per document first, then reconstruct the document by
             //  looking at each term's occurrences. This produces our forward index)
-            try (IndexInput inTermVectorFile = openInput(BlackLabCodec.TERMVEC_TMP_EXT)) {
+            try (IndexInput inTermVectorFile = openInput(BlackLabPostingsFormat.TERMVEC_TMP_EXT)) {
 
                 // For each field...
                 for (Entry<String, LengthsAndOffsetsPerDocument> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
@@ -385,11 +385,11 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                 }
             } finally {
                 // Clean up after ourselves
-                deleteIndexFile(BlackLabCodec.TERMVEC_TMP_EXT);
+                deleteIndexFile(BlackLabPostingsFormat.TERMVEC_TMP_EXT);
             }
 
             // Write fields file, now that we know all the relevant offsets
-            try (IndexOutput fieldsFile = createOutput(BlackLabCodec.FIELDS_EXT)) {
+            try (IndexOutput fieldsFile = createOutput(BlackLabPostingsFormat.FIELDS_EXT)) {
                 // for each field that has a forward index...
                 for (ForwardIndexField field : fiFields.values()) {
                     // write the information to fields file, see integrated.md
@@ -534,6 +534,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         return output;
     }
 
+    /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         return EndiannessReverserUtil.openInput(directory, fileName, ioContext);
     }
@@ -541,8 +542,6 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
     @SuppressWarnings("SameParameterValue")
     private IndexInput openInput(String ext) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
-        // NOTE: we have to deal with Lucene 9's switch to little-endian.
-        //IndexInput input = state.directory.openInput(fileName, state.context);
         IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
 
         // Read and check standard header, with codec name and version and segment info.

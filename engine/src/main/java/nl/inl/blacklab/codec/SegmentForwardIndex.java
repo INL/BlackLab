@@ -49,7 +49,7 @@ public class SegmentForwardIndex implements AutoCloseable {
     public SegmentForwardIndex(BlackLabPostingsReader postingsReader) throws IOException {
         this.fieldsProducer = postingsReader;
 
-        try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLabCodec.FIELDS_EXT)) {
+        try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.FIELDS_EXT)) {
             long size = fieldsFile.length();
             while (fieldsFile.getFilePointer() < (size - CodecUtil.footerLength())) {
                 ForwardIndexField f = new ForwardIndexField(fieldsFile);
@@ -57,8 +57,8 @@ public class SegmentForwardIndex implements AutoCloseable {
             }
         }
 
-        _tokensIndexFile = postingsReader.openIndexFile(BlackLabCodec.TOKENS_INDEX_EXT);
-        _tokensFile = postingsReader.openIndexFile(BlackLabCodec.TOKENS_EXT);
+        _tokensIndexFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TOKENS_INDEX_EXT);
+        _tokensFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TOKENS_EXT);
     }
 
     private synchronized IndexInput getCloneOfTokensIndexFile() {

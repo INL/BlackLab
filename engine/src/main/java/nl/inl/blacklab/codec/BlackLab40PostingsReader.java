@@ -121,6 +121,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
         return getClass().getSimpleName() + "(delegate=" + delegateFieldsProducer + ")";
     }
 
+    /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         return EndiannessReverserUtil.openInput(directory, fileName, ioContext);
     }
@@ -133,8 +134,6 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
      */
     public IndexInput openIndexFile(String extension) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, extension);
-        // NOTE: we have to deal with Lucene 9's switch to little-endian.
-        //IndexInput input = state.directory.openInput(fileName, state.context);
         IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
         try {
             // Check index header

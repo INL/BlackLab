@@ -7,7 +7,7 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.codec.BlackLabCodec;
+import nl.inl.blacklab.codec.BlackLabPostingsFormat;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.codec.ForwardIndexField;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -38,12 +38,12 @@ public class TermsIntegratedSegment implements AutoCloseable {
         try {
             this.segmentReader = segmentReader;
             this.ord = ord;
-            this._termIndexFile = segmentReader.openIndexFile(BlackLabCodec.TERMINDEX_EXT);
-            this._termsFile = segmentReader.openIndexFile(BlackLabCodec.TERMS_EXT);
-            this._termOrderFile = segmentReader.openIndexFile(BlackLabCodec.TERMORDER_EXT);
+            this._termIndexFile = segmentReader.openIndexFile(BlackLabPostingsFormat.TERMINDEX_EXT);
+            this._termsFile = segmentReader.openIndexFile(BlackLabPostingsFormat.TERMS_EXT);
+            this._termOrderFile = segmentReader.openIndexFile(BlackLabPostingsFormat.TERMORDER_EXT);
 
             // OPT: read cache these fields somewhere so we don't read them once per annotation
-            try (IndexInput fieldInput = segmentReader.openIndexFile(BlackLabCodec.FIELDS_EXT)) {
+            try (IndexInput fieldInput = segmentReader.openIndexFile(BlackLabPostingsFormat.FIELDS_EXT)) {
                 while (fieldInput.getFilePointer() < (fieldInput.length() - CodecUtil.footerLength())) {
                     ForwardIndexField f = new ForwardIndexField(fieldInput);
                     if (f.getFieldName().equals(luceneField)) {

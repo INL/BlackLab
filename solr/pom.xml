@@ -15,10 +15,6 @@
     <description>
         Solr integration for BlackLab (experimental).
     </description>
-
-    <properties>
-        <solr.version>9.6.1</solr.version>
-    </properties>
     
     <build>
 
@@ -133,6 +129,13 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>${servlet.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- metadata serialization? -->
 <!--        <dependency>-->
 <!--            <groupId>com.fasterxml.jackson.core</groupId>-->
@@ -160,7 +163,7 @@
 
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.apache.solr/solr-scripting -->
+
         <dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-scripting</artifactId>

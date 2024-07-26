@@ -42,7 +42,7 @@ import org.apache.lucene.util.BytesRef;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.analysis.PayloadUtils;
-import nl.inl.blacklab.codec.BlackLabCodec;
+import nl.inl.blacklab.codec.BlackLabPostingsFormat;
 import nl.inl.blacklab.codec.BlackLabPostingsWriter;
 import nl.inl.blacklab.codec.ForwardIndexField;
 import nl.inl.blacklab.codec.ForwardIndexFieldMutable;
@@ -213,11 +213,11 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
 
         Map<String, ForwardIndexFieldMutable> fiFields = new HashMap<>();
 
-        try (   IndexOutput outTokensIndexFile = createOutput(BlackLabCodec.TOKENS_INDEX_EXT);
-                IndexOutput outTokensFile = createOutput(BlackLabCodec.TOKENS_EXT);
-                IndexOutput termIndexFile = createOutput(BlackLabCodec.TERMINDEX_EXT);
-                IndexOutput termsFile = createOutput(BlackLabCodec.TERMS_EXT);
-                IndexOutput termsOrderFile = createOutput(BlackLabCodec.TERMORDER_EXT)
+        try (   IndexOutput outTokensIndexFile = createOutput(BlackLabPostingsFormat.TOKENS_INDEX_EXT);
+                IndexOutput outTokensFile = createOutput(BlackLabPostingsFormat.TOKENS_EXT);
+                IndexOutput termIndexFile = createOutput(BlackLabPostingsFormat.TERMINDEX_EXT);
+                IndexOutput termsFile = createOutput(BlackLabPostingsFormat.TERMS_EXT);
+                IndexOutput termsOrderFile = createOutput(BlackLabPostingsFormat.TERMORDER_EXT)
         ) {
 
             // Write our postings extension information
@@ -238,7 +238,7 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
             //   we use temporary files because this might take a huge amount of memory)
             // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
             Map<String, LengthsAndOffsetsPerDocument> field2docTermVecFileOffsets = new LinkedHashMap<>();
-            try (IndexOutput outTempTermVectorFile = createOutput(BlackLabCodec.TERMVEC_TMP_EXT)) {
+            try (IndexOutput outTempTermVectorFile = createOutput(BlackLabPostingsFormat.TERMVEC_TMP_EXT)) {
 
                 // Process fields
                 for (String luceneField: fields) { // for each field
@@ -366,7 +366,7 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
             // Reverse the reverse index to create forward index
             // (this time we iterate per field and per document first, then reconstruct the document by
             //  looking at each term's occurrences. This produces our forward index)
-            try (IndexInput inTermVectorFile = openInput(BlackLabCodec.TERMVEC_TMP_EXT)) {
+            try (IndexInput inTermVectorFile = openInput(BlackLabPostingsFormat.TERMVEC_TMP_EXT)) {
 
                 // For each field...
                 for (Entry<String, LengthsAndOffsetsPerDocument> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
@@ -390,11 +390,11 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
                 }
             } finally {
                 // Clean up after ourselves
-                deleteIndexFile(BlackLabCodec.TERMVEC_TMP_EXT);
+                deleteIndexFile(BlackLabPostingsFormat.TERMVEC_TMP_EXT);
             }
 
             // Write fields file, now that we know all the relevant offsets
-            try (IndexOutput fieldsFile = createOutput(BlackLabCodec.FIELDS_EXT)) {
+            try (IndexOutput fieldsFile = createOutput(BlackLabPostingsFormat.FIELDS_EXT)) {
                 // for each field that has a forward index...
                 for (ForwardIndexField field : fiFields.values()) {
                     // write the information to fields file, see integrated.md

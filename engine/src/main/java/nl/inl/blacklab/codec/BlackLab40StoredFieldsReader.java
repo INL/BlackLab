@@ -109,6 +109,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
         _blocksFile = openInput(BlackLabStoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
     }
 
+    /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         return EndiannessReverserUtil.openInput(directory, fileName, ioContext);
     }
@@ -127,8 +128,6 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
     private IndexInput openInput(String extension, Directory directory, SegmentInfo segmentInfo, IOContext ioContext) throws IOException {
         String segmentSuffix = "";
         String fileName = IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, extension);
-        // NOTE: we have to deal with Lucene 9's switch to little-endian.
-        // IndexInput input = directory.openInput(fileName, ioContext);
         IndexInput input = openInputCorrectEndian(directory, fileName, ioContext);
         try {
             // Check index header

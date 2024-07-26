@@ -23,7 +23,6 @@
             <artifactId>micrometer-core</artifactId>
             <version>1.8.5</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api -->
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
