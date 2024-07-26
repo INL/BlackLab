@@ -15,40 +15,67 @@
  * limitations under the License.
  */
 
-package nl.inl.blacklab.search.lucene;
+package org.apache.lucene.queries.spans;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.SpanCollector;
+
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
 
 /**
  * Common super class for multiple sub spans required in a document.
  * <p>
  * (adapted directly from Lucene)
  */
-abstract class BLConjunctionSpans extends BLSpans {
-    final BLSpans[] subSpans; // in query order
-    final DocIdSetIterator conjunction; // use to move to next doc with all clauses
-    boolean atFirstInCurrentDoc; // a first start position is available in current doc for nextStartPosition
-    boolean oneExhaustedInCurrentDoc; // one subspans exhausted in current doc
+public abstract class BLConjunctionSpans extends BLSpans {
+    protected final BLSpans[] subSpans; // in query order
+    protected final DocIdSetIterator conjunction; // use to move to next doc with all clauses
+    protected boolean atFirstInCurrentDoc; // a first start position is available in current doc for nextStartPosition
+    protected boolean oneExhaustedInCurrentDoc; // one subspans exhausted in current doc
 
-    BLConjunctionSpans(List<BLSpans> subSpans, SpanGuarantees guarantees) {
+    public BLConjunctionSpans(List<BLSpans> subSpans, SpanGuarantees guarantees) {
         super(guarantees);
         if (subSpans.size() < 2) {
             throw new IllegalArgumentException("Less than 2 subSpans.size():" + subSpans.size());
         }
         this.subSpans = subSpans.toArray(new BLSpans[0]);
-        // intersectSpans op ConjuctionDISI is verplaatst naar ConjunctionSpans#intersectSpans - maar die class is package-private
-        // https://github.com/apache/lucene/commit/4b55ae5de42d20324ab2a44b5ff115242a6dbfee
-        // https://github.com/apache/lucene/commit/5e0e7a5479bca798ccfe385629a0ca2ba5870bc0
-        this.conjunction = ConjunctionUtils.intersectIterators(subSpans);
+        this.conjunction = intersectSpans(subSpans);
         this.atFirstInCurrentDoc = true; // ensure for doc -1 that start/end positions are -1
+    }
+
+    // Copied from ConjunctionSpans
+    private static DocIdSetIterator intersectSpans(List<BLSpans> spanList) {
+        if (spanList.size() < 2) {
+            throw new IllegalArgumentException("Cannot make a ConjunctionDISI of less than 2 iterators");
+        }
+        final List<DocIdSetIterator> allIterators = new ArrayList<>();
+        final List<TwoPhaseIterator> twoPhaseIterators = new ArrayList<>();
+        for (Spans spans : spanList) {
+            addSpans(spans, allIterators, twoPhaseIterators);
+        }
+
+        return ConjunctionUtils.createConjunction(allIterators, twoPhaseIterators);
+    }
+
+    // Copied from ConjunctionSpans
+    private static void addSpans(
+            Spans spans, List<DocIdSetIterator> allIterators, List<TwoPhaseIterator> twoPhaseIterators) {
+        TwoPhaseIterator twoPhaseIter = spans.asTwoPhaseIterator();
+        if (twoPhaseIter != null) {
+            ConjunctionUtils.addTwoPhaseIterator(twoPhaseIter, allIterators, twoPhaseIterators);
+        } else { // no approximation support, use the iterator as-is
+            ConjunctionUtils.addIterator(spans, allIterators, twoPhaseIterators);
+        }
     }
 
     @Override

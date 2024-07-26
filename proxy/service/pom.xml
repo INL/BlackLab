@@ -28,7 +28,6 @@
 
     <dependencies>
 
-        <!-- https://mvnrepository.com/artifact/jakarta.servlet/jakarta.servlet-api -->
         <dependency>
             <groupId>jakarta.servlet</groupId>
             <artifactId>jakarta.servlet-api</artifactId>
@@ -89,14 +88,6 @@
             <artifactId>jersey-hk2</artifactId>
             <version>${jersey.version}</version>
         </dependency>
-
-        <!-- Jackson JSON/YAML reading (BLS client, config file) -->
-
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.jaxrs</groupId>-->
-<!--            <artifactId>jackson-jaxrs-json-provider</artifactId>-->
-<!--            <version>${jackson.version}</version>-->
-<!--        </dependency>-->
 
         <dependency>
             <groupId>nl.inl.blacklab</groupId>

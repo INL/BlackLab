@@ -121,10 +121,6 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     /** Information such as our index, our search logger, etc. */
     protected QueryInfo queryInfo;
 
-    public QueryInfo getQueryInfo() {
-        return queryInfo;
-    }
-
     public static boolean isAnyNGram(BLSpanQuery matchTarget) {
         boolean isAnyNGram = false;
         if (matchTarget instanceof SpanQueryAnyToken) {

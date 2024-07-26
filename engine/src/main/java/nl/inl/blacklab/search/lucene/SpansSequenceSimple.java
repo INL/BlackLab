@@ -3,6 +3,8 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.queries.spans.BLConjunctionSpans;
+
 /**
  * Simple version of sequence Spans. Requires that:
  *

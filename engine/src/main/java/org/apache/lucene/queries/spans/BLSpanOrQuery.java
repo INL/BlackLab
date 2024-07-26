@@ -172,7 +172,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      * @param clauses clauses to OR together
      */
     public BLSpanOrQuery(BLSpanQuery... clauses) {
-        super(clauses.length > 0 && clauses[0] != null ? clauses[0].getQueryInfo() : null);
+        super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo() : null);
         if (clauses.length == 0)
             throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
         inner = new SpanOrQuery(clauses);

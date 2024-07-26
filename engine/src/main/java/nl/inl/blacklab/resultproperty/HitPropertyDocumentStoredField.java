@@ -20,6 +20,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
         super(prop, hits, invert);
         this.fieldName = prop.fieldName;
         this.docPropStoredField = prop.docPropStoredField;
+        assert docPropStoredField != null;
     }
 
     public HitPropertyDocumentStoredField(BlackLabIndex index, String fieldName, String friendlyName) {
@@ -37,11 +38,9 @@ public class HitPropertyDocumentStoredField extends HitProperty {
         return new HitPropertyDocumentStoredField(this, newHits, invert);
     }
 
-    private static final PropertyValueString EMPTY = new PropertyValueString("");
-
     @Override
     public PropertyValueString get(long result) {
-        return docPropStoredField==null?EMPTY:DocPropertyStoredField.fromArray(docPropStoredField.get(hits.doc(result)));
+        return DocPropertyStoredField.fromArray(docPropStoredField.get(hits.doc(result)));
     }
 
     @Override
