@@ -24,13 +24,6 @@
         (e.g. call older BLS endpoint using newer API version).
     </description>
 
-    <properties>
-        <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
-        <jersey.version>2.35</jersey.version> <!-- 2.25.1 works. 3.0.4 does not. -->
-        <jackson.version>2.13.3</jackson.version> <!-- parent: 2.11.1 -->
-        <jaxb.version>2.3.1</jaxb.version> <!-- WAS: 2.3.0 -->
-    </properties>
-
     <dependencies>
 
     </dependencies>

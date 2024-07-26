@@ -53,10 +53,16 @@
         <blacklab.version>${project.version}</blacklab.version>
 
         <!-- Library versions -->
+        <servlet.version>4.0.1</servlet.version>
         <blacklab.luceneVersion>8.11.1</blacklab.luceneVersion>
+        <solr.version>8.11.1</solr.version>
         <log4j.version>2.17.2</log4j.version>
-        <jackson.version>2.13.4</jackson.version>
         <eclipse.collections.version>7.1.0</eclipse.collections.version>
+
+        <!-- servlet, rest, json, xml, yaml -->
+        <jackson.version>2.13.4</jackson.version>
+        <jersey.version>2.35</jersey.version>
+        <jaxb.version>2.3.1</jaxb.version>
 
         <!-- Java versions -->
         <maven.compiler.source>11</maven.compiler.source>

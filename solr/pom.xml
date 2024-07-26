@@ -15,10 +15,6 @@
     <description>
         Solr integration for BlackLab (experimental).
     </description>
-
-    <properties>
-        <solr.version>${blacklab.luceneVersion}</solr.version>
-    </properties>
     
     <build>
 
