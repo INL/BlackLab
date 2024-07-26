@@ -11,6 +11,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.ext.ExceptionMapper;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.ivdnt.blacklab.proxy.logic.Requests;
@@ -23,7 +24,7 @@ import org.ivdnt.blacklab.proxy.resources.ProxyResponse;
  * The generated response will either contain a standard ResponseMessage detailing the error when the client requested JSON/XML/text,
  * 	or will contain the standard tomcat-generated page when the client requested HTML.
  */
-public class GenericExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<Exception> {
+public class GenericExceptionMapper implements ExceptionMapper<Exception> {
 
 	@Context
 	private HttpHeaders headers;

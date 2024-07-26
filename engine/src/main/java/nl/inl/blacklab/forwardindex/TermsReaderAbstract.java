@@ -223,14 +223,14 @@ public abstract class TermsReaderAbstract implements Terms {
         // with the same term id is identical to this one, and if so, re-use it to save memory.
 
         // Is there a group starting with the same term id?
-        if (cacheFirstTermIdInGroup2GroupOffset[termIds.get(0)] != -1) {
+        if (cacheFirstTermIdInGroup2GroupOffset[termIds.getInt(0)] != -1) {
             // Yes, does it have the same size?
-            int groupOffset = cacheFirstTermIdInGroup2GroupOffset[termIds.get(0)];
+            int groupOffset = cacheFirstTermIdInGroup2GroupOffset[termIds.getInt(0)];
             int groupSize = groupTermIds[groupOffset];
             if (groupSize == termIds.size()) {
                 // Yes, are all the term ids the same?
                 for (int i = 0; i < groupSize; ++i) {
-                    if (groupTermIds[groupOffset + 1 + i] != termIds.get(i)) {
+                    if (groupTermIds[groupOffset + 1 + i] != termIds.getInt(i)) {
                         return -1; // no, not identical
                     }
                 }

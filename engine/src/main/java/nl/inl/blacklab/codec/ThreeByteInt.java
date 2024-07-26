@@ -9,15 +9,15 @@ import java.io.IOException;
  * integer is within MIN_VALUE and MAX_VALUE. You should make sure
  * of this.
  */
-class ThreeByteInt {
+public class ThreeByteInt {
 
     @FunctionalInterface
-    interface ByteOutput {
+    public interface ByteOutput {
         void writeByte(byte b) throws IOException;
     }
 
     @FunctionalInterface
-    interface ByteInput {
+    public interface ByteInput {
         byte readByte() throws IOException;
     }
 

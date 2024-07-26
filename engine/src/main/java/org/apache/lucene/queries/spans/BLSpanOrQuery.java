@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.lucene;
+package org.apache.lucene.queries.spans;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -50,6 +50,17 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
+import nl.inl.blacklab.search.lucene.SpanGuaranteesAdapter;
+import nl.inl.blacklab.search.lucene.SpanQueryAnd;
+import nl.inl.blacklab.search.lucene.SpanQueryNoHits;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -159,7 +170,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      * @param clauses clauses to OR together
      */
     public BLSpanOrQuery(BLSpanQuery... clauses) {
-        super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo : null);
+        super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo() : null);
         if (clauses.length == 0)
             throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
         inner = new SpanOrQuery(clauses);
@@ -170,7 +181,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         this.guarantees = createGuarantees(clauseGuarantees);
     }
 
-    static BLSpanQuery from(QueryInfo queryInfo, SpanOrQuery in) {
+    public static BLSpanQuery from(QueryInfo queryInfo, SpanOrQuery in) {
         SpanQuery[] clauses = in.getClauses();
         if (clauses.length == 0)
             return new SpanQueryNoHits(queryInfo, queryInfo.field().mainAnnotation().mainSensitivity().luceneField());
@@ -703,6 +714,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         }
     }
 
+    // BL from here on out.
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         // See if this is really just an expanded wildcard/regex query, and if so,
@@ -727,6 +739,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         return new Nfa(orAcyclic, List.of(orAcyclic));
     }
 
+    // BL
     /**
      * Checks if this OR node could be converted into a single NFA token state with
      * a list of terms, and collects the terms.
@@ -771,6 +784,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         return canBeTokenState;
     }
 
+    // BL
     @Override
     public boolean canMakeNfa() {
         if (clausesAreSimpleTermsInSameAnnotation)

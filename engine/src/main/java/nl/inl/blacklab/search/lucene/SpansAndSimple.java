@@ -3,6 +3,8 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.queries.spans.BLConjunctionSpans;
+
 /**
  * Combines two Spans using AND. Note that this means that only matches with the
  * same document id, the same start and the same end positions will be kept.

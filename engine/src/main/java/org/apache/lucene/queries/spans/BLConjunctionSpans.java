@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package nl.inl.blacklab.search.lucene;
+package org.apache.lucene.queries.spans;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,18 +27,24 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
+
 /**
  * Common super class for multiple sub spans required in a document.
  * <p>
  * (adapted directly from Lucene)
  */
-abstract class BLConjunctionSpans extends BLSpans {
-    final BLSpans[] subSpans; // in query order
-    final DocIdSetIterator conjunction; // use to move to next doc with all clauses
-    boolean atFirstInCurrentDoc; // a first start position is available in current doc for nextStartPosition
-    boolean oneExhaustedInCurrentDoc; // one subspans exhausted in current doc
+public abstract class BLConjunctionSpans extends BLSpans {
+    protected final BLSpans[] subSpans; // in query order
+    protected final DocIdSetIterator conjunction; // use to move to next doc with all clauses
+    protected boolean atFirstInCurrentDoc; // a first start position is available in current doc for nextStartPosition
+    protected boolean oneExhaustedInCurrentDoc; // one subspans exhausted in current doc
 
-    BLConjunctionSpans(List<BLSpans> subSpans, SpanGuarantees guarantees) {
+    public BLConjunctionSpans(List<BLSpans> subSpans, SpanGuarantees guarantees) {
         super(guarantees);
         if (subSpans.size() < 2) {
             throw new IllegalArgumentException("Less than 2 subSpans.size():" + subSpans.size());
