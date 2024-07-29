@@ -511,39 +511,35 @@ If there are any attributes, they follow next. These are sorted alphabetically b
 
 ### Payload
 
-The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the other end to save space.
+The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the target end to save space.
 
 The payload for a relation consists of the following fields:
 
-* `relOtherStart: ZInt`: relative position of the (start of the) other end. Default: `1`.
-* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `thisLength` and `otherLength`. If `0x08` is set, `targetField` will follow the flags field. The other bits are reserved for future use and must not be set. Default: `0`.
-* `targetField: VInt`: (only present if flag `0x08` set) annotated field the target points to. Uses the forward index field numbering. Default: `0`
-* `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
-* `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0` (normally) or `1` (if flag `0x04` is set)
+* This number is either `relTargetStart` or `relationId`, depending on the `flags` byte (see below). `relationId` is a unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future. For `relTargetStart`, see below. Default value: `1`.
+* `flags: byte`: If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `sourceLength` and `targetLength`. If `0x08` is set, the first number in the payload is the `relationId`. The other bits are reserved for future use and must not be set. Default: `0`.
+* If flag `0x08` was set, `flags` is followed by `relTargetStart: ZInt`: relative position of the (start of the) target end. Default: `1`. If flag `0x08` was not set, this number will not be written here (in that case, the first number of the payload is `relTargetStart`, see above).
+* `sourceLength: VInt`: length of the source end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, it will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
+* `targetLength: VInt`: length of the target end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, this will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
 
-The purpose of `targetField` is to enable having alignment relations between languages in parallel corpora. Each language would be stored in its own annotated field, e.g. `contents_en` might contain English, `contents_nl` Dutch, etc. Relations could be stored in one of the fields, or all of the fields.
+Fields may be omitted from the end if they have the default value. Therefore, an empty payload means `{ relTargetStart: 1, flags: 0, sourceLength: 0, targetLength: 0 }`.
 
-Fields may be omitted from the end if they have the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 0, otherLength: 0 }`.
-
-As another example, the payload `0x81; 0x04` would mean `{ relOtherStart: 1, flags: 4, thisLength: 1, otherLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`. 
-
-In the future, we will likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
+As another example, the payload `0x81; 0x04` would mean `{ relTargetStart: 1, flags: 4, sourceLength: 1, targetLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`.
 
 
 #### How to ensure we can look up attributes and other relation info (NOT YET IMPLEMENTED)
 
 _(NOTE: this feature is planned but not yet implemented)_
 
-Relations with attributes are index twice: once with the attributes as part of the term (so we can find instances with specific attribute values efficiently)and once without the attributes (so queries that don't filter on attributes are efficient even if there's a unique id attribute).
+Relations with attributes are indexed twice: once with the attributes as part of the term (so we can find instances with specific attribute values efficiently) and once without the attributes (so queries that don't filter on attributes are efficient even if there's a unique id attribute).
 
 This causes problems when we want to group by an attribute value of a tag we matched, because we don't always have those available, depending on the query.
 
-There could also be other things we want to look up about a relation in the future, such as its parent or children.
+There could also be other things we want to look up about a relation in the future, like its ties to other relations: in the case of inline tags: parent, children, ancestors, descendants, etc. In the case of dependency relations: perhaps information about transitive connections to other relations, etc.
 
 We want to enable this by adding a unique relation id to the payload that allows us to look up additional information in a separate file.
 
 How this changes the relation encoding:
-- we add a flag `0x10`; if set, a unique `relationId` is stored in the payload. It would be stored after `flags` (and after `targetField`, if present). This ensures BlackLab remains compatible with older corpora; however, corpora encoded this way are not compatible with older versions of BlackLab (as they would not be able to correctly decode the payload).
+- we add a flag `0x10`; if set, a unique `relationId` is stored in the payload. It would be stored after `flags`. This ensures BlackLab remains compatible with older corpora; however, corpora encoded this way are not compatible with older versions of BlackLab (as they would not be able to correctly decode the payload).
 - `relationId` is a unique number (for this annotated field), assigned when the relation is parsed and added, that can be used to look up information about the relation, such as its attributes, in separate index files.
 - The index files with relation info is created while writing the indexed terms _with_ attributes to the segment (because that term contains all the information we need to create it, whereas the optimization terms obviously do not). Both versions of the term are added with the same `relationId`, of course. 
 

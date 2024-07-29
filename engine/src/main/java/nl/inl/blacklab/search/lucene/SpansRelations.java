@@ -26,7 +26,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 class SpansRelations extends BLFilterSpans<BLSpans> {
 
     /** Empty payload (actually returns as if there is no payload, so we need our own empty array value) */
-    private static final byte[] EMPTY_PAYLOAD = new byte[0];
+    protected static final byte[] EMPTY_PAYLOAD = new byte[0];
 
     private final int NOT_YET_NEXTED = -1;
 

@@ -498,7 +498,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!openTag.name.equals(tagName))
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
-            BytesRef payload = PayloadUtils.inlineTagPayload(openTag.position, currentPos, getIndexType());
+            int relationId = tagsAnnotation().getNextRelationId();
+            BytesRef payload = PayloadUtils.inlineTagPayload(openTag.position, currentPos, getIndexType(), relationId);
             int index = openTag.index;
             if (index < 0) {
                 // Negative value means two terms were indexed (one with, one without attributes, for search performance)
@@ -591,7 +592,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         case SPAN:
             // Span: index as a relation from the start of source to the start of target (0-length)
             //   (and in the classic external index, the payload just contains the end position)
-            payload = PayloadUtils.inlineTagPayload(indexAtPosition, spanEndOrRelTarget.start(), getIndexType());
+            payload = PayloadUtils.inlineTagPayload(indexAtPosition, spanEndOrRelTarget.start(),
+                    getIndexType(), tagsAnnotation().getNextRelationId());
             break;
         case RELATION:
             // Relation: index with the full source and target spans
@@ -605,7 +607,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             int sourceEnd = onlyHasTarget ? indexAtPosition : position.end();
 
             payload = PayloadUtils.relationPayload(onlyHasTarget, sourceStart, sourceEnd,
-                    spanEndOrRelTarget.start(), spanEndOrRelTarget.end());
+                    spanEndOrRelTarget.start(), spanEndOrRelTarget.end(), tagsAnnotation().getNextRelationId());
             break;
         }
         annotationValue(name, value, indexAtPosition, payload);

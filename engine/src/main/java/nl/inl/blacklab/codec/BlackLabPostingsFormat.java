@@ -26,6 +26,24 @@ public abstract class BlackLabPostingsFormat extends PostingsFormat {
      */
     public static final String TERMVEC_TMP_EXT = EXT_PREFIX + "termvec.tmp";
 
+    /** Every relation info file extension will be prefixed with this to indicate it is part of the relation info. */
+    private static final String EXT_RELINFO_PREFIX = "blri.";
+
+    static final String RI_DOCS_EXT = EXT_RELINFO_PREFIX + "docs";
+
+    static final String RI_RELATIONS_EXT = EXT_RELINFO_PREFIX + "relations";
+
+    static final String RI_ATTR_SETS_EXT = EXT_RELINFO_PREFIX + "attrsets";
+
+    static final String RI_ATTR_NAMES_EXT = EXT_RELINFO_PREFIX + "attrnames";
+
+    static final String RI_ATTR_VALUES_EXT = EXT_RELINFO_PREFIX + "attrvalues";
+
+    /** Extension for the temporary relations file that will be converted later.
+     * The temporary file contains the attribute set id for each unique relation+attributes in each doc (and each annotated field)
+     */
+    static final String RI_RELATIONS_TMP_EXT = EXT_RELINFO_PREFIX + "relations.tmp";
+
     public BlackLabPostingsFormat(String name) {
         super(name);
     }
