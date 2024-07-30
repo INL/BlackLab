@@ -259,7 +259,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             int openTagPosition = openTagPositions.remove(lastIndex);
             int closeTagPosition = propMain.lastValuePosition() + 1;
             BytesRef payload = PayloadUtils.inlineTagPayload(openTagPosition,
-                    closeTagPosition, getIndexType());
+                    closeTagPosition, getIndexType(), -1);
             Integer openTagIndex = openTagIndexes.remove(lastIndex);
             if (openTagIndex < 0) {
                 // Negative value means two terms were indexed (one with, one without attributes, for search performance)

@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.queries.spans.FilterSpans;
@@ -73,7 +74,8 @@ class SpansTagsExternal extends BLFilterSpans<BLSpans> {
                 // NOTE: tags is a BLSpanTermQuery, a leaf, so we know there can only be one payload
                 //   each start tag gets a payload, so there should always be one
                 in.collect(collector);
-                byte[] payload = collector.getPayloads().iterator().next();
+                Iterator<byte[]> iterator = collector.getPayloads().iterator();
+                byte[] payload = iterator.hasNext() ? iterator.next() : SpansRelations.EMPTY_PAYLOAD;
                 ByteBuffer bb = ByteBuffer.wrap(payload);
                 if (payloadIndicatesPrimaryValues)
                     bb.position(PayloadUtils.getPrimaryValueIndicatorLength(payload)); // skip indicator

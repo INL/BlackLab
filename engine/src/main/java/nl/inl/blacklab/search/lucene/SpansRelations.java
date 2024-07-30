@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.PostingsEnum;
@@ -23,6 +24,9 @@ import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
  * target also define the span that is returned.
  */
 class SpansRelations extends BLFilterSpans<BLSpans> {
+
+    /** Empty payload (actually returns as if there is no payload, so we need our own empty array value) */
+    protected static final byte[] EMPTY_PAYLOAD = new byte[0];
 
     private final int NOT_YET_NEXTED = -1;
 
@@ -132,7 +136,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             //   each relation gets a payload, so there should always be one
             try {
                 in.collect(collector);
-                byte[] payload = collector.getPayloads().iterator().next();
+                Iterator<byte[]> iterator = collector.getPayloads().iterator();
+                byte[] payload = iterator.hasNext() ? iterator.next() : EMPTY_PAYLOAD;
                 ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
                 if (relationInfo == null) { // should only happen in tests
                     relationInfo = RelationInfo.create();
