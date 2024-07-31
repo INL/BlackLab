@@ -245,7 +245,13 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             List<SpansCaptureRelationsBetweenSpans.Target> targetSpanses = new ArrayList<>(targets.size());
             for (TargetWeight target: targets) {
                 SpansCaptureRelationsBetweenSpans.Target spansTarget = target.getSpans(context, requiredPostings);
-                targetSpanses.add(spansTarget); // if null, query has no hits at all; we'll check this later
+                if (spansTarget == null && target.optionalMatch) {
+                    // This is fine; optional target that has no matches. Just don't add the null value to the result,
+                    // so the matching process will continue with the other targets (if any) that do have matches.
+                } else {
+                    // Target with matches, or a non-optional null target; add it to the targetSpanses.
+                    targetSpanses.add(spansTarget); // if null, query has no hits at all; we'll check this later
+                }
             }
             return targetSpanses;
         }
@@ -389,8 +395,14 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
                 return null;
             List<SpansCaptureRelationsBetweenSpans.Target> targetSpans =
                     TargetWeight.getSpansTargets(targets, context, requiredPostings);
-            if (targetSpans.stream().anyMatch(Objects::isNull))
-                return null; // one of the targets has no hits at all
+            if (targetSpans.stream().anyMatch(Objects::isNull)) {
+                return null; // one of the non-optional targets has no hits at all
+            }
+            if (targetSpans.isEmpty()) {
+                // No targets; this means there were optional targets (==>? operator) without matches.
+                // We still want to produce source hits in this case.
+                return spans;
+            }
             return new SpansCaptureRelationsBetweenSpans(spans, targetSpans);
         }
 
