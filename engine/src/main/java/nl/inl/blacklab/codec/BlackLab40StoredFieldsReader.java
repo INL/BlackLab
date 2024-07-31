@@ -17,6 +17,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
@@ -301,7 +302,10 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
                     int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
 
                     // Try to make sure we have a large enough buffer available
-                    final int decodeBufferLength = valueLengthChar * UTF8_MAX_BYTES_PER_CHAR + ESTIMATED_DECODE_OVERHEAD;
+                    long decodeBufferLengthLong = valueLengthChar * UTF8_MAX_BYTES_PER_CHAR + ESTIMATED_DECODE_OVERHEAD;
+                    if (decodeBufferLengthLong > Constants.JAVA_MAX_ARRAY_SIZE)
+                        decodeBufferLengthLong = Constants.JAVA_MAX_ARRAY_SIZE;
+                    final int decodeBufferLength = (int) decodeBufferLengthLong;
                     if (decodedValue == null || decodedValue.length < decodeBufferLength)
                         decodedValue = new byte[decodeBufferLength];
 
