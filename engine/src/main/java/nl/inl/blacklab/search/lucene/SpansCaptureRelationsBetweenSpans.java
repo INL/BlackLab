@@ -211,15 +211,9 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             PosMinMax targetLimits = findMatchingRelations(matchingRelations, candidate.docID(), target.matchRelations,
                     sourceStart, sourceEnd);
 
-            if (matchingRelations.isEmpty()) {
-                // If no relations match, there is no match.
-                if (!target.isOptionalMatch())
-                    return FilterSpans.AcceptStatus.NO;
-                else
-                    continue; // check next target
-            }
-            if (target.hasTargetRestrictions && target.target == null) {
-                // There were target restrictions, but no hits (in this index segment); no match
+            if (matchingRelations.isEmpty() || // If no relations match, there is no match.
+                    // If there were target restrictions, but no hits (in this index segment), there is no match
+                    target.hasTargetRestrictions && target.target == null) {
                 if (!target.isOptionalMatch())
                     return FilterSpans.AcceptStatus.NO;
                 else
