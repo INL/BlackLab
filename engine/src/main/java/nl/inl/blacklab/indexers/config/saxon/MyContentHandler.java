@@ -64,8 +64,8 @@ public class MyContentHandler implements ContentHandler {
 
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
-        charPositions.addNextEndElement(locator);
         saxonHandler.endElement(uri, localName, qName);
+        charPositions.addNextEndElement(locator);
     }
 
     @Override
