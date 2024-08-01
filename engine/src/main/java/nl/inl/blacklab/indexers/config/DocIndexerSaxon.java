@@ -242,8 +242,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             // Yes; determine boundaries of this annotated field container so we can later store
             // this version of the document in the field's content store.
             // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-            docVersionStartPos = charPositions.getNodeStartPos(container);
-            long docVersionEndPos = charPositions.getNodeEndPos(container);
+            docVersionStartPos = charPositions.getNodeStartPos(container) - docStartPos;
+            long docVersionEndPos = charPositions.getNodeEndPos(container) - docStartPos;
             docStartEndOffsetsPerField.put(annotatedField, Pair.of(docVersionStartPos, docVersionEndPos));
         }
 
@@ -450,8 +450,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             storeWholeDocument(document.getTextContent(docStartPos, docEndPos));
         } else {
             for (Map.Entry<ConfigAnnotatedField, Pair<Long, Long>> entry: docStartEndOffsetsPerField.entrySet()) {
-                Long startOffset = entry.getValue().getLeft();
-                Long endOffset = entry.getValue().getRight();
+                Long startOffset = entry.getValue().getLeft() + docStartPos;
+                Long endOffset = entry.getValue().getRight() + docStartPos;
                 storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
             }
         }
