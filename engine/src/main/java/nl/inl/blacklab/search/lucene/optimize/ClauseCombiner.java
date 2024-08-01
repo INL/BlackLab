@@ -20,10 +20,11 @@ public abstract class ClauseCombiner {
     }
 
     public static Set<ClauseCombiner> all(boolean nfa) {
-        HashSet<ClauseCombiner> all = new HashSet<>();
+        Set<ClauseCombiner> all = new HashSet<>();
         all.add(new ClauseCombinerRepetition());
         all.add(new ClauseCombinerInternalisation());
         all.add(new ClauseCombinerAnyExpansion());
+        all.add(new ClauseCombinerDefaultValue());
         all.add(new ClauseCombinerNot());
         if (nfa)
             all.add(new ClauseCombinerNfa());

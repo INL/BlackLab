@@ -15,7 +15,9 @@ import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
  */
 class ClauseCombinerAnyExpansion extends ClauseCombiner {
 
-    private static final int PRIORITY = 3;
+    private static final int BOTH_ANY_PRIORITY = 8; // prefer this over repetition, e.g. []* []* --> []*, not ([]*){2}
+
+    private static final int EXPANSION_PRIORITY = 30;
 
     enum Type {
         LEFT_ANY,
@@ -33,7 +35,12 @@ class ClauseCombinerAnyExpansion extends ClauseCombiner {
 
     @Override
     public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-        return getType(left, right) == null ? CANNOT_COMBINE : PRIORITY;
+        Type type = getType(left, right);
+        if (type == null)
+            return CANNOT_COMBINE;
+        if (type == Type.BOTH_ANY)
+            return BOTH_ANY_PRIORITY;
+        return EXPANSION_PRIORITY;
     }
 
     @Override
