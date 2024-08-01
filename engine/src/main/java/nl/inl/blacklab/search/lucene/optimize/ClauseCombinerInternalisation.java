@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  */
 class ClauseCombinerInternalisation extends ClauseCombiner {
 
-    private static final int PRIORITY = 2;
+    private static final int PRIORITY = 20;
 
     enum Type {
         INTERNALIZE_RIGHT_NEIGHBOUR,

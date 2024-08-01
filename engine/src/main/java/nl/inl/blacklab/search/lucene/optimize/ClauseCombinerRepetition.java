@@ -10,12 +10,12 @@ import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
  */
 class ClauseCombinerRepetition extends ClauseCombiner {
 
-    private static final int PRIORITY = 1;
+    private static final int PRIORITY = 10;
 
     @Override
     public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
         if (left.equals(right))
-            return 1;
+            return PRIORITY;
         BLSpanQuery leftCl = left instanceof SpanQueryRepetition ? ((SpanQueryRepetition) left).getClause() : left;
         BLSpanQuery rightCl = right instanceof SpanQueryRepetition ? ((SpanQueryRepetition) right).getClause() : right;
         return leftCl.equals(rightCl) ? PRIORITY : CANNOT_COMBINE;

@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
  */
 class ClauseCombinerNot extends ClauseCombiner {
 
-    private static final int PRIORITY = 4;
+    private static final int PRIORITY = 40;
 
     enum Type {
         NOT_CONST,
