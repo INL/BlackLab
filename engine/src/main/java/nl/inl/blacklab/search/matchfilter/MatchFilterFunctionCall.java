@@ -16,6 +16,8 @@ public class MatchFilterFunctionCall extends MatchFilter {
 
     public MatchFilterFunctionCall(String functionName, String groupName) {
         this.functionName = functionName;
+        if (!functionName.matches("start|end"))
+            throw new IllegalArgumentException("Unknown function: " + functionName);
         this.groupName = groupName;
     }
 

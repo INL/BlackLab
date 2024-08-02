@@ -141,9 +141,9 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
                 doc = nextDoc();
             } else {
                 doc = source.advance(target);
-                if (doc != DocIdSetIterator.NO_MORE_DOCS) {
-                    prepareForFirstBucketInDocument(source);
-                }
+            }
+            if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                prepareForFirstBucketInDocument(source);
             }
         }
         assert source.docID() == DocIdSetIterator.NO_MORE_DOCS || (beforeFirstBucketHit && source.startPosition() < 0);
