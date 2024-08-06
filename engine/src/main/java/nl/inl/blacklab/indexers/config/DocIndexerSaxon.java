@@ -1,12 +1,10 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,7 +15,6 @@ import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.xml.sax.SAXException;
@@ -31,6 +28,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.indexers.config.saxon.CharPositionsTracker;
+import nl.inl.blacklab.indexers.config.saxon.CharPositionsTrackerImpl;
 import nl.inl.blacklab.indexers.config.saxon.DocumentReference;
 import nl.inl.blacklab.indexers.config.saxon.MyContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
@@ -127,47 +125,37 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     @Override
     public void setDocument(File file, Charset defaultCharset) {
-        setDocument(file, defaultCharset, null);
+        cleanupPreviousInputFile();
+        document = DocumentReference.fromFile(file, defaultCharset);
     }
 
     @Override
     public void setDocument(byte[] contents, Charset defaultCharset) {
-        try {
-            char[] charContents = IOUtils.toCharArray(new ByteArrayInputStream(contents), defaultCharset);
-            setDocument(null, StandardCharsets.UTF_8, charContents);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        cleanupPreviousInputFile();
+        document = DocumentReference.fromByteArray(contents, defaultCharset);
     }
 
     @Override
     public void setDocument(InputStream is, Charset defaultCharset) {
-        try {
-            setDocument(null, StandardCharsets.UTF_8, IOUtils.toCharArray(is, defaultCharset));
-            is.close();
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        cleanupPreviousInputFile();
+        document = DocumentReference.fromInputStream(is, defaultCharset);
     }
 
     @Override
     public void setDocument(Reader reader) {
-        try {
-            setDocument(null, StandardCharsets.UTF_8, IOUtils.toCharArray(reader));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    private void setDocument(File file, Charset charset, char[] documentContent) {
-        assert file == null || charset != null; // if file is set, we also need a charset
-        document = new DocumentReference(documentContent, charset, file, false);
+        cleanupPreviousInputFile();
+        document = DocumentReference.fromReader(reader);
     }
 
     private void readDocument() {
         try {
-            document = document.withXIncludesResolved(currentXIncludeDir);
-            charPositions = document.getCharPositionsTracker();
+            document.setXIncludeDirectory(currentXIncludeDir);
+
+            // Read through the document(s) once, capturing the character positions for each tag.
+            try (Reader reader = document.getDocumentReader()) {
+                charPositions = new CharPositionsTrackerImpl(reader);
+            }
+            // Now parse the document
             try (Reader reader = document.getDocumentReader()) {
                 contents = SaxonHelper.parseDocument(reader, new MyContentHandler(charPositions));
             }
@@ -447,19 +435,32 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     @Override
     protected void storeDocument() {
         if (docStartEndOffsetsPerField.isEmpty()) {
+            // Regular, non-parallel corpus. Store whole document.
             storeWholeDocument(document.getTextContent(docStartPos, docEndPos));
         } else {
+            // Parallel corpus. Store each version of the document with its field.
             for (Map.Entry<ConfigAnnotatedField, Pair<Long, Long>> entry: docStartEndOffsetsPerField.entrySet()) {
                 Long startOffset = entry.getValue().getLeft() + docStartPos;
                 Long endOffset = entry.getValue().getRight() + docStartPos;
                 storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
             }
         }
-        document.clean();
-        document = null;
+    }
+
+    private void cleanupPreviousInputFile() {
+        if (document != null) {
+            document.clean();
+            document = null;
+        }
         // make sure we don't hold on to memory needlessly
         charPositions = null;
         contents = null;
+    }
+
+    @Override
+    public void close() {
+        cleanupPreviousInputFile();
+        super.close();
     }
 
     @Override

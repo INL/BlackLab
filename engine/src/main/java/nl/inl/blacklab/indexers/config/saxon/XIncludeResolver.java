@@ -2,12 +2,9 @@ package nl.inl.blacklab.indexers.config.saxon;
 
 import java.io.Reader;
 
-public interface XIncludeResolver {
-    DocumentReference getDocumentReference();
+interface XIncludeResolver {
 
     Reader getDocumentReader();
-
-    CharPositionsTracker getCharPositionsTracker();
 
     boolean anyXIncludesFound();
 }

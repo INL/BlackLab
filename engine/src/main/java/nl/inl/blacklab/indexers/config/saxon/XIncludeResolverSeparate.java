@@ -12,43 +12,43 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Resolve xi:includes using a composite Reader.
- *
- * Uses a lot less memory because the contents aren't kept in-memory.
- */
-public class XIncludeResolverSeparate implements XIncludeResolver {
-
-    private final DocumentReference document;
+/** Resolve xi:includes using a composite Reader. */
+class XIncludeResolverSeparate implements XIncludeResolver {
 
     private final File baseDir;
 
-    private final CharPositionsTrackerImpl charPositionsTracker;
-
     private boolean anyXIncludesFound = false;
 
-    public XIncludeResolverSeparate(DocumentReference document, File curDir) {
-        this.document = document;
+    private Reader initialReader;
+
+    private final char[] baseDocument;
+
+    public XIncludeResolverSeparate(char[] baseDocument, File curDir) {
+        this.baseDocument = baseDocument;
         this.baseDir = curDir;
 
-        // Read through the document(s) once, capturing the character positions for each tag.
-        try (Reader reader = getDocumentReader()) {
-            charPositionsTracker = new CharPositionsTrackerImpl(reader);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public DocumentReference getDocumentReference() {
-        return document;
+        // Make sure we've read through so we know if there's xi:includes or not
+        initialReader = getDocumentReader();
     }
 
     @Override
     public Reader getDocumentReader() {
-        // Find XInclude tags and construct a list of readers
-        List<Reader> readers = findXIncludesAndConstructReaderList(document.getDocWithoutXIncludesResolved(), baseDir);
+        if (initialReader != null) {
+            // We've already read through the document; return the reader we created then
+            Reader r = initialReader;
+            initialReader = null;
+            return r;
+        }
 
-        return new Reader() {
+        if (!anyXIncludesFound) {
+            // We know there's no xi:includes in the file; just return the document as a reader
+            return new CharArrayReader(baseDocument);
+        }
+
+        // Find XInclude tags and construct a list of readers
+        List<Reader> readers = findXIncludesAndConstructReaderList(baseDocument, baseDir);
+
+        Reader reader = new Reader() {
             @Override
             public int read(char[] chars, int offset, int length) throws IOException {
                 if (length == 0)
@@ -78,11 +78,7 @@ public class XIncludeResolverSeparate implements XIncludeResolver {
                 }
             }
         };
-    }
-
-    @Override
-    public CharPositionsTracker getCharPositionsTracker() {
-        return charPositionsTracker;
+        return reader;
     }
 
     private List<Reader> findXIncludesAndConstructReaderList(char[] documentContent, File dir) {
