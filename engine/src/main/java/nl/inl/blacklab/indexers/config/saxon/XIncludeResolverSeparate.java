@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/** Resolve xi:includes using a composite Reader.
+ *
+ * Uses a lot less memory because the contents aren't kept in-memory.
+ */
 public class XIncludeResolverSeparate implements XIncludeResolver {
 
     private final DocumentReference document;

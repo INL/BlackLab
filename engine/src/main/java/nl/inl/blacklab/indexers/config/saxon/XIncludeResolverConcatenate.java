@@ -15,6 +15,10 @@ import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
+/** Resolve xi:includes by concatenating contents together.
+ *
+ * Naive approach that uses a lot of memory.
+ */
 public class XIncludeResolverConcatenate implements XIncludeResolver {
 
     private final DocumentReference documentReference;
