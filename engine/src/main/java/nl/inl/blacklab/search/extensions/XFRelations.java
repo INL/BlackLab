@@ -120,7 +120,7 @@ public class XFRelations implements ExtensionFunctionClass {
      */
     private static BLSpanQuery rspan(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         if (args.size() < 2)
-            throw new IllegalArgumentException("rmatch() requires a query and a span mode as arguments");
+            throw new IllegalArgumentException("rspan() requires a query and a span mode as arguments");
         BLSpanQuery relations = (BLSpanQuery) args.get(0);
         RelationInfo.SpanMode mode = RelationInfo.SpanMode.fromCode((String)args.get(1));
         return new SpanQueryRelationSpanAdjust(relations, mode, null);
