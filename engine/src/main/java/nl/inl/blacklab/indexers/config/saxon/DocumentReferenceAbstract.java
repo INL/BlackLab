@@ -3,6 +3,9 @@ package nl.inl.blacklab.indexers.config.saxon;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.function.Supplier;
+
+import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -17,6 +20,33 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
     XIncludeResolver xincludeResolver;
 
     /**
+     * Read characters from a Reader, starting at startOffset and ending at endOffset.
+     *
+     * @param reader the Reader to read from
+     * @param startOffset the offset to start reading at
+     * @param endOffset the offset to stop reading at, or -1 to read until the end
+     * @return the characters read
+     * @throws IOException
+     */
+    private static char[] readerToCharArray(Reader reader, long startOffset, long endOffset) {
+        try {
+            if (startOffset > 0)
+                IOUtils.skip(reader, startOffset);
+            if (endOffset != -1) {
+                int length = (int)(endOffset - startOffset);
+                char[] result = new char[length];
+                if (reader.read(result, 0, length) < 0)
+                    throw new RuntimeException("Unexpected end of file");
+                return result;
+            } else {
+                return IOUtils.toCharArray(reader);
+            }
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
+
+    /**
      * Get part of the document as a TextContent object.
      * @param startOffset the offset to start reading at
      * @param endOffset the offset to stop reading at, or -1 to read until the end
@@ -24,20 +54,11 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
      */
     @Override
     public TextContent getTextContent(long startOffset, long endOffset) {
-        return new TextContent(getCharArray(startOffset, endOffset));
-    }
-
-    /**
-     * Get part of the document as a char array.
-     * @param startOffset the offset to start reading at
-     * @param endOffset the offset to stop reading at, or -1 to read until the end
-     * @return the characters read
-     */
-    char[] getCharArray(long startOffset, long endOffset) {
         // Read from the Reader provided by the XIncludeResolver
         try (Reader reader = getDocumentReader()) {
             // Read characters starting startOffset and ending at endOffset
-            return DocumentReference.readerToCharArray(reader, startOffset, endOffset);
+            char[] result = readerToCharArray(reader, startOffset, endOffset);
+            return new TextContent(result);
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }
@@ -53,28 +74,33 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
      *
      * Activates the resolving for xi:include elements, which is disabled by default.
      *
-     * @param currentXIncludeDir the directory to resolve relative XInclude paths against
+     * @param dir the directory to resolve relative XInclude paths against
      * @return document reference with XIncludes resolved (may be the same or a new instance)
      */
     @Override
-    public void setXIncludeDirectory(File currentXIncludeDir) {
-        // XInclude resolver that uses separate Readers for each part
-        xincludeResolver = new XIncludeResolverSeparate(getBaseDocument(), currentXIncludeDir);
+    public void setXIncludeDirectory(File dir) {
+        xincludeResolver = new XIncludeResolverReader(getBaseDocReaderSupplier(), dir);
     }
 
-    abstract char[] getBaseDocument();
+    public abstract Supplier<Reader> getBaseDocReaderSupplier();
 
     @Override
     public Reader getDocumentReader() {
-        return getXIncludeResolver().getDocumentReader();
-    }
-
-    XIncludeResolver getXIncludeResolver() {
         if (xincludeResolver == null) {
-            xincludeResolver = getDummyXIncludeResolver();
+            // Create a dummy that does nothing.
+            xincludeResolver = new XIncludeResolver() {
+                @Override
+                public Reader getDocumentReader() {
+                    return getBaseDocReaderSupplier().get();
+                }
+
+                @Override
+                public boolean anyXIncludesFound() {
+                    return false;
+                }
+            };
         }
-        return xincludeResolver;
+        return xincludeResolver.getDocumentReader();
     }
 
-    abstract XIncludeResolver getDummyXIncludeResolver();
 }

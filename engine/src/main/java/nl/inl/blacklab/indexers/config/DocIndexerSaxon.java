@@ -86,7 +86,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         }
     }
 
-    /** Our document, possibly swapped to disk. */
+    /** Our document (in memory or on disk). */
     private DocumentReference document;
 
     /** The parsed document. */

@@ -2,13 +2,10 @@ package nl.inl.blacklab.indexers.config.saxon;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-
-import org.apache.commons.io.IOUtils;
+import java.util.function.Supplier;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
@@ -17,19 +14,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  * Contents may be stored in memory for smaller documents, or be read from disk for larger ones.
  */
 public class DocumentReferenceFile extends DocumentReferenceAbstract {
-
-    static DocumentReferenceFile fromCharArray(char[] contents) {
-        try {
-            File file = File.createTempFile("blDocToIndex", null);
-            file.deleteOnExit();
-            try (FileWriter writer = new FileWriter(file, StandardCharsets.UTF_8)) {
-                IOUtils.write(contents, writer);
-            }
-            return new DocumentReferenceFile(file, StandardCharsets.UTF_8, true);
-        } catch (IOException e) {
-            throw new RuntimeException("Error swapping large doc to disk", e);
-        }
-    }
 
     /** Charset used by the file */
     private Charset fileCharset;
@@ -49,6 +33,8 @@ public class DocumentReferenceFile extends DocumentReferenceAbstract {
         this.fileCharset = fileCharset;
         this.file = file;
         this.deleteFileOnExit = deleteOnExit;
+        if (deleteFileOnExit)
+            file.deleteOnExit();
     }
 
     @Override
@@ -59,28 +45,13 @@ public class DocumentReferenceFile extends DocumentReferenceAbstract {
         super.clean();
     }
 
-    char[] getBaseDocument() {
-        try {
-            return IOUtils.toCharArray(new FileReader(file, fileCharset));
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-    }
-
-    XIncludeResolver getDummyXIncludeResolver() {
-        return new XIncludeResolver() {
-            @Override
-            public Reader getDocumentReader() {
-                try {
-                    return new FileReader(file, fileCharset);
-                } catch (IOException e) {
-                    throw new BlackLabRuntimeException(e);
-                }
-            }
-
-            @Override
-            public boolean anyXIncludesFound() {
-                return false;
+    @Override
+    public Supplier<Reader> getBaseDocReaderSupplier() {
+        return () -> {
+            try {
+                return new FileReader(file, fileCharset);
+            } catch (IOException e) {
+                throw new BlackLabRuntimeException(e);
             }
         };
     }

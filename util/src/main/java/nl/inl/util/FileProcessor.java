@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -29,6 +30,19 @@ import nl.inl.blacklab.index.ZipHandleManager;
  * configuration is changed during processing.
  */
 public class FileProcessor implements AutoCloseable {
+
+    public interface FileReference {
+
+        /** Path to the file (containing archive may be included). */
+        String getPath();
+
+        /** Get an input stream to the file contents. */
+        InputStream getInputStream();
+
+        /** Corresponding file or archive this is from, or null if unknown. */
+        File getFile();
+    }
+
     public interface FileHandler {
         /**
          * Handle a directory.
@@ -49,6 +63,8 @@ public class FileProcessor implements AutoCloseable {
          *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void directory(File dir) throws Exception;
+
+        void file(String path, Supplier<InputStream> supplier, File file) throws Exception;
 
         /**
          * Handle a file stream.
@@ -408,8 +424,9 @@ public class FileProcessor implements AutoCloseable {
             try {
                 if (file.length() > Constants.JAVA_MAX_ARRAY_SIZE) {
                     // Too large to read into a byte array. Use input stream.
-                    FileInputStream inputStream = FileUtils.openInputStream(file);
-                    processInputStream(file.getAbsolutePath(), inputStream, file);
+                    //FileInputStream inputStream = FileUtils.openInputStream(file);
+                    //processInputStream(file.getAbsolutePath(), inputStream, file);
+                    processInputStreamSupplier(file.getAbsolutePath(), () -> FileUtils.openInputStream(file), file);
                 } else {
                     // Read entire file into byte array (more efficient).
                     processFile(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);
@@ -417,6 +434,27 @@ public class FileProcessor implements AutoCloseable {
             } catch (IOException e) {
                 reportAndAbort(e, file.getAbsolutePath(), file);
             }
+        }
+    }
+
+    public void processInputStreamSupplier(String path, Supplier<InputStream> supplier, File file) {
+        if (closed)
+            return;
+
+        TarGzipReader.FileHandler handler = (pathInArchive, bytes) -> {
+            processFile(pathInArchive, bytes, file);
+            return !closed; // quit processing the archive if we've received an error in the meantime
+        };
+
+        if (isProcessArchives() && path != null && (path.endsWith(".tar.gz") || path.endsWith(".tgz"))) {
+            TarGzipReader.processTarGzip(path, is, handler);
+        } else if (isProcessArchives() && path != null && path.endsWith(".zip")) {
+            TarGzipReader.processZip(path, is, handler);
+        } else if (path != null && path.endsWith(".gz")) {
+            TarGzipReader.processGzip(path, is, handler);
+        } else if (path == null || (!skipFile(path) && getFileNamePattern().matcher(path).matches())) {
+            CompletableFuture.runAsync(makeRunnable(() -> fileHandler.file(path, supplier, file)), executor)
+                    .exceptionally(e -> reportAndAbort(e, path, file));
         }
     }
 
