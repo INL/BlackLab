@@ -38,6 +38,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.FileProcessor;
+import nl.inl.util.FileReference;
+import nl.inl.util.FileReferenceBytes;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeStream;
 
@@ -57,8 +59,16 @@ class IndexerImpl implements DocWriter, Indexer {
      * performs some reporting.
      */
     private class DocIndexerWrapper implements FileProcessor.FileHandler {
+
         @Override
-        public void file(String path, byte[] contents, File file) throws IOException, MalformedInputFile, PluginException {
+        public void file(FileReference file) throws Exception {
+            if (file instanceof FileReferenceBytes)
+                fileBytes(file);
+            else
+                fileStream(file);
+        }
+
+        private void fileBytes(FileReference fileRef) throws IOException, MalformedInputFile, PluginException {
             // Attempt to detect the encoding of our input, falling back to DEFAULT_INPUT_ENCODING if the stream
             // doesn't contain a a BOM. 
             // There is one gotcha, and that is that if the inputstream contains non-textual data, we pass the
@@ -67,13 +77,16 @@ class IndexerImpl implements DocWriter, Indexer {
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
             // and for text docIndexers, passing a binary file is an error in itself already.
             UniversalDetector det = new UniversalDetector(null);
+            String path = fileRef.getPath();
+            byte[] contents = fileRef.withBytes().getBytes();
+            File file = fileRef.getAssociatedFile();
             det.handleData(contents, 0, Math.min(contents.length, 1048576 /* 1 meg */));
             det.dataEnd();
             Charset cs = DEFAULT_INPUT_ENCODING; 
             try {
                 cs = Charset.forName(det.getDetectedCharset());
-            } catch (Exception e) { 
-                logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name()); 
+            } catch (Exception e) {
+                logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name());
             }
             InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
             try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path, contents, cs)) {
@@ -87,8 +100,7 @@ class IndexerImpl implements DocWriter, Indexer {
             }
         }
 
-        @Override
-        public void file(String path, InputStream is, File file) throws IOException, MalformedInputFile, PluginException {
+        private void fileStream(FileReference fileRef) throws IOException, MalformedInputFile, PluginException {
             // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream
             // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
             // the BOM (if present) and exposes the correct character set for this stream (if present)
@@ -98,6 +110,9 @@ class IndexerImpl implements DocWriter, Indexer {
             // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
             // and for text docIndexers, passing a binary file is an error in itself already.
+            String path = fileRef.getPath();
+            InputStream is = fileRef.getSinglePassInputStream();
+            File file = fileRef.getAssociatedFile();
             InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
             try (UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
                     DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path,
@@ -484,7 +499,7 @@ class IndexerImpl implements DocWriter, Indexer {
             proc.setFileNameGlob(fileNameGlob);
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener());
-            proc.processInputStream(fileName, input, null);
+            proc.processFile(FileReference.fromInputStream(fileName, input, null));
         }
     }
 
@@ -500,7 +515,7 @@ class IndexerImpl implements DocWriter, Indexer {
             proc.setFileNameGlob(optGlob.orElse("*"));
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener());
-            proc.processFile(file);
+            proc.processFileOrDirectory(file);
         }
     }
     
@@ -511,7 +526,7 @@ class IndexerImpl implements DocWriter, Indexer {
             proc.setFileNameGlob(optGlob.orElse("*"));
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener());
-            proc.processFile(fileName, contents, null);
+            proc.processFile(FileReference.fromBytes(fileName, contents, null));
         }
     }
     

@@ -35,6 +35,22 @@ public class TarGzipReader {
      * Process a .tar.gz file and call the handler for each normal file in the
      * archive.
      *
+     * @param fileRef file to decompress
+     * @param fileHandler the handler to call for each regular file
+     */
+    public static void processTarGzip(FileReference fileRef, FileHandler fileHandler) {
+        try (InputStream tgzStream = fileRef.getSinglePassInputStream();
+                InputStream unzipped = new GzipCompressorInputStream(tgzStream)) {
+            processTar(fileRef.getPath(), unzipped, fileHandler);
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    /**
+     * Process a .tar.gz file and call the handler for each normal file in the
+     * archive.
+     *
      * @param fileName name/path to this file
      * @param tarGzipStream the .tar.gz input stream to decompress. The stream will
      *            be closed after processing.
@@ -43,6 +59,21 @@ public class TarGzipReader {
     public static void processTarGzip(String fileName, InputStream tarGzipStream, FileHandler fileHandler) {
         try (InputStream unzipped = new GzipCompressorInputStream(tarGzipStream)) {
             processTar(fileName, unzipped, fileHandler);
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    /**
+     * Process a .gz file and call the file handler for its contents.
+     *
+     * @param fileRef file to decompress
+     * @param fileHandler the handler to call for each regular file
+     */
+    public static void processGzip(FileReference fileRef, FileHandler fileHandler) {
+        try (InputStream gzStream = fileRef.getSinglePassInputStream();
+                InputStream unzipped = new GzipCompressorInputStream(gzStream)) {
+            fileHandler.handle(fileRef.getPath().replaceAll("\\.gz$", ""), IOUtils.toByteArray(unzipped)); // TODO make filename handling uniform across all archives types?
         } catch (Exception e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -79,6 +110,32 @@ public class TarGzipReader {
                     continue;
 
                 boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), IOUtils.toByteArray(s));
+                if (!keepProcessing)
+                    return;
+            }
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    /**
+     * Process a .zip file and call the handler for each normal file in the archive.
+     *
+     * Note that directory structure inside the zip file is ignored; files are
+     * processed as if they are one large directory.
+     *
+     * @param fileRef file to decompress
+     * @param fileHandler the handler to call for each regular file
+     */
+    public static void processZip(FileReference fileRef, FileHandler fileHandler) {
+        try (InputStream zipStream = fileRef.getSinglePassInputStream();
+                ZipInputStream s = new ZipInputStream(zipStream)) {
+            for (ZipEntry e = s.getNextEntry(); e != null; e = s.getNextEntry()) {
+                if (e.isDirectory())
+                    continue;
+
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileRef.getPath(),
+                        e.getName()), IOUtils.toByteArray(s));
                 if (!keepProcessing)
                     return;
             }
