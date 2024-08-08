@@ -19,6 +19,12 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
     /** Helper for resolving XIncludes */
     XIncludeResolver xincludeResolver;
 
+    /** Internal Reader for getTextContent(). */
+    private Reader internalReader = null;
+
+    /** Where our internal reader is positioned currently. */
+    private long internalReaderOffset = -1;
+
     /**
      * Read characters from a Reader, starting at startOffset and ending at endOffset.
      *
@@ -54,19 +60,23 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
      */
     @Override
     public TextContent getTextContent(long startOffset, long endOffset) {
-        // Read from the Reader provided by the XIncludeResolver
-        try (Reader reader = getDocumentReader()) {
-            // Read characters starting startOffset and ending at endOffset
-            char[] result = readerToCharArray(reader, startOffset, endOffset);
-            return new TextContent(result);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
+        Reader reader = getInternalReader(startOffset);
+        // Read characters starting startOffset and ending at endOffset
+        char[] result = readerToCharArray(reader, 0, endOffset - startOffset);
+        return new TextContent(result);
     }
 
     @Override
     public void clean() {
         xincludeResolver = null;
+        if (internalReader != null) {
+            try {
+                internalReader.close();
+            } catch (IOException e) {
+                throw new BlackLabRuntimeException(e);
+            }
+            internalReader = null;
+        }
     }
 
     /**
@@ -83,6 +93,22 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
     }
 
     public abstract Supplier<Reader> getBaseDocReaderSupplier();
+
+    Reader getInternalReader(long startOffset) {
+        if (internalReader == null || internalReaderOffset > startOffset) {
+            internalReader = getDocumentReader();
+            internalReaderOffset = 0;
+        }
+        try {
+            internalReaderOffset += internalReader.skip(startOffset - internalReaderOffset);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+        if (internalReaderOffset < startOffset) {
+            throw new BlackLabRuntimeException("Could not skip to start offset");
+        }
+        return internalReader;
+    }
 
     @Override
     public Reader getDocumentReader() {

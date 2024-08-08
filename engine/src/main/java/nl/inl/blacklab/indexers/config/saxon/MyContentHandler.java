@@ -10,7 +10,7 @@ import org.xml.sax.SAXException;
  */
 public class MyContentHandler implements ContentHandler {
 
-    private final CharPositionsTracker charPositions;
+    private final PositionTrackingReader charPositions;
 
     /**
      * Saxon's default handler, which we defer to.
@@ -22,7 +22,7 @@ public class MyContentHandler implements ContentHandler {
      */
     private Locator locator;
 
-    public MyContentHandler(CharPositionsTracker charPositions) {
+    public MyContentHandler(PositionTrackingReader charPositions) {
         this.charPositions = charPositions;
     }
 

@@ -141,7 +141,12 @@ public class AnnotatedFieldWriter {
     }
 
     public void addEndChar(int endChar) {
-        assert end.isEmpty() || endChar >= end.get(end.size() - 1);
+        //assert end.isEmpty() || endChar >= end.get(end.size() - 1);
+
+        // Nested word tags can cause this... how to handle this gracefully?
+        if (!end.isEmpty() && endChar < end.get(end.size() - 1))
+            endChar = end.get(end.size() - 1);
+
         end.add(endChar);
     }
 

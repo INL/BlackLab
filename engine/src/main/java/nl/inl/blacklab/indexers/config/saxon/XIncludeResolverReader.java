@@ -76,7 +76,7 @@ class XIncludeResolverReader implements XIncludeResolver {
                 addToBuffer((char) c);
                 if (c == '<') {
                     // Make sure we buffer the entire tag
-                    int tagStart = end - 1;
+                    int tagStart = end == 0 ? buffer.length - 1 : end - 1;
                     while (!isBufferFull()) {
                         c = reader.read();
                         if (c < 0)
@@ -106,8 +106,8 @@ class XIncludeResolverReader implements XIncludeResolver {
                     try {
                         File f = new File(baseDir, href);
                         // Make sure we're not trying to break out of the base directory
-                        if (!f.getCanonicalPath().startsWith(baseDir.getCanonicalPath())) {
-                            throw new RuntimeException("XInclude file " + f + " is not in the base directory " + baseDir);
+                        if (!f.getCanonicalPath().startsWith(baseDir.getParentFile().getCanonicalPath())) {
+                            throw new RuntimeException("XInclude file " + f + " is not within the directory " + baseDir.getParentFile());
                         }
                         innerReader = new FileReader(f, StandardCharsets.UTF_8);
                     } catch (IOException e) {

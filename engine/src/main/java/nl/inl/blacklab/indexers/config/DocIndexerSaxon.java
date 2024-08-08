@@ -7,6 +7,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -27,10 +28,9 @@ import net.sf.saxon.tree.iter.AxisIterator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.indexers.config.saxon.CharPositionsTracker;
-import nl.inl.blacklab.indexers.config.saxon.CharPositionsTrackerImpl;
 import nl.inl.blacklab.indexers.config.saxon.DocumentReference;
 import nl.inl.blacklab.indexers.config.saxon.MyContentHandler;
+import nl.inl.blacklab.indexers.config.saxon.PositionTrackingReader;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -93,7 +93,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     private TreeInfo contents;
 
     /** Can calculate character position for a given line/column position. */
-    private CharPositionsTracker charPositions;
+    private PositionTrackingReader charPositions;
 
     /** Current character position in the current document */
     private long charPos = 0;
@@ -151,13 +151,15 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         try {
             document.setXIncludeDirectory(currentXIncludeDir);
 
-            // Read through the document(s) once, capturing the character positions for each tag.
-            try (Reader reader = document.getDocumentReader()) {
-                charPositions = new CharPositionsTrackerImpl(reader);
-            }
             // Now parse the document
+            // (our special reader will capture the character positions for each tag while parsing)
             try (Reader reader = document.getDocumentReader()) {
-                contents = SaxonHelper.parseDocument(reader, new MyContentHandler(charPositions));
+                try {
+                    this.charPositions = new PositionTrackingReader(reader);
+                    contents = SaxonHelper.parseDocument(charPositions, new MyContentHandler(charPositions));
+                } finally {
+                    this.charPositions.close();
+                }
             }
             XPath xPath = SaxonHelper.getXPathFactory().newXPath();
             finder = new XPathFinder(xPath,
@@ -210,8 +212,9 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     @Override
     protected void indexDocument(NodeInfo doc) {
-        docStartPos = charPositions.getNodeStartPos(doc);
-        docEndPos = charPositions.getNodeEndPos(doc);
+        PositionTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(doc);
+        docStartPos = nodeStartEnd.getStartPos();
+        docEndPos = nodeStartEnd.getEndPos();
         super.indexDocument(doc);
     }
 
@@ -230,8 +233,9 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             // Yes; determine boundaries of this annotated field container so we can later store
             // this version of the document in the field's content store.
             // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-            docVersionStartPos = charPositions.getNodeStartPos(container) - docStartPos;
-            long docVersionEndPos = charPositions.getNodeEndPos(container) - docStartPos;
+            PositionTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(container);
+            docVersionStartPos = nodeStartEnd.getStartPos() - docStartPos;
+            long docVersionEndPos = nodeStartEnd.getEndPos() - docStartPos;
             docStartEndOffsetsPerField.put(annotatedField, Pair.of(docVersionStartPos, docVersionEndPos));
         }
 
@@ -270,7 +274,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             }
 
             // Index our word
-            charPos = charPositions.getNodeStartPos(word) - docStartPos;
+            PositionTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(word);
+            charPos = nodeStartEnd.getStartPos() - docStartPos;
             beginWord();
 
             // For each configured annotation...
@@ -278,7 +283,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                 processAnnotation(annotation, word, tokenPosition);
             }
 
-            charPos = charPositions.getNodeEndPos(word) - docStartPos;
+            charPos = nodeStartEnd.getEndPos() - docStartPos;
             endWord();
 
             // Make sure we close inline tags at the correct position
@@ -439,6 +444,12 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             storeWholeDocument(document.getTextContent(docStartPos, docEndPos));
         } else {
             // Parallel corpus. Store each version of the document with its field.
+            docStartEndOffsetsPerField.entrySet().stream()
+                    .sorted(Comparator.comparing(a -> a.getValue().getLeft()))
+                    .forEach(entry -> {
+                        Pair<Long, Long> startEnd = entry.getValue();
+                        storeContent(entry.getKey(), document.getTextContent(startEnd.getLeft(), startEnd.getRight()));
+                    });
             for (Map.Entry<ConfigAnnotatedField, Pair<Long, Long>> entry: docStartEndOffsetsPerField.entrySet()) {
                 Long startOffset = entry.getValue().getLeft() + docStartPos;
                 Long endOffset = entry.getValue().getRight() + docStartPos;
