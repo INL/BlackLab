@@ -3,6 +3,8 @@ package nl.inl.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
 
@@ -12,13 +14,13 @@ public class FileReferenceInputStream implements FileReference {
 
     String path;
 
-    InputStream is;
+    UnicodeStream is;
 
     File file;
 
     FileReferenceInputStream(String path, InputStream is, File file) {
         this.path = path;
-        this.is = is;
+        this.is = UnicodeStream.wrap(is, StandardCharsets.UTF_8);
         this.file = file;
     }
 
@@ -59,5 +61,10 @@ public class FileReferenceInputStream implements FileReference {
     @Override
     public File getAssociatedFile() {
         return file;
+    }
+
+    @Override
+    public Charset getCharSet() {
+        return is.getEncoding();
     }
 }

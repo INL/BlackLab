@@ -41,7 +41,6 @@ import nl.inl.util.FileProcessor;
 import nl.inl.util.FileReference;
 import nl.inl.util.FileReferenceBytes;
 import nl.inl.util.FileUtil;
-import nl.inl.util.UnicodeStream;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -53,6 +52,27 @@ import nl.inl.util.UnicodeStream;
 class IndexerImpl implements DocWriter, Indexer {
 
     static final Logger logger = LogManager.getLogger(IndexerImpl.class);
+
+    public static Charset getCharsetBytes(String path, byte[] contents) {
+        // Attempt to detect the encoding of our input, falling back to DEFAULT_INPUT_ENCODING if the stream
+        // doesn't contain a a BOM.
+        // There is one gotcha, and that is that if the inputstream contains non-textual data, we pass the
+        // default encoding to our DocIndexer
+        // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
+        // In the case of binary data docIndexers, they should always ignore the encoding anyway
+        // and for text docIndexers, passing a binary file is an error in itself already.
+        UniversalDetector det = new UniversalDetector(null);
+        det.handleData(contents, 0, Math.min(contents.length, 1048576 /* 1 meg */));
+        det.dataEnd();
+        Charset cs = DEFAULT_INPUT_ENCODING;
+        try {
+            cs = Charset.forName(det.getDetectedCharset());
+        } catch (Exception e) {
+            logger.trace("Could not determine charset for input file {}, using default ({})",
+                    path,  DEFAULT_INPUT_ENCODING.name());
+        }
+        return cs;
+    }
 
     /**
      * FileProcessor FileHandler that creates a DocIndexer for every file and
@@ -70,47 +90,20 @@ class IndexerImpl implements DocWriter, Indexer {
 
         private void fileBytes(FileReference fileRef) throws IOException, MalformedInputFile, PluginException {
             fileRef = fileRef.withBytes(); // we need direct random access for the encoding detection
-            byte[] contents = fileRef.getBytes();
-            File file = fileRef.getAssociatedFile();
-            Charset cs = getCharsetBytes(fileRef);  // TODO: FileReference.withDetectedEncoding() ?
             InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
-            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, fileRef.getPath(), contents, cs)) {
+            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, fileRef)) {
                 if (docIndexer == null) {
                     throw new PluginException(
                             "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + fileRef.getPath());
                 }
+                File file = fileRef.getAssociatedFile();
                 if (file != null)
                     docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
                 impl(docIndexer, fileRef.getPath());
             }
         }
 
-        private Charset getCharsetBytes(FileReference fileRef) {
-            // Attempt to detect the encoding of our input, falling back to DEFAULT_INPUT_ENCODING if the stream
-            // doesn't contain a a BOM.
-            // There is one gotcha, and that is that if the inputstream contains non-textual data, we pass the
-            // default encoding to our DocIndexer
-            // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
-            // In the case of binary data docIndexers, they should always ignore the encoding anyway
-            // and for text docIndexers, passing a binary file is an error in itself already.
-            UniversalDetector det = new UniversalDetector(null);
-            byte[] contents = fileRef.getBytes();
-            det.handleData(contents, 0, Math.min(contents.length, 1048576 /* 1 meg */));
-            det.dataEnd();
-            Charset cs = DEFAULT_INPUT_ENCODING;
-            try {
-                cs = Charset.forName(det.getDetectedCharset());
-            } catch (Exception e) {
-                logger.trace("Could not determine charset for input file {}, using default ({})",
-                        fileRef.getPath(),  DEFAULT_INPUT_ENCODING.name());
-            }
-            return cs;
-        }
-
-        private void fileStream(FileReference fileRef) throws IOException, MalformedInputFile {
-            String path = fileRef.getPath();
-            InputStream is = fileRef.getSinglePassInputStream();
-            File file = fileRef.getAssociatedFile();
+        private void fileStream(FileReference fileRef) throws MalformedInputFile {
             // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream
             // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
             // the BOM (if present) and exposes the correct character set for this stream (if present)
@@ -121,12 +114,11 @@ class IndexerImpl implements DocWriter, Indexer {
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
             // and for text docIndexers, passing a binary file is an error in itself already.
             InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
-            try (UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
-                    DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path,
-                            inputStream, inputStream.getEncoding())) {
+            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, fileRef)) {
+                File file = fileRef.getAssociatedFile();
                 if (file != null)
                     docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
-                impl(docIndexer, path);
+                impl(docIndexer, fileRef.getPath());
             }
         }
 

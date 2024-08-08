@@ -3,13 +3,17 @@ package nl.inl.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
+/** Represents a file to be indexed.
+ *
+ * May be in the form of an input stream, byte array, or file.
+ */
 public interface FileReference {
 
     static FileReference fromBytes(String path, byte[] contents, File file) {
@@ -33,11 +37,7 @@ public interface FileReference {
     }
 
     static FileReference fromInputStream(String path, InputStream is, File file) {
-        try {
-            return new FileReferenceBytes(path, IOUtils.toByteArray(is), file);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
+        return new FileReferenceInputStream(path, is, file);
     }
 
     /**
@@ -80,4 +80,7 @@ public interface FileReference {
      * The corresponding file or archive this content is from, or null if unknown.
      */
     File getAssociatedFile();
+
+    /** Detected or configured charset to use for file (or just the default) */
+    Charset getCharSet();
 }

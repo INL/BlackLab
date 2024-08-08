@@ -10,6 +10,7 @@ import java.util.List;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.util.FileReference;
 
 public interface DocIndexer extends AutoCloseable {
 
@@ -76,7 +77,15 @@ public interface DocIndexer extends AutoCloseable {
      *         (utf-8)
      * @throws FileNotFoundException if not found
      */
-    void setDocument(File file, Charset charset) throws FileNotFoundException;
+    void setDocument(File file, Charset charset);
+
+    /**
+     * Set the document to index.
+     *
+     * @param file file to index
+     * @throws FileNotFoundException if not found
+     */
+    void setDocument(FileReference file);
 
     /** Set the current document's directory.
      * This may e.g. be used to resolve XIncludes, e.g. by DocIndexerSaxon.

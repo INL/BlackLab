@@ -18,6 +18,7 @@ import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.util.FileReference;
 
 public interface DocumentReference {
 
@@ -102,6 +103,20 @@ public interface DocumentReference {
             return fromCharArray(IOUtils.toCharArray(reader));
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    static DocumentReference fromFileReference(FileReference file) {
+        if (file.getFile() != null) {
+            // A "real" file is the most flexible, we have easy sequential
+            // or random access to it.
+            return fromFile(file.getFile(), file.getCharSet());
+        } else {
+            // Otherwise, make sure we can create readers; one for parsing,
+            // one for getting the document (version) contents to store.
+            FileReference fileIs = file.withCreateInputStream();
+            return fromReaderSupplier(() -> new InputStreamReader(
+                    fileIs.createInputStream(), fileIs.getCharSet()));
         }
     }
 

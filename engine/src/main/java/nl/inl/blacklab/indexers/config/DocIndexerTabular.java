@@ -117,8 +117,12 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
     }
 
     @Override
-    public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
-        setDocument(FileUtil.openForReading(file, defaultCharset));
+    public void setDocument(File file, Charset defaultCharset) {
+        try {
+            setDocument(FileUtil.openForReading(file, defaultCharset));
+        } catch (FileNotFoundException e) {
+            throw new BlackLabRuntimeException(e);
+        }
     }
 
     @Override

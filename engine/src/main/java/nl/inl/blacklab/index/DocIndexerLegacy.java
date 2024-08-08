@@ -17,6 +17,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CountingReader;
+import nl.inl.util.FileReference;
 import nl.inl.util.UnicodeStream;
 
 /**
@@ -134,13 +135,9 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
      * @param cs charset to use if no BOM found, or null for the default (utf-8)
      */
     public void setDocument(InputStream is, Charset cs) {
-        try {
-            UnicodeStream unicodeStream = new UnicodeStream(is, cs);
-            Charset detectedCharset = unicodeStream.getEncoding();
-            setDocument(new InputStreamReader(unicodeStream, detectedCharset));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        UnicodeStream unicodeStream = UnicodeStream.wrap(is, cs);
+        Charset detectedCharset = unicodeStream.getEncoding();
+        setDocument(new InputStreamReader(unicodeStream, detectedCharset));
     }
 
     /**
@@ -162,8 +159,17 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
      *            (utf-8)
      * @throws FileNotFoundException if not found
      */
-    public void setDocument(File file, Charset charset) throws FileNotFoundException {
-        setDocument(new FileInputStream(file), charset);
+    public void setDocument(File file, Charset charset) {
+        try {
+            setDocument(new FileInputStream(file), charset);
+        } catch (FileNotFoundException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void setDocument(FileReference file) {
+        setDocument(file.getSinglePassInputStream(), file.getCharSet());
     }
 
     @Override

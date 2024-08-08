@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FileUtils;
 
@@ -12,7 +14,11 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 public class FileReferenceFile implements FileReference {
 
-    File file;
+    /** The file */
+    private File file;
+
+    /** The encoding, or null if BOM not yet detected */
+    private Charset charSet;
 
     FileReferenceFile(File file) {
         this.file = file;
@@ -68,5 +74,18 @@ public class FileReferenceFile implements FileReference {
     @Override
     public File getAssociatedFile() {
         return file;
+    }
+
+    @Override
+    public Charset getCharSet() {
+        if (charSet == null) {
+            // Check the file for a BOM to determine the encoding
+            try (UnicodeStream is = UnicodeStream.wrap(createInputStream(), StandardCharsets.UTF_8)) {
+                charSet = is.getEncoding();
+            } catch (IOException e) {
+                throw new BlackLabRuntimeException(e);
+            }
+        }
+        return charSet;
     }
 }

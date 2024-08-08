@@ -29,7 +29,6 @@ import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -38,6 +37,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
+import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 import nl.inl.util.UnicodeStream;
 
@@ -257,8 +257,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         // Index the data
         InputFormat inputFormat = DocumentFormats.getFormat(inputFormatIdentifier).orElseThrow();
-        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(), completePath,
-                data, Indexer.DEFAULT_INPUT_ENCODING)) {
+        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(),
+                FileReference.fromBytes(completePath, data, f))) {
             if (docIndexer instanceof DocIndexerBase) {
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingDoc = true;
@@ -687,13 +687,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param cs charset to use if no BOM found, or null for the default (utf-8)
      */
     public void setDocument(InputStream is, Charset cs) {
-        try {
-            UnicodeStream unicodeStream = new UnicodeStream(is, cs);
-            Charset detectedCharset = unicodeStream.getEncoding();
-            setDocument(new InputStreamReader(unicodeStream, detectedCharset));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        UnicodeStream unicodeStream = UnicodeStream.wrap(is, cs);
+        Charset detectedCharset = unicodeStream.getEncoding();
+        setDocument(new InputStreamReader(unicodeStream, detectedCharset));
     }
 
     /**
@@ -715,8 +711,22 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      *            (utf-8)
      * @throws FileNotFoundException if not found
      */
-    public void setDocument(File file, Charset charset) throws FileNotFoundException {
-        setDocument(new FileInputStream(file), charset);
+    public void setDocument(File file, Charset charset) {
+        try {
+            setDocument(new FileInputStream(file), charset);
+        } catch (FileNotFoundException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    @Override
+    public void setDocument(FileReference file) {
+        if (documentName == null)
+            documentName = file.getPath();
+        if (file.getFile() != null)
+            setDocument(file.getFile(), file.getCharSet());
+        else
+            setDocument(file.withBytes().getBytes(), file.getCharSet());
     }
 
     /**

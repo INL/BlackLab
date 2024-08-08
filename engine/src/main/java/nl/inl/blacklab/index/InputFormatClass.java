@@ -1,20 +1,14 @@
 package nl.inl.blacklab.index;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
 
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.util.UnicodeStream;
+import nl.inl.util.FileReference;
 
 /**
  * Description of a supported input format that is not configuration-based.
@@ -56,7 +50,7 @@ public class InputFormatClass implements InputFormat {
     }
 
     @Override
-    public DocIndexer createDocIndexer(DocWriter indexer, String documentName, InputStream is, Charset cs) {
+    public DocIndexer createDocIndexer(DocWriter indexer, FileReference file) {
         try {
             // Instantiate our DocIndexer class
             Constructor<? extends DocIndexer> constructor;
@@ -65,12 +59,13 @@ public class InputFormatClass implements InputFormat {
                 constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
                 docIndexer.setDocWriter(indexer);
-                docIndexer.setDocumentName(documentName);
-                docIndexer.setDocument(is, cs);
+                docIndexer.setDocumentName(file.getPath());
+                docIndexer.setDocument(file);
             } catch (NoSuchMethodException e) {
                 // No, this is an older DocIndexer that takes document name and reader directly.
                 constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
-                docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(is, cs));
+                InputStreamReader inputStreamReader = new InputStreamReader(file.getSinglePassInputStream(), file.getCharSet());
+                docIndexer = constructor.newInstance(indexer, file.getPath(), inputStreamReader);
             }
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
@@ -79,56 +74,80 @@ public class InputFormatClass implements InputFormat {
         }
     }
 
-    @Override
-    public DocIndexer createDocIndexer(DocWriter indexer, String documentName, File f, Charset cs) {
-        try {
-            // Instantiate our DocIndexer class
-            Constructor<? extends DocIndexer> constructor;
-            DocIndexer docIndexer;
-            try {
-                constructor = docIndexerClass.getConstructor();
-                docIndexer = constructor.newInstance();
-                docIndexer.setDocWriter(indexer);
-                docIndexer.setDocumentName(documentName);
-                docIndexer.setDocument(f, cs);
-            } catch (NoSuchMethodException e) {
-                // No, this is an older DocIndexer that takes document name and reader directly.
-                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
-                UnicodeStream is = new UnicodeStream(new FileInputStream(f), Indexer.DEFAULT_INPUT_ENCODING);
-                Charset detectedCharset = is.getEncoding();
-                docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(is, detectedCharset));
-            }
-            return docIndexer;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
-                 | InvocationTargetException | NoSuchMethodException | IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
-    public DocIndexer createDocIndexer(DocWriter indexer, String documentName, byte[] contents, Charset cs) {
-        try {
-            // Instantiate our DocIndexer class
-            Constructor<? extends DocIndexer> constructor;
-            DocIndexer docIndexer;
-            try {
-                constructor = docIndexerClass.getConstructor();
-                docIndexer = constructor.newInstance();
-                docIndexer.setDocWriter(indexer);
-                docIndexer.setDocumentName(documentName);
-                docIndexer.setDocument(contents, cs);
-            } catch (NoSuchMethodException e) {
-                // No, this is an older DocIndexer that takes document name and reader directly.
-                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
-                docIndexer = constructor.newInstance(indexer, documentName,
-                        new InputStreamReader(new ByteArrayInputStream(contents), cs));
-            }
-            return docIndexer;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
-                 | InvocationTargetException | NoSuchMethodException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
+//    @Override
+//    public DocIndexer createDocIndexer(DocWriter indexer, String documentName, InputStream is, Charset cs) {
+//        try {
+//            // Instantiate our DocIndexer class
+//            Constructor<? extends DocIndexer> constructor;
+//            DocIndexer docIndexer;
+//            try {
+//                constructor = docIndexerClass.getConstructor();
+//                docIndexer = constructor.newInstance();
+//                docIndexer.setDocWriter(indexer);
+//                docIndexer.setDocumentName(documentName);
+//                docIndexer.setDocument(is, cs);
+//            } catch (NoSuchMethodException e) {
+//                // No, this is an older DocIndexer that takes document name and reader directly.
+//                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
+//                docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(is, cs));
+//            }
+//            return docIndexer;
+//        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
+//                 | InvocationTargetException | NoSuchMethodException e) {
+//            throw BlackLabRuntimeException.wrap(e);
+//        }
+//    }
+//
+//    @Override
+//    public DocIndexer createDocIndexer(DocWriter indexer, String documentName, File f, Charset cs) {
+//        try {
+//            // Instantiate our DocIndexer class
+//            Constructor<? extends DocIndexer> constructor;
+//            DocIndexer docIndexer;
+//            try {
+//                constructor = docIndexerClass.getConstructor();
+//                docIndexer = constructor.newInstance();
+//                docIndexer.setDocWriter(indexer);
+//                docIndexer.setDocumentName(documentName);
+//                docIndexer.setDocument(f, cs);
+//            } catch (NoSuchMethodException e) {
+//                // No, this is an older DocIndexer that takes document name and reader directly.
+//                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
+//                UnicodeStream is = UnicodeStream.wrap(new FileInputStream(f), Indexer.DEFAULT_INPUT_ENCODING);
+//                Charset detectedCharset = is.getEncoding();
+//                docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(is, detectedCharset));
+//            }
+//            return docIndexer;
+//        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
+//                 | InvocationTargetException | NoSuchMethodException | IOException e) {
+//            throw BlackLabRuntimeException.wrap(e);
+//        }
+//    }
+//
+//    @Override
+//    public DocIndexer createDocIndexer(DocWriter indexer, String documentName, byte[] contents, Charset cs) {
+//        try {
+//            // Instantiate our DocIndexer class
+//            Constructor<? extends DocIndexer> constructor;
+//            DocIndexer docIndexer;
+//            try {
+//                constructor = docIndexerClass.getConstructor();
+//                docIndexer = constructor.newInstance();
+//                docIndexer.setDocWriter(indexer);
+//                docIndexer.setDocumentName(documentName);
+//                docIndexer.setDocument(contents, cs);
+//            } catch (NoSuchMethodException e) {
+//                // No, this is an older DocIndexer that takes document name and reader directly.
+//                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
+//                docIndexer = constructor.newInstance(indexer, documentName,
+//                        new InputStreamReader(new ByteArrayInputStream(contents), cs));
+//            }
+//            return docIndexer;
+//        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
+//                 | InvocationTargetException | NoSuchMethodException e) {
+//            throw BlackLabRuntimeException.wrap(e);
+//        }
+//    }
 
     @Override
     public String toString() {

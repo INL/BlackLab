@@ -87,7 +87,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-    public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
+    public void setDocument(File file, Charset defaultCharset) {
         String charEncodingLine;
         try (BufferedReader thefile = FileUtil.openForReading(file)) {
             charEncodingLine = thefile.readLine();
@@ -100,7 +100,11 @@ public class DocIndexerChat extends DocIndexerConfig {
             charEncoding = defaultCharset;
         }
         setDocumentName(file.getPath());
-        setDocument(FileUtil.openForReading(file, charEncoding));
+        try {
+            setDocument(FileUtil.openForReading(file, charEncoding));
+        } catch (FileNotFoundException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
     @Override

@@ -1,15 +1,13 @@
 package nl.inl.blacklab.index;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
+import nl.inl.util.FileReference;
 
 /**
  * Description of a supported input format that is configuration-based.
@@ -84,31 +82,11 @@ public class InputFormatWithConfig implements InputFormat {
     }
 
     @Override
-    public DocIndexerConfig createDocIndexer(DocWriter indexer, String documentName, InputStream is,
-            Charset cs) {
+    public DocIndexer createDocIndexer(DocWriter indexer, FileReference file) {
         DocIndexerConfig d = DocIndexerConfig.fromConfig(getConfig());
         d.setDocWriter(indexer);
-        d.setDocumentName(documentName);
-        d.setDocument(is, cs);
-        return d;
-    }
-
-    @Override
-    public DocIndexerConfig createDocIndexer(DocWriter indexer, String documentName, File f, Charset cs)
-            throws FileNotFoundException {
-        DocIndexerConfig d = DocIndexerConfig.fromConfig(getConfig());
-        d.setDocWriter(indexer);
-        d.setDocumentName(documentName);
-        d.setDocument(f, cs);
-        return d;
-    }
-
-    @Override
-    public DocIndexerConfig createDocIndexer(DocWriter indexer, String documentName, byte[] b, Charset cs) {
-        DocIndexerConfig d = DocIndexerConfig.fromConfig(getConfig());
-        d.setDocWriter(indexer);
-        d.setDocumentName(documentName);
-        d.setDocument(b, cs);
+        d.setDocumentName(file.getPath());
+        d.setDocument(file);
         return d;
     }
 

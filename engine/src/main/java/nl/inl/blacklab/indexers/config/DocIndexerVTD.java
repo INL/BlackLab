@@ -37,6 +37,7 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
@@ -116,6 +117,12 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
+
+    @Override
+    public void setDocument(FileReference file) {
+        // VTD always needs a byte array
+        setDocument(file.withBytes().getBytes(), file.getCharSet());
     }
 
     @Override

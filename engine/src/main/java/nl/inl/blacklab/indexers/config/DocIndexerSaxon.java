@@ -34,6 +34,7 @@ import nl.inl.blacklab.indexers.config.saxon.PositionTrackingReader;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.util.FileReference;
 
 /**
  * An indexer capable of XPath version supported by the provided saxon library.
@@ -145,6 +146,12 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     public void setDocument(Reader reader) {
         cleanupPreviousInputFile();
         document = DocumentReference.fromReader(reader);
+    }
+
+    @Override
+    public void setDocument(FileReference file) {
+        cleanupPreviousInputFile();
+        document = DocumentReference.fromFileReference(file);
     }
 
     private void readDocument() {

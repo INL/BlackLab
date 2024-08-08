@@ -16,6 +16,17 @@ import java.nio.charset.StandardCharsets;
  */
 public class UnicodeStream extends InputStream {
 
+    public static UnicodeStream wrap(InputStream is, Charset cs) {
+        if (is instanceof UnicodeStream) {
+            return (UnicodeStream) is;
+        }
+        try {
+            return new UnicodeStream(is, cs);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static final int BOM_SIZE = 4;
 
     // The steam we're wrapping
@@ -23,19 +34,6 @@ public class UnicodeStream extends InputStream {
 
     // Encoding of the character set, either detected through the BOM or a default value.
     private Charset encoding;
-
-    /**
-     * Construct UnicodeReader, a Reader that skips the BOM in Unicode files (if
-     * present).
-     *
-     * @param in Input stream.
-     * @param defaultEncoding Default encoding to be used if BOM is not found, or
-     *            <code>null</code> to use system default encoding.
-     * @throws IOException If an I/O error occurs.
-     */
-    public UnicodeStream(InputStream in, String defaultEncoding) throws IOException {
-        this(in, Charset.forName(defaultEncoding));
-    }
 
     /**
      * Construct InputStream, a Reader that detects and skips the BOM in Unicode
@@ -46,7 +44,7 @@ public class UnicodeStream extends InputStream {
      *            <code>null</code> to use system default encoding.
      * @throws IOException If an I/O error occurs.
      */
-    public UnicodeStream(InputStream in, Charset defaultEncoding) throws IOException {
+    private UnicodeStream(InputStream in, Charset defaultEncoding) throws IOException {
         byte[] bom = new byte[BOM_SIZE];
         int unread;
         PushbackInputStream pushbackStream = new PushbackInputStream(in, BOM_SIZE);
