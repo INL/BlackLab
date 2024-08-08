@@ -69,38 +69,48 @@ class IndexerImpl implements DocWriter, Indexer {
         }
 
         private void fileBytes(FileReference fileRef) throws IOException, MalformedInputFile, PluginException {
+            fileRef = fileRef.withBytes(); // we need direct random access for the encoding detection
+            byte[] contents = fileRef.getBytes();
+            File file = fileRef.getAssociatedFile();
+            Charset cs = getCharsetBytes(fileRef);  // TODO: FileReference.withDetectedEncoding() ?
+            InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
+            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, fileRef.getPath(), contents, cs)) {
+                if (docIndexer == null) {
+                    throw new PluginException(
+                            "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + fileRef.getPath());
+                }
+                if (file != null)
+                    docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
+                impl(docIndexer, fileRef.getPath());
+            }
+        }
+
+        private Charset getCharsetBytes(FileReference fileRef) {
             // Attempt to detect the encoding of our input, falling back to DEFAULT_INPUT_ENCODING if the stream
-            // doesn't contain a a BOM. 
+            // doesn't contain a a BOM.
             // There is one gotcha, and that is that if the inputstream contains non-textual data, we pass the
             // default encoding to our DocIndexer
             // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
             // and for text docIndexers, passing a binary file is an error in itself already.
             UniversalDetector det = new UniversalDetector(null);
-            String path = fileRef.getPath();
-            byte[] contents = fileRef.withBytes().getBytes();
-            File file = fileRef.getAssociatedFile();
+            byte[] contents = fileRef.getBytes();
             det.handleData(contents, 0, Math.min(contents.length, 1048576 /* 1 meg */));
             det.dataEnd();
-            Charset cs = DEFAULT_INPUT_ENCODING; 
+            Charset cs = DEFAULT_INPUT_ENCODING;
             try {
                 cs = Charset.forName(det.getDetectedCharset());
             } catch (Exception e) {
-                logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name());
+                logger.trace("Could not determine charset for input file {}, using default ({})",
+                        fileRef.getPath(),  DEFAULT_INPUT_ENCODING.name());
             }
-            InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
-            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path, contents, cs)) {
-                if (docIndexer == null) {
-                    throw new PluginException(
-                            "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + path);
-                }
-                if (file != null)
-                    docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
-                impl(docIndexer, path);
-            }
+            return cs;
         }
 
-        private void fileStream(FileReference fileRef) throws IOException, MalformedInputFile, PluginException {
+        private void fileStream(FileReference fileRef) throws IOException, MalformedInputFile {
+            String path = fileRef.getPath();
+            InputStream is = fileRef.getSinglePassInputStream();
+            File file = fileRef.getAssociatedFile();
             // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream
             // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
             // the BOM (if present) and exposes the correct character set for this stream (if present)
@@ -110,9 +120,6 @@ class IndexerImpl implements DocWriter, Indexer {
             // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
             // and for text docIndexers, passing a binary file is an error in itself already.
-            String path = fileRef.getPath();
-            InputStream is = fileRef.getSinglePassInputStream();
-            File file = fileRef.getAssociatedFile();
             InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
             try (UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
                     DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, path,
