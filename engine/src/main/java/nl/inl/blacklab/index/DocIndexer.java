@@ -3,8 +3,6 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -52,32 +50,6 @@ public interface DocIndexer extends AutoCloseable {
      * @param documentName name of the document
      */
     void setDocumentName(String documentName);
-
-    /**
-     * Set the document to index.
-     *
-     * @param is document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
-     */
-    void setDocument(InputStream is, Charset cs);
-
-    /**
-     * Set the document to index.
-     *
-     * @param contents document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
-     */
-    void setDocument(byte[] contents, Charset cs);
-
-    /**
-     * Set the document to index.
-     *
-     * @param file file to index
-     * @param charset charset to use if no BOM found, or null for the default
-     *         (utf-8)
-     * @throws FileNotFoundException if not found
-     */
-    void setDocument(File file, Charset charset);
 
     /**
      * Set the document to index.

@@ -2,9 +2,7 @@ package nl.inl.blacklab.indexers.config;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -125,32 +123,9 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     }
 
     @Override
-    public void setDocument(File file, Charset defaultCharset) {
-        cleanupPreviousInputFile();
-        document = DocumentReference.fromFile(file, defaultCharset);
-    }
-
-    @Override
-    public void setDocument(byte[] contents, Charset defaultCharset) {
-        cleanupPreviousInputFile();
-        document = DocumentReference.fromByteArray(contents, defaultCharset);
-    }
-
-    @Override
-    public void setDocument(InputStream is, Charset defaultCharset) {
-        cleanupPreviousInputFile();
-        document = DocumentReference.fromInputStream(is, defaultCharset);
-    }
-
-    @Override
-    public void setDocument(Reader reader) {
-        cleanupPreviousInputFile();
-        document = DocumentReference.fromReader(reader);
-    }
-
-    @Override
     public void setDocument(FileReference file) {
         cleanupPreviousInputFile();
+        super.setDocument(file);
         document = DocumentReference.fromFileReference(file);
     }
 

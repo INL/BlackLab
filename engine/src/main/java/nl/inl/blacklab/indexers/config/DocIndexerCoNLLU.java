@@ -1,21 +1,14 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -24,7 +17,7 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
-import nl.inl.util.FileUtil;
+import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 
 /**
@@ -67,28 +60,14 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         super.setConfigInputFormat(config);
     }
 
-    @Override
-    public void setDocument(File file, Charset defaultCharset) {
-        try {
-            setDocument(FileUtil.openForReading(file, defaultCharset));
-        } catch (FileNotFoundException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-    }
-
-    @Override
-    public void setDocument(byte[] contents, Charset defaultCharset) {
-        setDocument(new ByteArrayInputStream(contents), defaultCharset);
-    }
-
-    @Override
-    public void setDocument(InputStream is, Charset defaultCharset) {
-        setDocument(new InputStreamReader(new BOMInputStream(is), defaultCharset));
-    }
-
-    @Override
     public void setDocument(Reader reader) {
         inputReader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
+    }
+
+    @Override
+    public void setDocument(FileReference file) {
+        super.setDocument(file);
+        setDocument(file.createReader());
     }
 
     @Override

@@ -6,9 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
@@ -35,7 +35,11 @@ public class FileReferenceFile implements FileReference {
 
     @Override
     public FileReference withBytes() {
-        return FileReference.fromBytes(getPath(), getBytes(), file);
+        try {
+            return FileReference.fromBytes(getPath(), FileUtils.readFileToByteArray(file), file);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
     }
 
     @Override
@@ -45,11 +49,7 @@ public class FileReferenceFile implements FileReference {
 
     @Override
     public byte[] getBytes() {
-        try {
-            return FileUtils.readFileToByteArray(file);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
+        throw new UnsupportedOperationException("Bytes not available; call withBytes() on the FileReference first");
     }
 
     @Override
@@ -80,8 +80,8 @@ public class FileReferenceFile implements FileReference {
     public Charset getCharSet() {
         if (charSet == null) {
             // Check the file for a BOM to determine the encoding
-            try (UnicodeStream is = UnicodeStream.wrap(createInputStream(), StandardCharsets.UTF_8)) {
-                charSet = is.getEncoding();
+            try (BOMInputStream is = UnicodeStream.wrap(createInputStream())) {
+                charSet = UnicodeStream.getCharset(is);
             } catch (IOException e) {
                 throw new BlackLabRuntimeException(e);
             }

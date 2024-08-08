@@ -1,8 +1,10 @@
 package nl.inl.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
 import org.apache.commons.io.FileUtils;
@@ -18,6 +20,10 @@ public interface FileReference {
 
     static FileReference fromBytes(String path, byte[] contents, File file) {
         return new FileReferenceBytes(path, contents, file);
+    }
+
+    static FileReference fromBytesOverrideCharset(String path, byte[] contents, Charset charset) {
+        return new FileReferenceBytes(path, contents, charset);
     }
 
     static FileReference fromFile(File file) {
@@ -62,14 +68,31 @@ public interface FileReference {
     /**
      * Get an input stream to the file contents.
      * Call this if you only need to process the file ONCE.
+     * @return input stream
      */
     InputStream getSinglePassInputStream();
 
     /**
      * Get an input stream to the file contents.
      * May be called multiple times.
+     * @return input stream
      */
     InputStream createInputStream();
+
+    /**
+     * Get a reader to the file contents.
+     * May be called multiple times.
+     * @return reader
+     */
+    default BufferedReader createReader() {
+        return new BufferedReader(new InputStreamReader(createInputStream(), getCharSet()));
+    }
+
+    default BufferedReader createReader(Charset overrideEncoding) {
+        if (overrideEncoding == null)
+            overrideEncoding = getCharSet();
+        return new BufferedReader(new InputStreamReader(createInputStream(), overrideEncoding));
+    }
 
     /**
      * This file, or null if this is not a (simple) file.

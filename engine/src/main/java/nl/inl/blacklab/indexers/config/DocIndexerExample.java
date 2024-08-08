@@ -21,6 +21,7 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 
 /**
@@ -405,9 +406,13 @@ public class DocIndexerExample extends DocIndexerBase {
      *
      * @param reader document to index
      */
-    @Override
     public void setDocument(Reader reader) {
         this.reader = IOUtils.toBufferedReader(reader);
     }
 
+    @Override
+    public void setDocument(FileReference file) {
+        super.setDocument(file);
+        setDocument(file.createReader());
+    }
 }

@@ -3,7 +3,6 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +13,6 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.Term;
-import org.mozilla.universalchardet.UniversalDetector;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
@@ -52,27 +50,6 @@ import nl.inl.util.FileUtil;
 class IndexerImpl implements DocWriter, Indexer {
 
     static final Logger logger = LogManager.getLogger(IndexerImpl.class);
-
-    public static Charset getCharsetBytes(String path, byte[] contents) {
-        // Attempt to detect the encoding of our input, falling back to DEFAULT_INPUT_ENCODING if the stream
-        // doesn't contain a a BOM.
-        // There is one gotcha, and that is that if the inputstream contains non-textual data, we pass the
-        // default encoding to our DocIndexer
-        // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
-        // In the case of binary data docIndexers, they should always ignore the encoding anyway
-        // and for text docIndexers, passing a binary file is an error in itself already.
-        UniversalDetector det = new UniversalDetector(null);
-        det.handleData(contents, 0, Math.min(contents.length, 1048576 /* 1 meg */));
-        det.dataEnd();
-        Charset cs = DEFAULT_INPUT_ENCODING;
-        try {
-            cs = Charset.forName(det.getDetectedCharset());
-        } catch (Exception e) {
-            logger.trace("Could not determine charset for input file {}, using default ({})",
-                    path,  DEFAULT_INPUT_ENCODING.name());
-        }
-        return cs;
-    }
 
     /**
      * FileProcessor FileHandler that creates a DocIndexer for every file and
@@ -525,7 +502,7 @@ class IndexerImpl implements DocWriter, Indexer {
             proc.setFileNameGlob(optGlob.orElse("*"));
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener());
-            proc.processFile(FileReference.fromBytes(fileName, contents, null));
+            proc.processFile(FileReference.fromBytes(fileName, contents, (File)null));
         }
     }
     

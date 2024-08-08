@@ -1,15 +1,8 @@
 package nl.inl.blacklab.index;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.util.Map;
 
 import nl.inl.blacklab.contentstore.TextContent;
@@ -18,7 +11,6 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CountingReader;
 import nl.inl.util.FileReference;
-import nl.inl.util.UnicodeStream;
 
 /**
  * Abstract base class for a DocIndexer processing XML files.
@@ -128,48 +120,11 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         this.reader = new CountingReader(reader);
     }
 
-    /**
-     * Set the document to index.
-     *
-     * @param is document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
-     */
-    public void setDocument(InputStream is, Charset cs) {
-        UnicodeStream unicodeStream = UnicodeStream.wrap(is, cs);
-        Charset detectedCharset = unicodeStream.getEncoding();
-        setDocument(new InputStreamReader(unicodeStream, detectedCharset));
-    }
-
-    /**
-     *
-     * Set the document to index.
-     *
-     * @param contents document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
-     */
-    public void setDocument(byte[] contents, Charset cs) {
-        setDocument(new ByteArrayInputStream(contents), cs);
-    }
-
-    /**
-     * Set the document to index.
-     *
-     * @param file file to index
-     * @param charset charset to use if no BOM found, or null for the default
-     *            (utf-8)
-     * @throws FileNotFoundException if not found
-     */
-    public void setDocument(File file, Charset charset) {
-        try {
-            setDocument(new FileInputStream(file), charset);
-        } catch (FileNotFoundException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-    }
-
     @Override
     public void setDocument(FileReference file) {
-        setDocument(file.getSinglePassInputStream(), file.getCharSet());
+        if (documentName == null)
+            documentName = file.getPath();
+        setDocument(file.createReader());
     }
 
     @Override

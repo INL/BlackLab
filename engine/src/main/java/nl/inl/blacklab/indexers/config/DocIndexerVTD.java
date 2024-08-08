@@ -2,11 +2,8 @@ package nl.inl.blacklab.indexers.config;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -16,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -32,7 +27,6 @@ import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
@@ -76,16 +70,6 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
     /** XPath util functions and caching of XPathExpressions */
     private XpathFinderVTD finder;
 
-    @Override
-    public void setDocument(File file, Charset defaultCharset) {
-        try {
-            setDocument(FileUtils.readFileToByteArray(file), defaultCharset);
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
     public void setDocument(byte[] contents, Charset defaultCharset) {
         boolean resolveNamedEntityReferences = Boolean.parseBoolean(
                 config.getFileTypeOptions().getOrDefault(FT_OPT_RESOLVE_NAMED_ENTITY_REFERENCES, "false"));
@@ -99,28 +83,8 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
     }
 
     @Override
-    public void setDocument(InputStream is, Charset defaultCharset) {
-        try {
-            setDocument(IOUtils.toByteArray(is), defaultCharset);
-            is.close();
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
-    public void setDocument(Reader reader) {
-        try {
-            setDocument(IOUtils.toByteArray(reader, Indexer.DEFAULT_INPUT_ENCODING),
-                    Indexer.DEFAULT_INPUT_ENCODING);
-            reader.close();
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
     public void setDocument(FileReference file) {
+        super.setDocument(file);
         // VTD always needs a byte array
         setDocument(file.withBytes().getBytes(), file.getCharSet());
     }

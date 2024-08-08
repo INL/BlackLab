@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
@@ -14,13 +14,13 @@ public class FileReferenceInputStream implements FileReference {
 
     String path;
 
-    UnicodeStream is;
+    BOMInputStream is;
 
     File file;
 
     FileReferenceInputStream(String path, InputStream is, File file) {
         this.path = path;
-        this.is = UnicodeStream.wrap(is, StandardCharsets.UTF_8);
+        this.is = UnicodeStream.wrap(is);
         this.file = file;
     }
 
@@ -31,6 +31,7 @@ public class FileReferenceInputStream implements FileReference {
 
     @Override
     public FileReference withBytes() {
+        // NOTE: This only works if you haven't read from the InputStream yet!
         try {
             return FileReference.fromBytes(path, IOUtils.toByteArray(is), file);
         } catch (IOException e) {
@@ -40,7 +41,7 @@ public class FileReferenceInputStream implements FileReference {
 
     @Override
     public byte[] getBytes() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Bytes not available; call withBytes() on the FileReference first");
     }
 
     @Override
@@ -50,7 +51,7 @@ public class FileReferenceInputStream implements FileReference {
 
     @Override
     public InputStream createInputStream() {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Cannot create input stream; call withCreateInputStream() on the FileReference first");
     }
 
     @Override
@@ -65,6 +66,6 @@ public class FileReferenceInputStream implements FileReference {
 
     @Override
     public Charset getCharSet() {
-        return is.getEncoding();
+        return UnicodeStream.getCharset(is);
     }
 }

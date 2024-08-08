@@ -1,24 +1,16 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.util.FileUtil;
+import nl.inl.util.FileReference;
 
 /**
  * An indexer for tabular file formats, such as tab-separated or comma-separated
@@ -46,28 +38,14 @@ public class DocIndexerPlainText extends DocIndexerConfig {
         super.setConfigInputFormat(config);
     }
 
-    @Override
-    public void setDocument(File file, Charset defaultCharset) {
-        try {
-            setDocument(FileUtil.openForReading(file, defaultCharset));
-        } catch (FileNotFoundException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-    }
-
-    @Override
-    public void setDocument(byte[] contents, Charset defaultCharset) {
-        setDocument(new ByteArrayInputStream(contents), defaultCharset);
-    }
-
-    @Override
-    public void setDocument(InputStream is, Charset defaultCharset) {
-        setDocument(new InputStreamReader(new BOMInputStream(is), defaultCharset));
-    }
-
-    @Override
     public void setDocument(Reader reader) {
         this.reader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
+    }
+
+    @Override
+    public void setDocument(FileReference file) {
+        super.setDocument(file);
+        setDocument(file.createReader());
     }
 
     static final Pattern REGEX_WORD = Pattern.compile("\\b\\p{L}+\\b");
