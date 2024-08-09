@@ -4,6 +4,7 @@ import java.io.Reader;
 import java.util.function.Supplier;
 
 import nl.inl.util.FileReference;
+import nl.inl.util.TextContent;
 
 /** A way to access the contents of an XML document via a FileReference.
  *
@@ -21,13 +22,11 @@ public class DocumentReferenceFileReference extends DocumentReferenceAbstract {
     private FileReference file;
 
     DocumentReferenceFileReference(FileReference file) {
-        if (file.getFile() != null && file.getFile().length() < FILE_IN_MEMORY_THRESHOLD) {
-            // Fairly small; read the file into memory for efficiency
-            this.file = file.withBytes();
-        } else {
-            // Just make sure we can make multiple passes over the file if necessary
-            this.file = file.withCreateInputStream();
-        }
+        // Make sure to read small files into memory,
+        // and that we can create multiple readers (needed for getTextContent later).
+        this.file = file
+                .inMemoryIfSmallerThan(FILE_IN_MEMORY_THRESHOLD)
+                .withCreateReader();
     }
 
     @Override
@@ -39,5 +38,16 @@ public class DocumentReferenceFileReference extends DocumentReferenceAbstract {
     @Override
     public Supplier<Reader> getBaseDocReaderSupplier() {
         return () -> file.createReader();
+    }
+
+    @Override
+    public TextContent getTextContent(long startOffset, long endOffset) {
+        if (file.hasGetTextContent()) {
+            // File is char array based, so it can do this efficiently.
+            return file.getTextContent(startOffset, endOffset);
+        }
+        // File is input stream based; use our own implementation that makes sure to
+        // use the same input stream for multiple reads.
+        return super.getTextContent(startOffset, endOffset);
     }
 }

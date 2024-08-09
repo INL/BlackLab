@@ -2,15 +2,9 @@ package nl.inl.util;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-
-import org.apache.commons.io.FileUtils;
-
-import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /** Represents a file to be indexed.
  *
@@ -18,8 +12,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  */
 public interface FileReference {
 
-    static FileReference fromBytes(String path, byte[] contents, File file) {
-        return new FileReferenceBytes(path, contents, file);
+    static FileReference fromBytes(String path, byte[] contents, File assocFile) {
+        return new FileReferenceBytes(path, contents, assocFile);
     }
 
     static FileReference fromBytesOverrideCharset(String path, byte[] contents, Charset charset) {
@@ -27,23 +21,15 @@ public interface FileReference {
     }
 
     static FileReference fromFile(File file) {
-        if (file.length() > Constants.JAVA_MAX_ARRAY_SIZE) {
-            // Too large to read into a byte array. Use input stream.
-            //FileInputStream inputStream = FileUtils.openInputStream(file);
-            //processInputStream(file.getAbsolutePath(), inputStream, file);
-            return new FileReferenceFile(file);
-        } else {
-            // Read entire file into byte array (more efficient).
-            try {
-                return new FileReferenceBytes(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);
-            } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
-            }
-        }
+        return new FileReferenceFile(file);
     }
 
-    static FileReference fromInputStream(String path, InputStream is, File file) {
-        return new FileReferenceInputStream(path, is, file);
+    static FileReference fromInputStream(String path, InputStream is, File assocFile) {
+        return new FileReferenceInputStream(path, is, assocFile);
+    }
+
+    static FileReference fromCharArray(String path, char[] charArray, File assocFile) {
+        return new FileReferenceChars(path, charArray, assocFile);
     }
 
     /**
@@ -51,13 +37,14 @@ public interface FileReference {
      */
     String getPath();
 
-    /** Return a file reference that has a byte array with the file contents. */
-    FileReference withBytes();
-
-    /** Return a file reference where createInputStream() works,
+    /** Return a file reference where createInputStream() and createReader() work,
      *  so we can process the file multiple times. */
-    default FileReference withCreateInputStream() {
-        return withBytes();
+    FileReference withCreateReader();
+
+    FileReference withGetTextContent();
+
+    default FileReference inMemoryIfSmallerThan(int fileSizeInBytes) {
+        return this;
     }
 
     /**
@@ -70,14 +57,18 @@ public interface FileReference {
      * Call this if you only need to process the file ONCE.
      * @return input stream
      */
-    InputStream getSinglePassInputStream();
+    default InputStream getSinglePassInputStream() {
+        return createInputStream();
+    }
 
     /**
      * Get an input stream to the file contents.
      * May be called multiple times.
      * @return input stream
      */
-    InputStream createInputStream();
+    default InputStream createInputStream() {
+        throw new UnsupportedOperationException("Cannot create input stream; call withMultiStream() on the FileReference first");
+    }
 
     /**
      * Get a reader to the file contents.
@@ -85,7 +76,7 @@ public interface FileReference {
      * @return reader
      */
     default BufferedReader createReader() {
-        return new BufferedReader(new InputStreamReader(createInputStream(), getCharSet()));
+        return createReader(null);
     }
 
     default BufferedReader createReader(Charset overrideEncoding) {
@@ -94,10 +85,45 @@ public interface FileReference {
         return new BufferedReader(new InputStreamReader(createInputStream(), overrideEncoding));
     }
 
+    /** Is efficient getTextContent(start, end) supported? */
+    default boolean hasGetTextContent() {
+        return false;
+    }
+
+    /**
+     * Get part of the document.
+     * @param startOffset the offset to start reading at
+     * @param endOffset the offset to stop reading at, or -1 to read until the end
+     * @return the content read
+     */
+    default TextContent getTextContent(long startOffset, long endOffset) {
+        // We could do this using a Reader, but better to leave managing that to the caller,
+        // which knows if it needs multiple parts of the file and can make sure to minimize
+        // passes over the file.
+        throw new UnsupportedOperationException("Cannot get text content; call withCharArray() on the FileReference first");
+//        try (BufferedReader reader = createReader()) {
+//            if (startOffset > 0)
+//                reader.skip(startOffset);
+//            if (endOffset != -1) {
+//                int length = (int)(endOffset - startOffset);
+//                char[] result = new char[length];
+//                if (reader.read(result, 0, length) < 0)
+//                    throw new RuntimeException("Unexpected end of file");
+//                return TextContent.from(result);
+//            } else {
+//                return TextContent.from(FileUtils.readFileToString(getFile(), getCharSet()));
+//            }
+//        } catch (IOException e) {
+//            throw new BlackLabRuntimeException(e);
+//        }
+    }
+
     /**
      * This file, or null if this is not a (simple) file.
      */
-    File getFile();
+    default File getFile() {
+        return null;
+    }
 
     /**
      * The corresponding file or archive this content is from, or null if unknown.

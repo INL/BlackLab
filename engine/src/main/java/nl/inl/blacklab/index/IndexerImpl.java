@@ -17,7 +17,6 @@ import org.apache.lucene.index.Term;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -37,8 +36,8 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileReference;
-import nl.inl.util.FileReferenceBytes;
 import nl.inl.util.FileUtil;
+import nl.inl.util.TextContent;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -58,69 +57,36 @@ class IndexerImpl implements DocWriter, Indexer {
     private class DocIndexerWrapper implements FileProcessor.FileHandler {
 
         @Override
-        public void file(FileReference file) throws Exception {
-            if (file instanceof FileReferenceBytes)
-                fileBytes(file);
-            else
-                fileStream(file);
-        }
-
-        private void fileBytes(FileReference fileRef) throws IOException, MalformedInputFile, PluginException {
-            fileRef = fileRef.withBytes(); // we need direct random access for the encoding detection
+        public void file(FileReference file) throws MalformedInputFile, PluginException {
             InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
-            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, fileRef)) {
+            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, file)) {
                 if (docIndexer == null) {
                     throw new PluginException(
-                            "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + fileRef.getPath());
+                            "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + file.getPath());
                 }
-                File file = fileRef.getAssociatedFile();
-                if (file != null)
-                    docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
-                impl(docIndexer, fileRef.getPath());
-            }
-        }
+                if (file.getAssociatedFile() != null)
+                    docIndexer.setDocumentDirectory(file.getAssociatedFile().getParentFile()); // for XInclude resolution
 
-        private void fileStream(FileReference fileRef) throws MalformedInputFile {
-            // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream
-            // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
-            // the BOM (if present) and exposes the correct character set for this stream (if present)
-            // This way we can later use the charset to decode the input
-            // There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the
-            // default encoding to our DocIndexer
-            // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
-            // In the case of binary data docIndexers, they should always ignore the encoding anyway
-            // and for text docIndexers, passing a binary file is an error in itself already.
-            InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
-            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, fileRef)) {
-                File file = fileRef.getAssociatedFile();
-                if (file != null)
-                    docIndexer.setDocumentDirectory(file.getParentFile()); // for XInclude resolution
-                impl(docIndexer, fileRef.getPath());
-            }
-        }
+                if (docIndexer.continueIndexing()) {
+                    listener().fileStarted(file.getPath());
+                    int docsDoneBefore = docIndexer.numberOfDocsDone();
+                    long tokensDoneBefore = docIndexer.numberOfTokensDone();
+                    try {
+                        docIndexer.index();
+                    } catch (Throwable e) {
+                        throw new RuntimeException("Error while indexing input file: " + file.getPath(), e);
+                    }
+                    listener().fileDone(file.getPath());
 
-        private void impl(DocIndexer indexer, String documentName) {
-            if (!indexer.continueIndexing())
-                return;
-
-            listener().fileStarted(documentName);
-            int docsDoneBefore = indexer.numberOfDocsDone();
-            long tokensDoneBefore = indexer.numberOfTokensDone();
-
-            try {
-                indexer.index();
-            } catch (Throwable e) {
-                throw new RuntimeException("Error while indexing input file: " + documentName, e);
-            }
-            listener().fileDone(documentName);
-            
-            int docsDoneAfter = indexer.numberOfDocsDone();
-            if (docsDoneAfter == docsDoneBefore) {
-                logger.warn("No docs found in " + documentName + "; wrong format?");
-            }
-            long tokensDoneAfter = indexer.numberOfTokensDone();
-            if (tokensDoneAfter == tokensDoneBefore) {
-                logger.warn("No words indexed in " + documentName + "; wrong format?");
+                    int docsDoneAfter = docIndexer.numberOfDocsDone();
+                    if (docsDoneAfter == docsDoneBefore) {
+                        logger.warn("No docs found in " + file.getPath() + "; wrong format?");
+                    }
+                    long tokensDoneAfter = docIndexer.numberOfTokensDone();
+                    if (tokensDoneAfter == tokensDoneBefore) {
+                        logger.warn("No words indexed in " + file.getPath() + "; wrong format?");
+                    }
+                }
             }
         }
 

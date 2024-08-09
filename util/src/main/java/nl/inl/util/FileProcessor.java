@@ -104,7 +104,7 @@ public class FileProcessor implements AutoCloseable {
         FileReference getFile();
     }
 
-    public static byte[] fetchFileFromArchive(File f, final String pathInsideArchive) {
+    public static FileReference fetchFileFromArchive(File f, final String pathInsideArchive) {
         if (f.getName().endsWith(".gz") || f.getName().endsWith(".tgz")) {
             // We have to process the whole file, we can't do random access.
             PathCapturingFileHandler fileCapturer = new PathCapturingFileHandler() {
@@ -132,7 +132,7 @@ public class FileProcessor implements AutoCloseable {
             }
 
             // FileProcessor must have completed/be closed before result is available
-            return fileCapturer.getFile().getBytes();
+            return fileCapturer.getFile();
         } else if (f.getName().endsWith(".zip")) {
             // We can do random access. Fetch the file we want.
             try {
@@ -142,7 +142,7 @@ public class FileProcessor implements AutoCloseable {
                     throw new BlackLabRuntimeException("Linked document " + pathInsideArchive + " not found in archive " + f);
                 }
                 try (InputStream is = z.getInputStream(e)) {
-                    return IOUtils.toByteArray(is);
+                    return FileReference.fromBytes(f.getCanonicalPath() + "/" + pathInsideArchive, IOUtils.toByteArray(is), f);
                 }
             } catch (IOException e) {
                 throw BlackLabRuntimeException.wrap(e);

@@ -16,12 +16,12 @@ public class FileReferenceInputStream implements FileReference {
 
     BOMInputStream is;
 
-    File file;
+    File assocFile;
 
-    FileReferenceInputStream(String path, InputStream is, File file) {
+    FileReferenceInputStream(String path, InputStream is, File assocFile) {
         this.path = path;
         this.is = UnicodeStream.wrap(is);
-        this.file = file;
+        this.assocFile = assocFile;
     }
 
     @Override
@@ -30,18 +30,32 @@ public class FileReferenceInputStream implements FileReference {
     }
 
     @Override
-    public FileReference withBytes() {
+    public byte[] getBytes() {
         // NOTE: This only works if you haven't read from the InputStream yet!
         try {
-            return FileReference.fromBytes(path, IOUtils.toByteArray(is), file);
+            return IOUtils.toByteArray(is);
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }
     }
 
     @Override
-    public byte[] getBytes() {
-        throw new UnsupportedOperationException("Bytes not available; call withBytes() on the FileReference first");
+    public FileReference withGetTextContent() {
+        try {
+            return FileReference.fromCharArray(path, IOUtils.toCharArray(is, getCharSet()), assocFile);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FileReference withCreateReader() {
+        // NOTE: This only works if you haven't read from the InputStream yet!
+        try {
+            return FileReference.fromCharArray(path, IOUtils.toCharArray(is, getCharSet()), assocFile);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
     }
 
     @Override
@@ -50,18 +64,8 @@ public class FileReferenceInputStream implements FileReference {
     }
 
     @Override
-    public InputStream createInputStream() {
-        throw new UnsupportedOperationException("Cannot create input stream; call withCreateInputStream() on the FileReference first");
-    }
-
-    @Override
-    public File getFile() {
-        return file;
-    }
-
-    @Override
     public File getAssociatedFile() {
-        return file;
+        return assocFile;
     }
 
     @Override

@@ -23,7 +23,7 @@ import com.ximpleware.VTDException;
 import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
 
-import nl.inl.blacklab.contentstore.TextContent;
+import nl.inl.util.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -86,7 +86,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
     public void setDocument(FileReference file) {
         super.setDocument(file);
         // VTD always needs a byte array
-        setDocument(file.withBytes().getBytes(), file.getCharSet());
+        setDocument(file.getBytes(), file.getCharSet());
     }
 
     @Override

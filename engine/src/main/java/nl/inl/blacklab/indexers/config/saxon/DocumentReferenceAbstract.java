@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.blacklab.contentstore.TextContent;
+import nl.inl.util.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /** A way to access the contents of a document.
@@ -17,12 +17,12 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public abstract class DocumentReferenceAbstract implements DocumentReference {
 
     /** Helper for resolving XIncludes */
-    XIncludeResolver xincludeResolver;
+    Supplier<Reader> xincludeResolver;
 
     /** Internal Reader for getTextContent(). */
     private Reader internalReader = null;
 
-    /** Where our internal reader is positioned currently. */
+    /** Where our internal reader is positioned currently (next char to be read). */
     private long internalReaderOffset = -1;
 
     /**
@@ -89,7 +89,7 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
      */
     @Override
     public void setXIncludeDirectory(File dir) {
-        xincludeResolver = new XIncludeResolverReader(getBaseDocReaderSupplier(), dir);
+        xincludeResolver = new XIncludeResolver(getBaseDocReaderSupplier(), dir);
     }
 
     public abstract Supplier<Reader> getBaseDocReaderSupplier();
@@ -113,20 +113,10 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
     @Override
     public Reader getDocumentReader() {
         if (xincludeResolver == null) {
-            // Create a dummy that does nothing.
-            xincludeResolver = new XIncludeResolver() {
-                @Override
-                public Reader getDocumentReader() {
-                    return getBaseDocReaderSupplier().get();
-                }
-
-                @Override
-                public boolean anyXIncludesFound() {
-                    return false;
-                }
-            };
+            // No resolver configured; just return a reader for the base document
+            xincludeResolver = getBaseDocReaderSupplier();
         }
-        return xincludeResolver.getDocumentReader();
+        return xincludeResolver.get();
     }
 
 }

@@ -3,7 +3,7 @@ package nl.inl.blacklab.indexers.config.saxon;
 import java.io.File;
 import java.io.Reader;
 
-import nl.inl.blacklab.contentstore.TextContent;
+import nl.inl.util.TextContent;
 import nl.inl.util.FileReference;
 
 public interface DocumentReference {

@@ -1,10 +1,8 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,11 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
-import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -35,6 +31,7 @@ import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
+import nl.inl.util.TextContent;
 
 public abstract class DocIndexerBase extends DocIndexerAbstract {
 
@@ -231,29 +228,21 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         File f = resolveFileReference(inputFile);
 
         // Get the data
-        byte[] data;
-        String completePath = inputFile;
+        FileReference data;
         if (inputFile.endsWith(".zip") || inputFile.endsWith(".tar") || inputFile.endsWith(".tar.gz")
                 || inputFile.endsWith(".tgz")) {
             // It's an archive. Unpack the right file from it.
-            completePath += "/" + pathInsideArchive;
             data = FileProcessor.fetchFileFromArchive(f, pathInsideArchive);
         } else {
             // Regular file.
-            try (InputStream is = new FileInputStream(f)) {
-                data = IOUtils.toByteArray(is);
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
+            data = FileReference.fromFile(f);
         }
-        if (data == null) {
+        if (data == null)
             throw new BlackLabRuntimeException("Error reading linked document");
-        }
 
         // Index the data
         InputFormat inputFormat = DocumentFormats.getFormat(inputFormatIdentifier).orElseThrow();
-        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(),
-                FileReference.fromBytes(completePath, data, f))) {
+        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(), data)) {
             if (docIndexer instanceof DocIndexerBase) {
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingDoc = true;

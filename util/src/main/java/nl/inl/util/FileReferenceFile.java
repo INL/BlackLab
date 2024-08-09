@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -34,27 +35,35 @@ public class FileReferenceFile implements FileReference {
     }
 
     @Override
-    public FileReference withBytes() {
+    public byte[] getBytes() {
         try {
-            return FileReference.fromBytes(getPath(), FileUtils.readFileToByteArray(file), file);
+            return FileUtils.readFileToByteArray(file);
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }
     }
 
     @Override
-    public FileReference withCreateInputStream() {
+    public FileReference withGetTextContent() {
+        try {
+            return FileReference.fromCharArray(getPath(), IOUtils.toCharArray(createReader()), file);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FileReference withCreateReader() {
         return this;
     }
 
     @Override
-    public byte[] getBytes() {
-        throw new UnsupportedOperationException("Bytes not available; call withBytes() on the FileReference first");
-    }
-
-    @Override
-    public InputStream getSinglePassInputStream() {
-        return createInputStream();
+    public FileReference inMemoryIfSmallerThan(int fileSizeInBytes) {
+        if (file.length() < fileSizeInBytes) {
+            // Fairly small; read the file into memory for efficiency
+            return withGetTextContent();
+        }
+        return this;
     }
 
     @Override

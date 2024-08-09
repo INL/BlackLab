@@ -7,7 +7,10 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 public class FileReferenceBytes implements FileReference {
 
@@ -15,14 +18,14 @@ public class FileReferenceBytes implements FileReference {
 
     byte[] contents;
 
-    File file;
+    File assocFile;
 
     Charset charset;
 
-    FileReferenceBytes(String path, byte[] contents, File file) {
+    FileReferenceBytes(String path, byte[] contents, File assocFile) {
         this.path = path;
         this.contents = contents;
-        this.file = file;
+        this.assocFile = assocFile;
     }
 
     FileReferenceBytes(String path, byte[] contents, Charset charset) {
@@ -37,23 +40,22 @@ public class FileReferenceBytes implements FileReference {
     }
 
     @Override
-    public FileReference withBytes() {
-        return this;
-    }
-
-    @Override
-    public FileReference withCreateInputStream() {
-        return this;
-    }
-
-    @Override
     public byte[] getBytes() {
         return contents;
     }
 
     @Override
-    public InputStream getSinglePassInputStream() {
-        return createInputStream();
+    public FileReference withCreateReader() {
+        return this;
+    }
+
+    @Override
+    public FileReference withGetTextContent() {
+        try {
+            return FileReference.fromCharArray(getPath(), IOUtils.toCharArray(createReader()), getAssociatedFile());
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
     }
 
     @Override
@@ -62,13 +64,8 @@ public class FileReferenceBytes implements FileReference {
     }
 
     @Override
-    public File getFile() {
-        return null;
-    }
-
-    @Override
     public File getAssociatedFile() {
-        return file;
+        return assocFile;
     }
 
     @Override

@@ -84,7 +84,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     @Override
     public void setDocument(FileReference file) {
         super.setDocument(file);
-        file = file.withCreateInputStream();
+        file = file.withCreateReader(); // we need two readers, one extra to read char encoding line
         String charEncodingLine;
         try (BufferedReader reader = file.createReader()) {
             charEncodingLine = reader.readLine();

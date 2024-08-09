@@ -8,7 +8,6 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 
@@ -20,6 +19,7 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.SimpleResourcePool;
+import nl.inl.util.TextContent;
 
 /**
  * Store string content by id in a compound file and a TOC file. Quickly

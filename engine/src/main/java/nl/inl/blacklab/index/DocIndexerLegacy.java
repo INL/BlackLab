@@ -5,7 +5,7 @@ import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import nl.inl.blacklab.contentstore.TextContent;
+import nl.inl.util.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
