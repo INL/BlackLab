@@ -60,30 +60,25 @@ public interface FileReference {
 
     /**
      * Get contents as a byte array.
+     *
+     * (only used by the older VTD-XML indexer)
      */
     byte[] getBytes();
 
     /**
      * Get an input stream to the file contents.
      * Call this if you only need to process the file ONCE.
+     * Supported by all implementations.
+     *
      * @return input stream
      */
-    default InputStream getSinglePassInputStream() {
-        return createInputStream();
-    }
-
-    /**
-     * Get an input stream to the file contents.
-     * May be called multiple times.
-     * @return input stream
-     */
-    default InputStream createInputStream() {
-        throw new UnsupportedOperationException("Cannot create input stream; call withMultiStream() on the FileReference first");
-    }
+    InputStream getSinglePassInputStream();
 
     /**
      * Get a reader to the file contents.
      * Call this if you only need to process the file ONCE.
+     * Supported by all implementations.
+     *
      * @return reader
      */
     default BufferedReader getSinglePassReader() {
@@ -100,12 +95,13 @@ public interface FileReference {
     }
 
     default BufferedReader createReader(Charset overrideEncoding) {
-        if (overrideEncoding == null)
-            overrideEncoding = getCharSet();
-        return new BufferedReader(new InputStreamReader(createInputStream(), overrideEncoding));
+        throw new UnsupportedOperationException("Cannot create reader; call withCreateReader() first");
     }
 
-    /** Is efficient getTextContent(start, end) supported? */
+    /** Is getTextContent(start, end) supported?
+     *
+     * Only supported for implementations that can do it efficiently (i.e. with random access).
+     */
     default boolean hasGetTextContent() {
         return false;
     }
@@ -121,21 +117,6 @@ public interface FileReference {
         // which knows if it needs multiple parts of the file and can make sure to minimize
         // passes over the file.
         throw new UnsupportedOperationException("Cannot get text content; call withCharArray() on the FileReference first");
-//        try (BufferedReader reader = createReader()) {
-//            if (startOffset > 0)
-//                reader.skip(startOffset);
-//            if (endOffset != -1) {
-//                int length = (int)(endOffset - startOffset);
-//                char[] result = new char[length];
-//                if (reader.read(result, 0, length) < 0)
-//                    throw new RuntimeException("Unexpected end of file");
-//                return TextContent.from(result);
-//            } else {
-//                return TextContent.from(FileUtils.readFileToString(getFile(), getCharSet()));
-//            }
-//        } catch (IOException e) {
-//            throw new BlackLabRuntimeException(e);
-//        }
     }
 
     /**

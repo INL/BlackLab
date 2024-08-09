@@ -3,8 +3,11 @@ package nl.inl.util;
 import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+
+import org.apache.commons.io.input.ReaderInputStream;
 
 public class FileReferenceChars implements FileReference {
 
@@ -48,6 +51,11 @@ public class FileReferenceChars implements FileReference {
     @Override
     public Charset getCharSet() {
         return StandardCharsets.UTF_8;
+    }
+
+    @Override
+    public InputStream getSinglePassInputStream() {
+        return new ReaderInputStream(getSinglePassReader(), StandardCharsets.UTF_8);
     }
 
     @Override

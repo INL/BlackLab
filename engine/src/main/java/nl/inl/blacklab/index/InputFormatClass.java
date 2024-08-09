@@ -1,6 +1,5 @@
 package nl.inl.blacklab.index;
 
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -64,8 +63,7 @@ public class InputFormatClass implements InputFormat {
             } catch (NoSuchMethodException e) {
                 // No, this is an older DocIndexer that takes document name and reader directly.
                 constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
-                InputStreamReader inputStreamReader = new InputStreamReader(file.getSinglePassInputStream(), file.getCharSet());
-                docIndexer = constructor.newInstance(indexer, file.getPath(), inputStreamReader);
+                docIndexer = constructor.newInstance(indexer, file.getPath(), file.getSinglePassReader());
             }
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
