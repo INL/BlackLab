@@ -39,11 +39,6 @@ public class FileReferenceChars implements FileReference {
     }
 
     @Override
-    public FileReference withGetTextContent() {
-        return this;
-    }
-
-    @Override
     public File getAssociatedFile() {
         return assocFile;
     }

@@ -9,10 +9,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
-
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 public class FileReferenceBytes implements FileReference {
 
@@ -49,15 +46,6 @@ public class FileReferenceBytes implements FileReference {
     @Override
     public FileReference withCreateReader() {
         return this;
-    }
-
-    @Override
-    public FileReference withGetTextContent() {
-        try {
-            return FileReference.fromCharArray(getPath(), IOUtils.toCharArray(createReader()), getAssociatedFile());
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
     }
 
     public InputStream getSinglePassInputStream() {

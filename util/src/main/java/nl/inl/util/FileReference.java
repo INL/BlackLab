@@ -42,19 +42,12 @@ public interface FileReference {
     FileReference withCreateReader();
 
     /**
-     * Return a file reference where getTextContent() works,
-     * so we can get parts of the file efficiently (e.g. get document contents to store).
-     * @return
-     */
-    FileReference withGetTextContent();
-
-    /**
      * If we know this is a small file, read in into memory.
      *
      * @param fileSizeInBytes threshold for reading into memory
      * @return this or a new FileReference
      */
-    default FileReference inMemoryIfSmallerThan(int fileSizeInBytes) {
+    default FileReference inMemoryIfSmallerThan(int maxFileSizeBytes) {
         return this;
     }
 

@@ -61,9 +61,26 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
     @Override
     public TextContent getTextContent(long startOffset, long endOffset) {
         Reader reader = getInternalReader(startOffset);
-        // Read characters starting startOffset and ending at endOffset
         char[] result = readerToCharArray(reader, 0, endOffset - startOffset);
         return new TextContent(result);
+    }
+
+    /** Get a Reader at the specified position. */
+    private Reader getInternalReader(long startOffset) {
+        if (internalReader == null || internalReaderOffset > startOffset) {
+            // No Reader yet, or too far along; create a new one.
+            internalReader = getDocumentReader();
+            internalReaderOffset = 0;
+        }
+        try {
+            internalReaderOffset += internalReader.skip(startOffset - internalReaderOffset);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+        if (internalReaderOffset < startOffset) {
+            throw new BlackLabRuntimeException("Could not skip to start offset");
+        }
+        return internalReader;
     }
 
     @Override
@@ -93,22 +110,6 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
     }
 
     public abstract Supplier<Reader> getBaseDocReaderSupplier();
-
-    Reader getInternalReader(long startOffset) {
-        if (internalReader == null || internalReaderOffset > startOffset) {
-            internalReader = getDocumentReader();
-            internalReaderOffset = 0;
-        }
-        try {
-            internalReaderOffset += internalReader.skip(startOffset - internalReaderOffset);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-        if (internalReaderOffset < startOffset) {
-            throw new BlackLabRuntimeException("Could not skip to start offset");
-        }
-        return internalReader;
-    }
 
     @Override
     public Reader getDocumentReader() {

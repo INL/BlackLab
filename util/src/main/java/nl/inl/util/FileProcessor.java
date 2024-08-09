@@ -383,8 +383,14 @@ public class FileProcessor implements AutoCloseable {
         if (closed)
             return;
 
-        TarGzipReader.FileHandler handler = (pathInArchive, bytes) -> {
-            processFile(FileReference.fromBytes(pathInArchive, bytes, null));
+        TarGzipReader.FileHandler handler = (pathInArchive, inputStream) -> {
+            try {
+                byte[] bytes = IOUtils.toByteArray(inputStream);
+                processFile(FileReference.fromBytes(pathInArchive, bytes,
+                        fileRef.getAssociatedFile()));
+            } catch (IOException e) {
+                throw new BlackLabRuntimeException(e);
+            }
             return !closed; // quit processing the archive if we've received an error in the meantime
         };
 

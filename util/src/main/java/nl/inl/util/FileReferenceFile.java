@@ -46,23 +46,18 @@ public class FileReferenceFile implements FileReference {
     }
 
     @Override
-    public FileReference withGetTextContent() {
-        try {
-            return FileReference.fromCharArray(getPath(), IOUtils.toCharArray(createReader()), file);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-    }
-
-    @Override
     public FileReference withCreateReader() {
         return this;
     }
 
     @Override
-    public FileReference inMemoryIfSmallerThan(int fileSizeInBytes) {
-        if (file.length() < fileSizeInBytes) {
-            return withGetTextContent();
+    public FileReference inMemoryIfSmallerThan(int maxFileSizeBytes) {
+        if (file.length() < maxFileSizeBytes) {
+            try {
+                return FileReference.fromCharArray(getPath(), IOUtils.toCharArray(createReader()), file);
+            } catch (IOException e) {
+                throw new BlackLabRuntimeException(e);
+            }
         }
         return this;
     }

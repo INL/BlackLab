@@ -40,15 +40,6 @@ public class FileReferenceInputStream implements FileReference {
     }
 
     @Override
-    public FileReference withGetTextContent() {
-        try {
-            return FileReference.fromCharArray(path, IOUtils.toCharArray(is, getCharSet()), assocFile);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-    }
-
-    @Override
     public FileReference withCreateReader() {
         // NOTE: This only works if you haven't read from the InputStream yet!
         try {
