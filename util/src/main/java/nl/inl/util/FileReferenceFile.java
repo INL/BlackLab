@@ -60,7 +60,6 @@ public class FileReferenceFile implements FileReference {
     @Override
     public FileReference inMemoryIfSmallerThan(int fileSizeInBytes) {
         if (file.length() < fileSizeInBytes) {
-            // Fairly small; read the file into memory for efficiency
             return withGetTextContent();
         }
         return this;
@@ -89,7 +88,7 @@ public class FileReferenceFile implements FileReference {
     public Charset getCharSet() {
         if (charSet == null) {
             // Check the file for a BOM to determine the encoding
-            try (BOMInputStream is = UnicodeStream.wrap(createInputStream())) {
+            try (BOMInputStream is = UnicodeStream.wrap(new FileInputStream(file))) {
                 charSet = UnicodeStream.getCharset(is);
             } catch (IOException e) {
                 throw new BlackLabRuntimeException(e);

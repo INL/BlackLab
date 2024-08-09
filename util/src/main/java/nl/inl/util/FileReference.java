@@ -37,12 +37,23 @@ public interface FileReference {
      */
     String getPath();
 
-    /** Return a file reference where createInputStream() and createReader() work,
-     *  so we can process the file multiple times. */
+    /** Return a file reference where createReader() works,
+     *  so we can process the file multiple times (e.g. parse XML, get document contents to store). */
     FileReference withCreateReader();
 
+    /**
+     * Return a file reference where getTextContent() works,
+     * so we can get parts of the file efficiently (e.g. get document contents to store).
+     * @return
+     */
     FileReference withGetTextContent();
 
+    /**
+     * If we know this is a small file, read in into memory.
+     *
+     * @param fileSizeInBytes threshold for reading into memory
+     * @return this or a new FileReference
+     */
     default FileReference inMemoryIfSmallerThan(int fileSizeInBytes) {
         return this;
     }
@@ -68,6 +79,15 @@ public interface FileReference {
      */
     default InputStream createInputStream() {
         throw new UnsupportedOperationException("Cannot create input stream; call withMultiStream() on the FileReference first");
+    }
+
+    /**
+     * Get a reader to the file contents.
+     * Call this if you only need to process the file ONCE.
+     * @return reader
+     */
+    default BufferedReader getSinglePassReader() {
+        return new BufferedReader(new InputStreamReader(getSinglePassInputStream()));
     }
 
     /**

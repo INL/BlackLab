@@ -413,6 +413,6 @@ public class DocIndexerExample extends DocIndexerBase {
     @Override
     public void setDocument(FileReference file) {
         super.setDocument(file);
-        setDocument(file.createReader());
+        setDocument(file.getSinglePassReader());
     }
 }

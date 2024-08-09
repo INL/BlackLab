@@ -124,7 +124,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
     public void setDocument(FileReference file) {
         if (documentName == null)
             documentName = file.getPath();
-        setDocument(file.createReader());
+        setDocument(file.getSinglePassReader());
     }
 
     @Override

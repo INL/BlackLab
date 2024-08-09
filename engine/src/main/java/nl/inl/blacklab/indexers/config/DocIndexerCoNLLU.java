@@ -67,7 +67,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
     @Override
     public void setDocument(FileReference file) {
         super.setDocument(file);
-        setDocument(file.createReader());
+        setDocument(file.getSinglePassReader());
     }
 
     @Override

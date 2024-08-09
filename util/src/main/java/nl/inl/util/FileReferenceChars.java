@@ -51,6 +51,11 @@ public class FileReferenceChars implements FileReference {
     }
 
     @Override
+    public BufferedReader getSinglePassReader() {
+        return createReader();
+    }
+
+    @Override
     public BufferedReader createReader(Charset charset) {
         return new BufferedReader(new CharArrayReader(contents));
     }

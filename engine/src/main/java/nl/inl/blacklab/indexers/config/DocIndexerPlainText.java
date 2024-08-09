@@ -45,7 +45,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     @Override
     public void setDocument(FileReference file) {
         super.setDocument(file);
-        setDocument(file.createReader());
+        setDocument(file.getSinglePassReader());
     }
 
     static final Pattern REGEX_WORD = Pattern.compile("\\b\\p{L}+\\b");
