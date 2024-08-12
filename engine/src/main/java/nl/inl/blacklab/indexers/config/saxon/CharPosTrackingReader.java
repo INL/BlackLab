@@ -16,7 +16,7 @@ import net.sf.saxon.om.NodeInfo;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /** Tracks characters positions for each tag in an XML document while reading through it. */
-public class PositionTrackingReader extends Reader {
+public class CharPosTrackingReader extends Reader {
 
     /** Estimate of characters per open bracket, for initial sizing of list */
     private static final int AVERAGE_CHARS_PER_TAG_ESTIMATE = 20;
@@ -64,7 +64,7 @@ public class PositionTrackingReader extends Reader {
     /** Our element stack while parsing, for filling in the end tag character position when we encounter it. */
     private final Deque<StartEndPos> elStack = new ArrayDeque<>();
 
-    public PositionTrackingReader(Reader reader) {
+    public CharPosTrackingReader(Reader reader) {
         this.reader = reader;
         charsRead = 0;
         readAheadChar = 0; // we haven't peeked at next char yet
@@ -86,7 +86,14 @@ public class PositionTrackingReader extends Reader {
      * translation of recorded line and column number to character position in the document
      */
     private long charPosForLineAndCol(int lineNumber, int columnNumber) {
-        Long charPosStartOfLine = lineNumberToCharPos.get(lineNumber - 1);
+        //assert lineNumber >= 1 && columnNumber >= 1 : "Line and column numbers must be 1 or higher";
+        // If you match the document node / , it doesn't have valid line/col...
+        if (lineNumber < 1)
+            lineNumber = 1;
+        if (columnNumber < 1)
+            columnNumber = 1;
+
+        Long charPosStartOfLine = lineNumberToCharPos.getLong(lineNumber - 1);
         // Note that we subtract 1 at the end because Saxon indicates the columnNumber just AFTER the tag
         // (JN: or because columnNumber is 1-based, like line number, and we want a character position that is 0-based?)
         return charPosStartOfLine + columnNumber - 1;
@@ -177,7 +184,8 @@ public class PositionTrackingReader extends Reader {
         } else {
             // Read the next char.
             currentChar = reader.read();
-            charsRead++;
+            if (currentChar >= 0)
+                charsRead++;
         }
         if (currentChar < 0)
             return currentChar; // end of document
@@ -189,10 +197,12 @@ public class PositionTrackingReader extends Reader {
             // so we can convert from line+col (Locator) to character position
             if (currentChar == '\r') {
                 readAheadChar = reader.read();
-                charsRead++;
-                if (readAheadChar == '\n') {
-                    readAheadChar = 0; // windows-style line ending; also skip newline
-                    currentChar = '\n'; // produce a single newline
+                if (readAheadChar >= 0) {
+                    charsRead++;
+                    if (readAheadChar == '\n') {
+                        readAheadChar = 0; // windows-style line ending; also skip newline
+                        currentChar = '\n'; // produce a single newline
+                    }
                 }
             }
             lineNumberToCharPos.add(charsRead); // store character position after EOL char(s)

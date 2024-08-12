@@ -5,29 +5,33 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nl.inl.util.CountingReader;
+
 /** Resolve xi:includes using a composite Reader. */
-class XIncludeResolver implements Supplier<Reader> {
+class XIncludeResolver implements Supplier<CountingReader> {
 
     /** How we detect xi:include tags */
     private final static Pattern PATT_XINCLUDE_TAG = Pattern.compile("<xi:include\\s+href=\"([^\"]+)\"\\s*/>");
 
     private final File baseDir;
 
-    private final Supplier<Reader> supplier;
+    private final Supplier<CountingReader> supplier;
 
-    public XIncludeResolver(Supplier<Reader> supplier, File curDir) {
+    public XIncludeResolver(Supplier<CountingReader> supplier, File curDir) {
         this.supplier = supplier;
         this.baseDir = curDir;
     }
 
     @Override
-    public Reader get() {
+    public CountingReader get() {
 
-        return new Reader() {
+        return new CountingReader(new Reader() {
 
             /** Buffer length. Chosen large enough that it should be able to contain any tags encountered. */
             private static final int BUFFER_LENGTH = 1024;
@@ -47,6 +51,10 @@ class XIncludeResolver implements Supplier<Reader> {
 
             /** Index after last buffered char */
             private int end = 0;
+
+            private boolean done = false;
+
+            private List<File> includeFilesRead = new ArrayList<>();
 
             private boolean isBufferEmpty() {
                 return start == end;
@@ -113,6 +121,7 @@ class XIncludeResolver implements Supplier<Reader> {
                             throw new RuntimeException("XInclude file " + f + " is not within the directory " + baseDir.getParentFile());
                         }
                         includedDocReader = new FileReader(f, StandardCharsets.UTF_8);
+                        includeFilesRead.add(f);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -127,6 +136,7 @@ class XIncludeResolver implements Supplier<Reader> {
                     // Empty buffer and no xi:include to read from
                     if (!ensureBuffered()) {
                         // We're done.
+                        done = true;
                         return -1;
                     }
                 }
@@ -142,6 +152,7 @@ class XIncludeResolver implements Supplier<Reader> {
                     includedDocReader = null;
                     if (!ensureBuffered()) {
                         // We're done.
+                        done = true;
                         return -1;
                     }
                 }
@@ -173,6 +184,6 @@ class XIncludeResolver implements Supplier<Reader> {
                     includedDocReader.close();
                 baseDocReader.close();
             }
-        };
+        });
     }
 }

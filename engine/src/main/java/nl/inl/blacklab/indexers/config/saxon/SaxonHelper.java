@@ -63,7 +63,7 @@ public class SaxonHelper {
 //        xmlReader = new XIncludeFilter(reader, includeDir);
 
         xmlReader.setContentHandler(handler);
-        XMLReader wrapper = new MyXMLReader(xmlReader);
+        XMLReader wrapper = new CharPosTrackingXMLReader(xmlReader);
         // regular parsing with line numbering enabled
         InputSource inputSrc = new InputSource(reader);
         Source source = new SAXSource(wrapper, inputSrc);

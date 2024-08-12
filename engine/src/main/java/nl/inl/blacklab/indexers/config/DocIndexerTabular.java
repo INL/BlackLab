@@ -82,7 +82,6 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
         super.setConfigInputFormat(config);
         Map<String, String> opt = config.getFileTypeOptions();
         Type type = opt.containsKey(FT_OPT_TYPE) ? Type.fromStringValue(opt.get(FT_OPT_TYPE)) : Type.CSV;
-        //ConfigTabularOptions tab = config.getTabularOptions();
         switch (type) {
         case TSV:
             tabularFormat = CSVFormat.TDF;

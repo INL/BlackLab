@@ -7,8 +7,9 @@ import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.util.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.util.CountingReader;
+import nl.inl.util.TextContent;
 
 /** A way to access the contents of a document.
  *
@@ -17,13 +18,13 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public abstract class DocumentReferenceAbstract implements DocumentReference {
 
     /** Helper for resolving XIncludes */
-    Supplier<Reader> xincludeResolver;
+    Supplier<CountingReader> xincludeResolver;
+
+    /** Are we resolving xi:includes? If not, we can use the base contents directly. */
+    protected boolean resolvingXIncludes = false;
 
     /** Internal Reader for getTextContent(). */
-    private Reader internalReader = null;
-
-    /** Where our internal reader is positioned currently (next char to be read). */
-    private long internalReaderOffset = -1;
+    private CountingReader internalReader = null;
 
     /**
      * Read characters from a Reader, starting at startOffset and ending at endOffset.
@@ -67,17 +68,16 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
 
     /** Get a Reader at the specified position. */
     private Reader getInternalReader(long startOffset) {
-        if (internalReader == null || internalReaderOffset > startOffset) {
+        if (internalReader == null || internalReader.getCharsRead() > startOffset) {
             // No Reader yet, or too far along; create a new one.
             internalReader = getDocumentReader();
-            internalReaderOffset = 0;
         }
         try {
-            internalReaderOffset += internalReader.skip(startOffset - internalReaderOffset);
+            internalReader.skipTo(startOffset);
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }
-        if (internalReaderOffset < startOffset) {
+        if (internalReader.getCharsRead() != startOffset) {
             throw new BlackLabRuntimeException("Could not skip to start offset");
         }
         return internalReader;
@@ -107,12 +107,13 @@ public abstract class DocumentReferenceAbstract implements DocumentReference {
     @Override
     public void setXIncludeDirectory(File dir) {
         xincludeResolver = new XIncludeResolver(getBaseDocReaderSupplier(), dir);
+        resolvingXIncludes = true;
     }
 
-    public abstract Supplier<Reader> getBaseDocReaderSupplier();
+    public abstract Supplier<CountingReader> getBaseDocReaderSupplier();
 
     @Override
-    public Reader getDocumentReader() {
+    public CountingReader getDocumentReader() {
         if (xincludeResolver == null) {
             // No resolver configured; just return a reader for the base document
             xincludeResolver = getBaseDocReaderSupplier();

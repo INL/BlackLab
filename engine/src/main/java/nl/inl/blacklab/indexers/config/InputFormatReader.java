@@ -143,7 +143,6 @@ public class InputFormatReader extends YamlJsonReader {
             case "fileTypeOptions":
                 readFileTypeOptions(e, cfg);
                 break;
-//            case "tabularOptions": cfg.setTabularOptions(readTabularOptions(e)); break;
             case "corpusConfig":
                 readCorpusConfig(e, cfg.getCorpusConfig());
                 break;

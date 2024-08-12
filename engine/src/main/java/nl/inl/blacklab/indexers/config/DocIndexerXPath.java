@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -41,7 +42,8 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         String xmlProcessorName = fileTypeOptions.getOrDefault(FT_OPT_PROCESSOR, "");
         if (xmlProcessorName.isEmpty()) {
             // See if the older version of the key is being used
-            xmlProcessorName = fileTypeOptions.getOrDefault(FT_OPT_PROCESSING, "");
+            xmlProcessorName = fileTypeOptions.getOrDefault(FT_OPT_PROCESSING,
+                    BlackLab.featureFlag(BlackLab.FEATURE_DEFAULT_XML_PROCESSOR));
         }
         if (xmlProcessorName.toLowerCase().matches(REGEX_PROCESSOR_SAXON))
             return new DocIndexerSaxon();

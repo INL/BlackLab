@@ -15,12 +15,12 @@ public class CountingReader extends Reader {
     /**
      * Character count
      */
-    private int charsRead;
+    private long charsRead;
 
     /**
      * Last count reported
      */
-    private int lastReported;
+    private long lastReported;
 
     /**
      * Constructor
@@ -45,14 +45,18 @@ public class CountingReader extends Reader {
         return bytesReadThisTime;
     }
 
-    public int getCharsRead() {
+    public long getCharsRead() {
         lastReported = charsRead;
         return charsRead;
     }
 
-    public int getCharsReadSinceLastCall() {
-        int n = charsRead - lastReported;
+    public long getCharsReadSinceLastCall() {
+        long n = charsRead - lastReported;
         lastReported = charsRead;
         return n;
+    }
+
+    public long skipTo(long startOffset) throws IOException {
+        return skip(startOffset - getCharsRead());
     }
 }

@@ -80,6 +80,13 @@ public final class BlackLab {
      */
     public static final String FEATURE_DEFAULT_INDEX_TYPE = "defaultIndexType";
 
+    /** The default XML processing library to use. Valid values are "vtd" and "saxon".
+     *  VTD-XML, the current default, is memory-efficient but generally slower and doesn't support recent XPath.
+     *  Saxon uses more memory but is faster and has better XPath support.
+     *  The default will change to Saxon in the near future.
+     */
+    public static final String FEATURE_DEFAULT_XML_PROCESSOR = "defaultXmlProcessor";
+
     /** Write relation info for each relation/tag stored in the index? This allows
      * us to include attribute values when matching tags (and relations). */
     public static final String FEATURE_WRITE_RELATION_INFO = "writeRelationInfo";

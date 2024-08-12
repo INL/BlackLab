@@ -75,7 +75,7 @@ public class TextContent {
         if (offset < 0 || length < 0 || offset + length > chars.length)
             throw new IllegalArgumentException(
                     "illegal values for offset and length: " + offset + ", " + length + " (bytes.length = "
-                            + bytes.length + ")");
+                            + chars.length + ")");
         this.chars = chars;
         this.offset = offset;
         this.length = length;

@@ -1,8 +1,8 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
-import java.io.Reader;
 import java.util.function.Supplier;
 
+import nl.inl.util.CountingReader;
 import nl.inl.util.FileReference;
 import nl.inl.util.TextContent;
 
@@ -36,13 +36,13 @@ public class DocumentReferenceFileReference extends DocumentReferenceAbstract {
     }
 
     @Override
-    public Supplier<Reader> getBaseDocReaderSupplier() {
-        return () -> file.createReader();
+    public Supplier<CountingReader> getBaseDocReaderSupplier() {
+        return () -> new CountingReader(file.createReader());
     }
 
     @Override
     public TextContent getTextContent(long startOffset, long endOffset) {
-        if (file.hasGetTextContent()) {
+        if (file.hasGetTextContent() && !resolvingXIncludes) {
             // File is char array based, so it can do this efficiently.
             return file.getTextContent(startOffset, endOffset);
         }
