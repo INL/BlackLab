@@ -6,10 +6,10 @@ import java.io.Reader;
 import nl.inl.util.TextContent;
 import nl.inl.util.FileReference;
 
-public interface DocumentReference {
+public interface XmlDocRef {
 
-    static DocumentReference fromFileReference(FileReference file) {
-        return new DocumentReferenceFileReference(file);
+    static XmlDocRef fromFileReference(FileReference file) {
+        return new XmlDocRefFileReference(file);
     }
 
     void setXIncludeDirectory(File dir);

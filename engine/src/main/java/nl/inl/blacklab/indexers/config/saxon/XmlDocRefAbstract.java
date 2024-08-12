@@ -11,11 +11,11 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.CountingReader;
 import nl.inl.util.TextContent;
 
-/** A way to access the contents of a document.
+/** A way to access the contents of an XML document.
  *
  * Contents may be stored in memory for smaller documents, or be read from disk for larger ones.
  */
-public abstract class DocumentReferenceAbstract implements DocumentReference {
+public abstract class XmlDocRefAbstract implements XmlDocRef {
 
     /** Helper for resolving XIncludes */
     Supplier<CountingReader> xincludeResolver;

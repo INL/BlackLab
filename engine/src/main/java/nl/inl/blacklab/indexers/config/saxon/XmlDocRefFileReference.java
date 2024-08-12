@@ -10,7 +10,7 @@ import nl.inl.util.TextContent;
  *
  * Reads small files into memory for efficiency.
  */
-public class DocumentReferenceFileReference extends DocumentReferenceAbstract {
+public class XmlDocRefFileReference extends XmlDocRefAbstract {
 
     /** Files smaller than this may be read into memory. */
     public static final int FILE_IN_MEMORY_THRESHOLD_BYTES = 4_000_000;
@@ -21,7 +21,7 @@ public class DocumentReferenceFileReference extends DocumentReferenceAbstract {
      */
     private FileReference file;
 
-    DocumentReferenceFileReference(FileReference file) {
+    XmlDocRefFileReference(FileReference file) {
         // Make sure to read small files into memory,
         // and that we can create multiple readers (needed for getTextContent later).
         this.file = file

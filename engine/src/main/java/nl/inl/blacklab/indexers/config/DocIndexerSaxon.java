@@ -26,7 +26,7 @@ import net.sf.saxon.tree.iter.AxisIterator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.indexers.config.saxon.DocumentReference;
+import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
 import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingReader;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
@@ -86,7 +86,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     }
 
     /** Our document (in memory or on disk). */
-    private DocumentReference document;
+    private XmlDocRef document;
 
     /** The parsed document. */
     private TreeInfo contents;
@@ -126,7 +126,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     public void setDocument(FileReference file) {
         cleanupPreviousInputFile();
         super.setDocument(file);
-        document = DocumentReference.fromFileReference(file);
+        document = XmlDocRef.fromFileReference(file);
     }
 
     private void readDocument() {
