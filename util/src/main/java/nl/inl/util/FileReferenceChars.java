@@ -4,7 +4,11 @@ import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.input.ReaderInputStream;
@@ -30,7 +34,15 @@ public class FileReferenceChars implements FileReference {
 
     @Override
     public byte[] getBytes() {
-        return new String(contents).getBytes(StandardCharsets.UTF_8);
+        // Replaces less efficient version:
+        // return new String(contents).getBytes(StandardCharsets.UTF_8);
+        try {
+            CharsetEncoder encoder = StandardCharsets.UTF_8.newEncoder();
+            ByteBuffer byteBuffer = encoder.encode(CharBuffer.wrap(contents));
+            return byteBuffer.array();
+        } catch (CharacterCodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
