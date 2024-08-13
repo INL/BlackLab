@@ -58,7 +58,7 @@ And to find lemmas starting with _under_, use:
 
 	[lemma='under.*']
 
-Explaining regular expression syntax is beyond the scope of this document, but for a complete overview, see [regular-expressions.info](http://www.regular-expressions.info/).
+Explaining regular expression syntax is beyond the scope of this document, but for a complete overview, see [regular-expressions.info](http://www.regular-expressions.info/) for a general overview, or [Lucene's regular expression syntax](https://www.elastic.co/guide/en/elasticsearch/reference/current/regexp-syntax.html) specifically, which has a few quirks.
 
 ::: details Escaping and literal strings
 To find characters with special meaning in a regular expression, such as the period, you need to escape them with a backslash:
@@ -68,6 +68,8 @@ To find characters with special meaning in a regular expression, such as the per
 Alternatively, you can use a "literal string" by prefixing the string with an `l`:
 
     [lemma=l'etc.']
+
+Note that some unexpected characters may be considered special regex characters, such as `<` and `>`. See the above link to Lucene's regex documentation for more details.
 :::
 
 #### Matching any token
