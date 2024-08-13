@@ -10,7 +10,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -54,7 +53,7 @@ public class FileReferenceFile implements FileReference {
     public FileReference inMemoryIfSmallerThan(int maxFileSizeBytes) {
         if (file.length() < maxFileSizeBytes) {
             try {
-                return FileReference.fromCharArray(getPath(), IOUtils.toCharArray(createReader()), file);
+                return FileReference.readIntoMemoryFromTextualInputStream(getPath(), new FileInputStream(file), file);
             } catch (IOException e) {
                 throw new BlackLabRuntimeException(e);
             }
