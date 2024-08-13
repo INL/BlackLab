@@ -2,15 +2,27 @@ package nl.inl.util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BOMInputStream;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /** Represents a file to be indexed.
  *
  * May be in the form of an input stream, byte array, or file.
  */
 public interface FileReference {
+
+    /** When we have a choice, should we prefer a byte array (true) or a char array (false)?
+     * (byte arrays are more memory-efficient, char arrays are generally more CPU-efficient
+     *  when processing the file multiple times)
+     */
+    boolean PREFER_BYTE_ARRAY = true;
 
     static FileReference fromBytes(String path, byte[] contents, File assocFile) {
         return new FileReferenceBytes(path, contents, assocFile);
@@ -26,6 +38,26 @@ public interface FileReference {
 
     static FileReference fromInputStream(String path, InputStream is, File assocFile) {
         return new FileReferenceInputStream(path, is, assocFile);
+    }
+
+    /** Given a (temporary) textual input stream, read the file into memory and return a file reference. */
+    static FileReference readIntoMemoryFromTextualInputStream(String path, InputStream is, File assocFile) {
+        try {
+            if (PREFER_BYTE_ARRAY) {
+                // Read into byte array. This takes less memory, but character decoding has
+                // to be done each time we process the file.
+                return fromBytes(path, IOUtils.toByteArray(is), assocFile);
+            } else {
+                // Read into char array. This will generally take about twice as much memory
+                // (for Latin text), but we only do the character decoding once if we process
+                // the file multiple times (e.g. parse XML, get content to store)
+                BOMInputStream bis = UnicodeStream.wrap(is);
+                char[] chars = IOUtils.toCharArray(bis, UnicodeStream.getCharset(bis));
+                return fromCharArray(path, chars, assocFile);
+            }
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
     }
 
     static FileReference fromCharArray(String path, char[] charArray, File assocFile) {
