@@ -185,6 +185,9 @@ public class FileProcessor implements AutoCloseable {
      */
     private ExecutorService executor = null;
 
+    /** Are we processing multiple files in separte threads? If not, we can optimize. */
+    private boolean isMultiThreaded;
+
     /**
      * FileProcessor operates in two distinct stages: - The traversal of
      * directories/archives, this is done on the "main" thread (i.e. the thread that
@@ -217,11 +220,12 @@ public class FileProcessor implements AutoCloseable {
     public FileProcessor(final int numberOfThreadsToUse, boolean recurseSubdirs, boolean processArchives) {
         this.recurseSubdirs = recurseSubdirs;
         this.processArchives = processArchives;
+        this.isMultiThreaded = numberOfThreadsToUse > 1;
         setFileNameGlob("*");
 
         // We always use an ExecutorService to call our handlers to simplify our code
         // When not using threads, the service is just a fancy wrapper around doing task.run() directly inside the calling thread.
-        if (numberOfThreadsToUse > 1) {
+        if (isMultiThreaded) {
             // NOTE: we need to create our own executor instead of using Executors.newFixedThreadPool()
             // Because that implementation has an unbounded job queue by default, we run the risk that we queue 50k jobs and eat up all memory
             // So we provide our own queue that will block when it's full.
@@ -385,9 +389,22 @@ public class FileProcessor implements AutoCloseable {
 
         TarGzipReader.FileHandler handler = (pathInArchive, inputStream) -> {
             try {
-                byte[] bytes = IOUtils.toByteArray(inputStream);
-                processFile(FileReference.fromBytes(pathInArchive, bytes,
-                        fileRef.getAssociatedFile()));
+                FileReference fr;
+                if (isMultiThreaded) {
+                    // We have to convert the InputStream to a byte[], because we will
+                    // pass it to the handler asynchronously, and we can't guarantee that
+                    // the InputStream will still be valid when the handler is called.
+                    // (we can't use char[], even though that would be better for XML files,
+                    //  because file may be binary)
+                    fr = FileReference.fromBytes(pathInArchive, IOUtils.toByteArray(inputStream),
+                            fileRef.getAssociatedFile());
+                } else {
+                    // We're only processing files synchronously, on this thread.
+                    // No need to convert to a byte[], just use the InputStream directly.
+                    fr = FileReference.fromInputStream(pathInArchive, inputStream,
+                            fileRef.getAssociatedFile());
+                }
+                processFile(fr);
             } catch (IOException e) {
                 throw new BlackLabRuntimeException(e);
             }
