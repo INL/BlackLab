@@ -14,6 +14,7 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.SimpleResourcePool;
+import nl.inl.util.TextContent;
 
 /**
  * Store string content by id in a compound file and a TOC file. Quickly

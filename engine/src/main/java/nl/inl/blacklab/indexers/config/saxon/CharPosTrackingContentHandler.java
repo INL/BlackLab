@@ -8,9 +8,9 @@ import org.xml.sax.SAXException;
 /**
  * Content handler with access to the Locator to determine positions in the source.
  */
-public class MyContentHandler implements ContentHandler {
+public class CharPosTrackingContentHandler implements ContentHandler {
 
-    private final CharPositionsTracker charPositions;
+    private final CharPosTrackingReader charPositions;
 
     /**
      * Saxon's default handler, which we defer to.
@@ -22,7 +22,7 @@ public class MyContentHandler implements ContentHandler {
      */
     private Locator locator;
 
-    public MyContentHandler(CharPositionsTracker charPositions) {
+    public CharPosTrackingContentHandler(CharPosTrackingReader charPositions) {
         this.charPositions = charPositions;
     }
 

@@ -7,7 +7,6 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -25,10 +24,26 @@ public class TarGzipReader {
       /**
         * @param filePath path to the archive, concatenated with any path to this file
         *            inside the archive
-        * @param contents file contents
+        * @param tmpInputStream stream to the file contents, to be consumed immediately
         * @return true if we should continue with the next file, false if not
         */
-        boolean handle(String filePath, byte[] contents);
+        boolean handle(String filePath, InputStream tmpInputStream);
+    }
+
+    /**
+     * Process a .tar.gz file and call the handler for each normal file in the
+     * archive.
+     *
+     * @param fileRef file to decompress
+     * @param fileHandler the handler to call for each regular file
+     */
+    public static void processTarGzip(FileReference fileRef, FileHandler fileHandler) {
+        try (InputStream tgzStream = fileRef.getSinglePassInputStream();
+                InputStream unzipped = new GzipCompressorInputStream(tgzStream)) {
+            processTar(fileRef.getPath(), unzipped, fileHandler);
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
     /**
@@ -51,6 +66,22 @@ public class TarGzipReader {
     /**
      * Process a .gz file and call the file handler for its contents.
      *
+     * @param fileRef file to decompress
+     * @param fileHandler the handler to call for each regular file
+     */
+    public static void processGzip(FileReference fileRef, FileHandler fileHandler) {
+        try (InputStream gzStream = fileRef.getSinglePassInputStream();
+                InputStream unzipped = new GzipCompressorInputStream(gzStream)) {
+            fileHandler.handle(fileRef.getPath().replaceAll("\\.gz$", ""), unzipped);
+            // TODO make filename handling uniform across all archives types?
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    /**
+     * Process a .gz file and call the file handler for its contents.
+     *
      * @param fileName name/path to this file
      * @param gzipStream the .gz input stream to decompress. The stream will be
      *            closed after processing.
@@ -58,7 +89,8 @@ public class TarGzipReader {
      */
     public static void processGzip(String fileName, InputStream gzipStream, FileHandler fileHandler) {
         try (InputStream unzipped = new GzipCompressorInputStream(gzipStream)) {
-            fileHandler.handle(fileName.replaceAll("\\.gz$", ""), IOUtils.toByteArray(unzipped)); // TODO make filename handling uniform across all archives types?
+            fileHandler.handle(fileName.replaceAll("\\.gz$", ""), unzipped);
+            // TODO make filename handling uniform across all archives types?
         } catch (Exception e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -78,7 +110,34 @@ public class TarGzipReader {
                 if (e.isDirectory())
                     continue;
 
-                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), IOUtils.toByteArray(s));
+                boolean keepProcessing = fileHandler.handle(
+                        FilenameUtils.concat(fileName, e.getName()), s);
+                if (!keepProcessing)
+                    return;
+            }
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    /**
+     * Process a .zip file and call the handler for each normal file in the archive.
+     *
+     * Note that directory structure inside the zip file is ignored; files are
+     * processed as if they are one large directory.
+     *
+     * @param fileRef file to decompress
+     * @param fileHandler the handler to call for each regular file
+     */
+    public static void processZip(FileReference fileRef, FileHandler fileHandler) {
+        try (InputStream zipStream = fileRef.getSinglePassInputStream();
+                ZipInputStream s = new ZipInputStream(zipStream)) {
+            for (ZipEntry e = s.getNextEntry(); e != null; e = s.getNextEntry()) {
+                if (e.isDirectory())
+                    continue;
+
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileRef.getPath(),
+                        e.getName()), s);
                 if (!keepProcessing)
                     return;
             }
@@ -104,7 +163,8 @@ public class TarGzipReader {
                 if (e.isDirectory())
                     continue;
 
-                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), IOUtils.toByteArray(s));
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName,
+                        e.getName()), s);
                 if (!keepProcessing)
                     return;
             }

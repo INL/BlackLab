@@ -1,4 +1,4 @@
-package nl.inl.blacklab.contentstore;
+package nl.inl.util;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.Buffer;
@@ -11,6 +11,18 @@ import java.nio.charset.CharsetDecoder;
  * Text content, either as bytes or as a String.
  */
 public class TextContent {
+
+    public static TextContent from(char[] content) {
+        return new TextContent(content);
+    }
+
+    public static TextContent from(String content) {
+        return new TextContent(content);
+    }
+
+    public static TextContent from(char[] contents, int start, int length) {
+        return new TextContent(contents, start, length);
+    }
 
     /** If not null: text content as string. bytes and chars will be null in this case */
     private String str;
@@ -63,7 +75,7 @@ public class TextContent {
         if (offset < 0 || length < 0 || offset + length > chars.length)
             throw new IllegalArgumentException(
                     "illegal values for offset and length: " + offset + ", " + length + " (bytes.length = "
-                            + bytes.length + ")");
+                            + chars.length + ")");
         this.chars = chars;
         this.offset = offset;
         this.length = length;

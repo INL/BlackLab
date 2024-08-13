@@ -375,7 +375,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             for (ConfigMetadataField f: b.getFields()) {
                 if (f.isForEach())
                     continue;
-                metadataFields.addFromConfig(f);
+                MetadataFieldImpl metadataField = metadataFields.addFromConfig(f);
+                // We don't keep track of metadata field values in the integrated
+                // index format because it cannot change during indexing.
+                // Instead we will use DocValues to get the field values when necessary.
+                metadataField.setKeepTrackOfValues(false);
             }
         }
 

@@ -1,12 +1,8 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -25,7 +21,6 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -34,7 +29,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.util.FileUtil;
+import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 
 /**
@@ -87,33 +82,24 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-    public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
+    public void setDocument(FileReference file) {
+        super.setDocument(file);
+        file = file.withCreateReader(); // we need two readers, one extra to read char encoding line
         String charEncodingLine;
-        try (BufferedReader thefile = FileUtil.openForReading(file)) {
-            charEncodingLine = thefile.readLine();
+        try (BufferedReader reader = file.createReader()) {
+            charEncodingLine = reader.readLine();
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
         Charset charEncoding = charEncodingLine == null ? null : getCharEncoding(charEncodingLine);
         if (charEncoding == null) {
             log("No character encoding encountered in " + file.getPath() + "; using utf-8");
-            charEncoding = defaultCharset;
+            charEncoding = file.getCharSet();
         }
         setDocumentName(file.getPath());
-        setDocument(FileUtil.openForReading(file, charEncoding));
+        setDocument(file.createReader(charEncoding));
     }
 
-    @Override
-    public void setDocument(byte[] contents, Charset defaultCharset) {
-        setDocument(new ByteArrayInputStream(contents), defaultCharset);
-    }
-
-    @Override
-    public void setDocument(InputStream is, Charset defaultCharset) {
-        setDocument(new InputStreamReader(new BOMInputStream(is), defaultCharset));
-    }
-
-    @Override
     public void setDocument(Reader reader) {
         this.reader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }

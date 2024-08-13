@@ -15,15 +15,15 @@ import org.xml.sax.XMLReader;
 /**
  * Needed to not lose our ContentHandler, which would otherwise be overridden by Saxon.
  */
-public class MyXMLReader implements XMLReader {
+public class CharPosTrackingXMLReader implements XMLReader {
 
     private final XMLReader wrappedReader;
 
-    private final MyContentHandler handler;
+    private final CharPosTrackingContentHandler handler;
 
-    public MyXMLReader(XMLReader wrappedReader) {
+    public CharPosTrackingXMLReader(XMLReader wrappedReader) {
         this.wrappedReader = wrappedReader;
-        handler = (MyContentHandler) wrappedReader.getContentHandler();
+        handler = (CharPosTrackingContentHandler) wrappedReader.getContentHandler();
     }
 
     @Override

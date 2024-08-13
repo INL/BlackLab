@@ -1,11 +1,7 @@
 package nl.inl.blacklab.index;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.util.FileReference;
 
 /**
  * Description of a supported input format
@@ -13,42 +9,13 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 public interface InputFormat {
 
     /**
-     * Convenience function.
-     * <p>
-     * Note that it is usually faster to offer the document as byte[] and charset,
-     * because that allows the buffer to be passed on without copying.
+     * Create a DocIndexer for a file.
      *
      * @param indexer our indexer
-     * @param documentName document name
-     * @param is contents
-     * @param cs file encoding
+     * @param file file to index
      * @return the DocIndexer
      */
-    DocIndexer createDocIndexer(DocWriter indexer, String documentName, InputStream is,
-            Charset cs)
-            throws UnsupportedOperationException;
-
-    /** Convenience function.
-     *
-     * @param indexer our indexer
-     * @param documentName document name
-     * @param f file
-     * @param cs file encoding
-     * @return the DocIndexer
-     */
-    DocIndexer createDocIndexer(DocWriter indexer, String documentName, File f, Charset cs)
-            throws UnsupportedOperationException, FileNotFoundException;
-
-    /** Convenience function.
-     *
-     * @param indexer our indexer
-     * @param documentName document name
-     * @param b file contents
-     * @param cs file encoding
-     * @return the DocIndexer, or null if format not found
-     */
-    DocIndexer createDocIndexer(DocWriter indexer, String documentName, byte[] b, Charset cs)
-            throws UnsupportedOperationException;
+    DocIndexer createDocIndexer(DocWriter indexer, FileReference file);
 
     String getIdentifier();
 

@@ -10,6 +10,7 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.util.TextContent;
 import nl.inl.util.VersionFile;
 
 /**
