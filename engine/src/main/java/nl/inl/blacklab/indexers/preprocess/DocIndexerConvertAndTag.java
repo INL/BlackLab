@@ -12,7 +12,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.input.ReaderInputStream;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -22,6 +21,7 @@ import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
+import nl.inl.util.FileReference;
 
 /**
  * Wrapper class for a regular DocIndexer. It's activated when a format has the
@@ -54,22 +54,15 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         outputIndexer.close();
     }
 
-    /**
-     * Use {@link DocIndexerConvertAndTag#setDocument(InputStream, Charset)} if at
-     * all possible.
-     */
-    @Override
-    public void setDocument(Reader reader) {
-        // Reader outputs chars, so we can determine our own charset when we put them back into a stream
-        // We just need to make sure to pass it on to whatever consumes the stream
-        input = new PushbackInputStream(new ReaderInputStream(reader, StandardCharsets.UTF_8), 251);
-        charset = StandardCharsets.UTF_8;
-    }
-
-    @Override
     public void setDocument(InputStream is, Charset cs) {
         input = new PushbackInputStream(is, 251);
         charset = cs;
+    }
+
+    @Override
+    public void setDocument(FileReference file) {
+        super.setDocument(file);
+        setDocument(file.getSinglePassInputStream(), file.getCharSet());
     }
 
     @Override
@@ -116,7 +109,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         this.outputIndexer.setDocumentName(this.documentName);
         this.outputIndexer.setConfigInputFormat(config);
 
-        this.outputIndexer.setDocument(output.toByteArray(), charset);
+        this.outputIndexer.setDocument(FileReference.fromBytesOverrideCharset(documentName, output.toByteArray(), charset));
         this.outputIndexer.index();
     }
 

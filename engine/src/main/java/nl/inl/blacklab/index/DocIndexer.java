@@ -3,13 +3,12 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.util.FileReference;
 
 public interface DocIndexer extends AutoCloseable {
 
@@ -55,28 +54,10 @@ public interface DocIndexer extends AutoCloseable {
     /**
      * Set the document to index.
      *
-     * @param is document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
-     */
-    void setDocument(InputStream is, Charset cs);
-
-    /**
-     * Set the document to index.
-     *
-     * @param contents document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
-     */
-    void setDocument(byte[] contents, Charset cs);
-
-    /**
-     * Set the document to index.
-     *
      * @param file file to index
-     * @param charset charset to use if no BOM found, or null for the default
-     *         (utf-8)
      * @throws FileNotFoundException if not found
      */
-    void setDocument(File file, Charset charset) throws FileNotFoundException;
+    void setDocument(FileReference file);
 
     /** Set the current document's directory.
      * This may e.g. be used to resolve XIncludes, e.g. by DocIndexerSaxon.

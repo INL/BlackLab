@@ -1,14 +1,9 @@
 package nl.inl.blacklab.index;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.indexers.config.DocIndexerConfig;
+import nl.inl.util.FileReference;
 
 /**
  * Description of a supported input format that is configuration-based.
@@ -47,19 +42,7 @@ public class InputFormatError implements InputFormat {
     }
 
     @Override
-    public DocIndexerConfig createDocIndexer(DocWriter indexer, String documentName, InputStream is,
-            Charset cs) {
-        throw new BlackLabRuntimeException(getDescription());
-    }
-
-    @Override
-    public DocIndexerConfig createDocIndexer(DocWriter indexer, String documentName, File f, Charset cs)
-            throws FileNotFoundException {
-        throw new BlackLabRuntimeException(getDescription());
-    }
-
-    @Override
-    public DocIndexerConfig createDocIndexer(DocWriter indexer, String documentName, byte[] b, Charset cs) {
+    public DocIndexer createDocIndexer(DocWriter indexer, FileReference file) {
         throw new BlackLabRuntimeException(getDescription());
     }
 

@@ -1,14 +1,8 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,13 +12,12 @@ import java.util.regex.Pattern;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.util.FileUtil;
+import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 
 /**
@@ -89,7 +82,6 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
         super.setConfigInputFormat(config);
         Map<String, String> opt = config.getFileTypeOptions();
         Type type = opt.containsKey(FT_OPT_TYPE) ? Type.fromStringValue(opt.get(FT_OPT_TYPE)) : Type.CSV;
-        //ConfigTabularOptions tab = config.getTabularOptions();
         switch (type) {
         case TSV:
             tabularFormat = CSVFormat.TDF;
@@ -116,22 +108,6 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
             multipleValuesSeparatorRegex = opt.get(FT_OPT_MULTIPLE_VALUES_SEPARATOR);
     }
 
-    @Override
-    public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
-        setDocument(FileUtil.openForReading(file, defaultCharset));
-    }
-
-    @Override
-    public void setDocument(byte[] contents, Charset defaultCharset) {
-        setDocument(new ByteArrayInputStream(contents), defaultCharset);
-    }
-
-    @Override
-    public void setDocument(InputStream is, Charset defaultCharset) {
-        setDocument(new InputStreamReader(new BOMInputStream(is), defaultCharset));
-    }
-
-    @Override
     public void setDocument(Reader reader) {
         try {
             inputReader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
@@ -139,6 +115,12 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
+
+    @Override
+    public void setDocument(FileReference file) {
+        super.setDocument(file);
+        setDocument(file.getSinglePassReader());
     }
 
     @Override

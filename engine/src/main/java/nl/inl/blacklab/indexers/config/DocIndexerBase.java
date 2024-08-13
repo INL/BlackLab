@@ -1,14 +1,8 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,11 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
-import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -29,7 +21,6 @@ import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -38,8 +29,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
+import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
-import nl.inl.util.UnicodeStream;
+import nl.inl.util.TextContent;
 
 public abstract class DocIndexerBase extends DocIndexerAbstract {
 
@@ -236,29 +228,21 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         File f = resolveFileReference(inputFile);
 
         // Get the data
-        byte[] data;
-        String completePath = inputFile;
+        FileReference data;
         if (inputFile.endsWith(".zip") || inputFile.endsWith(".tar") || inputFile.endsWith(".tar.gz")
                 || inputFile.endsWith(".tgz")) {
             // It's an archive. Unpack the right file from it.
-            completePath += "/" + pathInsideArchive;
             data = FileProcessor.fetchFileFromArchive(f, pathInsideArchive);
         } else {
             // Regular file.
-            try (InputStream is = new FileInputStream(f)) {
-                data = IOUtils.toByteArray(is);
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
+            data = FileReference.fromFile(f);
         }
-        if (data == null) {
+        if (data == null)
             throw new BlackLabRuntimeException("Error reading linked document");
-        }
 
         // Index the data
         InputFormat inputFormat = DocumentFormats.getFormat(inputFormatIdentifier).orElseThrow();
-        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(), completePath,
-                data, Indexer.DEFAULT_INPUT_ENCODING)) {
+        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(), data)) {
             if (docIndexer instanceof DocIndexerBase) {
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingDoc = true;
@@ -667,56 +651,10 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         wordsDoneAtLastReport = wordsDone;
     }
 
-    /**
-     * @deprecated use {@link #setDocument(byte[], Charset)}
-     * Set the document to index.
-     *
-     * NOTE: you should generally prefer calling the File or byte[] versions of this
-     * method, as those can be more efficient (e.g. when using DocIndexer that
-     * parses using VTD-XML).
-     *
-     * @param reader document
-     */
-    @Deprecated
-    public abstract void setDocument(Reader reader);
-
-    /**
-     * Set the document to index.
-     *
-     * @param is document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
-     */
-    public void setDocument(InputStream is, Charset cs) {
-        try {
-            UnicodeStream unicodeStream = new UnicodeStream(is, cs);
-            Charset detectedCharset = unicodeStream.getEncoding();
-            setDocument(new InputStreamReader(unicodeStream, detectedCharset));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    /**
-     *
-     * Set the document to index.
-     *
-     * @param contents document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
-     */
-    public void setDocument(byte[] contents, Charset cs) {
-        setDocument(new ByteArrayInputStream(contents), cs);
-    }
-
-    /**
-     * Set the document to index.
-     *
-     * @param file file to index
-     * @param charset charset to use if no BOM found, or null for the default
-     *            (utf-8)
-     * @throws FileNotFoundException if not found
-     */
-    public void setDocument(File file, Charset charset) throws FileNotFoundException {
-        setDocument(new FileInputStream(file), charset);
+    @Override
+    public void setDocument(FileReference file) {
+        if (documentName == null)
+            documentName = file.getPath();
     }
 
     /**

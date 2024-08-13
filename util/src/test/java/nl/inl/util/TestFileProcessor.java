@@ -3,7 +3,6 @@ package nl.inl.util;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -212,15 +211,8 @@ public class TestFileProcessor {
         }
 
         @Override
-        public synchronized void file(String path, InputStream is, File file) throws Exception {
-            this.filesReceived.add(FilenameUtils.getName(path));
-            if (triggerException)
-                throw new TestException();
-        }
-
-        @Override
-        public synchronized void file(String path, byte[] contents, File file) throws Exception {
-            this.filesReceived.add(FilenameUtils.getName(path));
+        public synchronized void file(FileReference file) throws Exception {
+            this.filesReceived.add(FilenameUtils.getName(file.getPath()));
             if (triggerException)
                 throw new TestException();
         }
@@ -244,7 +236,7 @@ public class TestFileProcessor {
         try (FileProcessor proc = new FileProcessor(useThreads ? 2 : 1, recurseSubdirs, processArchives)) {
             proc.setFileHandler(fileHandler);
             proc.setErrorHandler(errorHandler);
-            proc.processFile(this.inputFile);
+            proc.processFileOrDirectory(this.inputFile);
         }
 
         if (!shouldTriggerException) {

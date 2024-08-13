@@ -1,14 +1,11 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -17,7 +14,6 @@ import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.xml.sax.SAXException;
@@ -30,12 +26,13 @@ import net.sf.saxon.tree.iter.AxisIterator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.indexers.config.saxon.CharPositionsTracker;
-import nl.inl.blacklab.indexers.config.saxon.DocumentReference;
-import nl.inl.blacklab.indexers.config.saxon.MyContentHandler;
+import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
+import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingContentHandler;
+import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingReader;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.util.FileReference;
 
 /**
  * An indexer capable of XPath version supported by the provided saxon library.
@@ -88,14 +85,14 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         }
     }
 
-    /** Our document, possibly swapped to disk. */
-    private DocumentReference document;
+    /** Our document (in memory or on disk). */
+    private XmlDocRef document;
 
     /** The parsed document. */
     private TreeInfo contents;
 
     /** Can calculate character position for a given line/column position. */
-    private CharPositionsTracker charPositions;
+    private CharPosTrackingReader charPositions;
 
     /** Current character position in the current document */
     private long charPos = 0;
@@ -126,50 +123,31 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     }
 
     @Override
-    public void setDocument(File file, Charset defaultCharset) {
-        setDocument(file, defaultCharset, null);
-    }
-
-    @Override
-    public void setDocument(byte[] contents, Charset defaultCharset) {
-        try {
-            char[] charContents = IOUtils.toCharArray(new ByteArrayInputStream(contents), defaultCharset);
-            setDocument(null, StandardCharsets.UTF_8, charContents);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void setDocument(InputStream is, Charset defaultCharset) {
-        try {
-            setDocument(null, StandardCharsets.UTF_8, IOUtils.toCharArray(is, defaultCharset));
-            is.close();
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
-    public void setDocument(Reader reader) {
-        try {
-            setDocument(null, StandardCharsets.UTF_8, IOUtils.toCharArray(reader));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    private void setDocument(File file, Charset charset, char[] documentContent) {
-        assert file == null || charset != null; // if file is set, we also need a charset
-        document = new DocumentReference(documentContent, charset, file, false);
+    public void setDocument(FileReference file) {
+        cleanupPreviousInputFile();
+        super.setDocument(file);
+        document = XmlDocRef.fromFileReference(file);
     }
 
     private void readDocument() {
         try {
-            document = document.withXIncludesResolved(currentXIncludeDir);
-            charPositions = document.getCharPositionsTracker();
+            // Should we enable (primitive) XInclude processing?
+            // Note that our support is not standards compliant; we just
+            // recognize xi:include elements using regex and substitute the
+            // referenced file, all before XML parsing happens.
+            // XInclude processing incurs an overhead, so it's best to only enable it when needed.
+            if (config.getFileTypeOptions().getOrDefault("enableXInclude", "").equalsIgnoreCase("true"))
+                document.setXIncludeDirectory(currentXIncludeDir);
+
+            // Now parse the document
+            // (our special reader will capture the character positions for each tag while parsing)
             try (Reader reader = document.getDocumentReader()) {
-                contents = SaxonHelper.parseDocument(reader, new MyContentHandler(charPositions));
+                try {
+                    this.charPositions = new CharPosTrackingReader(reader);
+                    contents = SaxonHelper.parseDocument(charPositions, new CharPosTrackingContentHandler(charPositions));
+                } finally {
+                    this.charPositions.close();
+                }
             }
             XPath xPath = SaxonHelper.getXPathFactory().newXPath();
             finder = new XPathFinder(xPath,
@@ -212,8 +190,13 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     @Override
     public void index() throws MalformedInputFile, PluginException, IOException {
         super.index();
-        readDocument();
         indexParsedFile(config.getDocumentPath(), false);
+    }
+
+    @Override
+    protected boolean indexParsedFile(String docXPath, boolean mustBeSingleDocument) {
+        readDocument();
+        return super.indexParsedFile(docXPath, mustBeSingleDocument);
     }
 
     // process annotated field
@@ -222,8 +205,9 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     @Override
     protected void indexDocument(NodeInfo doc) {
-        docStartPos = charPositions.getNodeStartPos(doc);
-        docEndPos = charPositions.getNodeEndPos(doc);
+        CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(doc);
+        docStartPos = nodeStartEnd.getStartPos();
+        docEndPos = nodeStartEnd.getEndPos();
         super.indexDocument(doc);
     }
 
@@ -242,8 +226,9 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             // Yes; determine boundaries of this annotated field container so we can later store
             // this version of the document in the field's content store.
             // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-            docVersionStartPos = charPositions.getNodeStartPos(container) - docStartPos;
-            long docVersionEndPos = charPositions.getNodeEndPos(container) - docStartPos;
+            CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(container);
+            docVersionStartPos = nodeStartEnd.getStartPos() - docStartPos;
+            long docVersionEndPos = nodeStartEnd.getEndPos() - docStartPos;
             docStartEndOffsetsPerField.put(annotatedField, Pair.of(docVersionStartPos, docVersionEndPos));
         }
 
@@ -282,7 +267,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             }
 
             // Index our word
-            charPos = charPositions.getNodeStartPos(word) - docStartPos;
+            CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(word);
+            charPos = nodeStartEnd.getStartPos() - docStartPos;
             beginWord();
 
             // For each configured annotation...
@@ -290,7 +276,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                 processAnnotation(annotation, word, tokenPosition);
             }
 
-            charPos = charPositions.getNodeEndPos(word) - docStartPos;
+            charPos = nodeStartEnd.getEndPos() - docStartPos;
             endWord();
 
             // Make sure we close inline tags at the correct position
@@ -447,19 +433,38 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     @Override
     protected void storeDocument() {
         if (docStartEndOffsetsPerField.isEmpty()) {
+            // Regular, non-parallel corpus. Store whole document.
             storeWholeDocument(document.getTextContent(docStartPos, docEndPos));
         } else {
+            // Parallel corpus. Store each version of the document with its field.
+            docStartEndOffsetsPerField.entrySet().stream()
+                    .sorted(Comparator.comparing(a -> a.getValue().getLeft()))
+                    .forEach(entry -> {
+                        Pair<Long, Long> startEnd = entry.getValue();
+                        storeContent(entry.getKey(), document.getTextContent(startEnd.getLeft(), startEnd.getRight()));
+                    });
             for (Map.Entry<ConfigAnnotatedField, Pair<Long, Long>> entry: docStartEndOffsetsPerField.entrySet()) {
                 Long startOffset = entry.getValue().getLeft() + docStartPos;
                 Long endOffset = entry.getValue().getRight() + docStartPos;
                 storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
             }
         }
-        document.clean();
-        document = null;
+    }
+
+    private void cleanupPreviousInputFile() {
+        if (document != null) {
+            document.clean();
+            document = null;
+        }
         // make sure we don't hold on to memory needlessly
         charPositions = null;
         contents = null;
+    }
+
+    @Override
+    public void close() {
+        cleanupPreviousInputFile();
+        super.close();
     }
 
     @Override

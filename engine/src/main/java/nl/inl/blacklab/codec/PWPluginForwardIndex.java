@@ -409,9 +409,11 @@ class PWPluginForwardIndex implements PWPlugin {
     }
 
     public void finalize() throws IOException {
-        CodecUtil.writeFooter(outTempTermVectorFile);
-        outTempTermVectorFile.close();
-        outTempTermVectorFile = null;
+        if (outTempTermVectorFile != null) {
+            CodecUtil.writeFooter(outTempTermVectorFile);
+            outTempTermVectorFile.close();
+            outTempTermVectorFile = null;
+        }
 
         // Reverse the reverse index to create forward index
         // (this time we iterate per field and per document first, then reconstruct the document by
