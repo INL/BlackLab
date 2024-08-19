@@ -440,14 +440,10 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             docStartEndOffsetsPerField.entrySet().stream()
                     .sorted(Comparator.comparing(a -> a.getValue().getLeft()))
                     .forEach(entry -> {
-                        Pair<Long, Long> startEnd = entry.getValue();
-                        storeContent(entry.getKey(), document.getTextContent(startEnd.getLeft(), startEnd.getRight()));
+                        Long startOffset = entry.getValue().getLeft() + docStartPos;
+                        Long endOffset = entry.getValue().getRight() + docStartPos;
+                        storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
                     });
-            for (Map.Entry<ConfigAnnotatedField, Pair<Long, Long>> entry: docStartEndOffsetsPerField.entrySet()) {
-                Long startOffset = entry.getValue().getLeft() + docStartPos;
-                Long endOffset = entry.getValue().getRight() + docStartPos;
-                storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
-            }
         }
     }
 
