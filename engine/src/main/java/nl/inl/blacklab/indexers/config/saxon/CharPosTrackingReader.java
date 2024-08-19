@@ -86,16 +86,15 @@ public class CharPosTrackingReader extends Reader {
      * translation of recorded line and column number to character position in the document
      */
     private long charPosForLineAndCol(int lineNumber, int columnNumber) {
-        //assert lineNumber >= 1 && columnNumber >= 1 : "Line and column numbers must be 1 or higher";
-        // If you match the document node / , it doesn't have valid line/col...
-        if (lineNumber < 1)
-            lineNumber = 1;
-        if (columnNumber < 1)
-            columnNumber = 1;
+        if (lineNumber == 0 && columnNumber == -1) {
+            // If you match the document node / , it doesn't have valid line/col...
+            lineNumber = columnNumber = 1;
+        }
+        assert lineNumber >= 1 && columnNumber >= 1 : "Line and column numbers must be positive";
 
         Long charPosStartOfLine = lineNumberToCharPos.getLong(lineNumber - 1);
-        // Note that we subtract 1 at the end because Saxon indicates the columnNumber just AFTER the tag
-        // (JN: or because columnNumber is 1-based, like line number, and we want a character position that is 0-based?)
+        // Note that we subtract 1 at the end because columnNumber is 1-based, like line number,
+        // and we want a character position that is 0-based
         return charPosStartOfLine + columnNumber - 1;
     }
 
@@ -137,31 +136,6 @@ public class CharPosTrackingReader extends Reader {
         StartEndPos startEndPos = new StartEndPos(begin);
         elStack.push(startEndPos);
         startEndPosMap.put(end, startEndPos);
-    }
-
-    /** Find the highest open bracket position that is lower than the end position
-     * (the last open bracket before the end position)
-     */
-    private long findOpenBracket(long endBracketPos) {
-        // Binary search
-        int highestValidIndex = 0;
-        long highestValidPos = openBracketPositions.getLong(0);
-        int lowestInvalidIndex = openBracketPositions.size();
-        while (highestValidIndex < lowestInvalidIndex - 1) {
-            int mid = (highestValidIndex + lowestInvalidIndex) >>> 1; // find midpoint, biased towards high (+ 1)
-            long midPos = openBracketPositions.getLong(mid);
-            if (midPos < endBracketPos) {
-                // This is a possible candidate. Update low.
-                highestValidIndex = mid;
-                highestValidPos = midPos;
-            } else {
-                // This is not a candidate. Update high.
-                lowestInvalidIndex = mid;
-            }
-        }
-        if (highestValidPos < 0)
-            throw new BlackLabRuntimeException("No open bracket found before position " + endBracketPos);
-        return highestValidPos;
     }
 
     /**

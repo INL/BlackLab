@@ -144,17 +144,12 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
         if (this.matchInfo != null) {
             // We've already retrieved our clause's match info. Use that.
             for (int i = 0; i < matchInfo.length; i++) {
-                if (matchInfo[i] == null)
+                if (this.matchInfo[i] != null)
                     matchInfo[i] = this.matchInfo[i];
             }
         } else {
             super.getMatchInfo(matchInfo);
         }
-    }
-
-    @Override
-    public RelationInfo getRelationInfo() {
-        return super.getRelationInfo();
     }
 
     @Override

@@ -110,6 +110,7 @@ public enum WebserviceParameter {
     OPERATION("op"),
     CORPUS_NAME("indexname"),
     FIELD("field"), // (annotated) field to use for operation
+    SEARCH_FIELD("searchfield"), // annotated field to search (parallel, if different from field)
     INPUT_FORMAT("inputformat"),
     API_VERSION("api");
 

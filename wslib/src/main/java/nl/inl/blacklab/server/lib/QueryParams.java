@@ -152,6 +152,8 @@ public interface QueryParams {
 
     String getFieldName();
 
+    Optional<String> getSearchFieldName();
+
     /**
      * Get the operation, for webservices that pass operation via a parameter.
      * <p>

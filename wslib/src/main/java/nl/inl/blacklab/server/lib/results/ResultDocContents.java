@@ -132,15 +132,16 @@ public class ResultDocContents {
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc;
+        AnnotatedField fieldToShow = params.getAnnotatedField();
         if (hits == null) {
-            hitsInDoc = Hits.empty(QueryInfo.create(index, params.getAnnotatedField()));
+            hitsInDoc = Hits.empty(QueryInfo.create(index, fieldToShow));
         } else {
             hitsInDoc = hits.getHitsInDoc(docId);
         }
         if (isFullDocument) {
             // Whole document. Use the highlightDocument method, which takes document versions in
             // a parallel corpus into account (cuts out part of the original input file).
-            AnnotatedField field = hits == null ? params.getAnnotatedField() : hits.field();
+            AnnotatedField field = hits == null ? fieldToShow : hits.field();
             content = DocUtil.highlightDocument(index, field, docId, hitsInDoc);
         } else {
             // Part of the document by token positions.
@@ -174,7 +175,7 @@ public class ResultDocContents {
             // here we may need to include namespace declarations
             // retrieve the first bit of the document, try to find namespaces
             String root = DocUtil.contentsByCharPos(index, docId, document,
-                    params.getAnnotatedField(), 0, 1024);
+                    fieldToShow, 0, 1024);
             m = NAMED_NAMESPACE.matcher(root);
             namespaces = new HashSet<>();
             while (m.find()) {

@@ -87,6 +87,8 @@ public interface WebserviceParams extends QueryParams {
 
     AnnotatedField getAnnotatedField();
 
+    AnnotatedField getSearchField();
+
     SearchDocs docsWindow() throws BlsException;
 
     SearchDocs docsSorted() throws BlsException;

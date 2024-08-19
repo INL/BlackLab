@@ -410,6 +410,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public String getFieldName() { return get(WebserviceParameter.FIELD); }
 
     @Override
+    public Optional<String> getSearchFieldName() { return opt(WebserviceParameter.SEARCH_FIELD); }
+
+    @Override
     public WebserviceOperation getOperation() {
         String strOp = get(WebserviceParameter.OPERATION);
         WebserviceOperation op = WebserviceOperation.fromValue(strOp)

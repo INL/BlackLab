@@ -364,7 +364,8 @@ public interface Hits extends Results<Hit, HitProperty> {
         for (int i = 0; i < matchInfo.length; i++) {
             if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
                 continue;
-            map.put(matchInfoDefs().get(i).getName(), matchInfo[i]);
+            if (matchInfo[i] != null)
+                map.put(matchInfoDefs().get(i).getName(), matchInfo[i]);
         }
         return map;
     }

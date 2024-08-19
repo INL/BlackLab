@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
  * Information about the original query.
@@ -93,6 +94,21 @@ public final class QueryInfo {
         } else if (!index.equals(other.index))
             return false;
         return true;
+    }
+
+    /**
+     * Return QueryInfo with the correct field, taken from query.
+     *
+     * Will return a new QueryInfo if the query's field differs from ours;
+     * otherwise, will return this.
+     *
+     * @param query the query to get the field from
+     * @return a QueryInfo with the correct field
+     */
+    public QueryInfo optOverrideField(BLSpanQuery query) {
+        if (query.getField().equals(field.name()))
+            return this;
+        return new QueryInfo(index, index.annotatedField(query.getField()), useCache);
     }
 }
 

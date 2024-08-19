@@ -13,6 +13,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsWithinSpan;
+import nl.inl.blacklab.search.lucene.SpanQueryOtherFieldHits;
 import nl.inl.blacklab.search.lucene.SpanQueryRelationSpanAdjust;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -26,6 +27,7 @@ public class XFRelations implements ExtensionFunctionClass {
     public static final String FUNC_REL = "rel";
     public static final String FUNC_RMATCH = "rmatch";
     public static final String FUNC_RSPAN = "rspan";
+    public static final String FUNC_RFIELD = "rfield";
     public static final String FUNC_RCAPTURE = "rcapture";
     public static final String FUNC_RCAPTURE2 = "rcapture2";
 
@@ -126,6 +128,19 @@ public class XFRelations implements ExtensionFunctionClass {
         return new SpanQueryRelationSpanAdjust(relations, mode, null);
     }
 
+    private static BLSpanQuery rfield(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
+        if (args.size() < 2)
+            throw new IllegalArgumentException("rfield() requires a query and a field or version name as arguments");
+        BLSpanQuery relations = (BLSpanQuery) args.get(0);
+        String fieldOrVersion = (String)args.get(1);
+        String fieldName = queryInfo.index().annotatedFields().getByFieldOrVersionName(fieldOrVersion).name();
+        if (relations.getField().equals(fieldName)) {
+            // Nothing to do, just return query unchanged
+            return relations;
+        }
+        return new SpanQueryOtherFieldHits(relations, fieldName);
+    }
+
     /**
      * Perform an AND operation with the additional requirement that clauses match unique relations.
      *
@@ -192,6 +207,8 @@ public class XFRelations implements ExtensionFunctionClass {
                 List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM));
         QueryExtensions.register(FUNC_RSPAN, XFRelations::rspan, QueryExtensions.ARGS_QS,
                 Arrays.asList(null, "full"));
+        QueryExtensions.register(FUNC_RFIELD, XFRelations::rfield, QueryExtensions.ARGS_QS,
+                Arrays.asList(null, null));
         QueryExtensions.register(FUNC_RCAPTURE, XFRelations::rcapture, QueryExtensions.ARGS_QSS,
                 Arrays.asList(null, DEFAULT_RCAP_NAME, ".*"), true);
         QueryExtensions.register(FUNC_RCAPTURE2, XFRelations::rcaptureWithinCapture, QueryExtensions.ARGS_QSSS,
