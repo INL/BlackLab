@@ -3,9 +3,9 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 /**
- * A version of SpansRepetition that only looks at consecutive hits.
+ * A Spans that makes sure clauses below it get the overridden field in their HitQueryContext.
  *
- * Suitable if hits don't overlap. Otherwise, use SpansRepetition.
+ * Used for e.g. parallel corpora, in which part of the query deals with a different field.
  */
 class SpansOverrideField extends BLFilterDocsSpans<BLSpans> {
 

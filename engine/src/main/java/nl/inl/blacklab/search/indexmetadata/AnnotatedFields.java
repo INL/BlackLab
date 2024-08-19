@@ -40,6 +40,26 @@ public interface AnnotatedFields extends Iterable<AnnotatedField> {
     AnnotatedField get(String fieldName);
 
     /**
+     * Get annotated field by its full name, or by its version name (parallel corpus).
+     *
+     * If it's not a full annotated field name, it's assumed to be a version name in a
+     * parallel corpus.
+     * The main annotated field is used and the version is replaced with the one supplied.
+     * Example: version "nl" of main annotated field "contents__en" is "contents__nl".
+     *
+     * @param name field name or version name
+     * @return the annotated field, or null if it doesn't exist
+     */
+    default AnnotatedField getByFieldOrVersionName(String name) {
+        // Was a field name supplied?
+        if (!exists(name)) {
+            // No; see if it's a version (e.g. different language in parallel corpus) of the main annotated field
+            name = AnnotatedFieldNameUtil.changeParallelFieldVersion(main().name(), name);
+        }
+        return get(name);
+    }
+
+    /**
      * Does the specified field exist?
      * 
      * @param fieldName field name

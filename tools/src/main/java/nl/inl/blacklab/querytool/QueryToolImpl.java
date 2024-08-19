@@ -659,7 +659,8 @@ public class QueryToolImpl {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            SearchHits search = index.search(contentsField).find(spanQuery);
+            AnnotatedField field = index.annotatedField(spanQuery.getField()); // query may override field, e.g. rfield(...)
+            SearchHits search = index.search(field).find(spanQuery);
             timings = search.queryInfo().timings();
 
             if (alwaysSortBy != null) {

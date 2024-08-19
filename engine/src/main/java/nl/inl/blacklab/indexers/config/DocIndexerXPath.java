@@ -237,7 +237,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 // Standoff span or relation annotation. Try to find end/target and type.
 
                 // end/target
-                Span endOrTarget = indexAtPositions.isEmpty() ? Span.invalid() : indexAtPositions.get(0);
+                Span endOrTarget = Span.invalid();
                 Span[] endOrTargetArr = new Span[] { endOrTarget };
                 xpathForEachStringValue(standoff.getSpanEndPath(), standoffNode, (tokenId) -> {
                     Span tokenPos = tokenPositionsMap.get(tokenId);

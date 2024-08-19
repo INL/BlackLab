@@ -437,7 +437,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     private SearchHits hits() throws BlsException {
-        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
+        SearchEmpty search = blIndex().search(getSearchField(), useCache());
         try {
             Query filter = filterQuery();
             Optional<TextPattern> pattern = patternWithinContextTag();
@@ -457,11 +457,42 @@ public class WebserviceParamsImpl implements WebserviceParams {
      * Uses the main field if none was specified or the specified field doesn't exist,
      * so we can always return a valid field.
      *
+     * Uses the optional "searchfield" parameter if present, or the
+     * "field" parameter otherwise.
+     *
+     * @return the annotated field
+     */
+    @Override
+    public AnnotatedField getSearchField() {
+        if (params.getSearchFieldName().isPresent())
+            return resolveFieldName(params.getSearchFieldName().get()).orElse(getAnnotatedField());
+        return getAnnotatedField();
+    }
+
+    /**
+     * Get the annotated field for this operation.
+     *
+     * Uses the main field if none was specified or the specified field doesn't exist,
+     * so we can always return a valid field.
+     *
+     * (see also {@link #getSearchField()}, which also looks at the optional "searchfield"
+     *  parameter in addition to the "field" parameter this method looks at)
+     *
      * @return the annotated field
      */
     @Override
     public AnnotatedField getAnnotatedField() {
-        String fieldName = getFieldName();
+        Optional<AnnotatedField> field = resolveFieldName(getFieldName());
+        if (field.isEmpty())
+            return blIndex().mainAnnotatedField();
+        return field.orElse(null);
+    }
+
+    /** Find annotated field by the specified name or version name (parallel).
+     *
+     * @param fieldName the field name (or field version in a parallel corpus)
+     */
+    private Optional<AnnotatedField> resolveFieldName(String fieldName) {
         AnnotatedField field = blIndex().annotatedField(fieldName);
         if (field == null) {
             // See if field is actually a different version in a parallel corpus of the main field, e.g. "nl" if the
@@ -470,9 +501,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
                     fieldName);
             field = blIndex().annotatedField(fieldVersion);
         }
-        if (field == null)
-            field = blIndex().mainAnnotatedField();
-        return field;
+        return field == null ? Optional.empty() : Optional.of(field);
     }
 
     @Override
@@ -793,6 +822,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
+    }
+
+    @Override
+    public Optional<String> getSearchFieldName() {
+        return params.getSearchFieldName();
     }
 
     @Override
