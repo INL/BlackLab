@@ -327,12 +327,14 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                     break;
             }
             while (relations.startPosition() < sourceEnd) {
-                // Source of this relation overlaps our source hit.
-                RelationInfo relInfo = relations.getRelationInfo().copy();
-                results.add(relInfo);
-                // Keep track of the min and max target positions so we can quickly reject targets below.
-                targetPos.min = Math.min(targetPos.min, relInfo.getTargetStart());
-                targetPos.max = Math.max(targetPos.max, relInfo.getTargetEnd());
+                if (relations.endPosition() > sourceStart) {
+                    // Source of this relation overlaps our source hit.
+                    RelationInfo relInfo = relations.getRelationInfo().copy();
+                    results.add(relInfo);
+                    // Keep track of the min and max target positions so we can quickly reject targets below.
+                    targetPos.min = Math.min(targetPos.min, relInfo.getTargetStart());
+                    targetPos.max = Math.max(targetPos.max, relInfo.getTargetEnd());
+                }
 
                 relations.nextStartPosition();
             }
