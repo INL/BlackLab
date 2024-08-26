@@ -164,6 +164,13 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
     }
 
     @Override
+    public int nextStartPosition() throws IOException {
+        if (super.nextStartPosition() == NO_MORE_POSITIONS)
+            return NO_MORE_POSITIONS;
+        return adjustedStart;
+    }
+
+    @Override
     public int startPosition() {
         if (atFirstInCurrentDoc)
             return -1;
