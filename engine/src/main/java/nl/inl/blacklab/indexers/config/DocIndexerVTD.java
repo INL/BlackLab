@@ -23,7 +23,6 @@ import com.ximpleware.VTDException;
 import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
 
-import nl.inl.util.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -33,6 +32,7 @@ import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
+import nl.inl.util.TextContent;
 import nl.inl.util.XmlUtil;
 
 /**
@@ -434,7 +434,8 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(new TextContent(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8));
+        storeWholeDocument(TextContent.from(inputDocument, documentByteOffset,
+                documentLengthBytes, StandardCharsets.UTF_8));
     }
 
     @Override

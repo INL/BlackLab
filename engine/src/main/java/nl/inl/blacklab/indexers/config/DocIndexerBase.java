@@ -417,7 +417,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param document document to store
      */
     protected void storeWholeDocument(String document) {
-        storeWholeDocument(new TextContent(document));
+        storeWholeDocument(TextContent.from(document));
     }
 
     /**
