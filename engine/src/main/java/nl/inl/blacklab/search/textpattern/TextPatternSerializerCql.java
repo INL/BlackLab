@@ -162,6 +162,9 @@ public class TextPatternSerializerCql {
         // POSFILTER
         cqlSerializers.put(TextPatternPositionFilter.class, TextPatternSerializerCql::serializePosFilter);
 
+        // OVERLAPPING
+        cqlSerializers.put(TextPatternOverlapping.class, TextPatternSerializerCql::serializeOverlapping);
+
         // QUERYFUNCTION
         cqlSerializers.put(TextPatternQueryFunction.class, TextPatternSerializerCql::serializeFuncCall);
 
@@ -349,6 +352,19 @@ public class TextPatternSerializerCql {
                             " (only supports unadjusted, uninverted within/containing))");
         infix(b, parenthesizeIfNecessary, insideTokenBrackets, " " + tp.getOperation() + " ",
                 List.of(tp.getProducer(), tp.getFilter()));
+    }
+
+    private static void serializeOverlapping(TextPatternStruct pattern, StringBuilder b, boolean parenthesizeIfNecessary,
+            boolean insideTokenBrackets) {
+        if (insideTokenBrackets)
+            throw new UnsupportedOperationException("Cannot serialize TextPatternOverlapping inside brackets to CQL");
+        TextPatternOverlapping tp = (TextPatternOverlapping) pattern;
+        boolean supportedOp = tp.getOperation().toUpperCase().equals("OVERLAP");
+        if (!supportedOp)
+            throw new IllegalArgumentException(
+                    "Cannot serialize to CorpusQL: TextPatternOverlapping with operation " + tp.getOperation());
+        infix(b, parenthesizeIfNecessary, insideTokenBrackets, " " + tp.getOperation().toLowerCase() + " ",
+                List.of(tp.getLeft(), tp.getRight()));
     }
 
     private static void serializeFuncCall(TextPatternStruct pattern, StringBuilder b, boolean parenthesizeIfNecessary,

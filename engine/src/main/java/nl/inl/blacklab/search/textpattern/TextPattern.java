@@ -41,6 +41,7 @@ public abstract class TextPattern implements TextPatternStruct {
     public static final String NT_NOT = "not";
     public static final String NT_OR = "or";
     public static final String NT_POSFILTER = "posfilter";
+    public static final String NT_OVERLAPPING = "overlapping";
     public static final String NT_PREFIX = "prefix";
     public static final String NT_CALLFUNC = "callfunc";
     public static final String NT_REGEX = "regex";
@@ -118,6 +119,11 @@ public abstract class TextPattern implements TextPatternStruct {
         return spanQuery;
     }
 
+    /** Does this query involve any (e.g. dependency) relations operations?
+     *
+     * (we sometimes treat these queries slightly differently, e.g. adjusting hits to encompass
+     *  matched relations, if requested)
+     */
     public boolean isRelationsQuery() {
         return false;
     }

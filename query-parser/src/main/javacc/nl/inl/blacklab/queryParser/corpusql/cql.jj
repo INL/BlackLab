@@ -29,8 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.ChildRelationStruct;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -52,9 +50,9 @@ import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
 import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
-import nl.inl.blacklab.search.textpattern.TextPatternEdge;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
+import nl.inl.blacklab.search.textpattern.TextPatternOverlapping;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
 import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
@@ -95,6 +93,7 @@ TOKEN [IGNORE_CASE]:
 {
     <WITHIN: "within" >
 |   <CONTAINING: "containing" >
+|   <OVERLAP: "overlap" >
 |   <DEFAULT_VALUE: "_">
     /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
 |   <ROOT_DEP_OP: "^-" ( ~["-"] (~["-", " ", "'", "\"", "]"] | "-" ~[">", " ", "'", "\"", "]"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
@@ -251,15 +250,18 @@ TextPattern containingWithinQuery():
 {
     a=relationQuery() [ op=containingWithinOperator() b=containingWithinQuery() ]
     {
-        if (op == null)
-            return a;
-        if (op.toString().equals("within")) {
-            // a within b
-            oper = Operation.WITHIN;
-        }
-
-        return new TextPatternPositionFilter(a, b, oper);
+    if (op == null)
+        return a;
+    if (op.toString().equals("within")) {
+        // a within b
+        oper = Operation.WITHIN;
+    } else if (op.toString().equals("overlap")) {
+        // a overlaps b
+        return new TextPatternOverlapping(a, b, op.toString());
     }
+
+    return new TextPatternPositionFilter(a, b, oper);
+}
 }
 
 Token containingWithinOperator():
@@ -267,7 +269,7 @@ Token containingWithinOperator():
     Token t = null;
 }
 {
-    (t=<WITHIN> | t=<CONTAINING>)
+    (t=<WITHIN> | t=<CONTAINING> | t=<OVERLAP>)
     {
         return t;
     }

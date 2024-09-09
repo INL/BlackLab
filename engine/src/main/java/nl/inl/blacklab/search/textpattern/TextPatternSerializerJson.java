@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import static nl.inl.blacklab.search.textpattern.TextPattern.MAX_UNLIMITED;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -204,6 +205,14 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_INVERT, nullIf(tp.isInvert(), false),
                     KEY_ADJUST_LEADING, nullIf(tp.getAdjustLeading(), 0),
                     KEY_ADJUST_TRAILING, nullIf(tp.getAdjustTrailing(), 0));
+        });
+
+        // Overlapping
+        jsonSerializers.put(TextPatternOverlapping.class, (pattern, writer) -> {
+            TextPatternOverlapping tp = (TextPatternOverlapping) pattern;
+            writer.write(TextPattern.NT_OVERLAPPING,
+                    KEY_CLAUSES, Arrays.asList(tp.getLeft(), tp.getRight()),
+                    KEY_OPERATION, tp.getOperation());
         });
 
         // QueryFunction
@@ -451,6 +460,14 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (boolean) args.getOrDefault(KEY_INVERT, false),
                     (int) args.getOrDefault(KEY_ADJUST_LEADING, 0),
                     (int) args.getOrDefault(KEY_ADJUST_TRAILING, 0));
+        case TextPattern.NT_OVERLAPPING: {
+            List<TextPattern> clauses = (List<TextPattern>)args.get(KEY_CLAUSES);
+            return new TextPatternOverlapping(
+                    clauses.get(0),
+                    clauses.get(1),
+                    (String) args.get(KEY_OPERATION)
+            );
+        }
         case TextPattern.NT_PREFIX:
             return new TextPatternPrefix(
                     (String) args.get(KEY_VALUE),
