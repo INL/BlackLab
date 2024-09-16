@@ -212,6 +212,31 @@ public class RelationUtil {
     }
 
     /**
+     * What value do we index for attributes to tags (spans)?
+     * <p>
+     * (integrated index) A tag <s id="123"> ... </s> would be indexed in annotation "_relation"
+     * with a single tokens: "__tag::s\u0001\u0003id\u0002123\u0001".
+     * <p>
+     * (classic external index) A tag <s id="123"> ... </s> would be indexed in annotation "starttag"
+     * with two tokens at the same position: "s" and "@id__123".
+     *
+     * @param useOldEncoding use the older encoding without CH_NAME_START?
+     * @param name attribute name
+     * @param valueRegex attribute value
+     * @return regex for this attribute
+     */
+    private static String tagAttributeRegex(boolean useOldEncoding, String name, String valueRegex,
+            BlackLabIndex.IndexType indexType) {
+        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+            // NOTE: this means that we cannot distinguish between attributes for
+            // different start tags occurring at the same token position!
+            // (In the integrated index format, we include all attributes in the term)
+            return "@" + name.toLowerCase() + "__" + optParRegex(valueRegex.toLowerCase());
+        }
+        return (useOldEncoding ? "" : CH_NAME_START) + name + KEY_VALUE_SEPARATOR + optParRegex(valueRegex) + ATTR_SEPARATOR;
+    }
+
+    /**
      * Given the indexed term, return the full relation type.
      * <p>
      * This leaves out any attributes indexed with the relation.
@@ -307,7 +332,7 @@ public class RelationUtil {
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .map(e -> tagAttributeIndexValue(useOldRelationsEncoding,
+                .map(e -> tagAttributeRegex(useOldRelationsEncoding,
                         e.getKey(), e.getValue(), BlackLabIndex.IndexType.INTEGRATED))
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
