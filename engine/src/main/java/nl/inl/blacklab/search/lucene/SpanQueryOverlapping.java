@@ -97,6 +97,8 @@ public class SpanQueryOverlapping extends BLSpanQueryAbstract {
             if (spansProd == null)
                 return null;
             BLSpans spansFilter = right.getSpans(context, requiredPostings);
+            if (spansFilter == null)
+                return null;
             return new SpansOverlapping(spansProd, spansFilter, operation);
         }
     }
