@@ -43,6 +43,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
+import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
@@ -352,7 +353,7 @@ TextPattern rootRelationType():
 TextPattern tag():
 {
     Token tagName, endTagSlash = null, selfCloseSlash = null;
-    Map<String, String> attr = new HashMap<String, String>();
+    Map<String, MatchValue> attr = new HashMap<String, MatchValue>();
 }
 {
     "<" (endTagSlash="/")? tagName=<NAME> ( attributes(attr) )* (selfCloseSlash="/")? ">"
@@ -382,19 +383,22 @@ String quotedString():
     }
 }
 
-void attributes(Map<String, String> attr):
+void attributes(Map<String, MatchValue> attr):
 {
     Token name;
-    String value;
+    String quotedString = null;
+    MatchValue value = null;
 }
 {
-    name=<NAME> "=" (value=quotedString() | value=inIntegerRange())
+    name=<NAME> "=" (quotedString=quotedString() | value=inIntegerRange())
     {
+        if (quotedString != null)
+            value = MatchValue.regex(quotedString);
         attr.put(name.toString(), value);
     }
 }
 
-String inIntegerRange():
+MatchValue inIntegerRange():
 {
     Token tMin, tMax;
 }
@@ -403,9 +407,7 @@ String inIntegerRange():
     {
         int min = Integer.parseInt(tMin.toString());
         int max = Integer.parseInt(tMax.toString());
-        if (min > max)
-            return "[^.].*"; // return a regex that cannot match anything
-        return RangeRegex.forRange(min, max);
+        return MatchValue.intRange(min, max);
     }
 }
 
@@ -590,7 +592,7 @@ TextPattern positionWord():
     String t = null;
 }
 {
-    t=quotedString()      { return wrapper.simplePattern(t); }
+    t=quotedString()      { return wrapper.simplePattern(MatchValue.regex(t)); }
 }
 
 /* expression inside square brackets: an attribute clause, or multiple
@@ -636,9 +638,6 @@ TextPattern attValuePair():
     LOOKAHEAD(2)
     annot=annotName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
 |   annot=annotName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
-/* UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. ["word"], meaning the same as just "word" without brackets)
-|   v=valuePart() [f=flags()]                      { return v; }
-*/
 }
 
 String annotName():
@@ -655,32 +654,17 @@ String annotName():
     }
 }
 
-/* value expression: a value or multiple values combined with boolean operators */
-/*   UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. [word=("word"|"other")], use [word="word|other"] or [word="word" | word="other"])
-TextPattern value():
-{
-    TextPattern a = null, c = null;
-    Token b = null;
-}
-{
-    LOOKAHEAD(3) a=valuePart() b=booleanOperator() c=value()
-    {
-        if (b.toString().equals("->"))
-            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
-        if (b.toString().equals("&"))
-            return new TextPatternAnd(a, c);
-        return new TextPatternOr(a, c);
-    }
-|   a=valuePart()                   { return a; }
-}
-*/
-
 /* value: a quoted string or an integer range */
 TextPatternTerm valuePart():
 {
     TextPatternTerm m = null;
     String t = null;
+    MatchValue v = null;
 }
 {
-    (t=quotedString() | t=inIntegerRange())  { return wrapper.simplePattern(t); }
+    (t=quotedString() | v=inIntegerRange())  {
+        if (t != null)
+            v = MatchValue.regex(t);
+        return wrapper.simplePattern(v);
+    }
 }

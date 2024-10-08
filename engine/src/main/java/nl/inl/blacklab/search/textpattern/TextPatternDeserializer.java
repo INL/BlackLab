@@ -77,7 +77,7 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
             value = readArray(parser);
             break;
         case START_OBJECT:
-            if (fieldName.equals("attr")) {
+            if (fieldName.equals(TextPatternSerializerJson.KEY_ATTRIBUTES)) {
                 // Attributes to a "tags" TextPattern.
                 value = readStringMap(parser);
             } else {

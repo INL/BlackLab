@@ -38,6 +38,7 @@ public abstract class TextPattern implements TextPatternStruct {
     public static final String NT_FILTERNGRAMS = "filterngrams";
     public static final String NT_FIXEDSPAN = "fixedspan";
     public static final String NT_FUZZY = "fuzzy";
+    public static final String NT_INT_RANGE = "intrange";
     public static final String NT_NOT = "not";
     public static final String NT_OR = "or";
     public static final String NT_POSFILTER = "posfilter";

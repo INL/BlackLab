@@ -84,7 +84,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_ALIGNMENT = "alignment";
     private static final String KEY_ANNOTATION = "annotation";
     private static final String KEY_ARGS = "args";
-    private static final String KEY_ATTRIBUTES = "attributes";
+    static final String KEY_ATTRIBUTES = "attributes";
     private static final String KEY_CAPTURE = "capture"; // capture, tags
     private static final String KEY_CAPTURES = "captures";
     private static final String KEY_CHILDREN = "children";
@@ -185,6 +185,15 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             writer.write(TextPattern.NT_FIXEDSPAN, KEY_START, tp.getStart(), KEY_END, tp.getEnd());
         });
 
+        // IntRange
+        jsonSerializers.put(TextPatternIntRange.class, (pattern, writer) -> {
+            TextPatternIntRange tp = (TextPatternIntRange) pattern;
+            writer.write(TextPattern.NT_INT_RANGE,
+                    KEY_MIN, tp.getMin(),
+                    KEY_MAX, tp.getMax(),
+                    KEY_ANNOTATION, tp.getAnnotation());    // (omitted if null)
+        });
+
         // Not
         jsonSerializers.put(TextPatternNot.class, (pattern, writer) -> {
             writer.write(TextPattern.NT_NOT, KEY_CLAUSE, ((TextPatternNot) pattern).getClause());
@@ -280,7 +289,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             TextPatternTags tp = (TextPatternTags) pattern;
             writer.write(TextPattern.NT_TAGS,
                     KEY_NAME, tp.getElementName(),
-                    KEY_ATTRIBUTES, nullIfEmpty(tp.getAttributes()),
+                    KEY_ATTRIBUTES, nullIfEmpty(encodeAttributeMap(tp.getAttributes())),
                     KEY_ADJUST, nullIf(tp.getAdjust().toString(), "full_tag"),
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()));
         });
@@ -377,6 +386,24 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         });
     }
 
+    private static Map<String, String> encodeAttributeMap(Map<String, MatchValue> attributes) {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (Map.Entry<String, MatchValue> e: attributes.entrySet()) {
+            map.put(e.getKey(), e.getValue().encodeForJson());
+        }
+        return map;
+    }
+
+    private static Map<String, MatchValue> decodeAttributeMap(Map<String, String> attributes) {
+        if (attributes == null)
+            return null;
+        Map<String, MatchValue> map = new LinkedHashMap<>();
+        for (Map.Entry<String, String> e: attributes.entrySet()) {
+            map.put(e.getKey(), MatchValue.decodeFromJson(e.getValue()));
+        }
+        return map;
+    }
+
     private static String sensitivity(MatchSensitivity sensitivity) {
         if (sensitivity == null)
             return null;
@@ -448,6 +475,11 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (int) args.get(KEY_END));
         case TextPattern.NT_FUZZY:
             throw new UnsupportedOperationException("Cannot deserialize deprecated TextPatternFuzzy");
+        case TextPattern.NT_INT_RANGE:
+            return new TextPatternIntRange(
+                    (int) args.get(KEY_MIN),
+                    (int) args.get(KEY_MAX),
+                    (String) args.get(KEY_ANNOTATION));
         case TextPattern.NT_NOT:
             return new TextPatternNot((TextPattern) args.get(KEY_CLAUSE));
         case TextPattern.NT_OR:
@@ -511,7 +543,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         case TextPattern.NT_TAGS:
             return new TextPatternTags(
                     (String) args.get(KEY_NAME),
-                    (Map<String, String>) args.get(KEY_ATTRIBUTES),
+                     decodeAttributeMap((Map<String, String>)args.get(KEY_ATTRIBUTES)),
                     optArgAdjust(args),
                     (String) args.get(KEY_CAPTURE));
         case TextPattern.NT_TERM:

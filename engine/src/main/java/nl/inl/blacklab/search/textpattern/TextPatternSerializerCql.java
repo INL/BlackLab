@@ -57,6 +57,7 @@ public class TextPatternSerializerCql {
             boolean negate) {
         String className = pattern.getClass().getSimpleName();
         boolean isRegexPattern = pattern instanceof TextPatternRegex;
+        boolean isIntRange = pattern instanceof TextPatternIntRange;
         TextPatternTerm tp = (TextPatternTerm) pattern;
         String annotation = tp.getAnnotation();
         if (negate && annotation == null)
@@ -68,12 +69,21 @@ public class TextPatternSerializerCql {
         String optCloseBracket = insideTokenBrackets ? "" : "]";
         if (annotation != null)
             b.append(optOpenBracket).append(annotation).append(negate ? "!" : "").append("=");
-        String value = tp.getValue();
-        if (!isRegexPattern) {
-            // We're looking for an exact value, which may include regex characters.
-            value = StringUtil.escapeLuceneRegexCharacters(value);
+        if (isIntRange) {
+            // Integer range, e.g. [number=in[1,5]]
+            TextPatternIntRange tpIntRange = (TextPatternIntRange) tp;
+            int min = tpIntRange.getMin();
+            int max = tpIntRange.getMax();
+            b.append("in[").append(min).append(",").append(max).append("]");
+        } else {
+            // Regular regex or literal, e.g. [word="the"]
+            String value = tp.getValue();
+            if (!isRegexPattern) {
+                // We're looking for an exact value, which may include regex characters.
+                value = StringUtil.escapeLuceneRegexCharacters(value);
+            }
+            serializeToSingleQuotedString(b, value);
         }
-        serializeToSingleQuotedString(b, value);
         if (annotation != null)
             b.append(optCloseBracket);
     }
@@ -167,6 +177,9 @@ public class TextPatternSerializerCql {
 
         // QUERYFUNCTION
         cqlSerializers.put(TextPatternQueryFunction.class, TextPatternSerializerCql::serializeFuncCall);
+
+        // INTRANGE
+        cqlSerializers.put(TextPatternIntRange.class, TextPatternSerializerCql::serializeRegexOrTerm);
 
         // REGEX
         cqlSerializers.put(TextPatternRegex.class, TextPatternSerializerCql::serializeRegexOrTerm);
@@ -427,9 +440,11 @@ public class TextPatternSerializerCql {
         return b.append("'").append(StringUtil.escapeQuote(value, "'")).append("'");
     }
 
-    private static String serializeAttributes(Map<String, String> attr) {
+    private static String serializeAttributes(Map<String, MatchValue> attr) {
         return attr.entrySet().stream()
-                .map(e -> e.getKey() + "='" + e.getValue().replaceAll("[\\\\']", "\\\\$0") + "'")
+                .map(e -> {
+                    return e.getKey() + "=" + e.getValue().getBcql();
+                })
                 .collect(Collectors.joining(" "));
     }
 

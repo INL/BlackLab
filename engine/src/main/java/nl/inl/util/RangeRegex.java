@@ -7,6 +7,9 @@ import java.util.regex.Pattern;
 
 public class RangeRegex {
 
+    /** A regex that can never match anything; can be used for invalid ranges. */
+    public static final String REGEX_WITHOUT_MATCHES = "[^.].*";
+
     /** Return a regex string that will match an integer number within the specified range (inclusive).
      *
      * Leading zeroes are taken into account. If you need additional check ssuch as start- or end-of-

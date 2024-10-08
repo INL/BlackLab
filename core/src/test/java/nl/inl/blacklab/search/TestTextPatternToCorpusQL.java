@@ -118,4 +118,10 @@ public class TestTextPatternToCorpusQL {
         assertRoundtrip("((A:[]) (B:[])) :: (start(A) <= end(B))");
         assertRoundtrip("[] (((A:[]) (B:[])) :: ((A.lemma = B.lemma) & (start(A) <= end(B)))) []");
     }
+
+    @Test
+    public void testIntRange() throws InvalidQuery {
+        assertRoundtrip("[number=in[24,42]]");
+        assertRoundtrip("<s number=in[123,4567]/>");
+    }
 }

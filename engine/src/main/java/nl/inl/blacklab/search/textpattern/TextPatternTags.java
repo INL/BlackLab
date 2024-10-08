@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.util.RangeRegex;
 
 /**
  * A TextPattern matching a word.
@@ -43,17 +44,17 @@ public class TextPatternTags extends TextPattern {
 
     private final String elementName;
 
-    private final Map<String, String> attributes;
+    private final Map<String, MatchValue> attributes;
 
     private final Adjust adjust;
 
     private final String captureAs;
 
-    public TextPatternTags(String elementName, Map<String, String> attributes) {
+    public TextPatternTags(String elementName, Map<String, MatchValue> attributes) {
         this(elementName, attributes, Adjust.FULL_TAG, "");
     }
 
-    public TextPatternTags(String elementName, Map<String, String> attributes, Adjust adjust, String captureAs) {
+    public TextPatternTags(String elementName, Map<String, MatchValue> attributes, Adjust adjust, String captureAs) {
         this.elementName = elementName;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
         this.adjust = adjust == null ? Adjust.FULL_TAG : adjust;
@@ -70,8 +71,8 @@ public class TextPatternTags extends TextPattern {
         context = context.withRelationAnnotation();
         String optInsensitiveElName = optInsensitive(context, elementName);
         Map<String, String> attrOptIns = new HashMap<>();
-        for (Map.Entry<String, String> e : attributes.entrySet()) {
-            attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue()));
+        for (Map.Entry<String, MatchValue> e : attributes.entrySet()) {
+            attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue().getRegex()));
         }
 
         // Use element name if no explicit name given. Keep only characters and add unique number if needed.
@@ -115,7 +116,7 @@ public class TextPatternTags extends TextPattern {
         return elementName;
     }
 
-    public Map<String, String> getAttributes() {
+    public Map<String, MatchValue> getAttributes() {
         return attributes;
     }
 

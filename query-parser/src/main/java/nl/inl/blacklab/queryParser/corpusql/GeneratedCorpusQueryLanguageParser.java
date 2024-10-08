@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
+import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
@@ -429,7 +430,7 @@ RelationOperatorInfo relType = RelationOperatorInfo.fromOperator(t.toString());
  * tag; if it's in [1] it's a self-closing tag.
  */
   final public TextPattern tag() throws ParseException {Token tagName, endTagSlash = null, selfCloseSlash = null;
-    Map<String, String> attr = new HashMap<String, String>();
+    Map<String, MatchValue> attr = new HashMap<String, MatchValue>();
     jj_consume_token(27);
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case 34:{
@@ -497,14 +498,15 @@ if (endTagSlash != null && selfCloseSlash != null) {
     throw new Error("Missing return statement in function");
   }
 
-  final public void attributes(Map<String, String> attr) throws ParseException {Token name;
-    String value;
+  final public void attributes(Map<String, MatchValue> attr) throws ParseException {Token name;
+    String quotedString = null;
+    MatchValue value = null;
     name = jj_consume_token(NAME);
     jj_consume_token(22);
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case QUOTED_STRING:
     case SINGLE_QUOTED_STRING:{
-      value = quotedString();
+      quotedString = quotedString();
       break;
       }
     case IN:{
@@ -516,10 +518,12 @@ if (endTagSlash != null && selfCloseSlash != null) {
       jj_consume_token(-1);
       throw new ParseException();
     }
-attr.put(name.toString(), value);
+if (quotedString != null)
+            value = MatchValue.regex(quotedString);
+        attr.put(name.toString(), value);
   }
 
-  final public String inIntegerRange() throws ParseException {Token tMin, tMax;
+  final public MatchValue inIntegerRange() throws ParseException {Token tMin, tMax;
     jj_consume_token(IN);
     jj_consume_token(35);
     tMin = jj_consume_token(NUMBER);
@@ -528,9 +532,7 @@ attr.put(name.toString(), value);
     jj_consume_token(37);
 int min = Integer.parseInt(tMin.toString());
         int max = Integer.parseInt(tMax.toString());
-        if (min > max)
-            {if ("" != null) return "[^.].*";} // return a regex that cannot match anything
-        {if ("" != null) return RangeRegex.forRange(min, max);}
+        {if ("" != null) return MatchValue.intRange(min, max);}
     throw new Error("Missing return statement in function");
   }
 
@@ -887,7 +889,7 @@ if (m == null)
 /* position word: no brackets, just a single token constraint for the default attribute (usually word form) */
   final public TextPattern positionWord() throws ParseException {String t = null;
     t = quotedString();
-{if ("" != null) return wrapper.simplePattern(t);}
+{if ("" != null) return wrapper.simplePattern(MatchValue.regex(t));}
     throw new Error("Missing return statement in function");
   }
 
@@ -1011,29 +1013,10 @@ String annotName = t.toString();
     throw new Error("Missing return statement in function");
   }
 
-/* value expression: a value or multiple values combined with boolean operators */
-/*   UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. [word=("word"|"other")], use [word="word|other"] or [word="word" | word="other"])
-TextPattern value():
-{
-    TextPattern a = null, c = null;
-    Token b = null;
-}
-{
-    LOOKAHEAD(3) a=valuePart() b=booleanOperator() c=value()
-    {
-        if (b.toString().equals("->"))
-            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
-        if (b.toString().equals("&"))
-            return new TextPatternAnd(a, c);
-        return new TextPatternOr(a, c);
-    }
-|   a=valuePart()                   { return a; }
-}
-*/
-
 /* value: a quoted string or an integer range */
   final public TextPatternTerm valuePart() throws ParseException {TextPatternTerm m = null;
     String t = null;
+    MatchValue v = null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case QUOTED_STRING:
     case SINGLE_QUOTED_STRING:{
@@ -1041,7 +1024,7 @@ TextPattern value():
       break;
       }
     case IN:{
-      t = inIntegerRange();
+      v = inIntegerRange();
       break;
       }
     default:
@@ -1049,7 +1032,9 @@ TextPattern value():
       jj_consume_token(-1);
       throw new ParseException();
     }
-{if ("" != null) return wrapper.simplePattern(t);}
+if (t != null)
+            v = MatchValue.regex(t);
+        {if ("" != null) return wrapper.simplePattern(v);}
     throw new Error("Missing return statement in function");
   }
 
@@ -1257,19 +1242,6 @@ TextPattern value():
     return false;
   }
 
-  private boolean jj_3R_41()
- {
-    if (jj_3R_47()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_15()
- {
-    if (jj_3R_4()) return true;
-    if (jj_scan_token(33)) return true;
-    return false;
-  }
-
   private boolean jj_3R_22()
  {
     if (jj_scan_token(30)) return true;
@@ -1280,6 +1252,13 @@ TextPattern value():
   private boolean jj_3R_32()
  {
     if (jj_3R_37()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_15()
+ {
+    if (jj_3R_4()) return true;
+    if (jj_scan_token(33)) return true;
     return false;
   }
 
@@ -1343,32 +1322,21 @@ TextPattern value():
     return false;
   }
 
-  private boolean jj_3R_40()
+  private boolean jj_3_8()
  {
-    if (jj_3R_46()) return true;
+    if (jj_3R_10()) return true;
     return false;
   }
 
-  private boolean jj_3R_35()
+  private boolean jj_3R_41()
  {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_40()) {
-    jj_scanpos = xsp;
-    if (jj_3R_41()) return true;
-    }
+    if (jj_3R_47()) return true;
     return false;
   }
 
   private boolean jj_3_6()
  {
     if (jj_3R_9()) return true;
-    return false;
-  }
-
-  private boolean jj_3_8()
- {
-    if (jj_3R_10()) return true;
     return false;
   }
 
@@ -1434,10 +1402,20 @@ TextPattern value():
     return false;
   }
 
-  private boolean jj_3R_28()
+  private boolean jj_3R_40()
  {
-    if (jj_scan_token(34)) return true;
-    if (jj_scan_token(NAME)) return true;
+    if (jj_3R_46()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_35()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_40()) {
+    jj_scanpos = xsp;
+    if (jj_3R_41()) return true;
+    }
     return false;
   }
 
@@ -1447,6 +1425,13 @@ TextPattern value():
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_8()) jj_scanpos = xsp;
+    return false;
+  }
+
+  private boolean jj_3R_28()
+ {
+    if (jj_scan_token(34)) return true;
+    if (jj_scan_token(NAME)) return true;
     return false;
   }
 
@@ -1723,6 +1708,12 @@ TextPattern value():
     return false;
   }
 
+  private boolean jj_3R_43()
+ {
+    if (jj_scan_token(DEFAULT_VALUE)) return true;
+    return false;
+  }
+
   private boolean jj_3R_46()
  {
     Token xsp;
@@ -1731,12 +1722,6 @@ TextPattern value():
     jj_scanpos = xsp;
     if (jj_scan_token(16)) return true;
     }
-    return false;
-  }
-
-  private boolean jj_3R_43()
- {
-    if (jj_scan_token(DEFAULT_VALUE)) return true;
     return false;
   }
 
