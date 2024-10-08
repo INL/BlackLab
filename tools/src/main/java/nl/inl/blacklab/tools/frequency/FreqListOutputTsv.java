@@ -41,7 +41,8 @@ class FreqListOutputTsv implements FreqListOutput {
         // - annotation values
         int[] tokenIds = groupId.getTokenIds();
         for (int i = 0; i < tokenIds.length; i++) {
-            String token = sensitivity[i].desensitize(terms[i].get(tokenIds[i]));
+            String token = (sensitivity == null ? MatchSensitivity.INSENSITIVE : sensitivity[i])
+                    .desensitize(terms[i].get(tokenIds[i]));
             record.add(token);
         }
         // - metadata values
