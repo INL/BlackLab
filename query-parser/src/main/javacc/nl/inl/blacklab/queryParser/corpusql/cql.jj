@@ -60,6 +60,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 import nl.inl.blacklab.search.textpattern.TextPatternSettings;
 import nl.inl.blacklab.search.textpattern.TextPatternTags.Adjust;import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
+import nl.inl.util.RangeRegex;
 
 @SuppressWarnings("all")
 
@@ -94,6 +95,7 @@ TOKEN [IGNORE_CASE]:
     <WITHIN: "within" >
 |   <CONTAINING: "containing" >
 |   <OVERLAP: "overlap" >
+|   <IN: "in">
 |   <DEFAULT_VALUE: "_">
     /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
 |   <ROOT_DEP_OP: "^-" ( ~["-"] (~["-", " ", "'", "\"", "]"] | "-" ~[">", " ", "'", "\"", "]"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
@@ -386,9 +388,24 @@ void attributes(Map<String, String> attr):
     String value;
 }
 {
-    name=<NAME> "=" value=quotedString()
+    name=<NAME> "=" (value=quotedString() | value=inIntegerRange())
     {
         attr.put(name.toString(), value);
+    }
+}
+
+String inIntegerRange():
+{
+    Token tMin, tMax;
+}
+{
+    <IN> "[" tMin=<NUMBER> "," tMax=<NUMBER> "]"
+    {
+        int min = Integer.parseInt(tMin.toString());
+        int max = Integer.parseInt(tMax.toString());
+        if (min > max)
+            return "[^.].*"; // return a regex that cannot match anything
+        return RangeRegex.forRange(min, max);
     }
 }
 
@@ -658,15 +675,12 @@ TextPattern value():
 }
 */
 
-/* value: a quoted string or a value expression between parentheses */
+/* value: a quoted string or an integer range */
 TextPatternTerm valuePart():
 {
     TextPatternTerm m = null;
     String t = null;
 }
 {
-    t=quotedString()               { return wrapper.simplePattern(t); }
-/*  UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. [word=("word"|"other")], use [word="word|other"] or [word="word" | word="other"])
-|   "(" m=value() ")"              { return m; }
- */
+    (t=quotedString() | t=inIntegerRange())  { return wrapper.simplePattern(t); }
 }

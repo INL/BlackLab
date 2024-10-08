@@ -662,6 +662,7 @@ BlackLab currently supports (arguably) most of the important features of Corpus 
 * Using an anchor to capture a token position. Example: `'big' A:[]`. Captured matches can be used in capture 
   constraints (see next item) or processed separately later (using the Java interface; capture information is not yet returned by BlackLab Server). Note that BlackLab can actually capture entire groups of tokens as well, similarly to regular expression engines.
 * Capture constraints, such as requiring two captures to contain the same word. Example: `'big' A:[] 'or' 'small' B:[] :: A.word = B.word`
+  * Integer ranges: `[pos='verb' & pos_confidence=in[50,100]]` or `<verse number=in[1,10]/>` (ranges are always inclusive)
 
 See below for features not in this list that may be added soon, and let us know if you want a particular feature to be added.
 
