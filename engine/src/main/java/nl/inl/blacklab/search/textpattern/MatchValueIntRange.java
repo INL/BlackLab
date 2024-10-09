@@ -21,13 +21,16 @@ class MatchValueIntRange implements MatchValue {
         return RangeRegex.forRange(min, max);
     }
 
-    public String getBcql() {
-        return "in[" + min + "," + max + "]";
+    public int getMin() {
+        return min;
     }
 
-    @Override
-    public String encodeForJson() {
-        return JSON_ENCODING_RANGE_TAG + min + "," + max;
+    public int getMax() {
+        return max;
+    }
+
+    public String getBcql() {
+        return "in[" + min + "," + max + "]";
     }
 
     @Override

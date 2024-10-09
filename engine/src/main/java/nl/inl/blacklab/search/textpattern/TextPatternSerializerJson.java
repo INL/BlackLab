@@ -51,7 +51,31 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                         Object value = e.getValue();
                         if (value != null) {
                             gen.writeFieldName(e.getKey());
-                            serializerProvider.defaultSerializeValue(value, gen);
+                            if (e.getKey().equals(KEY_ATTRIBUTES)) {
+                                // Attributes in "tags" node. Special case because match values can now be an int range
+                                // as well as (the more common) regex.
+                                // (we could have made MatchValue a TextPatternStruct, but that would change
+                                //  the JSON structure (each attribute value would be a JSON object with a type).
+                                //  We want to keep everything as-is while also adding the int range filter option)
+                                gen.writeStartObject();
+                                Map<String, MatchValue> attributes = (Map<String, MatchValue>) value;
+                                for (Map.Entry<String, MatchValue> attr: attributes.entrySet()) {
+                                    gen.writeFieldName(attr.getKey());
+                                    if (attr.getValue() instanceof MatchValueIntRange) {
+                                        // Int range; serialize as an object with min and max fields
+                                        MatchValueIntRange range = (MatchValueIntRange) attr.getValue();
+                                        gen.writeStartObject();
+                                        gen.writeNumberField(KEY_MIN, range.getMin());
+                                        gen.writeNumberField(KEY_MAX, range.getMax());
+                                        gen.writeEndObject();
+                                    } else {
+                                        // Regex; serialize as a simple string (as we have always done)
+                                        gen.writeString(attr.getValue().getRegex());
+                                    }
+                                }
+                                gen.writeEndObject();
+                            } else
+                                serializerProvider.defaultSerializeValue(value, gen);
                         }
                     }
                 }
@@ -97,8 +121,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_FILTER = "filter";
     private static final String KEY_INCLUDE = "include";
     private static final String KEY_INVERT = "invert";
-    private static final String KEY_MAX = "max"; // (same)
-    private static final String KEY_MIN = "min"; // repeat, ngrams, anytoken
+    static final String KEY_MAX = "max"; // (same)
+    static final String KEY_MIN = "min"; // repeat, ngrams, anytoken
     private static final String KEY_NAME = "name"; // annotation, function
     private static final String KEY_NEGATE = "negate";
     private static final String KEY_OPERATION = "operation"; // posfilter, ngrams
@@ -149,7 +173,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
 
         // Default value
         jsonSerializers.put(TextPatternDefaultValue.class, (pattern, writer) -> {
-            TextPatternDefaultValue tp = (TextPatternDefaultValue) pattern;
             writer.write(TextPattern.NT_DEFVAL);
         });
 
@@ -289,7 +312,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             TextPatternTags tp = (TextPatternTags) pattern;
             writer.write(TextPattern.NT_TAGS,
                     KEY_NAME, tp.getElementName(),
-                    KEY_ATTRIBUTES, nullIfEmpty(encodeAttributeMap(tp.getAttributes())),
+                    KEY_ATTRIBUTES, nullIfEmpty(tp.getAttributes()),
                     KEY_ADJUST, nullIf(tp.getAdjust().toString(), "full_tag"),
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()));
         });
@@ -386,24 +409,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         });
     }
 
-    private static Map<String, String> encodeAttributeMap(Map<String, MatchValue> attributes) {
-        Map<String, String> map = new LinkedHashMap<>();
-        for (Map.Entry<String, MatchValue> e: attributes.entrySet()) {
-            map.put(e.getKey(), e.getValue().encodeForJson());
-        }
-        return map;
-    }
-
-    private static Map<String, MatchValue> decodeAttributeMap(Map<String, String> attributes) {
-        if (attributes == null)
-            return null;
-        Map<String, MatchValue> map = new LinkedHashMap<>();
-        for (Map.Entry<String, String> e: attributes.entrySet()) {
-            map.put(e.getKey(), MatchValue.decodeFromJson(e.getValue()));
-        }
-        return map;
-    }
-
     private static String sensitivity(MatchSensitivity sensitivity) {
         if (sensitivity == null)
             return null;
@@ -414,7 +419,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         return str == null || str.isEmpty() ? null : str;
     }
 
-    private static Map<String, String> nullIfEmpty(Map<String, String> attributes) {
+    private static <K,V> Map<K, V> nullIfEmpty(Map<K, V> attributes) {
         return attributes.isEmpty() ? null : attributes;
     }
 
@@ -543,7 +548,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         case TextPattern.NT_TAGS:
             return new TextPatternTags(
                     (String) args.get(KEY_NAME),
-                     decodeAttributeMap((Map<String, String>)args.get(KEY_ATTRIBUTES)),
+                     (Map<String, MatchValue>)args.get(KEY_ATTRIBUTES),
                     optArgAdjust(args),
                     (String) args.get(KEY_CAPTURE));
         case TextPattern.NT_TERM:

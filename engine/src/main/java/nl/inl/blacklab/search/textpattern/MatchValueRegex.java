@@ -18,11 +18,6 @@ class MatchValueRegex implements MatchValue {
     }
 
     @Override
-    public String encodeForJson() {
-        return getRegex();
-    }
-
-    @Override
     public TextPatternTerm textPattern() {
         return new TextPatternRegex(getRegex());
     }
