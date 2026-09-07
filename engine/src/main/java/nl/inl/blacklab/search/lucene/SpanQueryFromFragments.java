@@ -127,7 +127,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
 
     @Override
     public String toString(String field) {
-        return "FragmentsToSpanQuery(" + fragmentQuery.toString(field) + ")";
+        return "SpanQueryFromFragments(" + fragmentQuery.toString(field) + ")";
     }
 
     @Override
@@ -232,6 +232,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
             if (spansIt == null)
                 return -1;
             if (!spansIt.hasNext()) {
+                currentSpan = Span.between(NO_MORE_POSITIONS, NO_MORE_POSITIONS);
                 return NO_MORE_POSITIONS;
             }
             currentSpan = spansIt.next();

@@ -26,6 +26,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.NoMergePolicy;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -809,6 +810,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 // Return true only for fragment fields so visitLeaf() is called for them;
                 // return false for all other fields so visitLeaf() is suppressed.
                 return mf != null && mf.occursInFragments();
+            }
+
+            @Override
+            public void consumeTerms(Query query, Term... terms) {
+                result[0] = true;
             }
 
             @Override

@@ -106,7 +106,7 @@ public class QueryFullDocsFromFragments extends Query {
 
     @Override
     public String toString(String field) {
-        return "FragmentsToDocsQuery(" + fragmentQuery.toString(field) + ")";
+        return "QueryFullDocsFromFragments(" + fragmentQuery.toString(field) + ")";
     }
 
     @Override
@@ -220,6 +220,7 @@ public class QueryFullDocsFromFragments extends Query {
                                 break;
                             }
                         }
+                        break;
                     }
 
                     // Go to the next matched index document (full document or fragment)
