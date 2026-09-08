@@ -239,14 +239,14 @@ function expectUnchanged(corpusName, category, testName, actualResponse) {
             // Save this response for subsequent tests
             fs.writeFileSync(savedResponseFile, toSave, {encoding: 'utf8'});
         } else {
-            expect.fail(`Response for ${category}/${testName} not found. Make sure it exists (use run-local.sh to save responses)`);
+            expect.fail(`Response for ${corpusName}/${category}/${testName} not found. Make sure it exists (use run-local.sh to save responses)`);
         }
     }
 }
 
 function expectUrlUnchanged(corpusName, category, testName, url, expectedType = 'application/json') {
     const params = url.indexOf('api=') >= 0 ? undefined : { api: constants.TEST_API_VERSION };
-    describe(`${category}/${testName}`, () => {
+    describe(`${corpusName}/${category}/${testName}`, () => {
         it('response should match previous', done => {
             const get = chai
                     .request(constants.SERVER_URL)

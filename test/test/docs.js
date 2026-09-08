@@ -45,7 +45,7 @@ function expectDocsUnchanged(testName, params, filter) {
             .end((err, res) => {
                 expect(err).to.be.null;
                 expect(res).to.have.status(200);
-                expectUnchanged('docs', testName, res.body);
+                expectUnchanged('test', 'docs', testName, res.body);
                 done();
             });
         });
@@ -66,21 +66,21 @@ expectDocsUnchanged('filter only', { filter: 'pid:PBsve435' });
 expectDocsUnchanged('pattern and filter', '"the"', 'pid:PBsve435');
 
 // Doc metadata, contents
-expectUrlUnchanged('docs', 'document metadata',
+expectUrlUnchanged('test', 'docs', 'document metadata',
         constants.URL_CORPUS_TEST + '/docs/PBsve430');
-expectUrlUnchanged('docs', 'document contents',
+expectUrlUnchanged('test', 'docs', 'document contents',
         constants.URL_CORPUS_TEST + '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
 
 // Doc snippet
-expectUrlUnchanged('docs', 'document snippet wordstart',
+expectUrlUnchanged('test', 'docs', 'document snippet wordstart',
         constants.URL_CORPUS_TEST + '/docs/PBsve430/snippet?wordstart=5&wordend=15');
-expectUrlUnchanged('docs', 'document snippet hitstart',
+expectUrlUnchanged('test', 'docs', 'document snippet hitstart',
         constants.URL_CORPUS_TEST + '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
 
 // Doc facets
-expectUrlUnchanged('docs', 'document facets',
+expectUrlUnchanged('test', 'docs', 'document facets',
         constants.URL_CORPUS_TEST + '/docs/?number=0&facets=field:title');
 
 // Docs CSV
-expectUrlUnchanged('docs', 'CSV results',
+expectUrlUnchanged('test', 'docs', 'CSV results',
         constants.URL_CORPUS_TEST + '/docs/', 'text/csv');

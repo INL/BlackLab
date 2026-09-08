@@ -79,15 +79,15 @@ expectHitsUnchanged('view single group', {
 });
 
 // Matching doc facets
-expectUrlUnchanged('hits', 'document facets',
+expectUrlUnchanged('test', 'hits', 'document facets',
         corpusUrl('test') + '/hits/?patt=%22the%22&number=0&facets=field:pid');
 
 // Hits CSV
-expectUrlUnchanged('hits', 'CSV results',
+expectUrlUnchanged('test', 'hits', 'CSV results',
         corpusUrl('test') + '/hits/?patt=%22the%22', 'text/csv');
 
 // /termfreq operation
-expectUrlUnchanged('hits', 'Termfreq word sensitive',
+expectUrlUnchanged('test', 'hits', 'Termfreq word sensitive',
         corpusUrl('test') + '/termfreq/?annotation=word&sensitive=true');
-expectUrlUnchanged('hits', 'Termfreq lemma insensitive',
+expectUrlUnchanged('test', 'hits', 'Termfreq lemma insensitive',
         corpusUrl('test') + '/termfreq/?annotation=lemma');

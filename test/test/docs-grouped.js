@@ -34,7 +34,7 @@ function expectDocsGroupedUnchanged(testName, params) {
                 expect(res).to.have.status(200);
                 // NOTE: we pass true to remove summary.searchParam, because we perform some different requests
                 //   that should produce the same response.
-                expectUnchanged('docs-grouped', testName, res.body, false);
+                expectUnchanged('test', 'docs-grouped', testName, res.body, false);
                 done();
             });
         });

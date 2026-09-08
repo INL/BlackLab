@@ -35,7 +35,7 @@ function expectHitsGroupedUnchanged(testName, params) {
                 expect(res).to.have.status(200);
                 // NOTE: we pass true to remove summary.searchParam, because we perform some different requests
                 //   that should produce the same response.
-                expectUnchanged('hits-grouped', testName, res.body);
+                expectUnchanged('test', 'hits-grouped', testName, res.body);
                 done();
             });
         });

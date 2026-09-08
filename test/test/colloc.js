@@ -29,7 +29,7 @@ function expectCollocUnchanged(testName, params) {
             .end((err, res) => {
                 expect(err).to.be.null;
                 expect(res).to.have.status(200);
-                expectUnchanged('colloc', testName, res.body);
+                expectUnchanged('test', 'colloc', testName, res.body);
                 done();
             });
         });

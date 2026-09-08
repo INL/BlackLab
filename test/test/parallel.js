@@ -33,7 +33,7 @@ describeParallel('parallel adjusted alignment otherFields', () => {
             expect(res.body.hits[0]).to.have.nested.property('otherFields.contents__en');
             expect(res.body.hits[0].otherFields.contents__en).to.have.nested.property('match.word');
             expect(res.body.hits[0].otherFields.contents__en.match.word).to.deep.equal(["This"]);
-            expectUnchanged('parallel', 'adjusted alignment otherFields', res.body);
+            expectUnchanged('parallel', 'parallel', 'adjusted alignment otherFields', res.body);
             done();
         });
     });
