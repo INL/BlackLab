@@ -1,0 +1,1201 @@
+{
+  "docs": [
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "fromInputFile": [
+            "PBsve430.xml"
+          ],
+          "pid": [
+            "PBsve430"
+          ],
+          "title": [
+            "service encounter about visa application for family members"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 334
+          }
+        ]
+      },
+      "docPid": "PBsve430",
+      "numberOfHits": 8,
+      "snippets": [
+        {
+          "after": {
+            "lemma": [
+              "visum",
+              "of",
+              "i",
+              "family",
+              "mhm"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "visa",
+              "of",
+              "my",
+              "family",
+              "mhm"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "want",
+              "to",
+              "apply",
+              "",
+              "for"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "want",
+              "to",
+              "apply",
+              "_1",
+              "for"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "district",
+              "office",
+              "and",
+              "they",
+              "tell"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "district",
+              "office",
+              "and",
+              "they",
+              "told"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "mhm",
+              "i",
+              "go",
+              "to",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "mhm",
+              "i",
+              "went",
+              "to",
+              "_0"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "confirmation",
+              "here",
+              "i",
+              "be",
+              "live"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "confirmation",
+              "here",
+              "i",
+              "'m",
+              "living"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "er",
+              "student",
+              "house",
+              "you",
+              "need"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "er",
+              "student",
+              "house",
+              "you",
+              "need"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "confirmation",
+              "for",
+              "here",
+              "first",
+              "here"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "confirmation",
+              "for",
+              "here",
+              "first",
+              "here"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "okay",
+              "i",
+              "will",
+              "print",
+              "you"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "okay",
+              "i",
+              "will",
+              "print",
+              "you"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "right",
+              "form",
+              "or",
+              "",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "right",
+              "form",
+              "or",
+              "_1",
+              "f_danke"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "first",
+              "here",
+              "",
+              "it",
+              "be"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "first",
+              "here",
+              "_0",
+              "it",
+              "is"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "fromInputFile": [
+            "PBsve435.xml"
+          ],
+          "pid": [
+            "PBsve435"
+          ],
+          "title": [
+            "service encounter about getting an address printed out"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 164
+          }
+        ]
+      },
+      "docPid": "PBsve435",
+      "numberOfHits": 9,
+      "snippets": [
+        {
+          "after": {
+            "lemma": [
+              "address",
+              "so",
+              "can",
+              "you",
+              "print"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "address",
+              "so",
+              "can",
+              "you",
+              "print"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "er",
+              "now",
+              "i",
+              "need",
+              "er"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "er",
+              "now",
+              "i",
+              "need",
+              "er"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "new",
+              "address",
+              "for",
+              "i",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "new",
+              "address",
+              "for",
+              "me",
+              "_0"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "so",
+              "can",
+              "you",
+              "print",
+              "er"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "so",
+              "can",
+              "you",
+              "print",
+              "er"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "address",
+              "for",
+              "i",
+              "",
+              "the"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "address",
+              "for",
+              "me",
+              "_1",
+              "the"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "you",
+              "print",
+              "yah",
+              "print",
+              "mhm"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "you",
+              "print",
+              "yah",
+              "print",
+              "mhm"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "confirmation",
+              "for",
+              "you",
+              "visa",
+              "yeah"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "confirmation",
+              "for",
+              "your",
+              "visa",
+              "yeah"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "the",
+              "address",
+              "for",
+              "i",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "the",
+              "address",
+              "for",
+              "me",
+              "_1"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "",
+              "for",
+              "the",
+              "new",
+              "period"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "_0",
+              "for",
+              "the",
+              "new",
+              "period"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "yeah",
+              "yeah",
+              "yeah",
+              "okay",
+              "for"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "yeah",
+              "yeah",
+              "yeah",
+              "okay",
+              "for"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "fromInputFile": [
+            "PRint602.xml"
+          ],
+          "pid": [
+            "PRint602"
+          ],
+          "title": [
+            "interview about conference experience and impressions of city"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 268
+          }
+        ]
+      },
+      "docPid": "PRint602",
+      "numberOfHits": 4,
+      "snippets": [
+        {
+          "after": {
+            "lemma": [
+              "conference",
+              "you",
+              "know",
+              "er",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "conference",
+              "you",
+              "know",
+              "er",
+              "a_[org1]"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "i",
+              "come",
+              "here",
+              "to",
+              "join"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "i",
+              "came",
+              "here",
+              "to",
+              "join"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "vienna",
+              "be",
+              "very",
+              "a",
+              "beautiful"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "vienna",
+              "is",
+              "very",
+              "a",
+              "beautiful"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "take",
+              "er",
+              "this",
+              "year",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "took",
+              "er",
+              "this",
+              "year",
+              "_0"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "the",
+              "er",
+              "",
+              "very",
+              "fresh"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "the",
+              "er",
+              "_0",
+              "very",
+              "fresh"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "it",
+              "be",
+              "very",
+              "good",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "it",
+              "'s",
+              "very",
+              "good",
+              "_0"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "lemma": [
+              "er",
+              "",
+              "very",
+              "fresh",
+              "air"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "er",
+              "_0",
+              "very",
+              "fresh",
+              "air"
+            ]
+          },
+          "before": {
+            "lemma": [
+              "be",
+              "very",
+              "good",
+              "",
+              "the"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "'s",
+              "very",
+              "good",
+              "_0",
+              "the"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "indexname": "test",
+      "op": "docs",
+      "patt": "\"the\"",
+      "sort": "field:pid",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"the\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"the\"",
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"the\"",
+            "type": "string",
+            "value": "the"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 3,
+          "hits": 21,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 3,
+          "hits": 21,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 3,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

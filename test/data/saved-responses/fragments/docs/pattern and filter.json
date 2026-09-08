@@ -1,0 +1,60 @@
+{
+  "docs": [
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "filter": "year:1987",
+      "indexname": "test",
+      "op": "docs",
+      "patt": "\"the\"",
+      "sort": "field:pid",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"the\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"the\"",
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"the\"",
+            "type": "string",
+            "value": "the"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 0,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 0,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 0,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

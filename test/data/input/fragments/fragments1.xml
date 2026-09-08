@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <doc>
-    <metadata title="Test title" id="doc-pid-01" author="Piet" />
+    <metadata title="Test title" id="doc-01" author="Piet" />
     <text>
-        <metadata from="A" to="B" id="frag-pid-01" year="1900" />
-        <metadata from="B" to="D" id="frag-pid-02" author="Jan" />
-        <metadata from="B" to="C" id="frag-pid-03" year="1976" />
-        <metadata from="C" to="D" id="frag-pid-04" year="2026" />
+        <metadata from="A" to="B" id="doc-01-frag-01" year="1900" />
+        <metadata from="B" to="D" id="doc-01-frag-02" author="Jan" />
+        <metadata from="B" to="C" id="doc-01-frag-03" year="1976" />
+        <metadata from="C" to="D" id="doc-01-frag-04" year="2026" />
         <s>
             <milestone id="A"/>
             <w>The</w>
@@ -31,9 +31,9 @@
         </s>
         <s>
             <milestone id="C"/>
-            <w>Dit</w>
+            <w>This</w>
             <w>is</w>
-            <w>een</w>
+            <w>a</w>
             <w>test</w>.
         </s>
         <milestone id="D"/>

@@ -33,7 +33,7 @@ run_index_tool test-3 add    /data/index/test '/test-data/input/PRint602.xml' vo
 run_index_tool parallel create /data/index/parallel '/test-data/input/parallel/minimal-parallel.xml' '/test-data/input/parallel/minimal-parallel.blf.yaml'
 
 # Small corpus with fragment metadata.
-run_index_tool fragments create /data/index/fragments '/test-data/input/fragments/fragments.xml' '/test-data/input/fragments/fragments.blf.yaml'
+run_index_tool fragments create /data/index/fragments '/test-data/input/fragments/fragments*.xml' '/test-data/input/fragments/fragments.blf.yaml'
 
 #cd /usr/local/tomcat && catalina.sh jpda run
 cd /usr/local/tomcat && catalina.sh run

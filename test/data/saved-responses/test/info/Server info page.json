@@ -6,8 +6,8 @@
   "corpora": {
     "fragments": {
       "count": {
-        "documents": 1,
-        "tokens": 21
+        "documents": 2,
+        "tokens": 53
       },
       "documentFormat": "fragments",
       "status": "available",

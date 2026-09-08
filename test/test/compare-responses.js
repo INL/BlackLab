@@ -211,7 +211,7 @@ function expectUnchanged(corpusName, category, testName, actualResponse) {
     // Ensure category dir exists
     const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanCorpusName, sanCategory);
     if (!fs.existsSync(categoryDir))
-        fs.mkdirSync(categoryDir);
+        fs.mkdirSync(categoryDir, { recursive: true });
 
     // Did we have a previous response?
     const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanCorpusName, sanCategory, `${sanFileName}.json`);
