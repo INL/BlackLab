@@ -11,7 +11,7 @@
 set -o errexit  # Exit on error (set -e)
 
 # Get the servicename (or default to "test", the regular CI test)
-SERVICE_NAME=test
+SERVICE_NAME="test"
 
 if [ "$1" = "test-local" ]; then
     export BLACKLAB_TEST_SAVE_MISSING_RESPONSES=true

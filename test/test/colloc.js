@@ -17,7 +17,7 @@ function expectCollocUnchanged(testName, params) {
     describe(`/hits?calc=colloc with pattern ${params.patt}`, () => {
         it('should return expected response (#hits/docs, structure)', done => {
             chai.request(constants.SERVER_URL)
-            .get(constants.URL_PREFIX + '/hits')
+            .get(constants.URL_CORPUS_TEST + '/hits')
             .query({
                 api: constants.TEST_API_VERSION,
                 calc: 'colloc',

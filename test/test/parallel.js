@@ -12,7 +12,7 @@ const describeParallel = constants.INDEX_TYPE === "solr" ? describe.skip : descr
 describeParallel('parallel adjusted alignment otherFields', () => {
     it('response should include aligned field fragments', done => {
         chai.request(constants.SERVER_URL)
-        .get(constants.PARALLEL_URL_PREFIX + '/hits')
+        .get(constants.URL_CORPUS_PARALLEL + '/hits')
         .query({
             patt: "[word='Dit'] =w=>en _",
             field: "contents__nl",

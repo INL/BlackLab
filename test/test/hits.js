@@ -7,6 +7,7 @@ chai.use(chaiHttp);
 
 const constants = require('./constants');
 const { expectUnchanged, expectUrlUnchanged, sanitizeResponse} = require("./compare-responses");
+const { corpusUrl } = require("./util");
 
 /**
  * Test that a hits search returns the same response as before.
@@ -15,6 +16,8 @@ const { expectUnchanged, expectUrlUnchanged, sanitizeResponse} = require("./comp
  * @param params The search parameters.
  */
 function expectHitsUnchanged(testName, params) {
+
+    const corpusName = 'test';
 
     // You can call this function with one string parameter, which is then used
     // as both the name and the CQL pattern.
@@ -28,7 +31,7 @@ function expectHitsUnchanged(testName, params) {
     describe(`hits/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
-            .get(constants.URL_PREFIX + '/hits')
+            .get(corpusUrl(corpusName) + '/hits')
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid,hitposition", // fully defined sort
@@ -41,7 +44,7 @@ function expectHitsUnchanged(testName, params) {
             .end((err, res) => {
                 expect(err).to.be.null;
                 expect(res).to.have.status(200);
-                expectUnchanged('hits', testName, res.body);
+                expectUnchanged(corpusName, 'hits', testName, res.body);
                 done();
             });
         });
@@ -77,14 +80,14 @@ expectHitsUnchanged('view single group', {
 
 // Matching doc facets
 expectUrlUnchanged('hits', 'document facets',
-        constants.URL_PREFIX + '/hits/?patt=%22the%22&number=0&facets=field:pid');
+        corpusUrl('test') + '/hits/?patt=%22the%22&number=0&facets=field:pid');
 
 // Hits CSV
 expectUrlUnchanged('hits', 'CSV results',
-        constants.URL_PREFIX + '/hits/?patt=%22the%22', 'text/csv');
+        corpusUrl('test') + '/hits/?patt=%22the%22', 'text/csv');
 
 // /termfreq operation
 expectUrlUnchanged('hits', 'Termfreq word sensitive',
-        constants.URL_PREFIX + '/termfreq/?annotation=word&sensitive=true');
+        corpusUrl('test') + '/termfreq/?annotation=word&sensitive=true');
 expectUrlUnchanged('hits', 'Termfreq lemma insensitive',
-        constants.URL_PREFIX + '/termfreq/?annotation=lemma');
+        corpusUrl('test') + '/termfreq/?annotation=lemma');

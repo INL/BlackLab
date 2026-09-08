@@ -29,7 +29,11 @@ run_index_tool test-1 create /data/index/test '/test-data/input/PBsve435.xml' vo
 run_index_tool test-2 add    /data/index/test '/test-data/input/PBsve430.xml' voice-tei
 run_index_tool test-3 add    /data/index/test '/test-data/input/PRint602.xml' voice-tei
 
-# Small parallel corpus for direct BLS response regression tests.
-run_index_tool parallel create /data/index/parallel '/test-data/parallel/minimal-parallel.xml' '/test-data/parallel/minimal-parallel.blf.yaml'
+# Small parallel corpus.
+run_index_tool parallel create /data/index/parallel '/test-data/input/parallel/minimal-parallel.xml' '/test-data/input/parallel/minimal-parallel.blf.yaml'
+
+# Small corpus with fragment metadata.
+run_index_tool fragments create /data/index/fragments '/test-data/input/fragments/fragments.xml' '/test-data/input/fragments/fragments.blf.yaml'
+
 #cd /usr/local/tomcat && catalina.sh jpda run
 cd /usr/local/tomcat && catalina.sh run

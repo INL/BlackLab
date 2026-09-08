@@ -4,6 +4,15 @@
   "blacklabScmRevision": "VALUE_REMOVED",
   "blacklabVersion": "VALUE_REMOVED",
   "corpora": {
+    "fragments": {
+      "count": {
+        "documents": 1,
+        "tokens": 21
+      },
+      "documentFormat": "fragments",
+      "status": "available",
+      "timeModified": "VALUE_REMOVED"
+    },
     "parallel": {
       "count": {
         "docVersions": 3,

@@ -31,20 +31,20 @@ expectUrlUnchanged('info', 'server', '/'); // ?api=exp&custom=true
 expectUrlUnchanged('info', 'input formats', '/input-formats');
 
 // Corpus info
-expectUrlUnchanged('info', 'corpus', constants.URL_PREFIX + '/');
-expectUrlUnchanged('info', 'corpus status', constants.URL_PREFIX + '/status');
+expectUrlUnchanged('info', 'corpus', constants.URL_CORPUS_TEST + '/');
+expectUrlUnchanged('info', 'corpus status', constants.URL_CORPUS_TEST + '/status');
 
 // Relations
-expectUrlUnchanged('info', 'relations', constants.URL_PREFIX + '/relations');
+expectUrlUnchanged('info', 'relations', constants.URL_CORPUS_TEST + '/relations');
 
 // Field info with list of values
 expectUrlUnchanged('info', 'annotated field info with values',
-        constants.URL_PREFIX + '/fields/contents?listvalues=lemma');
+        constants.URL_CORPUS_TEST + '/fields/contents?listvalues=lemma');
 expectUrlUnchanged('info', 'metadata field info with values',
-        constants.URL_PREFIX + '/fields/title');
+        constants.URL_CORPUS_TEST + '/fields/title');
 
 // Autocomplete
 expectUrlUnchanged('info', 'autocomplete metadata field',
-        constants.URL_PREFIX + '/autocomplete/title?term=a');
+        constants.URL_CORPUS_TEST + '/autocomplete/title?term=a');
 expectUrlUnchanged('info', 'autocomplete annotated field',
-        constants.URL_PREFIX + '/autocomplete/contents/lemma?term=b');
+        constants.URL_CORPUS_TEST + '/autocomplete/contents/lemma?term=b');
