@@ -6,6 +6,7 @@ chai.use(chaiHttp);
 
 const constants = require('./constants');
 const { expectUnchanged, expectUrlUnchanged } = require("./compare-responses");
+const {corpusUrl} = require("./util");
 
 
 /**
@@ -27,7 +28,7 @@ function expectDocsUnchanged(corpusName, testName, params, filter) {
     describe(`docs/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
-            .get(constants.URL_CORPUS_TEST + '/docs')
+            .get(corpusUrl(corpusName) + '/docs')
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid",
@@ -63,31 +64,32 @@ expectDocsUnchanged(corpus, 'filter only', { filter: 'pid:PBsve435' });
 expectDocsUnchanged(corpus, 'pattern and filter', '"the"', 'pid:PBsve435');
 
 // Doc metadata, contents
+let corpUrl = corpusUrl(corpus);
 expectUrlUnchanged(corpus, 'docs', 'document metadata',
-        constants.URL_CORPUS_TEST + '/docs/PBsve430');
+        corpUrl + '/docs/PBsve430');
 expectUrlUnchanged(corpus, 'docs', 'document contents',
-        constants.URL_CORPUS_TEST + '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
+        corpUrl + '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
 
 // Doc snippet
 expectUrlUnchanged(corpus, 'docs', 'document snippet wordstart',
-        constants.URL_CORPUS_TEST + '/docs/PBsve430/snippet?wordstart=5&wordend=15');
+        corpUrl + '/docs/PBsve430/snippet?wordstart=5&wordend=15');
 expectUrlUnchanged(corpus, 'docs', 'document snippet hitstart',
-        constants.URL_CORPUS_TEST + '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
+        corpUrl + '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
 
 // Doc facets
 expectUrlUnchanged(corpus, 'docs', 'document facets',
-        constants.URL_CORPUS_TEST + '/docs/?number=0&facets=field:title');
+        corpUrl + '/docs/?number=0&facets=field:title');
 
 // Docs CSV
 expectUrlUnchanged(corpus, 'docs', 'CSV results',
-        constants.URL_CORPUS_TEST + '/docs/', 'text/csv');
+        corpUrl + '/docs/', 'text/csv');
 
 // Some tests on the corpus with fragment metadata (should return full docs)
 
-// @@@ saved-response FOR MOST OF THESE ARE WRONG, FIX FIRST!
 corpus = 'fragments';
 expectDocsUnchanged(corpus, 'single word the', '"the"');
-expectDocsUnchanged(corpus, 'both docs', { filter: 'author:*n*' });
+expectDocsUnchanged(corpus, 'both docs', { filter: 'author:Jan author:Gene' });
 expectDocsUnchanged(corpus, 'frag by field', { filter: 'author:Jan' });
-expectDocsUnchanged(corpus, 'frag by id', { id: 'doc-01-frag-02' });
-expectDocsUnchanged(corpus, 'pattern and filter', '"the"', 'year:1987');
+expectDocsUnchanged(corpus, 'frag by id', { filter: 'pid:doc-01-frag-02' });
+
+expectDocsUnchanged(corpus, 'pattern and filter', '"one"', 'year:1987');

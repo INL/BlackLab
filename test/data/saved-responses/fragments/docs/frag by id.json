@@ -5,75 +5,30 @@
         "mayView": true,
         "metadata": {
           "fromInputFile": [
-            "PBsve430.xml"
+            "fragments1.xml"
           ],
           "pid": [
-            "PBsve430"
+            "doc-01"
           ],
           "title": [
-            "service encounter about visa application for family members"
+            "Test title"
           ]
         },
         "tokenCounts": [
           {
             "fieldName": "contents",
-            "tokens": 334
+            "tokens": 21
           }
         ]
       },
-      "docPid": "PBsve430"
-    },
-    {
-      "docInfo": {
-        "mayView": true,
-        "metadata": {
-          "fromInputFile": [
-            "PBsve435.xml"
-          ],
-          "pid": [
-            "PBsve435"
-          ],
-          "title": [
-            "service encounter about getting an address printed out"
-          ]
-        },
-        "tokenCounts": [
-          {
-            "fieldName": "contents",
-            "tokens": 164
-          }
-        ]
-      },
-      "docPid": "PBsve435"
-    },
-    {
-      "docInfo": {
-        "mayView": true,
-        "metadata": {
-          "fromInputFile": [
-            "PRint602.xml"
-          ],
-          "pid": [
-            "PRint602"
-          ],
-          "title": [
-            "interview about conference experience and impressions of city"
-          ]
-        },
-        "tokenCounts": [
-          {
-            "fieldName": "contents",
-            "tokens": 268
-          }
-        ]
-      },
-      "docPid": "PRint602"
+      "docPid": "doc-01"
     }
   ],
   "summary": {
     "params": {
       "context": "1",
-      "indexname": "test",
+      "filter": "pid:doc-01-frag-02",
+      "indexname": "fragments",
       "op": "docs",
       "sort": "field:pid",
       "waitfortotal": true
@@ -81,14 +36,14 @@
     "results": {
       "stats": {
         "counted": {
-          "documents": 3,
+          "documents": 1,
           "hits": 0,
           "status": "finished",
           "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "processed": {
-          "documents": 3,
+          "documents": 1,
           "hits": 0,
           "status": "finished",
           "stoppedBecauseTooMany": false,
@@ -96,7 +51,7 @@
         }
       },
       "window": {
-        "actualSize": 3,
+        "actualSize": 1,
         "firstResult": 0,
         "hasNext": false,
         "hasPrevious": false,

@@ -67,6 +67,8 @@ public class QueryFullDocsFromFragments extends Query {
             @Override
             public Scorer scorer(final LeafReaderContext ctx) throws IOException {
                 Scorer fragmentScorer = fragmentWeight.scorer(ctx);
+                if (fragmentScorer == null)
+                    return null; // no matches in segment
                 Scorer fullDocsScorer = fullDocsWeight.scorer(ctx);
                 return new Scorer(this) {
                     @Override

@@ -97,8 +97,10 @@ public class SpanQueryFromFragments extends BLSpanQuery {
             @Override
             public BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException {
                 Scorer fragmentScorer = fragmentWeight.scorer(ctx);
+                if (fragmentScorer == null)
+                    return null; // no matches in segment
                 Scorer fullDocsScorer = fullDocsWeight.scorer(ctx);
-                return new FragmentsToSpans(fragmentScorer, fullDocsScorer, searcher);
+                return new FragmentsToSpans(fragmentScorer, fullDocsScorer, new IndexSearcher(ctx.reader()));
             }
         };
     }
@@ -223,8 +225,11 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                 currentDocId = NO_MORE_DOCS;
                 return NO_MORE_DOCS;
             }
+            assert fragmentIterator.docID() >= target : "fragmentIterator.advance() returned a doc < target: " + fragmentIterator.docID() + " < " + target;
             determineFragment();
-            return prepareCurrentDoc();
+            int doc = prepareCurrentDoc();
+            assert doc >= target : "advance() returned a doc < target: " + doc + " < " + target;
+            return doc;
         }
 
         @Override

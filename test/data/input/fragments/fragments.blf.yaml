@@ -32,7 +32,7 @@ annotatedFields:
 
 corpusConfig:
   specialFields:
-    pidField: id
+    pidField: pid
 
   contentViewable: true
 
@@ -40,7 +40,7 @@ corpusConfig:
 metadata:
   containerPath: metadata
   fields:
-  - name: id
+  - name: pid
     valuePath: "@id"
     type: untokenized
     fragmentBehaviour: separate

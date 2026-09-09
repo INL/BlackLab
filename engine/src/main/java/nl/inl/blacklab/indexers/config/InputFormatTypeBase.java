@@ -670,52 +670,54 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     if (getDocWriter() != null && !indexingIntoExistingDoc) {
                         // Set the doc type field so we know this is a regular full document (as opposed to a fragment)
                         currentDoc.setType(BLInputDocument.DocType.DOCUMENT);
-                        getDocWriter().add(currentDoc);
-                    }
+                        List<BLInputDocument> docsToAddAsBlock = new ArrayList<>();
+                        docsToAddAsBlock.add(currentDoc);
 
-                    // Are there document fragments to store as well?
-                    // (each fragment is stored in a separate Lucene document that references the main document)
-                    if (!fragsPerField.isEmpty()) {
-                        // For each annotated field that has fragments...
-                        MetadataField pidField = getDocWriter().metadata().metadataFields().pidField();
-                        BLFieldType untokenizedFieldType = getDocWriter().metadataFieldType(false);
-                        if (pidField == null)
-                            throw new InvalidInputFormatConfig("Cannot store fragments, input format config .blf.yaml has no pidField configured");
-                        String pid = currentDoc.get(pidField.name());
-                        for (Map.Entry<String, List<Fragment>> entry: fragsPerField.entrySet()) {
-                            String annotatedFieldName = entry.getKey();
-                            // Merge fragments with the same span, and chop overlapping fragments into non-overlapping fragments
-                            List<Fragment> fragments = entry.getValue();
-                            fragments = Fragment.mergeFragmentsWithSameSpan(fragments);
-                            int docLength = docLengthsPerField.get(annotatedFieldName);
-                            Map<String, Collection<String>> valuesToInheritFromDoc = new HashMap<>();
-                            for (Map.Entry<String, Collection<String>> e: metadataFieldValues.entrySet()) {
-                                ConfigMetadataField.FragmentBehaviour b = metadataFieldsFragmentBehaviour.getOrDefault(e.getKey(), ConfigMetadataField.FragmentBehaviour.DEFAULT);
-                                if (!b.inheritFromDocLevel()) {
-                                    // Should explicitly not inherit to document level (e.g. doc and fragment may each have a separate pid)
-                                    continue;
+                        // Are there document fragments to store as well?
+                        // (each fragment is stored in a separate Lucene document that references the main document)
+                        if (!fragsPerField.isEmpty()) {
+                            // For each annotated field that has fragments...
+                            MetadataField pidField = getDocWriter().metadata().metadataFields().pidField();
+                            BLFieldType untokenizedFieldType = getDocWriter().metadataFieldType(false);
+                            if (pidField == null)
+                                throw new InvalidInputFormatConfig("Cannot store fragments, input format config .blf.yaml has no pidField configured");
+                            String pid = currentDoc.get(pidField.name());
+                            for (Map.Entry<String, List<Fragment>> entry: fragsPerField.entrySet()) {
+                                String annotatedFieldName = entry.getKey();
+                                // Merge fragments with the same span, and chop overlapping fragments into non-overlapping fragments
+                                List<Fragment> fragments = entry.getValue();
+                                fragments = Fragment.mergeFragmentsWithSameSpan(fragments);
+                                int docLength = docLengthsPerField.get(annotatedFieldName);
+                                Map<String, Collection<String>> valuesToInheritFromDoc = new HashMap<>();
+                                for (Map.Entry<String, Collection<String>> e: metadataFieldValues.entrySet()) {
+                                    ConfigMetadataField.FragmentBehaviour b = metadataFieldsFragmentBehaviour.getOrDefault(e.getKey(), ConfigMetadataField.FragmentBehaviour.DEFAULT);
+                                    if (!b.inheritFromDocLevel()) {
+                                        // Should explicitly not inherit to document level (e.g. doc and fragment may each have a separate pid)
+                                        continue;
+                                    }
+                                    if (e.getValue() != null && !e.getValue().isEmpty())
+                                        valuesToInheritFromDoc.put(e.getKey(), e.getValue());
                                 }
-                                if (e.getValue() != null && !e.getValue().isEmpty())
-                                    valuesToInheritFromDoc.put(e.getKey(), e.getValue());
-                            }
-                            fragments = Fragment.chopOverlappingFragments(fragments, valuesToInheritFromDoc, docLength);
-                            // Store each fragment in a separate Lucene document, with a reference to the main document
-                            for (Fragment fragment: fragments) {
-                                currentDoc = createNewDocument();
-                                currentDoc.addField(BLInputDocument.FRAG_FIELD_DOC, pid, untokenizedFieldType);
-                                currentDoc.addField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
-                                currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_START, fragment.span().start(), true);
-                                currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_END, fragment.span().end(), true);
-                                addMetadataToDocument(fragment.metadata(), true);
-                                // Set the doc type field so we know this is a fragment, not a full document
-                                currentDoc.setType(BLInputDocument.DocType.FRAGMENT);
-                                getDocWriter().add(currentDoc);
-                            }
-                            // Keep track of which metadata fields occur in fragments, so we can optimize queries on them
-                            for (String fragmentField: metadataFieldsFragmentBehaviour.keySet()) {
-                                getDocWriter().metadata().metadataFields().setOccursInFragment(fragmentField);
+                                fragments = Fragment.chopOverlappingFragments(fragments, valuesToInheritFromDoc, docLength);
+                                // Store each fragment in a separate Lucene document, with a reference to the main document
+                                for (Fragment fragment: fragments) {
+                                    currentDoc = createNewDocument();
+                                    currentDoc.addField(BLInputDocument.FRAG_FIELD_DOC, pid, untokenizedFieldType);
+                                    currentDoc.addField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
+                                    currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_START, fragment.span().start(), true);
+                                    currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_END, fragment.span().end(), true);
+                                    addMetadataToDocument(fragment.metadata(), true);
+                                    // Set the doc type field so we know this is a fragment, not a full document
+                                    currentDoc.setType(BLInputDocument.DocType.FRAGMENT);
+                                    docsToAddAsBlock.add(currentDoc);
+                                }
+                                // Keep track of which metadata fields occur in fragments, so we can optimize queries on them
+                                for (String fragmentField: metadataFieldsFragmentBehaviour.keySet()) {
+                                    getDocWriter().metadata().metadataFields().setOccursInFragment(fragmentField);
+                                }
                             }
                         }
+                        getDocWriter().addDocuments(docsToAddAsBlock);
                     }
                 } catch (Exception e) {
                     throw BlackLabException.wrapRuntime(e);
