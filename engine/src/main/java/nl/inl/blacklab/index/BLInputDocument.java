@@ -30,9 +30,6 @@ public interface BLInputDocument {
         return new TermQuery(new Term(DOC_TYPE_FIELD_NAME, type.value));
     }
 
-    /** Set the document type */
-    void setType(DocType docType);
-
     /** The different document types in an index. */
     enum DocType {
         DOCUMENT("document"),
@@ -85,7 +82,11 @@ public interface BLInputDocument {
 
     void addNumericField(String name, int value, boolean index, boolean store, boolean docValue);
 
+    void addIndexedAndDocValues(String name, String value);
+
     void addTextualMetadataField(String name, String value, BLFieldType type);
+
+    DocType getDocType();
 
     String get(String name);
 

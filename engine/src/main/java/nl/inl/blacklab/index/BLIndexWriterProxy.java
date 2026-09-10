@@ -22,13 +22,6 @@ public interface BLIndexWriterProxy {
 
     long updateDocuments(Query q, List<BLInputDocument> document, boolean ignoreFragments) throws IOException;
 
-    static void ensureDocTypeFieldSet(BLInputDocument document) {
-        if (document.get(BLInputDocument.DOC_TYPE_FIELD_NAME) == null) {
-            throw new ErrorIndexingFile("Document has no " + BLInputDocument.DOC_TYPE_FIELD_NAME +
-                    " field; cannot add it to the index.");
-        }
-    }
-
     void close() throws IOException;
 
     void commit() throws IOException;

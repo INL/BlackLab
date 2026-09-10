@@ -183,10 +183,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         private void updateMetadataDoc(BlackLabIndexWriter indexWriter, String metadataJson) throws IOException {
             // Create a metadata document with the metadata JSON, config format file,
             // and a marker field to we can find it again
-            BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument();
+            BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument(BLInputDocument.DocType.INDEXMETADATA);
             indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
             indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
-            indexmetadataDoc.setType(BLInputDocument.DocType.INDEXMETADATA);
             TermQuery query = new TermQuery(METADATA_DOC_QUERY.getTerm());
             indexWriter.writer().updateDocuments(query, List.of(indexmetadataDoc), true);
         }

@@ -17,12 +17,25 @@ public class BLInputDocumentLucene implements BLInputDocument {
 
     private final Document document;
 
-    public BLInputDocumentLucene() {
+    /** The document type (document/fragment/indexmetadata)
+     *
+     * Needed because _doc_type is not a stored field, so we can't retrieve it directly from the document
+     */
+    private DocType docType;
+
+    public BLInputDocumentLucene(DocType type) {
         document = new Document();
+        String docTypeValue = type.getValue();
+        addIndexedAndDocValues(DOC_TYPE_FIELD_NAME, docTypeValue);
+        this.docType = type;
     }
 
     public Document getDocument() {
         return document;
+    }
+
+    public DocType getDocType() {
+        return docType;
     }
 
     @Override
@@ -31,14 +44,14 @@ public class BLInputDocumentLucene implements BLInputDocument {
     }
 
     @Override
-    public void setType(DocType docType) {
-        document.add(new Field(DOC_TYPE_FIELD_NAME, docType.getValue(), BLFieldTypeLucene.METADATA_UNTOKENIZED.luceneType()));
-        document.add(new SortedDocValuesField(DOC_TYPE_FIELD_NAME, new BytesRef(docType.getValue().getBytes())));
+    public void addField(String name, String value, BLFieldType fieldType) {
+        document.add(new Field(name, value, fieldType.luceneType()));
     }
 
     @Override
-    public void addField(String name, String value, BLFieldType fieldType) {
-        document.add(new Field(name, value, fieldType.luceneType()));
+    public void addIndexedAndDocValues(String name, String value) {
+        document.add(new Field(name, value, BLFieldTypeLucene.STRING_UNTOKENIZED_UNSTORED.luceneType()));
+        document.add(new SortedDocValuesField(name, new BytesRef(value.getBytes())));
     }
 
     @Override

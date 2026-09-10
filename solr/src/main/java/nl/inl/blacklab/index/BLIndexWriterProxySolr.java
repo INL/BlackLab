@@ -34,7 +34,6 @@ public class BLIndexWriterProxySolr implements BLIndexWriterProxy, Closeable {
     @Override
     public synchronized void addDocuments(List<BLInputDocument> documents) {
         for (BLInputDocument document : documents) {
-            BLIndexWriterProxy.ensureDocTypeFieldSet(document);
             pendingAddDocuments.add((BLInputDocumentSolr) document);
         }
     }

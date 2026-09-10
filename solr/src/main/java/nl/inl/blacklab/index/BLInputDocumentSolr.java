@@ -20,14 +20,17 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 public class BLInputDocumentSolr implements BLInputDocument {
 
     private final SolrInputDocument document;
-    
-    public BLInputDocumentSolr() {
+
+    private DocType docType;
+
+    public BLInputDocumentSolr(DocType type) {
         document = new SolrInputDocument();
+        document.addField(DOC_TYPE_FIELD_NAME, type.getValue());
+        this.docType = type;
     }
 
-    @Override
-    public void setType(DocType docType) {
-        document.addField(DOC_TYPE_FIELD_NAME, docType.getValue());
+    public DocType getDocType() {
+        return docType;
     }
 
     @Override
@@ -69,6 +72,12 @@ public class BLInputDocumentSolr implements BLInputDocument {
     @Override
     public String get(String name) {
         return document.getField(name).getValue().toString();
+    }
+
+    @Override
+    public void addIndexedAndDocValues(String name, String value) {
+        value = BLInputDocument.truncateValue(value);
+        document.addField(name, value);
     }
 
     @Override

@@ -73,15 +73,12 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
      * @return the PID term, or null if no PID field is configured or this is a fragment
      */
     private String getPidTerm(BLInputDocument document) {
+        if (document.getDocType() == BLInputDocument.DocType.FRAGMENT)
+            return null; // this is a fragment, don't check for duplicates
         String pidFieldName = getPidFieldName();
         if (pidFieldName == null)
             throw new ErrorIndexingFile("Missing pid field name");
         String pid = document.get(pidFieldName);
-        if (pid == null) {
-            String fragmentAnnotatedField = document.get(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
-            if (fragmentAnnotatedField != null)
-                return null; // this is a fragment, don't check for duplicates
-        }
         if (pid == null) {
             throw new ErrorIndexingFile("Document has no persistent identifier (pidField '" + pidFieldName +
                     "'). Document: " + document);
@@ -203,7 +200,6 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
     private List<Document> luceneDocs(List<BLInputDocument> documents) {
         List<Document> luceneDocs = new ArrayList<>(documents.size());
         for (BLInputDocument document : documents) {
-            BLIndexWriterProxy.ensureDocTypeFieldSet(document);
             luceneDocs.add(((BLInputDocumentLucene)document).getDocument());
         }
         return luceneDocs;
@@ -258,17 +254,17 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
     /** Get the delete query to use for an index that includes fragments. */
     private static Query getFragmentsDeleteQuery(Query q) {
         // First, filter the query so it only finds full documents (parents).
-        Term termDocTypeFullDoc = new Term(BLInputDocument.DOC_TYPE_FIELD_NAME, BLInputDocument.DocType.DOCUMENT.getValue());
+        Query fullDocsQuery = BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT);
         Query fullDocsOnly =
                 new BooleanQuery.Builder()
                         .add(q, BooleanClause.Occur.MUST)
-                        .add(new TermQuery(termDocTypeFullDoc), BooleanClause.Occur.FILTER)
+                        .add(fullDocsQuery, BooleanClause.Occur.FILTER)
                         .build();
         // Find the fragments (children) for the matching full documents.
         Query fragments =
                 new ToChildBlockJoinQuery(
                         fullDocsOnly,
-                        new QueryBitSetProducer(BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT)));
+                        new QueryBitSetProducer(fullDocsQuery));
         // Combine with AND so they both deleted in one operation.
         return new BooleanQuery.Builder()
                 .add(fullDocsOnly, BooleanClause.Occur.SHOULD)

@@ -11,7 +11,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.queries.spans.SpanCollector;
@@ -40,12 +40,6 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * Adjacent fragments will be combined into a single span.
  */
 public class SpanQueryFromFragments extends BLSpanQuery {
-
-    /** Field that contains the index document type (document/fragment/indexmetadata) */
-    private static final String DOC_TYPE_FIELD_NAME = BLInputDocument.DOC_TYPE_FIELD_NAME;
-
-    /** Value that indicates a regular (full) document */
-    private static final String DOC_TYPE_FULL_DOCUMENT = BLInputDocument.DocType.DOCUMENT.getValue();
 
     /** Have we nexted the fragment query but not used the result yet? */
     private boolean fragmentQueryNexted = false;
@@ -148,7 +142,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         private final DocIdSetIterator fragmentIterator;
 
         /** DocValues for _frag_annotatedField (field this is a fragment of) */
-        private final SortedSetDocValues dvFragAnnotatedField;
+        private final SortedDocValues dvFragAnnotatedField;
 
         /** Ord of the annotated field we're searching. Only look at matching fragments in this field. */
         private final long currentAnnotatedFieldOrd;
@@ -195,7 +189,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                 // Get the DocValues for the fields we need to read from the fragmentIterator results
                 LeafReader reader = ctx.reader();
                 dvTokenLength = reader.getNumericDocValues(tokenLengthField);
-                dvFragAnnotatedField = reader.getSortedSetDocValues(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
+                dvFragAnnotatedField = reader.getSortedDocValues(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
                 String annotatedFieldName = queryInfo.field().name();
                 currentAnnotatedFieldOrd = dvFragAnnotatedField.lookupTerm(new BytesRef(annotatedFieldName));
                 dvFragStart = reader.getNumericDocValues(BLInputDocument.FRAG_FIELD_START);
@@ -325,7 +319,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                     dvFragEnd.advance(docId);
                 }
                 fragIsFullDoc = false;
-                fragInCorrectField = dvFragAnnotatedField.nextOrd() == currentAnnotatedFieldOrd;
+                fragInCorrectField = dvFragAnnotatedField.ordValue() == currentAnnotatedFieldOrd;
                 fragStart = (int)dvFragStart.longValue();
                 fragEnd = (int)dvFragEnd.longValue();
                 // Find the parent document (the next full doc in the index)

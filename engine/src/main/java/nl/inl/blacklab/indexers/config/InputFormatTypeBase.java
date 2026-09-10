@@ -139,8 +139,8 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             protected void setDocumentDirectory(File dir) {
             }
 
-            protected BLInputDocument createNewDocument() {
-                return getDocWriter().indexObjectFactory().createInputDocument();
+            protected BLInputDocument createNewDocument(BLInputDocument.DocType docType) {
+                return getDocWriter().indexObjectFactory().createInputDocument(docType);
             }
 
             /**
@@ -607,7 +607,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             protected void startDocument() {
                 metadataFieldValues.clear();
                 if (!indexingIntoExistingDoc) {
-                    currentDoc = createNewDocument();
+                    currentDoc = createNewDocument(BLInputDocument.DocType.DOCUMENT);
                     addMetadataField("fromInputFile", documentName);
                 } else {
                     currentDoc = linkingDoc.getCurrentDoc();
@@ -667,7 +667,6 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     // Add Lucene doc to indexer, if not existing already
                     if (getDocWriter() != null && !indexingIntoExistingDoc) {
                         // Set the doc type field so we know this is a regular full document (as opposed to a fragment)
-                        currentDoc.setType(BLInputDocument.DocType.DOCUMENT);
                         List<BLInputDocument> docsToAddAsBlock = new ArrayList<>();
                         BLInputDocument fullDoc = currentDoc;
 
@@ -699,13 +698,12 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 fragments = Fragment.chopOverlappingFragments(fragments, valuesToInheritFromDoc, docLength);
                                 // Store each fragment in a separate Lucene document, with a reference to the main document
                                 for (Fragment fragment: fragments) {
-                                    currentDoc = createNewDocument();
-                                    currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
+                                    currentDoc = createNewDocument(BLInputDocument.DocType.FRAGMENT);
+                                    currentDoc.addIndexedAndDocValues(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName);
                                     currentDoc.addNumericField(BLInputDocument.FRAG_FIELD_START, fragment.span().start(), false, false, true);
                                     currentDoc.addNumericField(BLInputDocument.FRAG_FIELD_END, fragment.span().end(), false, false, true);
                                     addMetadataToDocument(fragment.metadata(), true);
                                     // Set the doc type field so we know this is a fragment, not a full document
-                                    currentDoc.setType(BLInputDocument.DocType.FRAGMENT);
                                     docsToAddAsBlock.add(currentDoc);
                                 }
                                 // Keep track of which metadata fields occur in fragments, so we can optimize queries on them
