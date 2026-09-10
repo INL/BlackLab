@@ -701,9 +701,8 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 for (Fragment fragment: fragments) {
                                     currentDoc = createNewDocument();
                                     currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
-                                    currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
-                                    currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_START, fragment.span().start(), true);
-                                    currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_END, fragment.span().end(), true);
+                                    currentDoc.addNumericField(BLInputDocument.FRAG_FIELD_START, fragment.span().start(), false, false, true);
+                                    currentDoc.addNumericField(BLInputDocument.FRAG_FIELD_END, fragment.span().end(), false, false, true);
                                     addMetadataToDocument(fragment.metadata(), true);
                                     // Set the doc type field so we know this is a fragment, not a full document
                                     currentDoc.setType(BLInputDocument.DocType.FRAGMENT);

@@ -18,6 +18,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.join.QueryBitSetProducer;
 import org.apache.lucene.search.join.ToChildBlockJoinQuery;
 import org.jspecify.annotations.NonNull;
 
@@ -261,13 +262,13 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
         Query fullDocsOnly =
                 new BooleanQuery.Builder()
                         .add(q, BooleanClause.Occur.MUST)
-                        .add(new TermQuery(termDocTypeFullDoc), BooleanClause.Occur.MUST)
+                        .add(new TermQuery(termDocTypeFullDoc), BooleanClause.Occur.FILTER)
                         .build();
         // Find the fragments (children) for the matching full documents.
         Query fragments =
                 new ToChildBlockJoinQuery(
                         fullDocsOnly,
-                        BLInputDocument.getFullDocBitSetProducer());
+                        new QueryBitSetProducer(BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT)));
         // Combine with AND so they both deleted in one operation.
         return new BooleanQuery.Builder()
                 .add(fullDocsOnly, BooleanClause.Occur.SHOULD)

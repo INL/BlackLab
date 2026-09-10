@@ -53,7 +53,7 @@ public class BLInputDocumentSolr implements BLInputDocument {
     }
 
     @Override
-    public void addStoredNumericField(String name, int value, boolean addDocValue) {
+    public void addNumericField(String name, int value, boolean index, boolean store, boolean docValue) {
         document.addField(name, value);
     }
 

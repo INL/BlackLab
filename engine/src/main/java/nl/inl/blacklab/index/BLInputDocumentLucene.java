@@ -21,6 +21,15 @@ public class BLInputDocumentLucene implements BLInputDocument {
         document = new Document();
     }
 
+    public Document getDocument() {
+        return document;
+    }
+
+    @Override
+    public String get(String name) {
+        return document.get(name);
+    }
+
     @Override
     public void setType(DocType docType) {
         document.add(new Field(DOC_TYPE_FIELD_NAME, docType.getValue(), BLFieldTypeLucene.METADATA_UNTOKENIZED.luceneType()));
@@ -33,40 +42,34 @@ public class BLInputDocumentLucene implements BLInputDocument {
     }
 
     @Override
+    public void addTextualMetadataField(String name, String value, BLFieldType type) {
+        addField(name, value, type);
+
+        // If a value is too long (more than 32K), just truncate it a bit.
+        // This should be very rare and would generally only affect sorting/grouping, if anything.
+        value = BLInputDocument.truncateValue(value);
+        // docvalues for efficient sorting/grouping
+        document.add(new SortedSetDocValuesField(name, new BytesRef(value)));
+    }
+
+    @Override
     public void addAnnotationField(String name, TokenStream tokenStream, BLFieldType fieldType) {
         document.add(new Field(name, tokenStream, fieldType.luceneType()));
     }
 
     @Override
-    public void addStoredNumericField(String name, int value, boolean addDocValue) {
-        document.add(new IntPoint(name, value));
-        document.add(new StoredField(name, value));
-        if (addDocValue)
+    public void addNumericField(String name, int value, boolean index, boolean store, boolean docValue) {
+        if (index)
+            document.add(new IntPoint(name, value));
+        if (store)
+            document.add(new StoredField(name, value));
+        if (docValue)
             document.add(new NumericDocValuesField(name, value));
     }
 
     @Override
     public void addStoredField(String name, String value) {
         document.add(new StoredField(name, value));
-    }
-
-    public Document getDocument() {
-        return document;
-    }
-
-    @Override
-    public String get(String name) {
-        return document.get(name);
-    }
-
-    @Override
-    public void addTextualMetadataField(String name, String value, BLFieldType type) {
-        addField(name, value, type);
-        // If a value is too long (more than 32K), just truncate it a bit.
-        // This should be very rare and would generally only affect sorting/grouping, if anything.
-        value = BLInputDocument.truncateValue(value);
-        // docvalues for efficient sorting/grouping
-        document.add(new SortedSetDocValuesField(name, new BytesRef(value)));
     }
 
     @Override

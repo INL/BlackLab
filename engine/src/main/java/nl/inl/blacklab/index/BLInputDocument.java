@@ -4,9 +4,9 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.join.BitSetProducer;
-import org.apache.lucene.search.join.QueryBitSetProducer;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -26,13 +26,8 @@ public interface BLInputDocument {
      *  indexmetadata (special index metadata document) */
     String DOC_TYPE_FIELD_NAME = "_doc_type";
 
-    /** Returns a BitSetProducer that indicates which Lucene documents represent "full documents"
-     *  in an index that includes fragments as well.
-     */
-    static BitSetProducer getFullDocBitSetProducer() {
-        Term docTypeTerm = new Term(DOC_TYPE_FIELD_NAME, DocType.DOCUMENT.value);
-        TermQuery fullDocsQuery = new TermQuery(docTypeTerm);
-        return new QueryBitSetProducer(fullDocsQuery);
+    static @NonNull Query docTypeQuery(DocType type) {
+        return new TermQuery(new Term(DOC_TYPE_FIELD_NAME, type.value));
     }
 
     /** Set the document type */
@@ -69,9 +64,6 @@ public interface BLInputDocument {
     /** Prefix for special fields in fragment Lucene documents. */
     String FRAG_PREFIX = "_frag_";
 
-    /** Field pointing to the document this is fragment of, referencing it by its pidField */
-    String FRAG_FIELD_DOC = FRAG_PREFIX + "doc";
-
     /** Annotated field this fragment is from */
     String FRAG_FIELD_ANNOTATED_FIELD = FRAG_PREFIX + "annotatedField";
 
@@ -87,7 +79,11 @@ public interface BLInputDocument {
 
     void addAnnotationField(String name, TokenStream tokenStream, BLFieldType fieldType);
 
-    void addStoredNumericField(String name, int value, boolean addDocValue);
+    default void addStoredNumericField(String name, int value, boolean addDocValue) {
+        addNumericField(name, value, true, true, addDocValue);
+    }
+
+    void addNumericField(String name, int value, boolean index, boolean store, boolean docValue);
 
     void addTextualMetadataField(String name, String value, BLFieldType type);
 
