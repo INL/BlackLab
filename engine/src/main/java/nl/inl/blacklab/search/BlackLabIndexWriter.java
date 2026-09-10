@@ -156,7 +156,7 @@ public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
             }
             docsToDelete = bq.build();
         }
-        writer().updateDocuments(docsToDelete, documents);
+        writer().updateDocuments(docsToDelete, documents, false);
     }
 
 

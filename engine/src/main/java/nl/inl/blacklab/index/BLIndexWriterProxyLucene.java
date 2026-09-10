@@ -16,11 +16,9 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.join.ToChildBlockJoinQuery;
 import org.jspecify.annotations.NonNull;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -79,9 +77,8 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
             throw new ErrorIndexingFile("Missing pid field name");
         String pid = document.get(pidFieldName);
         if (pid == null) {
-            String fragmentPid = document.get(
-                    BLInputDocument.FRAG_FIELD_DOC); // fragments index reference to their document in this field
-            if (fragmentPid != null)
+            String fragmentAnnotatedField = document.get(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
+            if (fragmentAnnotatedField != null)
                 return null; // this is a fragment, don't check for duplicates
         }
         if (pid == null) {
@@ -201,10 +198,7 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
         return usedPids;
     }
 
-    private Document luceneDoc(BLInputDocument document) {
-        return ((BLInputDocumentLucene)document).getDocument();
-    }
-
+    /** Get the Lucene documents for a list of BLInputDocuments. */
     private List<Document> luceneDocs(List<BLInputDocument> documents) {
         List<Document> luceneDocs = new ArrayList<>(documents.size());
         for (BLInputDocument document : documents) {
@@ -242,43 +236,7 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
     public void deleteDocuments(Query q) throws IOException {
         if (index.metadataFields().anyOccurInFragments()) {
             // We have fragments in this index, so we need to delete all fragments of the matching documents as well.
-            // First, find all matching documents (not fragments)
-            if (getPidFieldName() == null) {
-                throw new IllegalStateException("Index contains fragments but no pid field is configured");
-            }
-            try (IndexReader reader = DirectoryReader.open(indexWriter)) {
-                // Find all the matching PIDs
-                IndexSearcher searcher = new IndexSearcher(reader);
-                List<String> pids = new ArrayList<>();
-                searcher.search(q, new SimpleCollector() {
-                    @Override
-                    public void collect(int doc) throws IOException {
-                        Document document = searcher.doc(doc);
-                        String pid = document.get(getPidFieldName());
-                        if (pid != null) { // i.e. skip any fragments we may have matched
-                            pid = StringUtil.desensitize(pid);
-                            pids.add(pid);
-                        }
-                    }
-
-                    @Override
-                    public ScoreMode scoreMode() {
-                        return ScoreMode.COMPLETE_NO_SCORES;
-                    }
-                });
-
-                // Create a query matching all fragments and documents with those PIDs, and delete them
-                BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
-                for (String pid : pids) {
-                    Term fragPidTerm = new Term(BLInputDocument.FRAG_FIELD_DOC, pid);
-                    queryBuilder.add(new TermQuery(fragPidTerm), BooleanClause.Occur.SHOULD);
-                }
-                for (String pid : pids) {
-                    Term docPidTerm = new Term(getPidFieldName(), pid);
-                    queryBuilder.add(new TermQuery(docPidTerm), BooleanClause.Occur.SHOULD);
-                }
-                indexWriter.deleteDocuments((Query) queryBuilder.build());
-            }
+            indexWriter.deleteDocuments(getFragmentsDeleteQuery(q));
         } else {
             // No need for fragment-aware deletion; just delete the document(s) matching the query
             indexWriter.deleteDocuments(q);
@@ -286,8 +244,35 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
     }
 
     @Override
-    public long updateDocuments(Query q, List<BLInputDocument> documents) throws IOException {
-        return indexWriter.updateDocuments(q, luceneDocs(documents));
+    public long updateDocuments(Query q, List<BLInputDocument> documents, boolean ignoreFragments) throws IOException {
+        if (!ignoreFragments && index.metadataFields().anyOccurInFragments()) {
+            // We have fragments in this index, so we need to delete all fragments of the matching documents as well.
+            return indexWriter.updateDocuments(getFragmentsDeleteQuery(q), luceneDocs(documents));
+        } else {
+            // No need for fragment-aware deletion; just delete the document(s) matching the query
+            return indexWriter.updateDocuments(q, luceneDocs(documents));
+        }
+    }
+
+    /** Get the delete query to use for an index that includes fragments. */
+    private static Query getFragmentsDeleteQuery(Query q) {
+        // First, filter the query so it only finds full documents (parents).
+        Term termDocTypeFullDoc = new Term(BLInputDocument.DOC_TYPE_FIELD_NAME, BLInputDocument.DocType.DOCUMENT.getValue());
+        Query fullDocsOnly =
+                new BooleanQuery.Builder()
+                        .add(q, BooleanClause.Occur.MUST)
+                        .add(new TermQuery(termDocTypeFullDoc), BooleanClause.Occur.MUST)
+                        .build();
+        // Find the fragments (children) for the matching full documents.
+        Query fragments =
+                new ToChildBlockJoinQuery(
+                        fullDocsOnly,
+                        BLInputDocument.getFullDocBitSetProducer());
+        // Combine with AND so they both deleted in one operation.
+        return new BooleanQuery.Builder()
+                .add(fullDocsOnly, BooleanClause.Occur.SHOULD)
+                .add(fragments, BooleanClause.Occur.SHOULD)
+                .build();
     }
 
     @Override

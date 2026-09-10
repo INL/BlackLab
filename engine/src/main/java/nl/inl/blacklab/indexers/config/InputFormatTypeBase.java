@@ -700,7 +700,6 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 // Store each fragment in a separate Lucene document, with a reference to the main document
                                 for (Fragment fragment: fragments) {
                                     currentDoc = createNewDocument();
-                                    currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_DOC, pid, untokenizedFieldType);
                                     currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
                                     currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
                                     currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_START, fragment.span().start(), true);

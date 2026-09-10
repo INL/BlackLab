@@ -188,7 +188,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
             indexmetadataDoc.setType(BLInputDocument.DocType.INDEXMETADATA);
             TermQuery query = new TermQuery(METADATA_DOC_QUERY.getTerm());
-            indexWriter.writer().updateDocuments(query, List.of(indexmetadataDoc));
+            indexWriter.writer().updateDocuments(query, List.of(indexmetadataDoc), true);
         }
 
         private String serializeToJson(IndexMetadataImpl metadata) {

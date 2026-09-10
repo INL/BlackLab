@@ -57,12 +57,12 @@ public class BLIndexWriterProxySolr implements BLIndexWriterProxy, Closeable {
     }
 
     @Override
-    public void deleteDocuments(Query q) throws IOException {
+    public void deleteDocuments(Query q) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public long updateDocuments(Query q, List<BLInputDocument> documents) throws IOException {
+    public long updateDocuments(Query q, List<BLInputDocument> documents, boolean ignoreFragments) {
         for (BLInputDocument document : documents) {
             pendingAddDocuments.add((BLInputDocumentSolr) document);
         }

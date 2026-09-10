@@ -20,7 +20,7 @@ public interface BLIndexWriterProxy {
 
     void deleteDocuments(Query q) throws IOException;
 
-    long updateDocuments(Query q, List<BLInputDocument> document) throws IOException;
+    long updateDocuments(Query q, List<BLInputDocument> document, boolean ignoreFragments) throws IOException;
 
     static void ensureDocTypeFieldSet(BLInputDocument document) {
         if (document.get(BLInputDocument.DOC_TYPE_FIELD_NAME) == null) {
