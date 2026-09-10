@@ -3,6 +3,10 @@ package nl.inl.blacklab.index;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.join.BitSetProducer;
+import org.apache.lucene.search.join.QueryBitSetProducer;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -20,7 +24,16 @@ public interface BLInputDocument {
 
     /** Document type: document (regular full document), fragment (part of document, refers to pid of full doc),
      *  indexmetadata (special index metadata document) */
-    String DOC_TYPE_FIELD_NAME = "_docType";
+    String DOC_TYPE_FIELD_NAME = "_doc_type";
+
+    /** Returns a BitSetProducer that indicates which Lucene documents represent "full documents"
+     *  in an index that includes fragments as well.
+     */
+    static BitSetProducer getFullDocBitSetProducer() {
+        Term docTypeTerm = new Term(DOC_TYPE_FIELD_NAME, DocType.DOCUMENT.value);
+        TermQuery fullDocsQuery = new TermQuery(docTypeTerm);
+        return new QueryBitSetProducer(fullDocsQuery);
+    }
 
     /** Set the document type */
     void setType(DocType docType);

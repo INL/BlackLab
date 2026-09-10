@@ -6,12 +6,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.StoredFields;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.queries.spans.SpanCollector;
@@ -22,8 +23,10 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.join.BitSetProducer;
+import org.apache.lucene.util.BitSet;
+import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLInputDocument;
@@ -50,31 +53,25 @@ public class SpanQueryFromFragments extends BLSpanQuery {
     /** A query yielding full documents and/or fragments */
     private final Query fragmentQuery;
 
-    /** A query yielding all full documents in the index */
-    private final Query fullDocsQuery;
-
-    /** Field that contains the full document's pid */
-    private final String pidField;
+    /** Creates a bitset of full documents per segment, so we can find a fragment's parent */
+    private final BitSetProducer fullDocsBitSetProducer;
 
     /** Field that gives us the document length in tokens */
     private final String tokenLengthField;
 
-    public SpanQueryFromFragments(QueryInfo queryInfo, Query fragmentQuery, String pidField) {
+    public SpanQueryFromFragments(QueryInfo queryInfo, Query fragmentQuery) {
         super(queryInfo);
         this.fragmentQuery = fragmentQuery;
-        this.pidField = pidField;
         this.tokenLengthField = queryInfo.field().tokenLengthField();
 
-        Term docTypeTerm = new Term(DOC_TYPE_FIELD_NAME, DOC_TYPE_FULL_DOCUMENT);
-        fullDocsQuery = new TermQuery(docTypeTerm);
+        fullDocsBitSetProducer = BLInputDocument.getFullDocBitSetProducer();
     }
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         Query frRewr = fragmentQuery.rewrite(reader);
-        Query fdRewr = fullDocsQuery.rewrite(reader);
-        if (frRewr != fragmentQuery || fdRewr != fullDocsQuery) {
-            return new SpanQueryFromFragments(queryInfo, frRewr, pidField);
+        if (frRewr != fragmentQuery) {
+            return new SpanQueryFromFragments(queryInfo, frRewr);
         }
         return this;
     }
@@ -82,11 +79,10 @@ public class SpanQueryFromFragments extends BLSpanQuery {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         Weight fragmentWeight = fragmentQuery.createWeight(searcher, ScoreMode.COMPLETE_NO_SCORES, 0);
-        Weight fullDocsWeight = fullDocsQuery.createWeight(searcher, ScoreMode.COMPLETE_NO_SCORES, 0);
         return new BLSpanWeight(this, searcher, null, 0) {
             @Override
             public boolean isCacheable(LeafReaderContext ctx) {
-                return fragmentWeight.isCacheable(ctx) && fullDocsWeight.isCacheable(ctx);
+                return fragmentWeight.isCacheable(ctx);
             }
 
             @Override
@@ -99,8 +95,8 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                 Scorer fragmentScorer = fragmentWeight.scorer(ctx);
                 if (fragmentScorer == null)
                     return null; // no matches in segment
-                Scorer fullDocsScorer = fullDocsWeight.scorer(ctx);
-                return new FragmentsToSpans(fragmentScorer, fullDocsScorer, new IndexSearcher(ctx.reader()));
+                BitSet fullDocsBitSet = fullDocsBitSetProducer.getBitSet(ctx);
+                return new FragmentsToSpans(fragmentScorer, fullDocsBitSet, ctx);
             }
         };
     }
@@ -148,21 +144,40 @@ public class SpanQueryFromFragments extends BLSpanQuery {
     /** Get the spans matching the full document and fragment matches */
     private class FragmentsToSpans extends BLSpans {
 
-        /** Where we retrieve stored fields from */
-        private final StoredFields storedFields;
-
         /** Iterator over the matched index documents (full documents and/or fragments) */
         private final DocIdSetIterator fragmentIterator;
 
-        // Iterate over all the docs in the segment that are full documents (not fragments)
-        // (needed to find the full document for a fragment if the full document wasn't matched already)
-        private final DocIdSetIterator fullDocsIterator;
+//        /** Live documents (not deleted) */
+//        private final Bits liveDocs;
+
+        /** DocValues for _doc_type (fragment or document) */
+        private final SortedDocValues dvDocType;
+
+        /** DocValues for _frag_annotatedField (field this is a fragment of) */
+        private final SortedSetDocValues dvFragAnnotatedField;
+
+        /** DocValues for _frag_start (start of fragment) */
+        private final NumericDocValues dvFragStart;
+
+        /** DocValues for _frag_end (start of fragment) */
+        private final NumericDocValues dvFragEnd;
+
+        /** BitSet indicating which Lucene docs are full documents (not fragments)
+         * (needed to find the full document for a fragment if the full document wasn't matched already)
+         */
+        private final BitSet fullDocsBitSet;
+
+        /** ord of the value "document" for field "_doc_type", so we can compare ords directly */
+        private final int fullDocOrd;
+
+        /** DocValues for token length field */
+        private final NumericDocValues dvTokenLength;
+
+        /** One greater than highest doc id */
+        private final int maxDoc;
 
         /** Current matching document id (last returned from nextDoc) */
         private int currentDocId;
-
-        /** Current full document pid (matching currentDocId). */
-        private String currentDocPid;
 
         /** Spans we're producing from this document. */
         private final List<Span> spansInCurrentDoc = new ArrayList<>();
@@ -174,23 +189,30 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         private Span currentSpan;
 
         // Fragment defined by the current result from the fragmentIterator (may not be processed yet).
-        String fragDocPid;
         int fragDocId;
         int fragStart;
         int fragEnd;
         boolean fragIsFullDoc;
 
-        public FragmentsToSpans(Scorer fragmentScorer, Scorer fullDocsScorer, IndexSearcher searcher) {
+        public FragmentsToSpans(Scorer fragmentScorer, BitSet fullDocsBitSet, LeafReaderContext ctx) {
             super(SpanGuarantees.SORTED_UNIQUE);
             try {
-                this.storedFields = searcher.storedFields();
+                // Get the DocValues for the fields we need to read from the fragmentIterator results
+                LeafReader reader = ctx.reader();
+//                liveDocs = reader.getLiveDocs();
+                dvDocType = reader.getSortedDocValues(DOC_TYPE_FIELD_NAME);
+                fullDocOrd = dvDocType.lookupTerm(new BytesRef(DOC_TYPE_FULL_DOCUMENT.getBytes()));
+                dvTokenLength = reader.getNumericDocValues(tokenLengthField);
+                dvFragAnnotatedField = reader.getSortedSetDocValues(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
+                dvFragStart = reader.getNumericDocValues(BLInputDocument.FRAG_FIELD_START);
+                dvFragEnd = reader.getNumericDocValues(BLInputDocument.FRAG_FIELD_END);
+                maxDoc = reader.maxDoc();
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
             fragmentIterator = fragmentScorer.iterator();
-            fullDocsIterator = fullDocsScorer.iterator();
+            this.fullDocsBitSet = fullDocsBitSet;
             currentDocId = -1;
-            currentDocPid = null;
         }
 
         @Override
@@ -220,16 +242,27 @@ public class SpanQueryFromFragments extends BLSpanQuery {
 
         @Override
         public int advance(int target) throws IOException {
-            fragmentQueryNexted = true;
-            if (fragmentIterator.advance(target) == DocIdSetIterator.NO_MORE_DOCS) {
+
+            if (target >= maxDoc) {
                 currentDocId = NO_MORE_DOCS;
                 return NO_MORE_DOCS;
             }
-            assert fragmentIterator.docID() >= target : "fragmentIterator.advance() returned a doc < target: " + fragmentIterator.docID() + " < " + target;
+
+            // We need to advance fragmentIterator to the first fragment in a document >= target.
+            // Find the previous full document before target, and advance to the next document after that,
+            // which is the first fragment in a document >= target (or a full document without fragments).
+            int firstFragId = target == 0 ? 0 : fullDocsBitSet.prevSetBit(target - 1) + 1;
+
+            fragmentQueryNexted = true;
+            if (fragmentIterator.advance(firstFragId) == DocIdSetIterator.NO_MORE_DOCS) {
+                currentDocId = NO_MORE_DOCS;
+                return NO_MORE_DOCS;
+            }
+            assert fragmentIterator.docID() >= firstFragId : "fragmentIterator.advance() returned a doc < firstFrag: " + fragmentIterator.docID() + " < " + firstFragId;
             determineFragment();
-            int doc = prepareCurrentDoc();
-            assert doc >= target : "advance() returned a doc < target: " + doc + " < " + target;
-            return doc;
+            int docId = prepareCurrentDoc();
+            assert docId >= target : "advance() returned a doc < target: " + docId + " < " + target;
+            return docId;
         }
 
         @Override
@@ -259,51 +292,38 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         }
 
         private void determineFragment() throws IOException {
-            // OPT: use docvalues?
-            Document document = storedFields.document(fragmentIterator.docID(),
-                    Set.of(DOC_TYPE_FIELD_NAME, pidField, tokenLengthField, BLInputDocument.FRAG_FIELD_DOC,
-                            BLInputDocument.FRAG_FIELD_START, BLInputDocument.FRAG_FIELD_END));
-            if (document.get(DOC_TYPE_FIELD_NAME).equals(DOC_TYPE_FULL_DOCUMENT)) {
-                // This is a full document; remember its pid and yield the document
+            int docId = fragmentIterator.docID();
+            if (dvDocType.docID() != docId) {
+                dvDocType.advance(docId);
+            }
+            if (dvDocType.ordValue() == fullDocOrd) {
+                // This is a full document; yield the document
                 fragIsFullDoc = true;
-                fragDocPid = document.get(pidField);
-                fragDocId = fragmentIterator.docID();
+                fragDocId = docId;
                 fragStart = 0;
-                fragEnd = Integer.parseInt(document.get(tokenLengthField));
+                if (dvTokenLength.docID() != docId)
+                    dvTokenLength.advance(docId);
+                fragEnd = (int)dvTokenLength.longValue();
             } else {
-                // This is a fragment; check if it refers to the current document pid or to a new one.
-                fragIsFullDoc = false;
-                fragDocPid = document.get(BLInputDocument.FRAG_FIELD_DOC);
-                assert fragDocPid != null : "Fragment document missing " + BLInputDocument.FRAG_FIELD_DOC + " field";
-                fragStart = Integer.parseInt(document.get(BLInputDocument.FRAG_FIELD_START));
-                fragEnd = Integer.parseInt(document.get(BLInputDocument.FRAG_FIELD_END));
-                if (!fragDocPid.equals(currentDocPid)) {
-                    // Fragment in a new document.
-                    // Find the full document for this fragment (by advancing our parallel iterator over all full docs)
-                    // (this should work because both iterators are in docId order)
-                    while (true) {
-                        int fullDocId = fullDocsIterator.nextDoc();
-                        if (fullDocId == DocIdSetIterator.NO_MORE_DOCS) {
-                            throw new IllegalStateException(
-                                    "Fragment found but cannot find full document, fragment pid: " + fragDocPid);
-                        }
-                        // Check if this is the full document for this fragment (by comparing pids)
-                        Document fullDoc = storedFields.document(fullDocId, Set.of(pidField));
-                        if (fullDoc.get(pidField).equals(fragDocPid)) {
-                            // We found the full document for this fragment; yield it
-                            fragDocId = fullDocId;
-                            break;
-                        }
-                    }
+                String type = dvDocType.lookupOrd(dvDocType.ordValue()).utf8ToString();
+                // This is a fragment.
+                if (dvFragAnnotatedField.docID() != docId) {
+                    dvFragAnnotatedField.advance(docId);
+                    dvFragStart.advance(docId);
+                    dvFragEnd.advance(docId);
                 }
+                fragIsFullDoc = false;
+                fragStart = (int)dvFragStart.longValue();
+                fragEnd = (int)dvFragEnd.longValue();
+                // Find the parent document (the next full doc in the index)
+                fragDocId = fullDocsBitSet.nextSetBit(docId);
             }
         }
 
         private int prepareCurrentDoc() throws IOException {
-            // We're now at the first fragment in the next document.
+            // We're now at the first fragment in a new document.
             // Collect this and all subsequent fragments in this doc as the spans we'll produce.
             currentDocId = fragDocId;
-            currentDocPid = fragDocPid;
             spansInCurrentDoc.clear();
             spansInCurrentDoc.add(Span.between(fragStart, fragEnd));
             boolean collectFragments = !fragIsFullDoc; // if whole doc matches, don't also produce fragments
@@ -313,7 +333,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                     break;
                 }
                 determineFragment();
-                if (!fragDocPid.equals(currentDocPid)) {
+                if (fragDocId != currentDocId) {
                     // This fragment is in a new document; we'll return it next time
                     break;
                 }

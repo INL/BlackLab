@@ -293,12 +293,10 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                         };
                         currentDoc.addTextualMetadataField(name, value, blFieldType);
                     }
-                }
-                if (type == FieldType.NUMERIC) {
+                } else {
                     boolean firstValue = true;
                     for (String value: values) {
-                        // Index these fields as numeric too, for faster range queries
-                        // (we do both because fields sometimes aren't exclusively numeric)
+                        // Index these fields as numeric, for faster range queries
                         int n;
                         try {
                             n = Integer.parseInt(value);
@@ -671,7 +669,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                         // Set the doc type field so we know this is a regular full document (as opposed to a fragment)
                         currentDoc.setType(BLInputDocument.DocType.DOCUMENT);
                         List<BLInputDocument> docsToAddAsBlock = new ArrayList<>();
-                        docsToAddAsBlock.add(currentDoc);
+                        BLInputDocument fullDoc = currentDoc;
 
                         // Are there document fragments to store as well?
                         // (each fragment is stored in a separate Lucene document that references the main document)
@@ -702,8 +700,9 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 // Store each fragment in a separate Lucene document, with a reference to the main document
                                 for (Fragment fragment: fragments) {
                                     currentDoc = createNewDocument();
-                                    currentDoc.addField(BLInputDocument.FRAG_FIELD_DOC, pid, untokenizedFieldType);
-                                    currentDoc.addField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
+                                    currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_DOC, pid, untokenizedFieldType);
+                                    currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
+                                    currentDoc.addTextualMetadataField(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, annotatedFieldName, untokenizedFieldType);
                                     currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_START, fragment.span().start(), true);
                                     currentDoc.addStoredNumericField(BLInputDocument.FRAG_FIELD_END, fragment.span().end(), true);
                                     addMetadataToDocument(fragment.metadata(), true);
@@ -717,6 +716,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 }
                             }
                         }
+                        docsToAddAsBlock.add(fullDoc); // full document last (according to Lucene block join API)
                         getDocWriter().addDocuments(docsToAddAsBlock);
                     }
                 } catch (Exception e) {

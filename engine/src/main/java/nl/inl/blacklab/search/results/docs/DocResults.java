@@ -22,12 +22,15 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.join.BitSetProducer;
+import org.apache.lucene.search.join.ToParentBlockJoinQuery;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -39,7 +42,6 @@ import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.lucene.QueryFullDocsFromFragments;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
@@ -287,7 +289,10 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         if (queryInfo.index().isFragmentQuery(query)) {
             // The query can yield fragments as well as full documents. "Upcast" to only full documents.
             String pidField = queryInfo.index().metadataFields().pidField().name();
-            query = new QueryFullDocsFromFragments(query, pidField);
+
+            BitSetProducer parentsFilter = BLInputDocument.getFullDocBitSetProducer();
+            query = new ToParentBlockJoinQuery(query, parentsFilter, org.apache.lucene.search.join.ScoreMode.None);
+            //query = new QueryFullDocsFromFragments(query, pidField);
         }
         // (NOTE: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
         //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery)

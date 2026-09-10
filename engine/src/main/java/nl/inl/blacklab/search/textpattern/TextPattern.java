@@ -253,8 +253,7 @@ public abstract class TextPattern implements TextPatternStruct {
                 // Can the filter yield fragments or only regular (full) documents?
                 if (queryInfo.index().isFragmentQuery(filter)) {
                     // Adapt the filter query to a spanquery and use within to find hits within documents/fragments
-                    String pidField = queryInfo.index().metadataFields().pidField().name();
-                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(queryInfo, filter, pidField);
+                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(queryInfo, filter);
                     spanQuery = new SpanQueryPositionFilter(spanQuery, filterSpanQuery, SpanFilter.WITHIN, false);
                 } else {
                     // Not a fragment query; use regular SpanQueryFiltered

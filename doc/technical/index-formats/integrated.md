@@ -10,7 +10,7 @@ BlackLab indexes have a codec name `BlackLab40Codec` and version of 1. (Addition
 
 Document fragments refer to the ability to tag parts of a document (from a starting token position to an ending token position) with metadata, not just the whole document. Most corpora in BlackLab won't use this feature, but for certain (e.g. historical) data sets, it is invaluable to tag part of the text as being written by a different author or in a different year.
 
-To enable this feature, a `_doctype` field was added to each Lucene document in the index. Regular full documents have `_doctype` set to `document`, fragments use `fragment` and the index metadata document uses `indexmetadata` (this will replace the current index metadata marker at some future point).
+To enable this feature, a `_doc_type` field was added to each Lucene document in the index. Regular full documents have `_doc_type` set to `document`, fragments use `fragment` and the index metadata document uses `indexmetadata` (this will replace the current index metadata marker at some future point).
 
 Fragment documents have special fields `_frag_annotatedField` (the annotated field this is a fragment from, usually just `contents`), `_frag_doc` (the persistent identifier (pid) of the full document this is a fragment of), `_frag_start` and `frag_end` (the part of the document this metadata applies to; end is exclusive).
 
